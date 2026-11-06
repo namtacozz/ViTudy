@@ -1,11 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useStudySpace } from '@/context/StudySpaceContext';
 
 export function VrFrameOverlay() {
-  const { transform } = useStudySpace();
-
   return (
     <div className="absolute inset-0 pointer-events-none z-30 select-none overflow-hidden">
       {/* 4 Corner Sci-Fi / VR Brackets */}
@@ -26,11 +23,10 @@ export function VrFrameOverlay() {
         }}
       />
 
-      {/* Subtle Coordinate Cross Indicator at bottom center */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] font-mono text-slate-500/60 bg-slate-950/40 px-2 py-0.5 rounded-full border border-slate-800/40">
-        <span>X: {Math.round(-transform.x)}</span>
-        <span>Y: {Math.round(-transform.y)}</span>
-        <span>Z: {transform.scale.toFixed(2)}x</span>
+      {/* Subtle VR HUD Mode Indicator at bottom center */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] font-mono text-cyan-500/60 bg-slate-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/20 backdrop-blur-[2px]">
+        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+        <span>STUDYSPACE 2.5D HUD ACTIVE</span>
       </div>
     </div>
   );

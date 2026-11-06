@@ -84,15 +84,14 @@ export function Minimap() {
         );
       })}
 
-      {/* Viewport Frame */}
+      {/* Viewport Frame (Hardware-accelerated Transform) */}
       <div
         style={{
-          left: Math.max(0, Math.min(miniWidth - rectW, rectX)),
-          top: Math.max(0, Math.min(miniHeight - rectH, rectY)),
+          transform: `translate3d(${Math.max(0, Math.min(miniWidth - rectW, rectX))}px, ${Math.max(0, Math.min(miniHeight - rectH, rectY))}px, 0)`,
           width: rectW,
           height: rectH
         }}
-        className="absolute border border-cyan-400/80 bg-cyan-500/10 rounded-[2px] pointer-events-none shadow-[0_0_8px_rgba(34,211,238,0.3)]"
+        className="absolute top-0 left-0 border border-cyan-400/80 bg-cyan-500/10 rounded-[2px] pointer-events-none shadow-[0_0_8px_rgba(34,211,238,0.3)] will-change-transform"
       />
 
       <div className="absolute bottom-1 right-1.5 text-[9px] font-mono text-slate-500 pointer-events-none">

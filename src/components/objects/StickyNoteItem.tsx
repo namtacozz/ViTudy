@@ -41,14 +41,29 @@ export function StickyNoteItem({ item, isSelected }: StickyNoteItemProps) {
       itemY: item.y
     };
 
+    let rafId: number | null = null;
+    let latestX = item.x;
+    let latestY = item.y;
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!dragStartRef.current) return;
-      const dx = moveEvent.clientX - dragStartRef.current.mouseX;
-      const dy = moveEvent.clientY - dragStartRef.current.mouseY;
-      updateItemPosition(item.id, dragStartRef.current.itemX + dx, dragStartRef.current.itemY + dy);
+      latestX = dragStartRef.current.itemX + (moveEvent.clientX - dragStartRef.current.mouseX);
+      latestY = dragStartRef.current.itemY + (moveEvent.clientY - dragStartRef.current.mouseY);
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          updateItemPosition(item.id, latestX, latestY);
+          rafId = null;
+        });
+      }
     };
 
     const handleMouseUp = () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      updateItemPosition(item.id, latestX, latestY);
       setIsDragging(false);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -61,11 +76,12 @@ export function StickyNoteItem({ item, isSelected }: StickyNoteItemProps) {
   return (
     <div
       style={{
-        transform: `translate(${item.x}px, ${item.y}px) rotate(${item.rotation}deg) scale(${item.scale})`,
+        transform: `translate3d(${item.x}px, ${item.y}px, 0) rotate(${item.rotation}deg) scale(${item.scale})`,
         zIndex: item.zIndex,
         width: 220,
         height: 200,
-        transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.1s'
+        transition: isDragging ? 'none' : 'box-shadow 0.2s',
+        willChange: isDragging ? 'transform' : 'auto'
       }}
       className={`absolute select-none group cursor-grab active:cursor-grabbing rounded-sm ${
         isSelected ? 'ring-2 ring-hud-cyan shadow-hud-glow' : ''

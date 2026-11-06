@@ -67,14 +67,29 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
       itemY: item.y
     };
 
+    let rafId: number | null = null;
+    let latestX = item.x;
+    let latestY = item.y;
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!dragStartRef.current) return;
-      const dx = moveEvent.clientX - dragStartRef.current.mouseX;
-      const dy = moveEvent.clientY - dragStartRef.current.mouseY;
-      updateItemPosition(item.id, dragStartRef.current.itemX + dx, dragStartRef.current.itemY + dy);
+      latestX = dragStartRef.current.itemX + (moveEvent.clientX - dragStartRef.current.mouseX);
+      latestY = dragStartRef.current.itemY + (moveEvent.clientY - dragStartRef.current.mouseY);
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          updateItemPosition(item.id, latestX, latestY);
+          rafId = null;
+        });
+      }
     };
 
     const handleMouseUp = (upEvent: MouseEvent) => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      updateItemPosition(item.id, latestX, latestY);
       setIsDragging(false);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -82,14 +97,13 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
       // Check if dropped onto another item (e.g. book or another paper sheet) for binder combine
       const currentTarget = activeSpace.items.find(other => {
         if (other.id === item.id) return false;
-        // Simple bounding box check
         const targetWidth = other.type === 'book' ? 700 : 360;
         const targetHeight = other.type === 'book' ? 520 : 480;
         return (
-          item.x >= other.x - 50 &&
-          item.x <= other.x + targetWidth &&
-          item.y >= other.y - 50 &&
-          item.y <= other.y + targetHeight
+          latestX >= other.x - 50 &&
+          latestX <= other.x + targetWidth &&
+          latestY >= other.y - 50 &&
+          latestY <= other.y + targetHeight
         );
       });
 
@@ -105,11 +119,12 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
   return (
     <div
       style={{
-        transform: `translate(${item.x}px, ${item.y}px) rotate(${item.rotation}deg) scale(${item.scale})`,
+        transform: `translate3d(${item.x}px, ${item.y}px, 0) rotate(${item.rotation}deg) scale(${item.scale})`,
         zIndex: item.zIndex,
         width: 360,
         height: 500,
-        transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.1s'
+        transition: isDragging ? 'none' : 'box-shadow 0.2s',
+        willChange: isDragging ? 'transform' : 'auto'
       }}
       className={`absolute select-none group cursor-grab active:cursor-grabbing rounded-sm ${
         isSelected ? 'ring-2 ring-hud-cyan shadow-hud-glow' : ''

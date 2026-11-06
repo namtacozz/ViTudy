@@ -13,15 +13,19 @@ import {
   Check, 
   X,
   Star,
-  ShieldCheck
+  ShieldCheck,
+  Plus
 } from 'lucide-react';
+import { KnowInheritPublishModal } from '../modals/KnowInheritPublishModal';
 
 export function BottomLeftKnowledge() {
-  const { addUploadedDocument } = useStudySpace();
-  const { wallet, spendTokens } = useViToken();
+  const { addUploadedDocument, activeSpace } = useStudySpace();
+  const { wallet, spendTokens, addTokens } = useViToken();
 
   const [isMarketOpen, setIsMarketOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [selectedDeskItemId, setSelectedDeskItemId] = useState<string>('');
 
   // Upload modal inputs
   const [docTitle, setDocTitle] = useState('');
@@ -134,9 +138,30 @@ export function BottomLeftKnowledge() {
             >
               <X className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-2.5 mb-1">
-              <Store className="w-5 h-5 text-cyan-400" />
-              <h3 className="text-base font-bold text-white">Chợ Tri Thức KnowInherit</h3>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2.5">
+                <Store className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-base font-bold text-white">Chợ Tri Thức KnowInherit</h3>
+              </div>
+
+              {/* Publish Button */}
+              {activeSpace.items.length > 0 && (
+                <button
+                  onClick={() => {
+                    const firstDoc = activeSpace.items.find(i => i.type === 'book' || i.type === 'paper');
+                    if (firstDoc) {
+                      setSelectedDeskItemId(firstDoc.id);
+                      setIsPublishOpen(true);
+                    } else {
+                      alert('Hãy tạo hoặc tải một cuốn sách/tờ giấy lên bàn trước khi đăng bán!');
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1 shadow-md mr-6"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Đăng Bán Tài Liệu (85%)</span>
+                </button>
+              )}
             </div>
             <p className="text-xs text-slate-400 mb-4">
               Tài liệu được người đi trước chia sẻ đã qua AI kiểm duyệt chống trùng lặp & thẩm định chất lượng. <strong>85% ViToken</strong> sẽ được chuyển trực tiếp cho tác giả.
@@ -269,6 +294,19 @@ export function BottomLeftKnowledge() {
             </form>
           </div>
         </div>
+      )}
+      {/* MODAL: Đăng bán tài liệu lên KnowInherit */}
+      {isPublishOpen && (
+        <KnowInheritPublishModal
+          item={activeSpace.items.find(i => i.id === selectedDeskItemId) || activeSpace.items[0]}
+          isOpen={isPublishOpen}
+          onClose={() => setIsPublishOpen(false)}
+          onPublished={(newListing) => {
+            setMarketItems(prev => [newListing, ...prev]);
+            // Reward publishing bonus: author gets tokens for publishing
+            addTokens(2, `Thưởng đăng tài liệu lên KnowInherit: ${newListing.title}`);
+          }}
+        />
       )}
     </div>
   );

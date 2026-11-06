@@ -43,15 +43,34 @@ export function InfiniteDesk() {
     setIsPanning(true);
     panStartRef.current = { x: e.clientX, y: e.clientY };
 
+    let rafId: number | null = null;
+    let pendingDx = 0;
+    let pendingDy = 0;
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!panStartRef.current) return;
-      const dx = moveEvent.clientX - panStartRef.current.x;
-      const dy = moveEvent.clientY - panStartRef.current.y;
+      pendingDx += moveEvent.clientX - panStartRef.current.x;
+      pendingDy += moveEvent.clientY - panStartRef.current.y;
       panStartRef.current = { x: moveEvent.clientX, y: moveEvent.clientY };
-      panBy(dx, dy);
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          panBy(pendingDx, pendingDy);
+          pendingDx = 0;
+          pendingDy = 0;
+          rafId = null;
+        });
+      }
     };
 
     const handleMouseUp = () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (pendingDx !== 0 || pendingDy !== 0) {
+        panBy(pendingDx, pendingDy);
+      }
       setIsPanning(false);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -129,11 +148,11 @@ export function InfiniteDesk() {
         </div>
       )}
 
-      {/* 2.5D World Transform Container */}
+      {/* 2.5D World Transform Container (GPU Accelerated) */}
       <div
-        className="absolute top-0 left-0 w-full h-full transform-gpu"
+        className="absolute top-0 left-0 w-full h-full transform-gpu will-change-transform"
         style={{
-          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`,
           transformOrigin: '0 0'
         }}
       >
