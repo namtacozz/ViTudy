@@ -35,6 +35,7 @@ export function StickyNoteItem({ item, isSelected }: StickyNoteItemProps) {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(item.title || 'Note');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     setTitleInput(item.title || 'Note');
@@ -181,42 +182,37 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
     }
   };
 
-  // Dynamic font scaling:
-  // 1. Khi chưa viết gì (rỗng hoặc rất ngắn): cỡ chữ ít nhất bằng 1/3 chiều cao note!
-  // 2. Cho phép chữ mở rộng chạm tới vạch gạch cách ly footer rồi mới thu nhỏ vừa khít khung note.
-  // 3. Nghiêm cấm xuất hiện thanh cuộn.
-  const noteHeight = item.height || 200;
-  const baseThirdSize = Math.max(52, Math.round(noteHeight / 3.2)); // Ít nhất 1/3 chiều cao note!
+  // Dynamic font scaling & auto expansion:
+  // Đảm bảo chữ hiển thị trọn vẹn, không bị cắt nội dung và phông chữ rõ ràng dễ đọc
+  const noteBaseHeight = item.height || 200;
+  const noteHeight = isExpanded ? Math.max(noteBaseHeight + 90, 290) : noteBaseHeight;
   const textLen = text.length;
   const lineBreaks = (text.match(/\n/g) || []).length;
-  const effectiveLen = textLen + lineBreaks * 26;
+  const effectiveLen = textLen + lineBreaks * 20;
 
   const dynamicFont = (() => {
-    let size = baseThirdSize;
-    let leading = 'leading-[1.06]';
+    let size = 13.5;
+    let leading = 'leading-[1.42]';
 
-    if (effectiveLen <= 12) {
-      size = baseThirdSize;
-      leading = 'leading-[1.05]';
-    } else if (effectiveLen <= 38) {
-      size = Math.max(32, Math.round(baseThirdSize * 0.65));
-      leading = 'leading-[1.12]';
-    } else if (effectiveLen <= 85) {
-      size = Math.max(24, Math.round(baseThirdSize * 0.50));
-      leading = 'leading-[1.20]';
-    } else if (effectiveLen <= 170) {
-      // Nội dung tiến sát vạch ngăn cách footer rồi mới thu nhỏ
-      size = Math.max(18, Math.round(baseThirdSize * 0.38));
-      leading = 'leading-[1.26]';
-    } else if (effectiveLen <= 280) {
-      size = Math.max(14.5, Math.round(baseThirdSize * 0.30));
-      leading = 'leading-[1.30]';
-    } else if (effectiveLen <= 420) {
-      size = Math.max(12.5, Math.round(baseThirdSize * 0.24));
-      leading = 'leading-[1.32]';
-    } else {
-      size = 10.5;
+    if (effectiveLen <= 15) {
+      size = Math.min(32, Math.max(24, Math.round(noteBaseHeight / 5.5)));
+      leading = 'leading-[1.15]';
+    } else if (effectiveLen <= 40) {
+      size = 20;
       leading = 'leading-[1.25]';
+    } else if (effectiveLen <= 80) {
+      size = 16;
+      leading = 'leading-[1.32]';
+    } else if (effectiveLen <= 150) {
+      // 120 ký tự hiển thị sắc nét vừa khít khung ghi chú tiêu chuẩn
+      size = 13.5;
+      leading = 'leading-[1.42]';
+    } else if (effectiveLen <= 260) {
+      size = 12;
+      leading = 'leading-[1.38]';
+    } else {
+      size = 11;
+      leading = 'leading-[1.32]';
     }
 
     return { size, leading };
@@ -230,8 +226,8 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         transform: `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${item.rotation}deg) scale(${item.scale})`,
         zIndex: item.zIndex,
         width: item.width || 220,
-        height: item.height || 200,
-        transition: isDragging ? 'none' : 'box-shadow 0.2s',
+        height: noteHeight,
+        transition: isDragging ? 'none' : 'box-shadow 0.2s, height 0.2s ease-out',
       }}
       className={`absolute select-none group cursor-default rounded-sm ${
         isSelected ? 'ring-2 ring-slate-900 shadow-xl' : ''
@@ -271,23 +267,23 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             textRendering: 'geometricPrecision', 
             WebkitFontSmoothing: 'antialiased',
             fontSize: `${dynamicFont.size}px`,
-            fontWeight: isBold ? 800 : 400,
+            fontWeight: isBold ? 800 : 500,
             WebkitTextStroke: isBold ? '0.35px currentColor' : '0px transparent',
             textAlign: textAlign,
           }}
           className={`w-full h-full bg-transparent resize-none outline-none ${
-            isBold ? 'font-black' : 'font-normal'
+            isBold ? 'font-bold' : 'font-medium'
           } ${
             textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'
-          } text-stone-950 placeholder:text-stone-400 placeholder:italic font-note selection:bg-amber-300 selection:text-stone-950 no-scrollbar cursor-text overflow-hidden relative z-10 ${dynamicFont.leading}`}
+          } text-stone-950 placeholder:text-stone-400 placeholder:italic font-sans selection:bg-amber-300 selection:text-stone-950 no-scrollbar cursor-text overflow-hidden relative z-10 ${dynamicFont.leading}`}
           onMouseDown={(e) => e.stopPropagation()}
         />
 
-        {/* Footer (Drag handle: Editable Note name & Character count) */}
+        {/* Footer (Drag handle: Editable Note name, Expand Toggle & Character count) */}
         <div 
           onMouseDown={handleMouseDown}
           title="Cầm chân ghi chú để di chuyển"
-          className="flex items-center justify-between text-[11px] text-stone-600 font-mono pt-1 border-t border-black/10 select-none cursor-grab active:cursor-grabbing relative z-10"
+          className="flex items-center justify-between text-[11px] text-stone-700 font-mono pt-1.5 border-t border-black/10 select-none cursor-grab active:cursor-grabbing relative z-10"
         >
           {isEditingTitle ? (
             <input
@@ -313,12 +309,26 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                 setIsEditingTitle(true);
               }}
               title="Nhấp để đổi tên ghi chú"
-              className="hover:underline font-bold text-stone-700 hover:text-stone-900 cursor-text truncate max-w-[120px] text-left"
+              className="hover:underline font-bold text-stone-800 hover:text-stone-950 cursor-text truncate max-w-[105px] text-left"
             >
               {item.title || 'Note'}
             </button>
           )}
-          <span>{text.length} ký tự</span>
+
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              title={isExpanded ? 'Thu gọn khung ghi chú' : 'Mở rộng khung ghi chú để đọc thoải mái'}
+              className="text-[10px] text-stone-600 hover:text-stone-950 font-bold px-1 py-0.2 rounded hover:bg-black/5 transition-colors cursor-pointer"
+            >
+              {isExpanded ? 'Thu gọn' : 'Mở rộng'}
+            </button>
+            <span className="text-stone-500 font-medium">{text.length}kí</span>
+          </div>
         </div>
       </div>
 

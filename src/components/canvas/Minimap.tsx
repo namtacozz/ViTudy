@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { X } from 'lucide-react';
 
 interface MinimapProps {
   isVisible?: boolean;
@@ -138,9 +139,24 @@ export function Minimap({ isVisible = true, onClose }: MinimapProps) {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       style={{ width: miniWidth, height: miniHeight }}
-      className="bg-white/95 border border-slate-200/90 rounded-xl relative overflow-hidden cursor-crosshair shadow-md backdrop-blur-md group select-none touch-none"
+      className="bg-white/95 border border-slate-300 rounded-xl relative overflow-hidden cursor-crosshair shadow-md backdrop-blur-md group select-none touch-none opacity-80 hover:opacity-100 transition-opacity duration-200"
       title="Bản đồ thu nhỏ bàn học (Kéo hoặc Click để điều hướng camera)"
     >
+      {/* Collapse button */}
+      {onClose && (
+        <button 
+          type="button" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          title="Thu gọn bản đồ (Phím M)"
+          className="absolute top-1 right-1 text-slate-400 hover:text-slate-800 p-0.5 rounded hover:bg-slate-100 transition-colors z-20 cursor-pointer pointer-events-auto"
+        >
+          <X className="w-3 h-3 stroke-[2.4]" />
+        </button>
+      )}
+
       {/* Subtle Radar Background Grid */}
       <div 
         className="absolute inset-0 opacity-20 pointer-events-none"
@@ -204,7 +220,7 @@ export function Minimap({ isVisible = true, onClose }: MinimapProps) {
         <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 border-b-2 border-r-2 border-cyan-600" />
       </div>
 
-      <div className="absolute bottom-1.5 right-2 text-[9px] font-mono font-black text-slate-500 pointer-events-none tracking-wider select-none">
+      <div className="absolute bottom-1.5 left-2 text-[9.5px] font-mono font-bold text-slate-700 pointer-events-none tracking-wider select-none">
         BẢN ĐỒ (Phím M)
       </div>
     </div>

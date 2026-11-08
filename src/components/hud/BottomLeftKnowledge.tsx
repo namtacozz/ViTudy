@@ -338,47 +338,50 @@ export function BottomLeftKnowledge() {
         onChange={handleFileSelect}
       />
 
-      {/* 1. Button: Tải lên tài liệu (Màu Cam ViT, icon trắng) */}
+      {/* 1. Button: Tải lên tài liệu (Hài hòa với thanh dock) */}
       <button
         onClick={() => fileInputRef.current?.click()}
-        title="Tải lên tài liệu"
-        className="w-12 h-12 rounded-full bg-[#E0562D] hover:bg-[#c9451e] text-white shadow-lg border border-[#c9451e]/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+        title="Tải lên tài liệu (PDF, Word, Text, Ảnh...)"
+        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
       >
-        <Upload className="w-5 h-5 text-white stroke-[2.4] group-hover:scale-110 transition-transform" />
+        <Upload className="w-4.5 h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
       </button>
 
-      {/* 2. Button: Ghi hình buổi học (Icon camera, màu trắng chữ đen, nằm giữa Tải lên và Mời bạn) */}
+      {/* 2. Button: Ghi hình buổi học (Icon camera) */}
       {isRecording ? (
-        <div className="flex items-center gap-2 bg-white/95 border border-red-300 rounded-full px-3 py-1.5 shadow-lg backdrop-blur-md animate-fade-in">
-          <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" />
-          <span className="text-xs font-mono font-black text-red-600 select-none">
+        <div className="flex items-center gap-2 bg-white/95 border border-red-300 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md animate-fade-in">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+          <span className="text-xs font-mono font-bold text-red-600 select-none">
             {formatRecordingTime(recordingSeconds)}
           </span>
           <button
             onClick={handleStopRecording}
             title="Dừng ghi hình"
-            className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ml-0.5 active:scale-95"
+            className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ml-0.5 active:scale-95"
           >
-            <Square className="w-3.5 h-3.5 fill-white stroke-none" />
+            <Square className="w-3 h-3 fill-white stroke-none" />
           </button>
         </div>
       ) : (
         <button
           onClick={() => setIsSetupModalOpen(true)}
           title="Ghi hình buổi học (Màn hình & Micro)"
-          className="w-12 h-12 rounded-full bg-white hover:bg-slate-100 text-slate-900 shadow-md border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+          className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
         >
-          <Video className="w-5 h-5 text-slate-900 stroke-[2.4] group-hover:scale-110 transition-transform" />
+          <Video className="w-4.5 h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
         </button>
       )}
 
-      {/* 3. Button: Mời bạn bè (Màu trắng chữ đen) */}
+      {/* 3. Button: Mời bạn bè & Supabase (Có đèn tín hiệu trạng thái) */}
       <button
         onClick={() => setIsShareModalOpen(true)}
-        title="Mời bạn bè cùng tham gia học nhóm"
-        className="w-12 h-12 rounded-full bg-white hover:bg-slate-100 text-slate-900 shadow-md border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+        title="Phòng học nhóm & Cơ sở dữ liệu Supabase"
+        className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group relative"
       >
-        <Share2 className="w-5 h-5 text-slate-900 stroke-[2.4] group-hover:scale-110 transition-transform" />
+        <Share2 className="w-4.5 h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
+        {supabaseConfigState.isConfigured && (
+          <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-1.5 right-1.5 ring-1 ring-white" />
+        )}
       </button>
 
       {/* MODAL 1: Cài đặt & Bắt đầu ghi hình */}

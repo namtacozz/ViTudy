@@ -83,16 +83,16 @@ Có hai phương pháp chính để tìm nghiệm:
             text: `Gradient Descent là phương pháp tối ưu hóa bậc nhất tìm cực tiểu địa phương của hàm khả vi.
 
 Quy tắc cập nhật trọng số:
-w_(t+1) = w_t - η * ∇L(w_t)
+$$w_{t+1} = w_t - \eta \nabla L(w_t)$$
 
 Trong đó:
-- η (eta) là tốc độ học (Learning Rate). Nếu η quá lớn, thuật toán sẽ phân kỳ (Diverge). Nếu η quá nhỏ, tốc độ hội tụ rất chậm.
-- ∇L(w_t) là gradient (vectơ đạo hàm riêng) của hàm mất mát theo w.
+• $\eta$ (learning rate): Tốc độ học. Nếu $\eta$ quá lớn, thuật toán sẽ phân kỳ; nếu $\eta$ quá nhỏ, tốc độ hội tụ rất chậm.
+• $\nabla L(w_t)$: Gradient (vectơ đạo hàm riêng) của hàm mất mát theo $w$.
 
-Biến thể:
-- Batch Gradient Descent: Tính gradient trên toàn bộ dữ liệu.
-- Stochastic Gradient Descent (SGD): Cập nhật trọng số theo từng mẫu ngẫu nhiên.
-- Mini-batch SGD: Cập nhật theo từng nhóm nhỏ (kích thước batch: 32, 64, 128).`
+Các biến thể chính:
+• Batch Gradient Descent: Tính toán gradient trên toàn bộ tập dữ liệu.
+• Stochastic Gradient Descent (SGD): Cập nhật trọng số theo từng mẫu ngẫu nhiên.
+• Mini-batch SGD: Cập nhật theo nhóm nhỏ (kích thước batch: 32, 64, 128).`
           },
           {
             id: 'p5',
@@ -101,13 +101,12 @@ Biến thể:
             text: `Mạng nơ-ron nhân tạo lấy cảm hứng từ cấu trúc sinh học của não bộ.
 
 Thành phần cơ bản của một Perceptron:
-z = ∑ (w_i * x_i) + b
-a = σ(z)
+$$z = \sum_{i=1}^{n} w_i x_i + b \quad \Longrightarrow \quad a = \sigma(z)$$
 
-Hàm kích hoạt phi tuyến (Activation Functions):
-1. Sigmoid: σ(z) = 1 / (1 + e^(-z)) (nén giá trị về khoảng [0, 1]).
-2. ReLU: f(z) = max(0, z) (phổ biến nhất vì tính toán nhanh và tránh triệt tiêu gradient ở miền dương).
-3. Softmax: Dùng ở lớp đầu ra cho bài toán phân loại đa lớp để biểu diễn phân phối xác suất.`
+Các hàm kích hoạt phi tuyến (Activation Functions):
+• Sigmoid: $\sigma(z) = \frac{1}{1 + e^{-z}}$ (nén giá trị về khoảng $[0, 1]$).
+• ReLU: $f(z) = \max(0, z)$ (phổ biến nhất vì tính toán nhanh, tránh triệt tiêu gradient ở miền dương).
+• Softmax: Biểu diễn phân phối xác suất ở lớp đầu ra cho phân loại đa lớp.`
           },
           {
             id: 'p6',
@@ -116,13 +115,12 @@ Hàm kích hoạt phi tuyến (Activation Functions):
             text: `Thuật toán Lan truyền ngược là trụ cột huấn luyện mạng nơ-ron sâu (Deep Learning).
 
 Nguyên lý Chain Rule (Quy tắc dây chuyền):
-Đạo hàm của hàm hợp:
-∂L / ∂w = (∂L / ∂a) * (∂a / ∂z) * (∂z / ∂w)
+$$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}$$
 
 Các bước thực hiện trong mỗi lượt huấn luyện (Epoch):
-1. Forward Pass: Truyền tín hiệu từ đầu vào qua các lớp ẩn để tính giá trị dự đoán y_hat và hàm mất mát L.
-2. Backward Pass: Tính đạo hàm của L ngược từ lớp ra về lớp vào.
-3. Weight Update: Điều chỉnh trọng số w bằng Optimizer (SGD, Adam, RMSProp).`
+1. Forward Pass: Truyền tín hiệu từ đầu vào qua các lớp ẩn để tính giá trị dự đoán $\hat{y}$ và hàm mất mát $L$.
+2. Backward Pass: Tính đạo hàm của $L$ ngược từ lớp ra về lớp vào qua Chain Rule.
+3. Weight Update: Điều chỉnh trọng số $w$ bằng Optimizer (SGD, Adam, RMSProp).`
           },
           {
             id: 'p7',
@@ -131,10 +129,11 @@ Các bước thực hiện trong mỗi lượt huấn luyện (Epoch):
             text: `Overfitting xảy ra khi mô hình học quá kỹ các chi tiết ngẫu nhiên và nhiễu (noise) của tập huấn luyện, dẫn đến độ chính xác cao trên Train nhưng suy giảm mạnh trên Test.
 
 Các kỹ thuật Regularization phổ biến:
-1. L2 Regularization (Ridge / Weight Decay): Phạt các trọng số có độ lớn cao: L_reg = L + λ * ||w||_2^2
-2. L1 Regularization (Lasso): Tạo ra các trọng số thưa (Sparse weights): L_reg = L + λ * ||w||_1
-3. Dropout: Tắt ngẫu nhiên một tỷ lệ nơ-ron (vd 20% - 50%) trong mỗi lượt huấn luyện để ngăn chặn sự phụ thuộc lẫn nhau.
-4. Early Stopping: Dừng huấn luyện khi mất mát trên tập Validation bắt đầu tăng.`
+• L2 Regularization (Ridge / Weight Decay): Phạt các trọng số có độ lớn cao:
+$$\mathcal{L}_{\text{reg}} = \mathcal{L} + \lambda \|w\|_2^2$$
+• L1 Regularization (Lasso): Tạo ra các trọng số thưa: $\mathcal{L}_{\text{reg}} = \mathcal{L} + \lambda \|w\|_1$
+• Dropout: Tắt ngẫu nhiên một tỷ lệ nơ-ron (20% – 50%) trong mỗi lượt huấn luyện.
+• Early Stopping: Dừng huấn luyện khi mất mát trên tập Validation bắt đầu tăng.`
           },
           {
             id: 'p8',
@@ -155,8 +154,8 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
         id: 'doc-paper-derivative',
         type: 'paper',
         title: 'Công thức Đạo hàm Cơ bản',
-        x: -240,
-        y: 80,
+        x: -280,
+        y: 100,
         rotation: 0,
         scale: 1,
         zIndex: 12,
@@ -169,13 +168,14 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
             id: 'p-rev-1',
             pageNumber: 1,
             title: 'Công thức Đạo hàm Cơ bản',
-            text: `Tờ ôn tập nhanh trước kỳ thi:
-- Đạo hàm của hàm mũ: d/dx (x^n) = n * x^(n-1)
-- Đạo hàm hàm số e^x: d/dx (e^x) = e^x
-- Đạo hàm ln(x): d/dx (ln(x)) = 1/x
-- Quy tắc tích: (u * v)' = u' * v + u * v'
-- Quy tắc thương: (u / v)' = (u' * v - u * v') / v^2
-- Đạo hàm hàm hợp (Chain rule): dy/dx = (dy/du) * (du/dx)`
+            text: `Tờ ôn tập quy tắc đạo hàm trọng tâm:
+
+• Hàm lũy thừa: $\\frac{d}{dx}(x^n) = n x^{n-1}$
+• Hàm mũ: $\\frac{d}{dx}(e^x) = e^x$
+• Logarit tự nhiên: $\\frac{d}{dx}(\\ln x) = \\frac{1}{x} \\quad (x > 0)$
+• Quy tắc tích: $(u \\cdot v)' = u' v + u v'$
+• Quy tắc thương: $\\left(\\frac{u}{v}\\right)' = \\frac{u' v - u v'}{v^2}$
+• Quy tắc dây chuyền: $\\frac{dy}{dx} = \\frac{dy}{du} \\cdot \\frac{du}{dx}$`
           }
         ]
       },
@@ -183,8 +183,8 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
         id: 'doc-roadmap-ml',
         type: 'paper',
         title: 'Lộ trình Ôn tập Machine Learning',
-        x: -240,
-        y: 560,
+        x: -280,
+        y: 630,
         rotation: 0,
         scale: 1,
         zIndex: 14,
@@ -203,8 +203,8 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
   └── [x] Độ đo Accuracy, Precision, Recall, F1-Score
 
 [CHẶNG 2: HỒI QUY TUYẾN TÍNH & HÀM MẤT MÁT]
-  ├── [ ] Mô hình y = X*w + b và Hàm mất mát MSE
-  ├── [ ] Nghiệm giải tích Normal Equation
+  ├── [ ] Mô hình $y = X w + b$ và Hàm mất mát MSE
+  ├── [ ] Nghiệm giải tích Normal Equation: $w = (X^T X)^{-1} X^T y$
   └── [ ] Thuật toán Gradient Descent: Batch, Mini-batch, SGD`
           }
         ]
@@ -213,8 +213,8 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
         id: 'doc-paper-gradient',
         type: 'paper',
         title: 'Gradient trong Không gian Đa chiều',
-        x: 1200,
-        y: 460,
+        x: 1120,
+        y: 350,
         rotation: 0,
         scale: 1,
         zIndex: 13,
@@ -227,14 +227,14 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
             id: 'p-rev-2',
             pageNumber: 1,
             title: 'Gradient trong Không gian Đa chiều',
-            text: `Cho hàm nhiều biến f(x_1, x_2, ..., x_n):
-Gradient của f, ký hiệu ∇f, là một vectơ gồm tất cả các đạo hàm riêng:
-∇f = [ ∂f/∂x_1, ∂f/∂x_2, ..., ∂f/∂x_n ]^T
+            text: `Cho hàm khả vi nhiều biến $f(x_1, x_2, \\dots, x_n)$:
+Gradient của $f$, ký hiệu $\\nabla f$, là một vectơ gồm tất cả các đạo hàm riêng:
+$$\\nabla f = \\left[ \\frac{\\partial f}{\\partial x_1}, \\frac{\\partial f}{\\partial x_2}, \\dots, \\frac{\\partial f}{\\partial x_n} \\right]^T$$
 
 Ý nghĩa hình học quan trọng:
-1. Vectơ gradient luôn chỉ theo hướng hàm số TĂNG NHANH NHẤT.
-2. Vectơ đối nghịch (-∇f) luôn chỉ theo hướng hàm số GIẢM NHANH NHẤT (Nguyên lý thuật toán Gradient Descent).
-3. Độ dài (Norm) của gradient thể hiện tốc độ biến thiên tại điểm đó.`
+1. Vectơ $\\nabla f$ luôn chỉ theo hướng hàm số TĂNG NHANH NHẤT.
+2. Vectơ đối nghịch $(-\\nabla f)$ luôn chỉ theo hướng hàm số GIẢM NHANH NHẤT (Nguyên lý Gradient Descent).
+3. Độ dài (Norm) $\\|\\nabla f\\|$ thể hiện tốc độ biến thiên cực đại tại điểm xét.`
           }
         ]
       },
@@ -242,8 +242,8 @@ Gradient của f, ký hiệu ∇f, là một vectơ gồm tất cả các đạo
         id: 'doc-sticky-1',
         type: 'sticky_note',
         title: 'Ghi chú nhớ ôn thi',
-        x: 1200,
-        y: 120,
+        x: 1120,
+        y: 100,
         rotation: 0,
         scale: 1,
         zIndex: 15,

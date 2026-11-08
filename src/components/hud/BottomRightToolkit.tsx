@@ -43,7 +43,7 @@ export function BottomRightToolkit() {
   return (
     <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end gap-2.5 pointer-events-auto select-none">
       {/* Minimap Box (Toggled by M or reopening via the map button) */}
-      <Minimap isVisible={isMinimapVisible} />
+      <Minimap isVisible={isMinimapVisible} onClose={() => setIsMinimapVisible(false)} />
 
       {/* Standalone Circular Map Reopen Button (shown when map is hidden, per user request & image 1) */}
       {!isMinimapVisible && (
@@ -69,6 +69,15 @@ export function BottomRightToolkit() {
           }`}
         >
           <RotateTwoWay className="w-5 h-5 stroke-[2.4]" />
+        </button>
+
+        {/* Nút Căn chỉnh thông minh / Snap bàn học ngay ngắn */}
+        <button
+          title="Căn chỉnh bố cục bàn học ngay ngắn (Snap Grid)"
+          onClick={() => tidyUpDesk?.()}
+          className="p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+        >
+          <Sparkles className="w-5 h-5 stroke-[2.4]" />
         </button>
 
         <div className="w-[1px] h-5 bg-slate-200" />

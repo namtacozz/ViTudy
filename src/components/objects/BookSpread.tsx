@@ -17,6 +17,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
+import { MathRenderer } from '../common/MathRenderer';
 import { IntelineModal } from '../modals/IntelineModal';
 import { StudyToolsModal } from '../modals/StudyToolsModal';
 import { FullScreenDocModal } from '../modals/FullScreenDocModal';
@@ -37,7 +38,8 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
     removeDeskItem,
     turnBookPage,
     detachPageFromBinder,
-    addStickyNote
+    addStickyNote,
+    setTransform
   } = useStudySpace();
 
   const { spendTokens } = useViToken();
@@ -45,6 +47,20 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
   const [isStudyOpen, setIsStudyOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
+  const [isConfirmDelete, setIsConfirmDelete] = useState(false);
+  const [isFocusReading, setIsFocusReading] = useState(false);
+
+  // Smooth Focus Reading Mode: Automatically animates camera to frame the book at 100% reading scale
+  const handleFocusRead = () => {
+    if (typeof window === 'undefined') return;
+    const w = 980;
+    const h = 640;
+    const targetScale = Math.min(1.15, Math.max(0.92, (window.innerHeight * 0.85) / h));
+    const targetX = Math.round(window.innerWidth / 2 - (item.x + w / 2) * targetScale);
+    const targetY = Math.round(window.innerHeight / 2 - (item.y + h / 2) * targetScale);
+    setTransform({ x: targetX, y: targetY, scale: targetScale, rotation: 0 });
+    setIsFocusReading(true);
+  };
   
   // Full modal fallback for complex multi-turn Inteline
   const [intelineModalState, setIntelineModalState] = useState<{
@@ -322,6 +338,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             <div className="relative group/tab flex items-center">
               <button
                 onClick={() => setIsStudyOpen(true)}
+                title="STudy: Tóm tắt thông minh & Ôn tập trắc nghiệm"
                 className="h-8 w-[48px] group-hover/tab:w-[106px] bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
                 style={{
                   clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
@@ -334,10 +351,11 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               </button>
             </div>
 
-            {/* Tab 2: Orange (Cam) - Phóng to (Xem Full) */}
+            {/* Tab 2: Orange (Cam) - Phóng to / Toàn màn hình */}
             <div className="relative group/tab flex items-center">
               <button
                 onClick={() => setIsFullScreen(true)}
+                title="Đọc toàn màn hình (Xem chuẩn PDF Reader)"
                 className="h-8 w-[48px] group-hover/tab:w-[110px] bg-orange-600 hover:bg-orange-500 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
                 style={{
                   clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
@@ -375,6 +393,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               <button
                 onMouseDown={handleRotateMouseDown}
                 onDoubleClick={handleRotateDoubleClick}
+                title="Kéo để xoay sách tự do 360°, nhấn đúp căn thẳng 0°"
                 className="h-8 w-[48px] group-hover/tab:w-[92px] bg-[#78350f] hover:bg-[#92400e] active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-grab active:cursor-grabbing overflow-hidden"
                 style={{
                   clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
@@ -387,10 +406,14 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               </button>
             </div>
 
-            {/* Tab 5: Red (Đỏ) - Xoá */}
+            {/* Mục đích riêng biệt: Vạch phân cách trước nút Xoá để chống bấm nhầm */}
+            <div className="w-6 h-[1px] bg-amber-950/25 my-0.5 self-center" />
+
+            {/* Tab 5: Red (Đỏ) - Xoá (Có xác nhận an toàn) */}
             <div className="relative group/tab flex items-center">
               <button
-                onClick={() => removeDeskItem(item.id)}
+                onClick={() => setIsConfirmDelete(true)}
+                title="Xóa cuốn sách này khỏi bàn học (Có xác nhận)"
                 className="h-8 w-[48px] group-hover/tab:w-[86px] bg-rose-600 hover:bg-rose-500 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
                 style={{
                   clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
@@ -436,13 +459,13 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                       </span>
                     </div>
 
-                    {/* Page Body Text */}
-                    <p 
+                    {/* Page Body Text with KaTeX Math Rendering */}
+                    <div 
                       onMouseDown={(e) => e.stopPropagation()}
                       className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
                     >
-                      {underneathLeftLeaf.text}
-                    </p>
+                      <MathRenderer content={underneathLeftLeaf.text} />
+                    </div>
                   </div>
 
                   {/* Left Page Footer (Drag handle): Only Page Number in Bottom-Left Corner */}
@@ -493,13 +516,13 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                       </span>
                     </div>
 
-                    {/* Page Body Text */}
-                    <p 
+                    {/* Page Body Text with KaTeX Math Rendering */}
+                    <div 
                       onMouseDown={(e) => e.stopPropagation()}
                       className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
                     >
-                      {underneathRightLeaf.text}
-                    </p>
+                      <MathRenderer content={underneathRightLeaf.text} />
+                    </div>
                   </div>
 
                   {/* Right Page Footer (Drag handle): Only Page Number in Bottom-Right Corner */}
@@ -711,12 +734,22 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         {/* ================= BOTTOM TITLE BADGE (Drag handle - Miro-style clean white) ================= */}
         <div 
           onMouseDown={handleMouseDown}
-          className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 flex items-center bg-white/95 text-slate-800 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md border border-slate-200/90 backdrop-blur-md pointer-events-auto select-none transition-all duration-200 z-20 cursor-grab active:cursor-grabbing hover:border-slate-300"
+          onDoubleClick={handleFocusRead}
+          className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 flex items-center gap-2.5 bg-white/95 text-slate-800 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md border border-slate-200/90 backdrop-blur-md pointer-events-auto select-none transition-all duration-200 z-20 cursor-grab active:cursor-grabbing hover:border-slate-300"
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="truncate max-w-[420px]">
+          <span className="truncate max-w-[340px]">
             {cleanTitle}
           </span>
+          <button
+            type="button"
+            onClick={handleFocusRead}
+            title="Tập trung đọc: Phóng to và căn giữa toàn bộ cuốn sách để đọc rõ ràng"
+            className="flex items-center gap-1 text-[11px] font-bold text-[#E0562D] hover:text-[#c9451e] bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+          >
+            <BookOpen className="w-3 h-3 stroke-[2.4]" />
+            <span>Tập trung</span>
+          </button>
         </div>
 
         {/* ================= INLINE INTELINE POPOVER AT THE END OF HIGHLIGHTED TEXT ================= */}
@@ -830,6 +863,63 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
           </div>
         )}
       </div>
+
+      {/* Safe Delete Confirmation Dialog */}
+      {isConfirmDelete && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsConfirmDelete(false);
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl p-5 shadow-2xl border border-slate-300 max-w-sm w-full text-slate-900 animate-fade-in font-sans"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mb-3 mx-auto">
+              <Trash2 className="w-5 h-5 stroke-[2.4]" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900 mb-1.5 text-center">Xóa sách khỏi bàn học?</h4>
+            <p className="text-xs text-slate-500 mb-4 text-center leading-relaxed">
+              Bạn có chắc muốn cất cuốn sách <strong className="text-slate-800">&ldquo;{cleanTitle}&rdquo;</strong>? Bạn có thể mở lại bất cứ lúc nào từ Chợ Tài Liệu hoặc menu trên cùng.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button 
+                type="button"
+                onClick={() => setIsConfirmDelete(false)} 
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsConfirmDelete(false);
+                  removeDeskItem(item.id);
+                }} 
+                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer active:scale-95"
+              >
+                Xác nhận xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Focus Mode Banner */}
+      {isFocusReading && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
+          <BookOpen className="w-4 h-4 text-[#E0562D]" />
+          <span>Đang ở chế độ đọc tập trung: <strong>{cleanTitle}</strong></span>
+          <button
+            onClick={() => setIsFocusReading(false)}
+            className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-300 transition-colors cursor-pointer"
+          >
+            Thoát tập trung
+          </button>
+        </div>
+      )}
 
       {/* Full Screen Document Reader Modal */}
       {isFullScreen && (

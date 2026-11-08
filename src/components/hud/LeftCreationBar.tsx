@@ -11,6 +11,7 @@ import {
   Sparkles, 
   BoxSelect, 
   Undo2, 
+  Redo2,
   Lock, 
   Unlock, 
   Trash2,
@@ -37,6 +38,8 @@ export function LeftCreationBar() {
     togglePanLock,
     strokes,
     undoStroke,
+    redoStroke,
+    redoStack,
     clearStrokes,
     addStickyNote
   } = useStudySpace();
@@ -447,29 +450,45 @@ export function LeftCreationBar() {
         )}
       </div>
 
-      {/* Miro-style Undo/Redo/Trash pill below toolbar */}
-      <div className="bg-white/95 border border-slate-300 rounded-full p-1.5 shadow-md backdrop-blur-md flex items-center gap-1.5">
+      {/* Grouped Undo & Redo Pill below toolbar */}
+      <div className="bg-white/95 border border-slate-300 rounded-full p-1.5 shadow-md backdrop-blur-md flex items-center gap-1 text-slate-900">
         <button
-          title="Hoàn tác nét vẽ (Undo)"
+          title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
           onClick={undoStroke}
           disabled={strokes.length === 0}
-          className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
             strokes.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Undo2 className="w-4.5 h-4.5 stroke-[2.4]" />
+          <Undo2 className="w-4 h-4 stroke-[2.4]" />
+        </button>
+
+        <button
+          title="Làm lại nét vẽ (Redo • Ctrl+Y)"
+          onClick={redoStroke}
+          disabled={redoStack.length === 0}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+            redoStack.length > 0
+              ? 'text-slate-800 hover:bg-slate-100 hover:text-black'
+              : 'text-slate-300 cursor-not-allowed'
+          }`}
+        >
+          <Redo2 className="w-4 h-4 stroke-[2.4]" />
         </button>
 
         {strokes.length > 0 && (
-          <button
-            title="Xóa toàn bộ nét vẽ"
-            onClick={clearStrokes}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-4.5 h-4.5 text-slate-900 stroke-[2.4]" />
-          </button>
+          <>
+            <div className="w-[1px] h-3.5 bg-slate-200" />
+            <button
+              title="Xóa toàn bộ nét vẽ"
+              onClick={clearStrokes}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5 stroke-[2.4]" />
+            </button>
+          </>
         )}
       </div>
     </div>

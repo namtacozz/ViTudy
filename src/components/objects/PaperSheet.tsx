@@ -19,9 +19,11 @@ import {
   Pencil,
   Layers,
   FileText,
-  HelpCircle
+  HelpCircle,
+  BookOpen
 } from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
+import { MathRenderer } from '../common/MathRenderer';
 import { SummaryTab } from '../modals/study-tools/SummaryTab';
 import { QuizTab } from '../modals/study-tools/QuizTab';
 import { FullScreenDocModal } from '../modals/FullScreenDocModal';
@@ -41,7 +43,8 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
     gradeExam,
     resetExam,
     updateItemTitle,
-    addStickyNote
+    addStickyNote,
+    setTransform
   } = useStudySpace();
 
   const { spendTokens } = useViToken();
@@ -50,6 +53,19 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
   const [paperStudyTab, setPaperStudyTab] = useState<'summary' | 'quiz'>('summary');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isFocusReading, setIsFocusReading] = useState(false);
+
+  // Focus Reading Mode: Automatically centers and scales paper smoothly
+  const handleFocusRead = () => {
+    if (typeof window === 'undefined') return;
+    const w = isExam ? 460 : 360;
+    const h = isExam ? 620 : 500;
+    const targetScale = Math.min(1.3, Math.max(1.02, (window.innerHeight * 0.82) / h));
+    const targetX = Math.round(window.innerWidth / 2 - (item.x + w / 2) * targetScale);
+    const targetY = Math.round(window.innerHeight / 2 - (item.y + h / 2) * targetScale);
+    setTransform({ x: targetX, y: targetY, scale: targetScale, rotation: 0 });
+    setIsFocusReading(true);
+  };
   
   const cleanTitle = (item.title || '')
     .replace(/^TỜ TÓM TẮT NHANH:\s*/i, '')
@@ -490,20 +506,20 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                 </h4>
               )}
 
-              {/* Reading Text Layer (Auto font-scaling & Strictly NO scrollbars) */}
+              {/* Reading Text Layer (Auto font-scaling & KaTeX Math Rendering) */}
               <div 
                 onMouseDown={(e) => e.stopPropagation()}
                 style={{ textRendering: 'geometricPrecision', WebkitFontSmoothing: 'antialiased' }}
                 className={`${dynamicFontSize} text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 overflow-hidden flex-1 cursor-text select-text`}
               >
-                {activePage.text}
+                <MathRenderer content={activePage.text} />
               </div>
             </div>
 
-            {/* Subtle Paper Sheet Footer (Drag Handle) */}
+            {/* Paper Sheet Footer (Drag Handle & WCAG-compliant Contrast) */}
             <div 
               onMouseDown={handleMouseDown}
-              className="pt-2 border-t border-stone-100 mt-2 flex items-center justify-between text-[10px] text-stone-400 font-mono select-none cursor-grab active:cursor-grabbing"
+              className="pt-2 border-t border-stone-200 mt-2 flex items-center justify-between text-[10px] text-slate-600 font-semibold font-mono select-none cursor-grab active:cursor-grabbing"
             >
               <span>ViTudy Doc</span>
               <span>1 trang</span>
@@ -545,6 +561,13 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             <div className="w-[1px] h-4 bg-slate-200" />
           </>
         )}
+        <button
+          title="Tập trung đọc: Căn giữa và phóng to tài liệu vừa vặn màn hình"
+          onClick={handleFocusRead}
+          className="p-1.5 hover:bg-orange-50 rounded-lg text-slate-700 hover:text-[#E0562D] transition-colors cursor-pointer"
+        >
+          <BookOpen className="w-4 h-4 stroke-[2.4]" />
+        </button>
         <button
           title="Đọc toàn màn hình (Xem như file PDF)"
           onClick={() => setIsFullScreen(true)}
@@ -688,6 +711,20 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
       )}
 
 
+
+      {/* Floating Focus Mode Banner */}
+      {isFocusReading && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
+          <BookOpen className="w-4 h-4 text-[#E0562D]" />
+          <span>Đang ở chế độ đọc tập trung: <strong>{cleanTitle}</strong></span>
+          <button
+            onClick={() => setIsFocusReading(false)}
+            className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-300 transition-colors cursor-pointer"
+          >
+            Thoát tập trung
+          </button>
+        </div>
+      )}
 
       {/* Drag & Merge Hint */}
       {!isExam && (

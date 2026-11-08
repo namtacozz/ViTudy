@@ -59,6 +59,8 @@ interface StudySpaceContextType {
   finishStroke: () => void;
   addStroke: (stroke: import('@/types/studyspace').DrawingStroke) => void;
   undoStroke: () => void;
+  redoStroke: () => void;
+  redoStack: import('@/types/studyspace').DrawingStroke[];
   clearStrokes: () => void;
   removeStrokeById: (id: string) => void;
   removeStrokesInBox: (box: { x1: number; y1: number; x2: number; y2: number }) => void;
@@ -181,16 +183,34 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     });
   };
 
+  const [redoStack, setRedoStack] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
+
   const addStroke = (stroke: import('@/types/studyspace').DrawingStroke) => {
     setStrokes(prev => [...prev, stroke]);
+    setRedoStack([]); // reset redo on new stroke
   };
 
   const undoStroke = () => {
-    setStrokes(prev => prev.slice(0, -1));
+    setStrokes(prev => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      setRedoStack(r => [...r, last]);
+      return prev.slice(0, -1);
+    });
+  };
+
+  const redoStroke = () => {
+    setRedoStack(prev => {
+      if (prev.length === 0) return prev;
+      const nextStroke = prev[prev.length - 1];
+      setStrokes(s => [...s, nextStroke]);
+      return prev.slice(0, -1);
+    });
   };
 
   const clearStrokes = () => {
     setStrokes([]);
+    setRedoStack([]);
   };
 
   const removeStrokeById = (id: string) => {
@@ -1076,6 +1096,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         finishStroke,
         addStroke,
         undoStroke,
+        redoStroke,
+        redoStack,
         clearStrokes,
         removeStrokeById,
         removeStrokesInBox,

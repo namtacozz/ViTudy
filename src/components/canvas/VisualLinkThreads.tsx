@@ -96,19 +96,38 @@ export function VisualLinkThreads() {
         const endX = targetSticky.x + 24;
         const endY = targetSticky.y + 16;
 
-        // Realistic hanging thread curve: Slight catenary gravity droop
+        // Realistic hanging thread curve: Smart routing avoiding document text
         const deltaX = endX - startX;
         const deltaY = endY - startY;
         const distance = Math.hypot(deltaX, deltaY);
-        const sag = Math.min(distance * 0.15, 45); // gravity sag
 
-        const cp1X = startX + deltaX * 0.35;
-        const cp1Y = startY + deltaY * 0.25 + sag;
-        const cp2X = startX + deltaX * 0.65;
-        const cp2Y = startY + deltaY * 0.75 + sag;
+        // If thread originates inside a book and heads right, route gracefully above the book header
+        const isCrossingBookPages = sourceItem.type === 'book' && endX > sourceItem.x + 480;
+
+        let cp1X: number, cp1Y: number, cp2X: number, cp2Y: number;
+
+        if (isCrossingBookPages) {
+          // Arch above the top margin of the book so it NEVER cuts across text
+          const archApexY = Math.min(sourceItem.y - 22, startY - 40, endY - 30);
+          cp1X = startX + deltaX * 0.25;
+          cp1Y = archApexY;
+          cp2X = startX + deltaX * 0.75;
+          cp2Y = Math.min(archApexY + 12, endY - 15);
+        } else {
+          const sag = Math.min(distance * 0.1, 28);
+          cp1X = startX + deltaX * 0.35;
+          cp1Y = startY + deltaY * 0.25 + sag;
+          cp2X = startX + deltaX * 0.65;
+          cp2Y = startY + deltaY * 0.75 + sag;
+        }
 
         const pathData = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
         const isThisPinDragging = draggingPin?.threadId === thread.id;
+
+        // Calculate cubic Bezier curve midpoint for relationship label badge
+        const t = 0.5;
+        const midX = Math.round((1-t)**3 * startX + 3*(1-t)**2 * t * cp1X + 3*(1-t) * t**2 * cp2X + t**3 * endX);
+        const midY = Math.round((1-t)**3 * startY + 3*(1-t)**2 * t * cp1Y + 3*(1-t) * t**2 * cp2Y + t**3 * endY);
 
         return (
           <g key={thread.id} className="transition-all duration-75">
@@ -117,17 +136,18 @@ export function VisualLinkThreads() {
               d={pathData}
               fill="none"
               stroke="#0f172a"
-              strokeWidth="2.5"
-              strokeOpacity="0.18"
+              strokeWidth="1.8"
+              strokeOpacity="0.12"
               filter="url(#threadShadow)"
             />
 
-            {/* Realistic Red Detective String (Sợi chỉ đỏ ghim bảng thám tử) */}
+            {/* Realistic Red Detective String (Mảnh hơn & Nửa trong suốt để chống rối mắt) */}
             <path
               d={pathData}
               fill="none"
               stroke="#dc2626"
-              strokeWidth="2"
+              strokeWidth="1.5"
+              strokeOpacity="0.6"
               strokeLinecap="round"
             />
 
@@ -136,10 +156,37 @@ export function VisualLinkThreads() {
               d={pathData}
               fill="none"
               stroke="#ef4444"
-              strokeWidth="1"
+              strokeWidth="0.8"
               strokeDasharray="4 2"
-              strokeOpacity="0.8"
+              strokeOpacity="0.5"
             />
+
+            {/* Relationship Label Badge at Midpoint (Nhãn mô tả liên kết) */}
+            <g transform={`translate(${midX}, ${midY})`} className="pointer-events-auto cursor-default select-none">
+              <rect 
+                x="-38" 
+                y="-9" 
+                width="76" 
+                height="18" 
+                rx="9" 
+                fill="#ffffff" 
+                stroke="#fca5a5" 
+                strokeWidth="0.8" 
+                className="shadow-xs drop-shadow-xs"
+              />
+              <text 
+                x="0" 
+                y="3.2" 
+                textAnchor="middle" 
+                fill="#b91c1c" 
+                fontSize="9" 
+                fontWeight="700" 
+                fontFamily="sans-serif"
+                letterSpacing="0.2px"
+              >
+                Liên quan đến
+              </text>
+            </g>
 
             {/* Source Physical Pushpin with Dedicated Small Hitbox */}
             <g 
@@ -162,26 +209,26 @@ export function VisualLinkThreads() {
                 });
               }}
             >
-              {/* Invisible Small Hitbox Circle (r=14) */}
-              <circle r="14" fill="transparent" />
+              {/* Invisible Small Hitbox Circle (r=12) */}
+              <circle r="12" fill="transparent" />
 
-              {/* Pushpin visuals */}
-              <circle r="6.5" fill="#000000" opacity="0.3" cx="1" cy="2" />
+              {/* Pushpin visuals (Đầu ghim nhỏ tinh tế r=4) */}
+              <circle r="4.5" fill="#000000" opacity="0.25" cx="0.5" cy="1.5" />
               <circle 
-                r="5.5" 
+                r="4" 
                 fill={isThisPinDragging ? '#b91c1c' : '#dc2626'} 
                 stroke="#991b1b" 
-                strokeWidth="1.2" 
+                strokeWidth="1" 
                 className="transition-transform hover:scale-125"
               />
-              <circle r="2" fill="#fca5a5" cx="-1" cy="-1" />
+              <circle r="1.5" fill="#fca5a5" cx="-0.8" cy="-0.8" />
             </g>
 
             {/* Target Physical Pushpin on Sticky Note */}
             <g transform={`translate(${endX}, ${endY})`}>
-              <circle r="6" fill="#000000" opacity="0.25" cx="1" cy="2" />
-              <circle r="5" fill="#dc2626" stroke="#991b1b" strokeWidth="1.2" />
-              <circle r="2" fill="#fca5a5" cx="-1" cy="-1" />
+              <circle r="4.5" fill="#000000" opacity="0.2" cx="0.5" cy="1.5" />
+              <circle r="4" fill="#dc2626" stroke="#991b1b" strokeWidth="1" />
+              <circle r="1.5" fill="#fca5a5" cx="-0.8" cy="-0.8" />
             </g>
           </g>
         );
