@@ -155,9 +155,9 @@ export function LeftCreationBar() {
   })();
 
   return (
-    <div className="absolute left-[5px] top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2.5 pointer-events-auto select-none">
-      {/* Miro-style Vertical Tool Island (+30% size, bold icons) */}
-      <div className="bg-white/95 border border-slate-300 rounded-2xl p-2 shadow-lg backdrop-blur-md flex flex-col items-center gap-2 relative">
+    <div className="absolute left-[5px] top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 pointer-events-auto select-none">
+      {/* Miro-style Vertical Tool Island (Optimized compact spacing) */}
+      <div className="bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-lg backdrop-blur-md flex flex-col items-center gap-1 relative">
         {/* Select (Cursor) Tool */}
         <button
           title="Con trỏ điều hướng (Kéo di chuyển bàn / Chọn vật thể)"
@@ -167,7 +167,7 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             activeTool === 'cursor'
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -184,7 +184,7 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             activeTool === 'create_note' || isNoteFlyoutOpen
               ? 'bg-slate-200 text-slate-900 border border-slate-300 shadow-xs'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -204,7 +204,7 @@ export function LeftCreationBar() {
               setActiveTool('pen');
             }
           }}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             isDrawingActive || isPenFlyoutOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -214,7 +214,7 @@ export function LeftCreationBar() {
         </button>
 
         {/* Gạch chia vùng NẰM TRÊN nút + */}
-        <div className="w-8 h-[1px] bg-slate-200 my-0.5" />
+        <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
 
         {/* Nút + Công cụ mở rộng (More tools) - nằm dưới pen và trên lock */}
         <button
@@ -224,7 +224,7 @@ export function LeftCreationBar() {
             setIsNoteFlyoutOpen(false);
             setIsPenFlyoutOpen(false);
           }}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             isMoreToolsOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -234,13 +234,13 @@ export function LeftCreationBar() {
         </button>
 
         {/* Gạch chia vùng NẰM DƯỚI nút + */}
-        <div className="w-8 h-[1px] bg-slate-200 my-0.5" />
+        <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
 
         {/* Lock Pan View Toggle */}
         <button
           title={isPanLocked ? 'Mở khóa di chuyển bàn' : 'Khóa góc nhìn bàn học'}
           onClick={togglePanLock}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             isPanLocked
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -450,13 +450,13 @@ export function LeftCreationBar() {
         )}
       </div>
 
-      {/* Grouped Undo & Redo Pill below toolbar */}
-      <div className="bg-white/95 border border-slate-300 rounded-full p-1.5 shadow-md backdrop-blur-md flex items-center gap-1 text-slate-900">
+      {/* Grouped Undo & Redo Column Pill below toolbar */}
+      <div className="bg-white/95 border border-slate-300 rounded-2xl p-1 shadow-md backdrop-blur-md flex flex-col items-center gap-0.5 text-slate-900">
         <button
           title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
           onClick={undoStroke}
           disabled={strokes.length === 0}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-7.5 h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
             strokes.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black'
               : 'text-slate-300 cursor-not-allowed'
@@ -469,7 +469,7 @@ export function LeftCreationBar() {
           title="Làm lại nét vẽ (Redo • Ctrl+Y)"
           onClick={redoStroke}
           disabled={redoStack.length === 0}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-7.5 h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
             redoStack.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black'
               : 'text-slate-300 cursor-not-allowed'
@@ -480,11 +480,11 @@ export function LeftCreationBar() {
 
         {strokes.length > 0 && (
           <>
-            <div className="w-[1px] h-3.5 bg-slate-200" />
+            <div className="w-4 h-[1px] bg-slate-200 my-0.5" />
             <button
               title="Xóa toàn bộ nét vẽ"
               onClick={clearStrokes}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="w-7.5 h-7.5 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5 stroke-[2.4]" />
             </button>

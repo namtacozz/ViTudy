@@ -14,6 +14,11 @@ export interface MarketItem {
   purchased?: boolean;
   pages?: { title?: string; text: string }[];
   examQuestions?: ExamQuestion[];
+  pageCount?: number;
+  downloadsCount?: number;
+  updatedDate?: string;
+  isAuthorVerified?: boolean;
+  aiReviewCount?: number;
 }
 
 export const INITIAL_MARKET_ITEMS: MarketItem[] = [

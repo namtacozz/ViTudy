@@ -324,18 +324,25 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       * Nút **"Mời bạn"** (`Share2`): Nền trắng thanh nhã (`bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 shadow-md`), icon vector màu đen nét đậm (`text-slate-900 stroke-[2.4]`). Mở modal sao chép liên kết phòng học.
   * **HUD Góc Dưới Giữa Màn Hình:** Loại bỏ hoàn toàn nhãn/popup "Không gian học 2.5D" lơ lửng để giải phóng tầm nhìn giữa bàn.
   * **Chợ Tài Liệu (Library-Standard Book Catalog with Brown Covers & Multi-Filters):**
-    * Nút hành động chính: `+ Chia sẻ`.
+    * Nút hành động chính: `+ Chia sẻ tài liệu`.
+    * **Banner Số Dư & Quy Đổi Đơn Vị:** Hiển thị rõ `Số dư của bạn: X ViToken (1 V = 1 ViToken)` cùng lời nhắc tích lũy ViToken từ Điểm danh hoặc Chia sẻ tài liệu.
     * Mô tả triết lý: *"Tài liệu được chia sẻ hoàn toàn từ mục đích học tập & nghiên cứu."*
     * **Kho Dữ Liệu Thư Viện Phong Phú:** Cung cấp 40 tài liệu học thuật đầy đủ 3 dạng: Sách giáo trình chuyên sâu, Tờ tóm tắt kiến thức cốt lõi, và Đề thi trắc nghiệm tương tác với đáp án và giải thích chi tiết.
+    * **Chế Độ Xem Linh Hoạt (View Mode Toggle):** Hỗ trợ chuyển đổi giữa dạng lưới thẻ chi tiết (`Grid`) và dạng danh sách gọn (`Compact List`).
     * **Cấu trúc thẻ card tài liệu chuẩn phong cách thư viện:**
       * **Bên trái — Khung bìa cuốn sách màu nâu da sang trọng (`#4a2c17` đến `#2e1a0e`, gáy `#6b3e20`):**
         * Header bìa: `ViTudy` kèm loại tài liệu (`Sách`, `Tờ tóm tắt`, `Đề thi`). **Tuyệt đối không có phân hạng S, A**.
         * Thân bìa: Tên tài liệu viết to, đậm rõ ràng, tự động xuống dòng (word wrap) gọn gàng trong bìa sách.
-        * Footer bìa: **Ngày chia sẻ** (`DD/MM/YYYY`) kèm icon lịch thanh nhã thay vì tên tác giả.
-        * Góc dưới cùng bên trái: **Nút "Mở tài liệu"** màu cam (hoặc "Đã mở tài liệu" khi đã sở hữu).
+        * Footer bìa: **Ngày chia sẻ** (`DD/MM/YYYY`) kèm icon lịch thanh nhã.
       * **Bên phải — Cột thông tin chi tiết:**
-        * **Hàng tiêu đề:** Tác giả $\rightarrow$ Đánh giá điểm AI (`#E0562D`) $\rightarrow$ Huy hiệu môn học $\rightarrow$ **Mức giá góc trên bên phải:** Hiển thị số tiền kèm **icon credit chữ V tròn thương hiệu (`w-5 h-5 rounded-full bg-slate-900 text-white font-black text-[11px]`)** thay vì chữ "ViToken".
-        * **Mô tả về sách & Trích đoạn xem trước:** Trình bày mạch lạc, dễ đọc.
+        * **Tiêu đề prominent:** Đưa tiêu đề tài liệu ra khung nội dung chính rõ nét, chữ đậm, hover đổi màu Cam ViT.
+        * **Tác giả & Xác thực:** Tên tác giả kèm huy hiệu xác thực (`CheckCircle2 text-sky-600` với tooltip "Tác giả xác thực").
+        * **Metadata đầy đủ:** Số trang (`X trang`), lượt tải/mua (`X lượt mua`), ngày cập nhật (`Cập nhật DD/MM/YYYY`).
+        * **Điểm AI & Tooltip tiêu chí:** Thay "Đánh giá" thành **`Điểm AI: {score}/100`** (`text-[#E0562D]`), hover hiển thị tooltip giải thích 3 tiêu chí chấm điểm tự động (Độ chuẩn xác 40%, Cấu trúc 35%, Thực tiễn 25%) và số lượt phản hồi.
+        * **Mô tả theo loại tài liệu:** Nhãn động theo định dạng: `MÔ TẢ SÁCH / GIÁO TRÌNH:`, `MÔ TẢ TÀI LIỆU TÓM TẮT:`, `MÔ TẢ BỘ ĐỀ TRẮC NGHIỆM:`.
+        * **Trích đoạn xem trước:** Khung font monospace thanh nhã.
+        * **Đặt Giá và Nút Hành Động Cạnh Nhau:** Mức giá hiển thị kèm huy hiệu chữ V tròn thương hiệu, nằm kề nút **"Xem thử"** (`Eye`) và nút **"Mua X V"** (hoặc nút **"Mở"** màu xanh lá khi đã sở hữu).
+        * **Modal Xem Thử Trích Đoạn Chi Tiết:** Nhấp "Xem thử" mở modal đọc trích đoạn nội dung, xem danh sách các chương mục và nút mua/mở nhanh.
     * **Hệ Thống Tìm Kiếm & Bộ Lọc Đa Năng:**
       * Thanh tìm kiếm từ khóa thời gian thực (tên, tác giả, mô tả).
       * Bộ lọc phân loại dạng tài liệu: Tất cả, Sách, Tờ tóm tắt, Đề thi trắc nghiệm.
@@ -343,6 +350,8 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       * Giới hạn điểm AI: Tất cả, $\ge 80$ điểm, $\ge 90$ điểm.
       * Giới hạn giá ViToken: Tất cả, $\le 15$ V, $\le 30$ V, $\le 50$ V.
       * Sắp xếp theo ngày chia sẻ: Mới nhất, Cũ nhất, Điểm cao nhất, Giá rẻ nhất.
+      * **Chip bộ lọc đang bật & Nút Đặt lại:** Hiển thị nút `Đặt lại` (`RotateCcw`) màu cam khi có bất kỳ bộ lọc nào đang kích hoạt để xóa nhanh về mặc định.
+      * Hỗ trợ phím tắt `Esc` để đóng modal an toàn.
   * **Loại Bỏ Hoàn Toàn Thuật Ngữ Kỹ Thuật (Zero Jargon Policy):** Tuyệt đối không để lộ các thuật ngữ kỹ thuật, mã phân đoạn hay mã đặc tả hệ thống (như *SRS*, *SRS 3.3*, *KnowInherit*...) trên toàn bộ giao diện người dùng.
   * **HUD Góc Dưới Bên Phải & Bản Đồ (Minimap):**
     * **Xóa Bỏ Dấu X Khỏi Map:** Triệt tiêu hoàn toàn nút `×` trên Minimap để chống thao tác bấm nhầm xóa mất bàn học.
@@ -355,14 +364,32 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       * Khi chưa có chuỗi (`streakDays === 0`): Hiển thị icon lửa đường nét xám mảnh (`text-slate-400 stroke-[2]`) và số `0` màu xám.
     * **Modal Điểm Danh Nhận ViToken (`DailyStreakModal`):**
       * Header: Icon ngọn lửa Cam ViT nổi bật trong khung tròn viền ấm.
-      * Mô tả cơ chế thưởng: *"Nhận cố định 5 ViToken mỗi ngày, riêng Chủ Nhật x2 nhận 10 ViToken."* (bỏ mô tả 2-10 cũ).
-      * **Thanh trực quan 7 ô theo tuần (Thứ 2 đến Chủ Nhật - T2 đến CN):**
-        * Khung mỗi ô được thu gọn vuông vắn vào đúng số thưởng (`+5` ngày thường hoặc `+10` ngày Chủ Nhật, hoặc dấu tích `✓` khi đã nhận). Bỏ hoàn toàn dòng thứ 3 (chữ V và chữ x2).
-        * Nhãn thứ trong tuần (`T2`, `T3`, `T4`, `T5`, `T6`, `T7`, `CN`) được đặt **nằm phía dưới ô và nằm bên ngoài khung ô**.
-        * **Riêng ô Chủ Nhật (CN):** Áp dụng **nền màu Cam ViT (`bg-[#E0562D]`) cùng chữ trắng (`text-white font-black`)** tạo điểm nhấn thị giác nhân đôi phần thưởng.
-        * Ngày đã điểm danh hiển thị dấu tích `✓` trên nền xanh lá (`bg-emerald-500 text-white`). Ngày hiện tại khi chưa nhận được bao viền Cam ViT.
-      * **Chuỗi ngày học liên tục:** Rút gọn thành đúng 1 dòng duy nhất: **`Chuỗi X ngày`** nằm ngay bên dưới thanh trực quan 7 ô.
-      * **Nút hành động:** Bỏ icon thừa, ghi rõ ràng chữ **"Nhận ViToken"** và áp dụng màu **Cam ViT (`bg-[#E0562D] hover:bg-[#c9451e] text-white font-bold`)**. Khi đã nhận hôm nay, chuyển sang trạng thái vô hiệu hóa tinh tế ("Đã nhận ViToken hôm nay").
+      * Mô tả cơ chế thưởng: *"Điểm danh mỗi ngày nhận 5 ViToken, riêng Chủ Nhật x2 nhận 10 ViToken."*
+      * **Phân định rõ 4 trạng thái ô ngày (Thứ 2 đến Chủ Nhật - T2 đến CN):**
+        1. **Đã nhận:** Nền xanh lá (`bg-emerald-500 border-emerald-600 text-white font-bold`) kèm dấu tích `✓` rõ ràng.
+        2. **Hôm nay chưa nhận:** Nền mềm Cam ViT viền đậm (`bg-[#FFF7ED] border-[#E0562D] text-[#9A3412] font-black ring-2 ring-[#E0562D] ring-offset-1 animate-pulse`).
+        3. **Bỏ lỡ:** Nền xám nhạt (`bg-slate-100 border-slate-200 text-slate-400`) kèm gạch ngang `-`.
+        4. **Sắp tới:** Nền xám mềm (`bg-slate-50 border-slate-200 text-slate-600`) hiển thị số token (`+5` hoặc `+10`).
+      * **Riêng ô Chủ Nhật (CN):** Áp dụng điểm nhấn cam (`bg-orange-50 border-orange-300 text-[#E0562D] font-black`).
+      * Nhãn thứ trong tuần (`T2`, `T3`, `T4`, `T5`, `T6`, `T7`, `CN`) đặt phía dưới ô kèm tooltip đầy đủ (Thứ Hai $\rightarrow$ Chủ Nhật).
+      * **Chuỗi ngày học & Mốc thưởng kế tiếp:** Hiển thị `Chuỗi X ngày` kèm icon ngọn lửa và mốc thưởng tiếp theo (ví dụ: `Mốc 7 ngày: +20 ViToken`) với thanh tiến trình trực quan.
+      * **Đồng xu ViToken:** Hiển thị icon SVG đồng xu tròn cam chữ V thương hiệu thay vì text thô.
+      * **Nhắc nhở điểm danh hàng ngày:** Tích hợp hộp kiểm "Nhắc tôi điểm danh mỗi ngày" đồng bộ `localStorage`.
+      * **Trạng thái nút hành động chuẩn xác (Zero Status Conflict):**
+        * Khi chưa nhận: Nút nổi bật Cam ViT **"Nhận ViToken ngay"** (`bg-[#E0562D] hover:bg-[#c9451e]`).
+        * Khi đã nhận hôm nay: Vô hiệu hóa nút (`disabled`) và đổi text thành **"Đã nhận hôm nay • Nhận tiếp sau {X}h {Y}m"** với bộ đếm ngược thời gian thực đến nửa đêm.
+      * Nút đóng chuẩn tiếp cận WCAG với vùng bấm tối thiểu 44px, hỗ trợ phím `Esc`.
+    * **Modal Cài Đặt Kết Nối AI (AI Provider Modal):**
+      * Hiển thị số dư ViToken của người dùng ngay trong modal: `Số dư ví của bạn: X ViToken`.
+      * **Nhãn trạng thái rõ ràng cho từng lựa chọn:**
+        * *Hệ thống ViTudy:* "Trừ ViToken" (`GPT-4o-mini`).
+        * *Google Gemini:* "Miễn phí theo hạn mức" (`Gemini 1.5 Flash`).
+        * *OpenAI cá nhân (BYOK):* "Khóa cá nhân" (`GPT-4o`).
+        * *Đăng nhập bằng tài khoản ChatGPT:* "Ủy quyền tài khoản" (`GPT-4o Plus`).
+      * Logo SVG vector chính thức sắc nét cho từng nhà cung cấp, huy hiệu "Đang dùng" cho provider active.
+      * Trường nhập API Key tích hợp nút ẩn/hiện mật khẩu (`Eye`/`EyeOff`), nút kiểm tra kết nối (`Test`), và lưu ý an toàn cục bộ trên trình duyệt.
+      * Nút "Lưu" chỉ kích hoạt khi có thay đổi thực sự so với cấu hình hiện tại, hiển thị thông báo xác nhận thành công.
+      * Nút đóng tối thiểu 44px, hỗ trợ phím tắt `Esc`.
     * **Chợ Tài Liệu (`Store` icon):** Icon chợ nét đậm `stroke-[2.4]`, hover hiển thị tooltip `"Chợ Tài Liệu"`.
     * **Ô số dư Credit:** Huy hiệu `V` tròn (`w-6 h-6`) cùng số dư to rõ `text-sm font-black font-mono text-slate-900`.
     * **Nút Mô hình AI:** Icon `Bot` nét đậm `stroke-[2.4]`, bấm mở cài đặt model.

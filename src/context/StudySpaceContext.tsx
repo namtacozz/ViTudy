@@ -134,14 +134,23 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     if (typeof window !== 'undefined') {
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      const targetScale = Math.min(screenW / (width + 120), screenH / (height + 120), 1.1);
-      const targetX = (screenW - width * targetScale) / 2 - itemX * targetScale;
-      const targetY = (screenH - height * targetScale) / 2 - itemY * targetScale;
+      // Top margin of ~22px so top edge of book/document sits just slightly below browser top edge
+      const topGap = 22;
+      const bottomGap = 26;
+      const availableH = screenH - (topGap + bottomGap);
+      const availableW = screenW - 48; // 24px each side
+
+      // Scale to fit screen height to the maximum extent
+      const targetScale = Math.min(availableH / height, availableW / width);
+      const scaledW = width * targetScale;
+
+      const targetX = (screenW - scaledW) / 2 - itemX * targetScale;
+      const targetY = topGap - itemY * targetScale;
 
       setTransform({
         x: Math.round(targetX),
         y: Math.round(targetY),
-        scale: Math.max(0.85, Math.min(Number(targetScale.toFixed(3)), 1.15)),
+        scale: Number(targetScale.toFixed(3)),
         rotation: 0
       });
     }
@@ -386,12 +395,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const zoomBy = (factor: number, originX?: number, originY?: number) => {
-    if (focusedItemId) {
-      triggerFocusNotice();
-      return;
-    }
     setTransform(prev => {
-      const newScale = Math.min(Math.max(Number((prev.scale * factor).toFixed(3)), 0.4), 2.2);
+      const newScale = Math.min(Math.max(Number((prev.scale * factor).toFixed(3)), 0.4), 2.5);
       if (originX === undefined || originY === undefined) {
         return { ...prev, scale: newScale };
       }

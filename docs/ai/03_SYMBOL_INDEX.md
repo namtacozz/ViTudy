@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `8fe42d1`  
+> **Commit Hash:** `f1f18d2`  
 > **Cập nhật lần cuối:** `2026-11-08`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -15,11 +15,11 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `DeskDrawingCanvas` | `component` | [src/components/canvas/DeskDrawingCanvas.tsx:L6-L81](file:///F:/AppMaking/ViTudy/src/components/canvas/DeskDrawingCanvas.tsx) | Canvas vẽ nét bút dạ quang và bút vẽ tự do với chế độ multiply blend |
 | `DeskDrawingInteractionLayer` | `component` | [src/components/canvas/DeskDrawingInteractionLayer.tsx:L6-L321](file:///F:/AppMaking/ViTudy/src/components/canvas/DeskDrawingInteractionLayer.tsx) | Lớp đón bắt sự kiện kéo vẽ mượt mà, phân định vẽ nét vs di chuyển bàn |
 | `DeskGrid` | `component` | [src/components/canvas/DeskGrid.tsx:L5-L50](file:///F:/AppMaking/ViTudy/src/components/canvas/DeskGrid.tsx) | Lưới caro toạ độ bàn học trắng tinh khiết chống mỏi mắt |
-| `InfiniteDesk` | `component` | [src/components/canvas/InfiniteDesk.tsx:L14-L412](file:///F:/AppMaking/ViTudy/src/components/canvas/InfiniteDesk.tsx) | Mặt bàn vô cực 2.5D: quản lý pan, zoom, phím tắt Alt+Drag, bắt sự kiện click |
+| `InfiniteDesk` | `component` | [src/components/canvas/InfiniteDesk.tsx:L14-L406](file:///F:/AppMaking/ViTudy/src/components/canvas/InfiniteDesk.tsx) | Mặt bàn vô cực 2.5D: quản lý pan, zoom, phím tắt Alt+Drag, bắt sự kiện click |
 | `ItemDrawingOverlay` | `component` | [src/components/canvas/ItemDrawingOverlay.tsx:L6-L72](file:///F:/AppMaking/ViTudy/src/components/canvas/ItemDrawingOverlay.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
 | `Minimap` | `component` | [src/components/canvas/Minimap.tsx:L12-L228](file:///F:/AppMaking/ViTudy/src/components/canvas/Minimap.tsx) | Bản đồ radar thu nhỏ góc nhìn toàn cảnh không gian bàn học 2.5D |
 | `MultiplayerCursorsLayer` | `component` | [src/components/canvas/MultiplayerCursorsLayer.tsx:L11-L44](file:///F:/AppMaking/ViTudy/src/components/canvas/MultiplayerCursorsLayer.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
-| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L13-L33](file:///F:/AppMaking/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
+| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L16-L159](file:///F:/AppMaking/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
 | `VisualLinkThreads` | `component` | [src/components/canvas/VisualLinkThreads.tsx:L6-L211](file:///F:/AppMaking/ViTudy/src/components/canvas/VisualLinkThreads.tsx) | Vẽ các đường dây nối SVG trực quan từ đoạn trích sách sang giấy note Inteline |
 
 ### Objects (Sách, Giấy, Note)
@@ -39,7 +39,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L28-L496](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L22-L359](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L18-L303](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
-| `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L20-L443](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
+| `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L56-L725](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
 | `VrFrameOverlay` | `component` | [src/components/hud/VrFrameOverlay.tsx:L5-L15](file:///F:/AppMaking/ViTudy/src/components/hud/VrFrameOverlay.tsx) | Khung viền 4 góc và nhãn chế độ "Không gian học 2.5D" phong cách VR HUD |
 
 ### Modals & Workflows
@@ -51,7 +51,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `FullScreenDocModal` | `component` | [src/components/modals/FullScreenDocModal.tsx:L31-L417](file:///F:/AppMaking/ViTudy/src/components/modals/FullScreenDocModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `IntelineModal` | `component` | [src/components/modals/IntelineModal.tsx:L25-L262](file:///F:/AppMaking/ViTudy/src/components/modals/IntelineModal.tsx) | Hộp thoại AI hỏi đáp ngữ cảnh sâu Inteline theo từng dòng/trang tài liệu |
 | `KnowInheritPublishModal` | `component` | [src/components/modals/KnowInheritPublishModal.tsx:L22-L214](file:///F:/AppMaking/ViTudy/src/components/modals/KnowInheritPublishModal.tsx) | Hộp thoại chia sẻ tài liệu lên chợ tri thức: AI thẩm định điểm và tính giá |
-| `MarketModal` | `component` | [src/components/modals/MarketModal.tsx:L25-L464](file:///F:/AppMaking/ViTudy/src/components/modals/MarketModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
+| `MarketModal` | `component` | [src/components/modals/MarketModal.tsx:L34-L855](file:///F:/AppMaking/ViTudy/src/components/modals/MarketModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `MobileCompanionView` | `component` | [src/components/mobile/MobileCompanionView.tsx:L14-L121](file:///F:/AppMaking/ViTudy/src/components/mobile/MobileCompanionView.tsx) | Giao diện di động rút gọn đồng bộ tài liệu từ máy tính |
 | `OcrTab` | `component` | [src/components/modals/study-tools/OcrTab.tsx:L12-L153](file:///F:/AppMaking/ViTudy/src/components/modals/study-tools/OcrTab.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `QuizTab` | `component` | [src/components/modals/study-tools/QuizTab.tsx:L26-L405](file:///F:/AppMaking/ViTudy/src/components/modals/study-tools/QuizTab.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
@@ -63,8 +63,8 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
-| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L103-L1181](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
-| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L1183-L1189](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
+| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L103-L1186](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
+| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L1188-L1194](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
 | `useViToken` | `hook` | [src/context/ViTokenContext.tsx:L225-L231](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Hook quản lý ví ViToken, chi tiêu token, điểm danh streak và cấu hình AI |
 | `ViTokenProvider` | `context` | [src/context/ViTokenContext.tsx:L42-L223](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Provider lưu trữ và đồng bộ ví ViToken, lịch sử giao dịch vào localStorage |
 
@@ -110,11 +110,11 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `DrawingStroke` | `type` | [src/types/studyspace.ts:L94-L101](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamQuestion` | `type` | [src/types/studyspace.ts:L17-L24](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamSheetData` | `type` | [src/types/studyspace.ts:L26-L35](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `INITIAL_MARKET_ITEMS` | `component` | [src/data/marketMockData.ts:L19-L846](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `INITIAL_MARKET_ITEMS` | `component` | [src/data/marketMockData.ts:L24-L851](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `INITIAL_SPACES` | `component` | [src/data/mockSpaces.ts:L3-L271](file:///F:/AppMaking/ViTudy/src/data/mockSpaces.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `IntelineThread` | `type` | [src/types/studyspace.ts:L62-L72](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ItemType` | `type` | [src/types/studyspace.ts:L1-L1](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `MarketItem` | `type` | [src/data/marketMockData.ts:L3-L17](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `MarketItem` | `type` | [src/data/marketMockData.ts:L3-L22](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MathRenderer` | `component` | [src/components/common/MathRenderer.tsx:L15-L64](file:///F:/AppMaking/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `metadata` | `const` | [src/app/layout.tsx:L20-L23](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PageContent` | `type` | [src/types/studyspace.ts:L3-L15](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

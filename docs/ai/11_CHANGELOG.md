@@ -4,6 +4,62 @@
 
 ---
 
+## 2026-11-08 16:35 — commit COMPREHENSIVE_UPGRADES_ZOOM_FOCUS_MARKET_STREAK_AI
+- **Task:** Hoàn thiện gói 6 nâng cấp cốt lõi về Zoom, Focus Mode HUD, Thanh công cụ trái, Chợ tài liệu, Chuỗi điểm danh & AI Provider:
+  1. **Zoom chuột bất kỳ lúc nào & trên nội dung tài liệu (`InfiniteDesk.tsx`, `StudySpaceContext.tsx`):**
+     - Cho phép cuộn chuột (wheel zoom) tự do ở bất kỳ đâu trên bàn học và trên bề mặt tài liệu (sách, tờ giấy, ghi chú) mà không bị chặn, chỉ giữ chặn zoom khi mở modal toàn màn hình (`[role="dialog"]`, `[data-modal="true"]`).
+     - Cho phép zoom tự do trong Focus Mode để người dùng tùy chỉnh kích thước chữ theo mong muốn.
+  2. **Thu gọn HUD & Điều khiển Peek/Retract trong Focus Mode (`StudySpaceDeskView.tsx`, `StudySpaceContext.tsx`):**
+     - Khi vào chế độ tập trung:
+       - Thanh công cụ trái tự động trượt ẩn sang vách trái (`-translate-x-full`).
+       - Thanh điều hướng và ví đỉnh màn hình tự động trượt ẩn lên trên (`-translate-y-full`).
+       - Bộ công cụ dưới cùng tự động trượt ẩn xuống dưới (`translate-y-full`).
+     - Xuất hiện 3 nút "nhòm" (peek buttons) bám sát các mép tường màn hình:
+       - Vách trái: icon mũi tên `>` mở thanh công cụ.
+       - Vách trên: icon `v` kèm nhãn "Menu" mở thanh điều hướng.
+       - Vách dưới: icon `^` kèm nhãn "Công cụ" mở thanh dưới.
+     - Khi mở ra trong focus mode: có nút thụt vào (retract button) ở trung điểm thanh hướng về phía tường để cất lại vào vách.
+     - Tính toán tỷ lệ zoom tập trung ôm sát chiều cao màn hình sao cho mép bìa trên của sách cách mép trên trình duyệt đúng 22px (`targetY = 22 - itemY * targetScale`).
+  3. **Tối ưu hóa Thanh Công Cụ Trái (`LeftCreationBar.tsx`):**
+     - Giảm khoảng cách giữa các nút sát nhau hơn (`gap-1`, padding `p-1.5`, nút `w-11 h-11`) để tối ưu diện tích màn hình.
+     - Xếp cụm 2 nút Hoàn tác / Làm lại (Undo/Redo) thành cột dọc (`flex-col`) với Undo ở trên và Redo ở dưới.
+  4. **Nâng cấp Toàn Diện Chợ Tài Liệu (`MarketModal.tsx`):**
+     - Hiển thị banner giải thích rõ quy đổi `1 V = 1 ViToken` và số dư hiện tại của người dùng.
+     - Đưa tiêu đề tài liệu ra khung nội dung chính; đổi nhãn mô tả động theo loại tài liệu (`MÔ TẢ SÁCH / GIÁO TRÌNH`, `MÔ TẢ TÀI LIỆU TÓM TẮT`, `MÔ TẢ BỘ ĐỀ TRẮC NGHIỆM`).
+     - Đổi "Đánh giá" thành "Điểm AI", kèm tooltip giải thích 3 tiêu chí chấm tự động (Độ chuẩn xác 40%, Cấu trúc 35%, Thực tiễn 25%) và số lượt phản hồi.
+     - Bổ sung số trang, lượt mua, ngày cập nhật, huy hiệu tác giả xác thực.
+     - Đặt giá và các nút hành động cạnh nhau: nút "Xem thử" (`Eye`) + nút "Mua X V" (hoặc "Mở" khi đã sở hữu).
+     - Nút "Xem thử" mở modal đọc trích đoạn nội dung thực tế và mục lục các chương.
+     - Thêm chip bộ lọc đang bật, nút "Đặt lại" (`RotateCcw`), và nút chuyển đổi chế độ xem Dạng lưới thẻ (`Grid`) và Danh sách gọn (`Compact List`). Hỗ trợ phím `Esc`.
+  5. **Chuẩn hóa Modal Điểm Danh Nhận ViToken (`TopRightWallet.tsx`):**
+     - Sửa mâu thuẫn trạng thái: khi đã nhận hôm nay, vô hiệu hóa nút (`disabled`) và hiển thị "Đã nhận hôm nay • Nhận tiếp sau {X}h {Y}m" đếm ngược thời gian thực đến nửa đêm.
+     - Phân định rõ 4 trạng thái ô ngày: Đã nhận (`✓` xanh emerald), Hôm nay chưa nhận (viền Cam ViT nhấp nháy), Bỏ lỡ (`-` xám), Sắp tới (số token +5/+10).
+     - Rút gọn mô tả, thay "+5" bằng icon SVG đồng xu ViToken cam chữ V thương hiệu.
+     - Hiển thị `Chuỗi X ngày` kèm mốc thưởng tiếp theo (Mốc 7 ngày: +20 ViToken) với thanh tiến trình trực quan.
+     - Thêm hộp kiểm "Nhắc tôi điểm danh mỗi ngày" lưu `localStorage`. Vùng bấm nút đóng 44px, hỗ trợ `Esc`.
+  6. **Modal Cài Đặt Kết Nối AI Hoàn Chỉnh (`TopRightWallet.tsx`):**
+     - Hiển thị số dư ViToken của người dùng ngay trong modal.
+     - Nhãn trạng thái rõ ràng cho 4 lựa chọn: "Trừ ViToken", "Miễn phí theo hạn mức", "Khóa cá nhân", "Ủy quyền tài khoản" cùng model cụ thể (`GPT-4o-mini`, `Gemini 1.5 Flash`, `GPT-4o`, `GPT-4o Plus`).
+     - Logo SVG vector chính thức sắc nét, huy hiệu "Đang dùng" cho provider active.
+     - Nhập API Key kèm nút toggle ẩn/hiện mật khẩu (`Eye`/`EyeOff`), nút kiểm tra kết nối (`Test`), và lưu ý an toàn cục bộ.
+     - Đổi thành "Đăng nhập bằng tài khoản ChatGPT", nút "Lưu" chỉ kích hoạt khi có thay đổi. Vùng bấm 44px, hỗ trợ `Esc`.
+- **Verified by:**
+  - Script CDP `scripts/verify-all-sections-live.mjs` & `scripts/test-focus-clean.mjs` trên Chrome port 9222:
+    - Wheel zoom, Left bar vertical Undo/Redo, Focus mode HUD collapse & peek/retract controls.
+    - MarketModal list view, preview modal, filter chips, side-by-side action buttons.
+    - Streak modal 4 states, countdown, milestone bar, reminder toggle.
+    - AI provider status badges, BYOK key toggle, test connection button, save button disabled/enabled.
+  - Screenshots:
+    - `verified_market_list_view.png`
+    - `verified_market_preview_modal.png`
+    - `verified_daily_streak_modal.png`
+    - `verified_ai_provider_modal.png`
+    - `verified_focus_mode_peek_controls.png`
+    - `verified_focus_hud_slid_out.png`
+  - Build static export `pnpm run build:pages`: Passed 100%.
+
+---
+
 ## 2026-11-08 12:15 — commit FOCUS_TAB_AND_INTERACTION_LOCK
 - **Task:** Tinh chỉnh Thanh nhắc Tập trung, Khóa Camera khi Tập trung & Gỡ bỏ nhãn chữ đường chỉ:
   1. **Bỏ chữ "Liên quan đến" trên đường chỉ đỏ (`VisualLinkThreads.tsx`):**

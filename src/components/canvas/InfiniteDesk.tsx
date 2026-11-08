@@ -122,24 +122,18 @@ export function InfiniteDesk() {
     };
   }, [panBy, focusedItemId, triggerFocusNotice]);
 
-  // Wheel zoom handler: Prevent zooming desk if scrolling inside an overlay, modal, dropdown, or scrollable element
+  // Wheel zoom handler: Zoom anytime anywhere on the canvas and documents
   const handleWheel = (e: React.WheelEvent) => {
     const target = e.target as HTMLElement;
+    // Only prevent canvas zoom if scrolling inside an explicit modal dialog or active full overlay
     if (
-      target.closest('[data-overlay="true"]') ||
       target.closest('[role="dialog"]') ||
-      target.closest('.overflow-y-auto') ||
-      target.closest('.overflow-auto') ||
-      target.closest('textarea') ||
-      target.closest('input')
+      target.closest('[data-modal="true"]') ||
+      target.closest('.fixed.inset-0')
     ) {
       return;
     }
     e.preventDefault();
-    if (focusedItemId) {
-      triggerFocusNotice();
-      return;
-    }
     const factor = e.deltaY < 0 ? 1.08 : 0.92;
     zoomBy(factor, e.clientX, e.clientY);
   };
