@@ -3,7 +3,7 @@
 import React from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 
-export function DeskDrawingCanvas() {
+export const DeskDrawingCanvas = React.memo(function DeskDrawingCanvas() {
   const { strokes, currentStroke } = useStudySpace();
 
   // Helper to convert points to smooth SVG Path data using midpoint quadratic curves
@@ -78,4 +78,4 @@ export function DeskDrawingCanvas() {
       </g>
     </svg>
   );
-}
+});

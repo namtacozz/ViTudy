@@ -398,6 +398,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const zoomBy = (factor: number, originX?: number, originY?: number) => {
     setTransform(prev => {
       const newScale = Math.min(Math.max(Number((prev.scale * factor).toFixed(3)), 0.4), 2.5);
+      if (Math.abs(newScale - prev.scale) < 0.0005) return prev;
       if (originX === undefined || originY === undefined) {
         return { ...prev, scale: newScale };
       }

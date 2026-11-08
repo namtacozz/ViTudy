@@ -9,7 +9,7 @@ interface MinimapProps {
   onClose?: () => void;
 }
 
-export function Minimap({ isVisible = true, onClose }: MinimapProps) {
+export const Minimap = React.memo(function Minimap({ isVisible = true, onClose }: MinimapProps) {
   const { activeSpace, transform, setTransform } = useStudySpace();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -225,4 +225,4 @@ export function Minimap({ isVisible = true, onClose }: MinimapProps) {
       </div>
     </div>
   );
-}
+});

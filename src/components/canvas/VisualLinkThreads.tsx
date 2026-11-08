@@ -3,8 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 
-export function VisualLinkThreads() {
+export const VisualLinkThreads = React.memo(function VisualLinkThreads() {
   const { activeSpace, threads, transform, updateThreadSourceOffset } = useStudySpace();
+
+  const transformRef = useRef(transform);
+  transformRef.current = transform;
 
   const [draggingPin, setDraggingPin] = useState<{
     threadId: string;
@@ -28,8 +31,9 @@ export function VisualLinkThreads() {
       const cur = dragRef.current;
       if (!cur) return;
 
-      const deltaX = (e.clientX - cur.startClientX) / transform.scale;
-      const deltaY = (e.clientY - cur.startClientY) / transform.scale;
+      const currentScale = transformRef.current.scale || 1;
+      const deltaX = (e.clientX - cur.startClientX) / currentScale;
+      const deltaY = (e.clientY - cur.startClientY) / currentScale;
 
       const nextOffset = {
         x: Math.round(cur.initialOffsetX + deltaX),
@@ -55,7 +59,7 @@ export function VisualLinkThreads() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [draggingPin, transform.scale, updateThreadSourceOffset]);
+  }, [draggingPin, updateThreadSourceOffset]);
 
   if (!threads || threads.length === 0) return null;
 
@@ -208,4 +212,4 @@ export function VisualLinkThreads() {
       })}
     </svg>
   );
-}
+});

@@ -122,21 +122,61 @@ export function InfiniteDesk() {
     };
   }, [panBy, focusedItemId, triggerFocusNotice]);
 
-  // Wheel zoom handler: Zoom anytime anywhere on the canvas and documents
-  const handleWheel = (e: React.WheelEvent) => {
-    const target = e.target as HTMLElement;
-    // Only prevent canvas zoom if scrolling inside an explicit modal dialog or active full overlay
-    if (
-      target.closest('[role="dialog"]') ||
-      target.closest('[data-modal="true"]') ||
-      target.closest('.fixed.inset-0')
-    ) {
-      return;
-    }
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.08 : 0.92;
-    zoomBy(factor, e.clientX, e.clientY);
-  };
+  // Smooth RAF-coalesced Wheel Zoom: eliminates frame drops and lag
+  const wheelZoomRafRef = useRef<number | null>(null);
+  const pendingWheelFactorRef = useRef<number>(1);
+  const wheelOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const zoomByRef = useRef(zoomBy);
+  zoomByRef.current = zoomBy;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      // Prevent canvas zoom if scrolling inside an explicit modal dialog or active full overlay
+      if (
+        target.closest('[role="dialog"]') ||
+        target.closest('[data-modal="true"]') ||
+        target.closest('.fixed.inset-0') ||
+        target.closest('[data-focus-notice="true"]')
+      ) {
+        return;
+      }
+      e.preventDefault();
+
+      // Proportional zoom delta: smooth on trackpads, responsive on mouse wheels
+      const delta = e.deltaY;
+      const normalizedDelta = Math.max(-120, Math.min(120, delta));
+      const factor = Math.exp(-normalizedDelta * 0.0016);
+
+      pendingWheelFactorRef.current *= factor;
+      wheelOriginRef.current = { x: e.clientX, y: e.clientY };
+
+      if (!wheelZoomRafRef.current) {
+        wheelZoomRafRef.current = requestAnimationFrame(() => {
+          wheelZoomRafRef.current = null;
+          const accumulatedFactor = pendingWheelFactorRef.current;
+          const origin = wheelOriginRef.current;
+          pendingWheelFactorRef.current = 1;
+          wheelOriginRef.current = null;
+
+          if (origin && Math.abs(accumulatedFactor - 1) > 0.0005) {
+            zoomByRef.current(accumulatedFactor, origin.x, origin.y);
+          }
+        });
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      if (wheelZoomRafRef.current) {
+        cancelAnimationFrame(wheelZoomRafRef.current);
+      }
+    };
+  }, []);
 
   // Global View Rotation when isViewRotateMode is toggled ON (User can drag anywhere to rotate)
   const handleMouseDownCapture = (e: React.MouseEvent) => {
@@ -323,7 +363,6 @@ export function InfiniteDesk() {
       onDoubleClickCapture={handleDoubleClickCapture}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
-      onWheel={handleWheel}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -349,12 +388,14 @@ export function InfiniteDesk() {
         </div>
       )}
 
-      {/* 2.5D World Transform Container (Crisp Vector Font Rendering) */}
+      {/* 2.5D World Transform Container (Crisp Vector Font Rendering & GPU Layer) */}
       <div
-        className="absolute top-0 left-0 w-full h-full"
+        className="absolute top-0 left-0 w-full h-full will-change-transform"
         style={{
-          transform: `translate(${Math.round(transform.x)}px, ${Math.round(transform.y)}px) rotate(${transform.rotation || 0}deg) scale(${transform.scale})`,
-          transformOrigin: '0 0'
+          transform: `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) rotate(${transform.rotation || 0}deg) scale(${transform.scale})`,
+          transformOrigin: '0 0',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden'
         }}
       >
         {/* Render all Desk Items */}

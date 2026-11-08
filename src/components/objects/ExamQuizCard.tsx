@@ -42,7 +42,7 @@ const NOTE_PALETTE = [
   { bg: '#e2e8f0', border: '#cbd5e1', accent: '#334155', name: 'Xám sáng' },
 ];
 
-export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
+export function ExamQuizCardComponent({ item, isSelected }: ExamQuizCardProps) {
   const { 
     selectItem, 
     removeDeskItem,
@@ -735,3 +735,5 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
     </div>
   );
 }
+
+export const ExamQuizCard = React.memo(ExamQuizCardComponent);

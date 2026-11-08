@@ -78,9 +78,8 @@ export const BOOK_COVER_PRESETS = [
   }
 ];
 
-export function BookSpread({ item, isSelected }: BookSpreadProps) {
+export function BookSpreadComponent({ item, isSelected }: BookSpreadProps) {
   const { 
-    transform, 
     selectItem, 
     removeDeskItem,
     turnBookPage,
@@ -214,8 +213,9 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
         const lastRect = rects[rects.length - 1] || range.getBoundingClientRect();
         const bookRect = bookRef.current.getBoundingClientRect();
 
-        const clickX = (lastRect.right - bookRect.left) / transform.scale;
-        const clickY = (lastRect.bottom - bookRect.top) / transform.scale + 8;
+        const currentScale = (bookRect.width || 980) / 980;
+        const clickX = (lastRect.right - bookRect.left) / currentScale;
+        const clickY = (lastRect.bottom - bookRect.top) / currentScale + 8;
 
         setSelectionPopover({
           x: Math.max(120, Math.min(clickX, 840)),
@@ -1060,3 +1060,5 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
     </>
   );
 }
+
+export const BookSpread = React.memo(BookSpreadComponent);

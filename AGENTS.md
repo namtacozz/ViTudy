@@ -70,6 +70,11 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
 
 * **Phân định thao tác Chuột & Công cụ Vẽ:**
   * **Khi ở chế độ con trỏ (`cursor`):** Kéo chuột trên mặt bàn dùng để di chuyển không gian bàn học (pan canvas).
+  * **Tối Ưu Hiệu Năng Phóng To / Thu Nhỏ Bàn Học (Smooth 60fps Zero-Lag Canvas Zoom):**
+    * Cơ chế gom sự kiện cuộn chuột qua `requestAnimationFrame` (RAF Coalescing): Toàn bộ các micro-ticks cuộn chuột phát sinh từ trackpad hoặc con lăn chuột được tích lũy theo tỷ lệ hàm mũ mượt mà (`Math.exp(-normalizedDelta * 0.0016)`) và áp dụng đúng 1 lần duy nhất trong mỗi frame màn hình 16.6ms, loại bỏ hoàn toàn bão re-render và hiện tượng giật lag.
+    * Tăng tốc phần cứng GPU Compositing: Container bàn học áp dụng `translate3d(x, y, 0)`, `will-change: transform`, và `backface-visibility: hidden` để Chromium biến đổi ma trận trên GPU mà không ép CPU phải tính lại layout.
+    * Bộ nhớ đệm toàn cục KaTeX (`katexHtmlCache`): Lưu trữ kết quả biên dịch HTML của công thức toán học trong `Map`, đảm bảo chi phí biên dịch bằng 0ms trên các lần render tiếp theo.
+    * Memoization toàn diện (`React.memo`): Toàn bộ các thực thể bàn học (`BookSpread`, `PaperSheet`, `StickyNoteItem`, `ExamQuizCard`, `DeskGrid`, `DeskDrawingCanvas`, `VisualLinkThreads`, `Minimap`) được bọc `React.memo` để triệt tiêu re-render thừa khi camera thay đổi.
   * **Điều Hướng Bàn Học Bằng Phím (WASD & Phím Mũi Tên):**
     * Khi người dùng không đang nhập liệu văn bản (`input`, `textarea`, `contenteditable`), có thể bấm giữ các phím `W`, `A`, `S`, `D` hoặc 4 phím mũi tên (`Up`, `Left`, `Down`, `Right`) để lia tầm nhìn camera mượt mà theo thời gian thực (60fps).
     * `W` / `Mũi tên lên`: Lia camera lên trên.

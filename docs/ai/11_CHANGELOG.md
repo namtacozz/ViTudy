@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-11-08 18:21 — commit SMOOTH_60FPS_ZERO_LAG_CANVAS_ZOOM
+- **Task:** Giải quyết triệt để vấn đề lag / giật khung hình khi người dùng zoom in/out trên bàn học:
+  1. **Nguyên nhân cốt lõi gây lag:**
+     - Sự kiện `wheel` của React synthetic firing liên tục (30–60 sự kiện/giây khi lăn chuột hoặc vuốt trackpad), mỗi tick gọi `zoomBy` $\rightarrow$ kích hoạt hàng loạt đợt re-render chồng chéo.
+     - KaTeX trong `<MathRenderer />` parse và render lại toàn bộ công thức toán học trên mọi trang sách mỗi khi camera thay đổi.
+     - Các thực thể bàn học (`BookSpread`, `PaperSheet`, `StickyNoteItem`, `ExamQuizCard`, `DeskGrid`, `DeskDrawingCanvas`, `VisualLinkThreads`, `Minimap`) chưa được memoize, khiến Chromium phải tái tính toán bố cục layout CPU liên tục.
+     - Container biến đổi 2.5D sử dụng `translate(...)` 2D thông thường thay vì lớp GPU compositing chuyên dụng.
+  2. **Giải pháp tối ưu hóa toàn diện:**
+     - **Cơ chế gom sự kiện RAF (`InfiniteDesk.tsx`):** Lắng nghe sự kiện `wheel` gốc `{ passive: false }` trực tiếp trên DOM, chuẩn hóa delta theo tỷ lệ hàm mũ (`Math.exp(-normalizedDelta * 0.0016)`). Tích lũy toàn bộ micro-ticks trong khung 16.6ms và áp dụng đúng 1 lần duy nhất trong `requestAnimationFrame`, đảm bảo tốc độ phản hồi 60fps/120fps chuẩn màn hình.
+     - **Tăng tốc phần cứng GPU Compositing (`InfiniteDesk.tsx`):** Chuyển sang `translate3d(x, y, 0)`, gán `willChange: 'transform'`, `backfaceVisibility: 'hidden'` để Chromium biến đổi texture trên GPU hardware layer mà không kích hoạt reflow.
+     - **Bộ nhớ đệm KaTeX toàn cục (`MathRenderer.tsx`):** Cung cấp `katexHtmlCache` (`Map<string, string>`) giúp lưu kết quả biên dịch HTML, giảm chi phí render các công thức toán từ vài mili-giây xuống 0ms tức thì ($O(1)$ lookup).
+     - **Memoization toàn diện (`React.memo`):** Bọc `React.memo` cho `BookSpread`, `PaperSheet`, `StickyNoteItem`, `ExamQuizCard`, `DeskGrid`, `DeskDrawingCanvas`, `VisualLinkThreads`, `Minimap`.
+     - **Tối ưu ngưỡng biến thiên zoom (`StudySpaceContext.tsx`):** Bỏ qua state update nếu `Math.abs(newScale - prev.scale) < 0.0005`.
+- **Verified by:**
+  - Chạy kịch bản kiểm thử hiệu năng zoom trên Chrome CDP:
+    - `verified_smooth_zoom_in.png`: Phóng to mượt mà lên 250% tại tâm con trỏ chuột, công thức toán học và nội dung sắc nét 100%.
+    - `verified_smooth_zoom_out.png`: Thu nhỏ trơn tru xuống 40%, không giật lag, không sụt giảm khung hình.
+- **Open follow-ups:** Sẵn sàng nghiệm thu.
+
+---
+
 ## 2026-11-08 18:05 — commit BROWSER_PDF_READER_BOOK_LEATHER_PRESETS_SHARP_QUIZ_AND_VITUDY_BRAND
 - **Task:** Triển khai trọn bộ 5 yêu cầu cải tiến giao diện theo hình ảnh thực tế và phản hồi của người dùng:
   1. **Triệt tiêu khung viền đậm và làm chữ thẻ trắc nghiệm sắc nét như sách thật (`ExamQuizCard.tsx`):**

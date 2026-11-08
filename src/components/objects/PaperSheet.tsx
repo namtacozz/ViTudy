@@ -36,7 +36,7 @@ interface PaperSheetProps {
   isSelected: boolean;
 }
 
-export function PaperSheet({ item, isSelected }: PaperSheetProps) {
+export function PaperSheetComponent({ item, isSelected }: PaperSheetProps) {
   if (item.isExamSheet && item.examData) {
     return <ExamQuizCard item={item} isSelected={isSelected} />;
   }
@@ -49,7 +49,6 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
     resetExam,
     updateItemTitle,
     addStickyNote,
-    setTransform,
     focusedItemId,
     enterFocusMode,
     exitFocusMode
@@ -731,3 +730,5 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
     </div>
   );
 }
+
+export const PaperSheet = React.memo(PaperSheetComponent);

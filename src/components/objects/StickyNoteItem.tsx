@@ -15,7 +15,7 @@ interface StickyNoteItemProps {
   isSelected: boolean;
 }
 
-export function StickyNoteItem({ item, isSelected }: StickyNoteItemProps) {
+export function StickyNoteItemComponent({ item, isSelected }: StickyNoteItemProps) {
   const { 
     selectItem, 
     removeDeskItem,
@@ -586,3 +586,5 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
     </div>
   );
 }
+
+export const StickyNoteItem = React.memo(StickyNoteItemComponent);

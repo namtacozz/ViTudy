@@ -8,11 +8,29 @@ interface MathRendererProps {
   className?: string;
 }
 
+// Global cache for compiled KaTeX HTML to guarantee 0ms overhead on re-renders
+const katexHtmlCache = new Map<string, string>();
+
+function renderKatexWithCache(math: string, displayMode: boolean): string {
+  const cacheKey = `${displayMode ? 'D:' : 'I:'}${math}`;
+  const hit = katexHtmlCache.get(cacheKey);
+  if (hit !== undefined) return hit;
+
+  try {
+    const html = katex.renderToString(math, { displayMode, throwOnError: false });
+    katexHtmlCache.set(cacheKey, html);
+    return html;
+  } catch {
+    return '';
+  }
+}
+
 /**
  * MathRenderer parses content containing LaTeX math ($...$ or $$...$$)
  * or common mathematical expressions and renders them via KaTeX with fallback.
+ * Memoized with global compile cache to eliminate render lag during zoom/pan.
  */
-export function MathRenderer({ content, className = '' }: MathRendererProps) {
+export const MathRenderer = React.memo(function MathRenderer({ content, className = '' }: MathRendererProps) {
   if (!content) return null;
 
   // Split content by inline $...$ or block $$...$$ math delimiters
@@ -26,8 +44,8 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
 
         if (part.startsWith('$$') && part.endsWith('$$')) {
           const rawMath = part.slice(2, -2).trim();
-          try {
-            const html = katex.renderToString(rawMath, { displayMode: true, throwOnError: false });
+          const html = renderKatexWithCache(rawMath, true);
+          if (html) {
             return (
               <span 
                 key={index} 
@@ -35,15 +53,14 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
-          } catch {
-            return <code key={index} className="block my-2 font-mono text-xs">{rawMath}</code>;
           }
+          return <code key={index} className="block my-2 font-mono text-xs">{rawMath}</code>;
         }
 
         if (part.startsWith('$') && part.endsWith('$')) {
           const rawMath = part.slice(1, -1).trim();
-          try {
-            const html = katex.renderToString(rawMath, { displayMode: false, throwOnError: false });
+          const html = renderKatexWithCache(rawMath, false);
+          if (html) {
             return (
               <span 
                 key={index} 
@@ -51,9 +68,8 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
-          } catch {
-            return <code key={index} className="font-mono text-xs">{rawMath}</code>;
           }
+          return <code key={index} className="font-mono text-xs">{rawMath}</code>;
         }
 
         // Normal text: handle line breaks and bold markers
@@ -61,4 +77,4 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
       })}
     </span>
   );
-}
+});

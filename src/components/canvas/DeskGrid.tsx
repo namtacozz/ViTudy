@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export function DeskGrid() {
+export const DeskGrid = React.memo(function DeskGrid() {
   return (
     <div className="absolute inset-0 pointer-events-none select-none overflow-hidden bg-[#e8ebf0]">
       {/* Engineering Architectural Grid Lines on Clean Light Grey Desk Surface */}
@@ -47,4 +47,4 @@ export function DeskGrid() {
       />
     </div>
   );
-}
+});
