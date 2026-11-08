@@ -14,8 +14,15 @@ import {
   Mic,
   MicOff,
   Download,
-  AlertCircle
+  AlertCircle,
+  Database,
+  Radio,
+  ExternalLink,
+  ShieldCheck,
+  Sparkles,
+  Users
 } from 'lucide-react';
+import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
 
 interface PendingDocument {
   file: File;
@@ -33,6 +40,73 @@ export function BottomLeftKnowledge() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // ================= SUPABASE DATABASE & MULTIPLAYER STATE =================
+  const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
+  const [supabaseKeyInput, setSupabaseKeyInput] = useState('');
+  const [isDbConfigOpen, setIsDbConfigOpen] = useState(false);
+  const [dbSavedNotice, setDbSavedNotice] = useState(false);
+  const [dbTestResult, setDbTestResult] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message?: string }>({ status: 'idle' });
+  const [supabaseConfigState, setSupabaseConfigState] = useState({ isConfigured: false, url: '', anonKey: '' });
+
+  useEffect(() => {
+    if (isShareModalOpen) {
+      const cfg = getSupabaseConfig();
+      setSupabaseConfigState(cfg);
+      setSupabaseUrlInput(cfg.url);
+      setSupabaseKeyInput(cfg.anonKey);
+      setDbTestResult({ status: 'idle' });
+    }
+  }, [isShareModalOpen]);
+
+  const handleTestDatabase = async () => {
+    const url = supabaseUrlInput.trim();
+    const key = supabaseKeyInput.trim();
+    if (!url || !key) {
+      setDbTestResult({ status: 'error', message: 'Vui lòng nhập đầy đủ Supabase URL và Anon Key.' });
+      return;
+    }
+    setDbTestResult({ status: 'testing' });
+    try {
+      const startTime = performance.now();
+      const res = await fetch(`${url}/rest/v1/`, {
+        headers: {
+          'apikey': key,
+          'Authorization': `Bearer ${key}`
+        }
+      });
+      const duration = Math.round(performance.now() - startTime);
+      if (res.ok || res.status === 200) {
+        setDbTestResult({ status: 'success', message: `Kết nối thành công! Phản hồi sau ${duration}ms.` });
+      } else {
+        setDbTestResult({ status: 'error', message: `Supabase trả về mã lỗi ${res.status}: ${res.statusText}` });
+      }
+    } catch (err: any) {
+      setDbTestResult({ status: 'error', message: `Lỗi kết nối mạng: ${err.message}` });
+    }
+  };
+
+  const handleSaveDb = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSupabaseConfig(supabaseUrlInput, supabaseKeyInput);
+    setDbSavedNotice(true);
+    setSupabaseConfigState(getSupabaseConfig());
+    setTimeout(() => {
+      setDbSavedNotice(false);
+      setIsDbConfigOpen(false);
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    }, 800);
+  };
+
+  const handleClearDb = () => {
+    clearSupabaseConfig();
+    setSupabaseUrlInput('');
+    setSupabaseKeyInput('');
+    setSupabaseConfigState(getSupabaseConfig());
+    setDbTestResult({ status: 'idle' });
+  };
 
   // ================= SCREEN & MIC RECORDING STATE =================
   const [isRecording, setIsRecording] = useState(false);
@@ -513,40 +587,176 @@ export function BottomLeftKnowledge() {
         </div>
       )}
 
-      {/* MODAL 4: Mời bạn bè cùng học */}
+      {/* MODAL 4: Phòng học nhóm, Chia sẻ & Cấu hình Supabase Realtime */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-sm p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsShareModalOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
-            <h3 className="text-sm font-bold text-slate-900 mb-1">Mời bạn bè vào bàn học</h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Gửi liên kết dưới đây để bạn bè cùng tham gia học nhóm và trao đổi trực tiếp trên bàn học 2.5D.
+
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
+                <Users className="w-4 h-4 stroke-[2.4]" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Phòng Học Nhóm & Cơ Sở Dữ Liệu</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-3.5">
+              Chia sẻ liên kết bàn học và kết nối cơ sở dữ liệu Supabase để đồng bộ đa người dùng theo thời gian thực.
             </p>
 
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-4">
+            {/* 1. Share Room Link Box */}
+            <label className="text-[11px] font-bold text-slate-700 block mb-1">Liên kết mời bạn cùng bàn học:</label>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-3.5">
               <input
                 type="text"
                 readOnly
-                value={typeof window !== 'undefined' ? window.location.href : 'http://localhost:3000'}
+                value={typeof window !== 'undefined' ? window.location.href : 'https://namtacozz.github.io/ViTudy/'}
                 className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono"
               />
               <button
                 onClick={handleCopyShareLink}
-                className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedLink ? 'Đã chép' : 'Sao chép'}</span>
               </button>
             </div>
 
+            {/* 2. Supabase Database Status Card */}
+            <div className={`p-3 rounded-xl border mb-3 text-xs transition-colors ${
+              supabaseConfigState.isConfigured
+                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                : 'bg-amber-50/70 border-amber-200 text-amber-900'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2 font-bold text-[12px]">
+                  <Database className="w-4 h-4 text-current flex-shrink-0" />
+                  <span>Cơ sở dữ liệu Supabase</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  supabaseConfigState.isConfigured 
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800' 
+                    : 'bg-amber-100 border-amber-300 text-amber-800'
+                }`}>
+                  {supabaseConfigState.isConfigured ? 'Đã cấu hình' : 'Chưa cấu hình'}
+                </span>
+              </div>
+              <p className="text-[11px] opacity-80 leading-relaxed">
+                {supabaseConfigState.isConfigured
+                  ? 'Đã sẵn sàng đồng bộ con trỏ chuột, góc nhìn và trạng thái phòng học thời gian thực.'
+                  : 'Cung cấp URL & Anon Key của dự án Supabase để kích hoạt tính năng Multiplayer thời gian thực.'}
+              </p>
+            </div>
+
+            {/* 3. Inline / Expandable Supabase Config Form */}
+            {!isDbConfigOpen ? (
+              <div className="flex items-center justify-between py-2 border-t border-slate-100 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDbConfigOpen(true)}
+                  className="text-xs font-semibold text-[#E0562D] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Database className="w-3.5 h-3.5" />
+                  <span>{supabaseConfigState.isConfigured ? 'Chỉnh sửa cấu hình Supabase' : 'Nhập URL & Anon Key Supabase'}</span>
+                </button>
+                {supabaseConfigState.isConfigured && (
+                  <button
+                    type="button"
+                    onClick={handleTestDatabase}
+                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-2.5 py-1 rounded-lg border border-slate-300 transition-colors cursor-pointer"
+                  >
+                    Kiểm tra kết nối
+                  </button>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSaveDb} className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3 space-y-2.5 text-xs animate-fade-in">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Supabase Project URL (https://*.supabase.co)
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://xyzcompany.supabase.co"
+                    value={supabaseUrlInput}
+                    onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 outline-none focus:border-[#E0562D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Supabase Anon Public Key
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                    value={supabaseKeyInput}
+                    onChange={(e) => setSupabaseKeyInput(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 outline-none focus:border-[#E0562D]"
+                  />
+                </div>
+
+                {dbSavedNotice && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-2 rounded-lg text-[11px] font-semibold flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Đã lưu cấu hình! Đang tải lại kết nối...</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={handleTestDatabase}
+                    disabled={dbTestResult.status === 'testing'}
+                    className="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-slate-700 font-semibold cursor-pointer transition-colors"
+                  >
+                    {dbTestResult.status === 'testing' ? 'Đang thử...' : 'Thử kết nối'}
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDbConfigOpen(false)}
+                      className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-3 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    >
+                      Lưu & Kết nối
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Test result feedback banner */}
+            {dbTestResult.status === 'success' && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-2 rounded-xl text-xs flex items-center gap-2 mb-3 animate-fade-in">
+                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span className="font-semibold">{dbTestResult.message}</span>
+              </div>
+            )}
+            {dbTestResult.status === 'error' && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 px-3 py-2 rounded-xl text-xs flex items-center gap-2 mb-3 animate-fade-in">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                <span>{dbTestResult.message}</span>
+              </div>
+            )}
+
+            {/* Modal Footer */}
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
               <div className="text-[11px] text-slate-500">
-                Phòng học nhóm trực tiếp
+                Chế độ bàn học cộng tác 2.5D
               </div>
               <button
                 onClick={() => setIsShareModalOpen(false)}
