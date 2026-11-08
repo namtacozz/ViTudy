@@ -22,11 +22,20 @@ export function BottomRightToolkit() {
     tidyUpDesk,
     fitAllToScreen,
     isViewRotateMode,
-    setIsViewRotateMode
+    setIsViewRotateMode,
+    focusedItemId
   } = useStudySpace();
 
+  const isFocusMode = !!focusedItemId;
   const [isMinimapVisible, setIsMinimapVisible] = useState(true);
   const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false);
+
+  // Map cũng phải thu gọn lại ở chế độ tập trung
+  React.useEffect(() => {
+    if (isFocusMode) {
+      setIsMinimapVisible(false);
+    }
+  }, [isFocusMode]);
 
   // Global shortcut 'm' or 'M' to toggle minimap
   React.useEffect(() => {
@@ -41,7 +50,7 @@ export function BottomRightToolkit() {
   }, []);
 
   return (
-    <div className="absolute bottom-1 right-1 z-40 flex flex-col items-end gap-2.5 pointer-events-auto select-none">
+    <div className="relative flex flex-col items-end gap-2.5 pointer-events-auto select-none">
       {/* Minimap Box (Toggled by M or reopening via the map button) */}
       <Minimap isVisible={isMinimapVisible} onClose={() => setIsMinimapVisible(false)} />
 

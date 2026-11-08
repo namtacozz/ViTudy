@@ -90,9 +90,17 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
   const [viewingFromSummary, setViewingFromSummary] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
-  // 3D Flip animation state
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [flipDirection, setFlipDirection] = useState<'forward' | 'backward'>('forward');
+  // 3D Flip animation state machine:
+  // Phase 'idle' -> 'out' (0deg -> -90deg/90deg) -> snap opposite (90deg/-90deg) -> 'in' (-> 0deg) -> 'idle'
+  const [flipState, setFlipState] = useState<{
+    phase: 'idle' | 'out' | 'in';
+    angle: number;
+    withTransition: boolean;
+  }>({
+    phase: 'idle',
+    angle: 0,
+    withTransition: false
+  });
 
   const cleanTitle = (item.title || '')
     .replace(/^Đề thi:\s*/i, '')
@@ -110,16 +118,33 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
     setIsEditingTitle(false);
   };
 
-  // Perform 3D flip transition
+  // Perform clean 2-phase 3D flip transition without ghost box or mid-tilt content jump
   const triggerFlip = (direction: 'forward' | 'backward', callback: () => void) => {
-    setFlipDirection(direction);
-    setIsFlipping(true);
+    if (flipState.phase !== 'idle') return;
+
+    const outAngle = direction === 'forward' ? -90 : 90;
+    const inAngle = direction === 'forward' ? 90 : -90;
+
+    // Phase 1: Turn out edge-on (accelerate to 90deg, 160ms)
+    setFlipState({ phase: 'out', angle: outAngle, withTransition: true });
+
     setTimeout(() => {
+      // Midpoint: card is perpendicular and invisible
       callback();
-      setTimeout(() => {
-        setIsFlipping(false);
-      }, 220);
-    }, 180);
+      // Snap instantly to opposite edge-on without transition
+      setFlipState({ phase: 'in', angle: inAngle, withTransition: false });
+
+      // Phase 2: Turn in from opposite edge-on to 0deg (decelerate into place, 180ms)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFlipState({ phase: 'in', angle: 0, withTransition: true });
+
+          setTimeout(() => {
+            setFlipState({ phase: 'idle', angle: 0, withTransition: false });
+          }, 190);
+        });
+      });
+    }, 160);
   };
 
   // Start exam from Intro screen
@@ -209,11 +234,8 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
         zIndex: item.zIndex,
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
-        transition: isDragging ? 'none' : 'box-shadow 0.2s',
       }}
-      className={`absolute select-none group cursor-default rounded-2xl ${
-        isSelected ? 'ring-2 ring-slate-900 shadow-2xl' : ''
-      }`}
+      className="absolute select-none group cursor-default"
       onClick={(e) => {
         e.stopPropagation();
         selectItem(item.id);
@@ -222,7 +244,7 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
       {/* 3D Flip Perspective Container */}
       <div 
         style={{
-          perspective: '1000px',
+          perspective: '1200px',
           width: '100%',
           height: '100%'
         }}
@@ -231,13 +253,22 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
         <div
           style={{
             backgroundColor: cardColor,
-            transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
-            transform: isFlipping 
-              ? `rotateY(${flipDirection === 'forward' ? '90deg' : '-90deg'}) scale(0.96)` 
-              : 'rotateY(0deg) scale(1)',
-            transformStyle: 'preserve-3d'
+            transform: `rotateY(${flipState.angle}deg) ${flipState.phase !== 'idle' ? 'scale(0.96)' : 'scale(1)'}`,
+            transition: flipState.withTransition
+              ? flipState.phase === 'out'
+                ? 'transform 0.16s cubic-bezier(0.4, 0, 0.7, 0.2)'
+                : 'transform 0.18s cubic-bezier(0.2, 0.8, 0.4, 1)'
+              : 'none',
+            transformStyle: 'preserve-3d',
+            transformOrigin: 'center center',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
           }}
-          className="w-full h-full rounded-2xl shadow-xl flex flex-col justify-between border border-black/10 relative overflow-hidden font-sans text-slate-900"
+          className={`w-full h-full rounded-2xl flex flex-col justify-between border border-black/10 relative overflow-hidden font-sans text-slate-900 transition-shadow ${
+            isSelected && flipState.phase === 'idle'
+              ? 'ring-2 ring-slate-900 shadow-2xl'
+              : 'shadow-xl'
+          }`}
         >
           {/* Drawing Ink Overlay permanently bound to card */}
           <ItemDrawingOverlay itemId={item.id} />
@@ -625,10 +656,10 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
         </div>
       </div>
 
-      {/* Floating Control Toolbar on Hover / Selection (White Miro-style) */}
+      {/* Floating Control Toolbar on Hover / Selection (White Miro-style, hidden during 3D flip) */}
       <div 
         className={`absolute ${item.y < 80 ? 'top-full mt-3' : '-top-11'} left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white text-slate-700 px-3 py-1.5 rounded-xl shadow-lg border border-slate-200/90 backdrop-blur-md transition-opacity duration-150 z-30 ${
-          isSelected 
+          isSelected && flipState.phase === 'idle'
             ? 'opacity-100 pointer-events-auto' 
             : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
         }`}

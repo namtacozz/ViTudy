@@ -98,7 +98,7 @@ export function TopLeftNav() {
   const isSearchExpanded = isSearchFocused || isSearchHovered || searchQuery.length > 0;
 
   return (
-    <div className="absolute top-1 left-1 z-40 flex flex-col gap-2 pointer-events-auto">
+    <div className="relative flex flex-col gap-2 pointer-events-auto">
       {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size, bold strokes) */}
       <div className="flex items-center gap-2.5 bg-white/95 border border-slate-300 rounded-2xl px-4 py-2.5 shadow-sm backdrop-blur-md text-slate-900">
         {/* Brand Logo & Compass (Click to reset view rotation when tilted) */}

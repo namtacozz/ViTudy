@@ -6,7 +6,7 @@
 
 ## 1. Tóm Tắt Dự Án & Sức Khỏe Repo (Health Summary)
 * **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini BYOK, OpenAI System) qua tiền tệ ViToken, và chợ tri thức KnowInherit 85/15.
-* **Giai đoạn phát triển:** Hoàn thành toàn diện: Chuẩn monochromatic, Zero-Emoji 100% SVG, Sách 980x640 da nâu, Hook tương tác xoay 360° `useDeskItemInteraction`, Nét vẽ in-document bám vật thể, Chế độ tập trung đọc Focus Mode tự động thu gọn HUD kèm nút nhòm Peek/Retract, Chợ tài liệu với Điểm AI & Xem thử, Modal Chuỗi điểm danh với đếm ngược, và Thẻ Trắc Nghiệm Tương Tác 3D Lật Mặt (`ExamQuizCard`) kích thước 380x490 màu pastel.
+* **Giai đoạn phát triển:** Hoàn thành toàn diện: Chuẩn monochromatic, Zero-Emoji 100% SVG, Sách 980x640 da nâu, Hook tương tác xoay 360° `useDeskItemInteraction`, Nét vẽ in-document bám vật thể, Chế độ tập trung đọc Focus Mode tự động thu gọn 5 cụm HUD độc lập kèm lẫy kéo gắn liền, Chợ tài liệu với Điểm AI & Xem thử, Modal Chuỗi điểm danh với đếm ngược, Biểu tượng ngọn lửa chuỗi ôm trọn số ngày, và Thẻ Trắc Nghiệm Tương Tác 3D Lật Mặt (`ExamQuizCard`) kích thước 380x490 màu pastel với máy trạng thái lật 2 giai đoạn không để lại khung đen rỗng.
 * **Sức khỏe Repo (Health):**
   * `Build`: **Pass** (`pnpm run build:pages` biên dịch sạch 100%, xuất tĩnh `out/` sẵn sàng GitHub Pages).
   * `Docs Check`: **Pass** (`pnpm run docs:check` hợp lệ, 82 symbols hợp lệ).

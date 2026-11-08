@@ -26,7 +26,8 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Áp dụng đồng bộ cho: `TopLeftNav` (`top-1 left-1`), `TopRightWallet` (`top-1 right-1`), `LeftCreationBar` (`left-1`), `BottomLeftKnowledge` (`bottom-1 left-1`), `BottomRightToolkit` (`bottom-1 right-1`), và `MultiplayerBar` (`top-1`).
     * Tối ưu hóa triệt để không gian học tập trung tâm của mặt bàn, triệt tiêu khoảng hở thừa không cần thiết.
   * **Biểu Tượng Chuỗi Ngày Học Tập (Streak Flame Icon):**
-    * Biểu tượng ngọn lửa được căn đưa cao hơn một chút (`-translate-y-1`), giúp phần bụng tròn của ngọn lửa ôm trọn số ngày chuỗi học tập màu trắng ở bên trong (`-translate-y-0.5`), số hiển thị rõ ràng, sắc nét, hoàn toàn không bị lệch hay che khuất.
+    * Biểu tượng ngọn lửa (`w-8.5 h-8.5`) màu Cam ViT (`#E0562D`) với phần bụng tròn ôm trọn số ngày chuỗi học tập màu trắng ở bên trong.
+    * Tọa độ căn số tuyệt đối: `top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2`, số chuỗi nằm chính xác 100% trong tâm bụng lửa, cân đối 4 phía, không lệch, không che khuất và không tràn ra ngoài viền ngọn lửa.
   * **Quy Chuẩn Nút Mở Bản Đồ Khi Ẩn (Minimap Reopen Button):**
     * Đồng bộ hoàn toàn style với Nút Tải lên tài liệu: khung vuông bo góc `rounded-xl`, kích thước chuẩn `w-10 h-10`, nền trắng `bg-white hover:bg-orange-50/80`, viền `border border-slate-300 hover:border-orange-300`, đổ bóng nhẹ `shadow-sm`, icon `Map` SVG màu Cam ViT (`#E0562D`, `stroke-[2.4]`). Tuyệt đối không dùng nút tròn nền cam độc lập.
   * **Hệ thống màu trạng thái ngữ nghĩa (Status Tokens):**
@@ -205,7 +206,14 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Tiêu đề bộ đề, số lượng câu hỏi, thời gian làm bài dự kiến.
     * Ở giữa đáy thẻ: Nút **"Bắt đầu làm bài"** nổi bật với màu **Cam ViT (`#E0562D`)**, chữ trắng.
   * **Cơ Chế Lật Mặt 3D Như Trang Sách (Interactive 3D Page Flip):**
-    * Khi bấm "Bắt đầu làm bài", thẻ lật xoay 3D từ trái sang phải (`rotateY(180deg)` $\rightarrow$ `0deg`) để lộ Câu 1 ở mặt sau.
+    * Khi bấm "Bắt đầu làm bài", thẻ lật xoay 3D từ trái sang phải để lộ Câu 1 ở mặt sau.
+    * **Khung định vị ngoài (`cardRef`):** Tuyệt đối KHÔNG gán `rounded-2xl`, `border`, `ring`, hay `shadow` lên thẻ cha. Thẻ cha thuần túy làm mốc tọa độ canvas (`translate`, `rotate`, `scale`).
+    * **Quy trình Lật 3D 2 Giai Đoạn (2-Phase 3D Flip State Machine):**
+      * *Giai đoạn 1 (Turn-Out):* Xoay từ `0deg` đến `90deg` (hoặc `-90deg` khi lật tới) trong 160ms (`cubic-bezier(0.4, 0, 0.7, 0.2)`).
+      * *Điểm chết trung tâm:* Khi thẻ vuông góc màn hình (chiều rộng hiển thị = 0px, hoàn toàn vô hình), cập nhật nội dung câu hỏi/màn hình và lập tức tráo góc xoay sang phía đối diện (`-90deg` / `90deg`) không áp dụng transition.
+      * *Giai đoạn 2 (Turn-In):* Xoay tiếp từ góc đối diện về `0deg` trong 180ms (`cubic-bezier(0.2, 0.8, 0.4, 1)`). Triệt tiêu 100% hiện tượng giật chữ, chớp nháy hoặc nhảy nội dung khi thẻ đang nghiêng.
+    * **Viền chọn (`ring-2 ring-slate-900 shadow-2xl`):** Được gắn trực tiếp vào vỏ thẻ xoay bên trong (`preserve-3d`), và tự động ẩn khi đang lật (`flipState.phase !== 'idle'`), triệt tiêu hoàn toàn khung dây đen rỗng (ghost wireframe box) lơ lửng trên bàn học.
+    * **Thanh công cụ nổi (`Rotate 360` / `Trash`):** Tự động ẩn khi đang lật thẻ để chống tình trạng lơ lửng mất liên kết.
     * Khi người dùng chọn đáp án và bấm **"Xác nhận"**: hiển thị phán quyết ngay lập tức (Xanh lá `✓ ĐÚNG` hoặc Đỏ `✕ SAI`), giải thích chi tiết, và nút chuyển thành **"Câu tiếp theo"** (hoặc **"Hoàn thành"** ở câu cuối cùng).
     * Bấm "Câu tiếp theo" sẽ tiếp tục lật xoay 3D sang câu tiếp theo.
   * **Thanh Điều Hướng Câu Hỏi Dạng List Ngang Ở Đáy Thẻ (Bottom Horizontal Strip):**

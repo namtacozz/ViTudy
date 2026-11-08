@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-11-08 17:40 — commit QUIZ_CARD_CLEAN_3D_FLIP_AND_ATTACHED_FOCUS_DRAWERS
+- **Task:** Xử lý triệt để các lỗi giao diện và trải nghiệm 3D theo ảnh chụp thực tế của người dùng:
+  1. **Khắc phục lỗi lật thẻ trắc nghiệm 3D (`ExamQuizCard.tsx`):**
+     - Loại bỏ hoàn toàn khung dây đen rỗng (ghost wireframe box) do gắn `ring-2 ring-slate-900` trên container cha cố định.
+     - Triển khai máy trạng thái lật 3D 2 giai đoạn (2-Phase Flip State Machine):
+       - Giai đoạn 1 (Turn-Out): Xoay từ `0deg` đến `90deg` trong 160ms (`cubic-bezier(0.4, 0, 0.7, 0.2)`).
+       - Điểm chết trung tâm: Tráo nội dung khi thẻ vuông góc màn hình (0px visible width), tức thời chuyển góc sang `90deg` đối diện không transition.
+       - Giai đoạn 2 (Turn-In): Xoay tiếp từ góc đối diện về `0deg` trong 180ms (`cubic-bezier(0.2, 0.8, 0.4, 1)`). Triệt tiêu 100% hiện tượng giật chữ, tráo text lộ liễu khi thẻ đang nghiêng.
+     - Viền chọn (`ring-2 ring-slate-900`) và thanh công cụ nổi (`Rotate 360` / `Trash`) tự động ẩn khi đang lật thẻ.
+  2. **Căn chuẩn xác số chuỗi ngày học tập vào tâm bụng ngọn lửa (`TopRightWallet.tsx`):**
+     - Căn tọa độ tuyệt đối `top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2` trên icon ngọn lửa `w-8.5 h-8.5`.
+     - Số `1` nằm gọn gàng 100% trong ruột cam, cân đối 4 phía, không lệch sang trái, không chườm ra viền ngoài.
+  3. **Đồng bộ ngăn kéo độc lập có lẫy kéo gắn liền cho 5 cụm HUD trong chế độ Tập trung (`StudySpaceDeskView.tsx`):**
+     - Cả 5 cụm HUD trượt ẩn độc lập ra khỏi màn hình trong chế độ tập trung.
+     - Mỗi cụm có một thẻ lẫy kéo mũi tên bám trực tiếp vào mép ngoài của chính HUD đó:
+       - Top-Left: Mũi tên `[\/]` (kéo xuống) / `[^]` (thu lên).
+       - Top-Right: Mũi tên `[\/]` (kéo xuống) / `[^]` (thu lên).
+       - Left Toolbar: Mũi tên `[>]` (kéo ra) / `[<]` (thu vào).
+       - Bottom-Left: Mũi tên `[^]` (kéo lên) / `[\/]` (thu xuống).
+       - Bottom-Right: Mũi tên `[^]` (kéo lên) / `[\/]` (thu xuống).
+     - Minimap tự động thu gọn khi vào chế độ tập trung.
+  4. **Mở rộng kích thước cụm nút Undo/Redo (`LeftCreationBar.tsx`):**
+     - Độ rộng khung `w-full` và kích thước nút `w-11 h-11` bo tròn `rounded-xl`, đồng bộ hoàn hảo với thanh công cụ chính phía trên.
+- **Verified by:**
+  - Chạy kiểm thử tự động trên Chrome qua CDP:
+    - `verified_flame_belly_centered.png`: Số `1` nằm đúng tâm bụng ngọn lửa.
+    - `verified_quiz_card_clean_mid_flip.png`: Lật thẻ 3D mượt mà không còn khung đen rỗng lơ lửng.
+    - `verified_quiz_card_q1_confirmed.png`: Câu 1 xác nhận đáp án đúng, hiện giải thích, thanh điều hướng đáy cập nhật xanh lá.
+    - `verified_toolbar_undo_enlarged.png`: Kích thước Undo/Redo mở rộng đồng bộ thanh công cụ.
+    - `verified_focus_mode_clean_desk.png`: Bàn học sạch sẽ khi vào chế độ tập trung.
+    - `verified_focus_pulled_hud.png`: Các lẫy kéo gắn liền trượt từng HUD ra vào trơn tru.
+- **Open follow-ups:** Sẵn sàng nghiệm thu.
+
+---
+
 ## 2026-11-08 17:16 — commit HUD_SNUG_SPACING_STREAK_FLAME_AND_MAP_BUTTON_STYLE
 - **Task:** Hoàn thiện 3 tinh chỉnh công thái học cho HUD bàn học:
   1. **Căn chỉnh Biểu tượng Chuỗi Ngày Học Tập (`TopRightWallet.tsx`):**

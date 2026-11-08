@@ -17,22 +17,23 @@ export default function StudySpaceDeskView() {
   const { focusedItemId } = useStudySpace();
   const isFocusMode = !!focusedItemId;
 
+  // Independent drawer states for each of the 5 HUD islands in focus mode
+  const [showTopLeftInFocus, setShowTopLeftInFocus] = useState(false);
+  const [showTopRightInFocus, setShowTopRightInFocus] = useState(false);
   const [showLeftInFocus, setShowLeftInFocus] = useState(false);
-  const [showTopInFocus, setShowTopInFocus] = useState(false);
-  const [showBottomInFocus, setShowBottomInFocus] = useState(false);
+  const [showBottomLeftInFocus, setShowBottomLeftInFocus] = useState(false);
+  const [showBottomRightInFocus, setShowBottomRightInFocus] = useState(false);
 
-  // Automatically collapse all HUDs when entering focus mode
+  // Automatically collapse all 5 HUDs when entering focus mode
   useEffect(() => {
     if (isFocusMode) {
+      setShowTopLeftInFocus(false);
+      setShowTopRightInFocus(false);
       setShowLeftInFocus(false);
-      setShowTopInFocus(false);
-      setShowBottomInFocus(false);
+      setShowBottomLeftInFocus(false);
+      setShowBottomRightInFocus(false);
     }
   }, [isFocusMode]);
-
-  const isLeftVisible = !isFocusMode || showLeftInFocus;
-  const isTopVisible = !isFocusMode || showTopInFocus;
-  const isBottomVisible = !isFocusMode || showBottomInFocus;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-white select-none">
@@ -44,116 +45,140 @@ export default function StudySpaceDeskView() {
         <VrFrameOverlay />
       </div>
 
-      {/* ================= LEFT TOOL CREATION BAR ================= */}
+      {/* ================= 1. TOP-LEFT NAV HUD (ViTudy | Tên bàn học | Search) ================= */}
       <div 
         className={clsx(
-          "fixed left-0 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-out flex items-center",
-          isLeftVisible ? "translate-x-0" : "-translate-x-full pointer-events-none"
+          "fixed top-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          isFocusMode && !showTopLeftInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >
-        <LeftCreationBar />
+        <TopLeftNav />
 
-        {/* Retract button sticking to midpoint of left bar pointing towards the wall */}
-        {isFocusMode && isLeftVisible && (
+        {/* Attached Pull/Retract Tab for Top-Left Nav in Focus Mode */}
+        {isFocusMode && (
           <button
             type="button"
-            onClick={() => setShowLeftInFocus(false)}
-            title="Thu gọn thanh công cụ vào vách"
-            className="ml-1 z-50 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-r-xl p-1 shadow-md cursor-pointer transition-all hover:bg-slate-50 active:scale-95 pointer-events-auto"
+            onClick={() => setShowTopLeftInFocus(prev => !prev)}
+            title={showTopLeftInFocus ? "Thu gọn thanh tiêu đề lên trên" : "Mở thanh tiêu đề bàn học"}
+            className="absolute top-full left-6 mt-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
           >
-            <ChevronLeft className="w-3.5 h-3.5 stroke-[2.4]" />
+            {showTopLeftInFocus ? (
+              <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+            )}
           </button>
         )}
       </div>
 
-      {/* Peek button on left wall when Left bar is collapsed in focus mode */}
-      {isFocusMode && !isLeftVisible && (
-        <button
-          type="button"
-          onClick={() => setShowLeftInFocus(true)}
-          title="Mở thanh công cụ"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-l-0 border-slate-300 rounded-r-xl p-2 shadow-md cursor-pointer transition-transform hover:translate-x-0.5 active:scale-95 animate-fade-in pointer-events-auto"
-        >
-          <ChevronRight className="w-4 h-4 stroke-[2.4]" />
-        </button>
-      )}
-
-      {/* ================= TOP NAV & WALLET HUD ================= */}
+      {/* ================= 2. TOP-RIGHT WALLET HUD (Chuỗi | Chợ | ViToken | AI) ================= */}
       <div 
         className={clsx(
-          "fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ease-out pointer-events-none",
-          isTopVisible ? "translate-y-0" : "-translate-y-full"
+          "fixed top-1 right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          isFocusMode && !showTopRightInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >
-        <div className="relative w-full h-full pointer-events-auto">
-          <TopLeftNav />
-          <TopRightWallet />
+        <TopRightWallet />
 
-          {/* Retract button sticking to midpoint of top bar pointing upwards */}
-          {isFocusMode && isTopVisible && (
-            <button
-              type="button"
-              onClick={() => setShowTopInFocus(false)}
-              title="Thu gọn thanh điều hướng lên trên"
-              className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-3 py-0.5 shadow-md cursor-pointer transition-all hover:bg-slate-50 flex items-center justify-center active:scale-95 pointer-events-auto"
-            >
+        {/* Attached Pull/Retract Tab for Top-Right Wallet in Focus Mode */}
+        {isFocusMode && (
+          <button
+            type="button"
+            onClick={() => setShowTopRightInFocus(prev => !prev)}
+            title={showTopRightInFocus ? "Thu gọn thanh ví & chuỗi lên trên" : "Mở thanh ví & chuỗi điểm danh"}
+            className="absolute top-full right-6 mt-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+          >
+            {showTopRightInFocus ? (
               <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
-            </button>
-          )}
-        </div>
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+            )}
+          </button>
+        )}
       </div>
 
-      {/* Peek button on top wall when Top bar is collapsed in focus mode */}
-      {isFocusMode && !isTopVisible && (
-        <button
-          type="button"
-          onClick={() => setShowTopInFocus(true)}
-          title="Hiển thị Menu và Điểm danh"
-          className="fixed top-0 left-1/2 -translate-x-1/2 z-50 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-t-0 border-slate-300 rounded-b-xl px-3 py-1 shadow-md cursor-pointer transition-transform hover:translate-y-0.5 active:scale-95 animate-fade-in flex items-center gap-1.5 text-xs font-bold pointer-events-auto"
-        >
-          <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
-          <span>Menu</span>
-        </button>
-      )}
-
-      {/* ================= BOTTOM TOOLS & KNOWLEDGE HUD ================= */}
+      {/* ================= 3. LEFT TOOL CREATION BAR ================= */}
       <div 
         className={clsx(
-          "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ease-out pointer-events-none",
-          isBottomVisible ? "translate-y-0" : "translate-y-full"
+          "fixed left-1 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
+          isFocusMode && !showLeftInFocus ? "-translate-x-[calc(100%+12px)]" : "translate-x-0"
         )}
       >
-        <div className="relative w-full h-full pointer-events-auto">
-          <BottomLeftKnowledge />
-          <BottomRightToolkit />
-          <MultiplayerBar />
+        <LeftCreationBar />
 
-          {/* Retract button sticking to midpoint of bottom bar pointing downwards */}
-          {isFocusMode && isBottomVisible && (
-            <button
-              type="button"
-              onClick={() => setShowBottomInFocus(false)}
-              title="Thu gọn công cụ xuống dưới"
-              className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-t-xl px-3 py-0.5 shadow-md cursor-pointer transition-all hover:bg-slate-50 flex items-center justify-center active:scale-95 pointer-events-auto"
-            >
-              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
-            </button>
-          )}
-        </div>
+        {/* Attached Pull/Retract Tab for Left Toolbar in Focus Mode */}
+        {isFocusMode && (
+          <button
+            type="button"
+            onClick={() => setShowLeftInFocus(prev => !prev)}
+            title={showLeftInFocus ? "Thu gọn thanh công cụ vào vách" : "Mở thanh công cụ vẽ & ghi chú"}
+            className="absolute left-full top-1/2 -translate-y-1/2 ml-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-r-xl p-1 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+          >
+            {showLeftInFocus ? (
+              <ChevronLeft className="w-3.5 h-3.5 stroke-[2.4]" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
+            )}
+          </button>
+        )}
       </div>
 
-      {/* Peek button on bottom wall when Bottom bar is collapsed in focus mode */}
-      {isFocusMode && !isBottomVisible && (
-        <button
-          type="button"
-          onClick={() => setShowBottomInFocus(true)}
-          title="Hiển thị thanh công cụ bàn học"
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-b-0 border-slate-300 rounded-t-xl px-3 py-1 shadow-md cursor-pointer transition-transform hover:-translate-y-0.5 active:scale-95 animate-fade-in flex items-center gap-1.5 text-xs font-bold pointer-events-auto"
-        >
-          <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
-          <span>Công cụ</span>
-        </button>
-      )}
+      {/* ================= 4. BOTTOM-LEFT KNOWLEDGE HUD (Tải lên, Ghi hình, Chia sẻ) ================= */}
+      <div 
+        className={clsx(
+          "fixed bottom-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          isFocusMode && !showBottomLeftInFocus ? "translate-y-[calc(100%+12px)]" : "translate-y-0"
+        )}
+      >
+        <BottomLeftKnowledge />
+
+        {/* Attached Pull/Retract Tab for Bottom-Left in Focus Mode */}
+        {isFocusMode && (
+          <button
+            type="button"
+            onClick={() => setShowBottomLeftInFocus(prev => !prev)}
+            title={showBottomLeftInFocus ? "Thu gọn bộ nút tải lên xuống dưới" : "Mở bộ nút tải lên & ghi hình"}
+            className="absolute bottom-full left-6 mb-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-t-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+          >
+            {showBottomLeftInFocus ? (
+              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+            ) : (
+              <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* ================= 5. BOTTOM-RIGHT TOOLKIT HUD (Zoom, Xoay, Map) ================= */}
+      <div 
+        className={clsx(
+          "fixed bottom-1 right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          isFocusMode && !showBottomRightInFocus ? "translate-y-[calc(100%+12px)]" : "translate-y-0"
+        )}
+      >
+        <BottomRightToolkit />
+
+        {/* Attached Pull/Retract Tab for Bottom-Right in Focus Mode */}
+        {isFocusMode && (
+          <button
+            type="button"
+            onClick={() => setShowBottomRightInFocus(prev => !prev)}
+            title={showBottomRightInFocus ? "Thu gọn thanh điều khiển xuống dưới" : "Mở thanh zoom & điều khiển bàn học"}
+            className="absolute bottom-full right-6 mb-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-t-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+          >
+            {showBottomRightInFocus ? (
+              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+            ) : (
+              <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* ================= MULTIPLAYER PRESENCE BAR (fades in focus mode) ================= */}
+      <div className={clsx("transition-opacity duration-300", isFocusMode ? "opacity-0 pointer-events-none" : "opacity-100")}>
+        <MultiplayerBar />
+      </div>
     </div>
   );
 }

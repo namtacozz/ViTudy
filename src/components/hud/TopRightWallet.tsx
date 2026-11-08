@@ -184,7 +184,7 @@ export function TopRightWallet() {
 
   return (
     <>
-      <div className="absolute top-1 right-1 z-40 flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none">
+      <div className="relative flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none">
         {/* Daily Streak Button */}
         <button
           onClick={() => {
@@ -197,18 +197,18 @@ export function TopRightWallet() {
           }`}
         >
           {wallet.streakDays > 0 ? (
-            <div className="relative flex items-center justify-center w-9 h-9">
-              {/* Ngọn lửa đưa cao hơn để phần bụng tròn ôm trọn số bên trong */}
-              <Flame className="w-8 h-8 text-[#E0562D] fill-[#E0562D] -translate-y-1 transition-transform group-hover:scale-105 drop-shadow-xs" />
-              {/* Số chuỗi nằm gọn gàng bên trong bụng lửa rõ ràng không bị lệch */}
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-black font-mono text-white select-none pointer-events-none -translate-y-0.5">
+            <div className="relative flex items-center justify-center w-10 h-10">
+              {/* Ngọn lửa Cam ViT với bụng tròn ôm trọn số chuỗi ngày */}
+              <Flame className="w-8.5 h-8.5 text-[#E0562D] fill-[#E0562D] drop-shadow-xs transition-transform group-hover:scale-105" />
+              {/* Số chuỗi căn chuẩn xác 100% vào tâm bụng tròn ngọn lửa (x=50%, y=64%) */}
+              <span className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black font-mono text-white select-none pointer-events-none leading-none">
                 {wallet.streakDays}
               </span>
             </div>
           ) : (
-            <div className="relative flex items-center justify-center w-8 h-8">
-              <Flame className="w-7 h-7 text-slate-400 stroke-[2] -translate-y-0.5 transition-transform group-hover:scale-105" />
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold font-mono text-slate-500 select-none pointer-events-none -translate-y-0.5">
+            <div className="relative flex items-center justify-center w-10 h-10">
+              <Flame className="w-7.5 h-7.5 text-slate-400 stroke-[2] transition-transform group-hover:scale-105" />
+              <span className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10.5px] font-bold font-mono text-slate-500 select-none pointer-events-none leading-none">
                 0
               </span>
             </div>

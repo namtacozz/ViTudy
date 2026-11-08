@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `9c1d884`  
+> **Commit Hash:** `da4dbf8`  
 > **Cập nhật lần cuối:** `2026-11-08`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -19,7 +19,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `ItemDrawingOverlay` | `component` | [src/components/canvas/ItemDrawingOverlay.tsx:L6-L72](file:///F:/AppMaking/ViTudy/src/components/canvas/ItemDrawingOverlay.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
 | `Minimap` | `component` | [src/components/canvas/Minimap.tsx:L12-L228](file:///F:/AppMaking/ViTudy/src/components/canvas/Minimap.tsx) | Bản đồ radar thu nhỏ góc nhìn toàn cảnh không gian bàn học 2.5D |
 | `MultiplayerCursorsLayer` | `component` | [src/components/canvas/MultiplayerCursorsLayer.tsx:L11-L44](file:///F:/AppMaking/ViTudy/src/components/canvas/MultiplayerCursorsLayer.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
-| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L16-L159](file:///F:/AppMaking/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
+| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L16-L184](file:///F:/AppMaking/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
 | `VisualLinkThreads` | `component` | [src/components/canvas/VisualLinkThreads.tsx:L6-L211](file:///F:/AppMaking/ViTudy/src/components/canvas/VisualLinkThreads.tsx) | Vẽ các đường dây nối SVG trực quan từ đoạn trích sách sang giấy note Inteline |
 
 ### Objects (Sách, Giấy, Note)
@@ -27,7 +27,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
 | `BookSpread` | `component` | [src/components/objects/BookSpread.tsx:L36-L962](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Mô phỏng cuốn sách mở 2.5D, phân trang động DOM, bìa cứng, gờ gáy và popover Inteline |
-| `ExamQuizCard` | `component` | [src/components/objects/ExamQuizCard.tsx:L42-L660](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `ExamQuizCard` | `component` | [src/components/objects/ExamQuizCard.tsx:L42-L691](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `PaperSheet` | `component` | [src/components/objects/PaperSheet.tsx:L39-L733](file:///F:/AppMaking/ViTudy/src/components/objects/PaperSheet.tsx) | Mô phỏng tờ giấy A4/ghi chép đơn lẻ 2.5D với độ xoay tự do và texture giấy |
 | `StickyNoteItem` | `component` | [src/components/objects/StickyNoteItem.tsx:L18-L588](file:///F:/AppMaking/ViTudy/src/components/objects/StickyNoteItem.tsx) | Giấy ghi chú dán bàn học (Patrick Hand font, NFC normalized, xoay 360°) |
 
@@ -36,7 +36,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
 | `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L36-L776](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
-| `BottomRightToolkit` | `component` | [src/components/hud/BottomRightToolkit.tsx:L17-L187](file:///F:/AppMaking/ViTudy/src/components/hud/BottomRightToolkit.tsx) | HUD góc dưới-phải: công cụ bút dạ quang, tạo note, khoá góc nhìn, zoom 100% |
+| `BottomRightToolkit` | `component` | [src/components/hud/BottomRightToolkit.tsx:L17-L196](file:///F:/AppMaking/ViTudy/src/components/hud/BottomRightToolkit.tsx) | HUD góc dưới-phải: công cụ bút dạ quang, tạo note, khoá góc nhìn, zoom 100% |
 | `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L28-L496](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L22-L359](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L18-L303](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |

@@ -155,7 +155,7 @@ export function LeftCreationBar() {
   })();
 
   return (
-    <div className="absolute left-1 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 pointer-events-auto select-none">
+    <div className="relative flex flex-col items-center gap-1.5 pointer-events-auto select-none">
       {/* Miro-style Vertical Tool Island (Optimized compact spacing) */}
       <div className="bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-lg backdrop-blur-md flex flex-col items-center gap-1 relative">
         {/* Select (Cursor) Tool */}
@@ -450,43 +450,43 @@ export function LeftCreationBar() {
         )}
       </div>
 
-      {/* Grouped Undo & Redo Column Pill below toolbar */}
-      <div className="bg-white/95 border border-slate-300 rounded-2xl p-1 shadow-md backdrop-blur-md flex flex-col items-center gap-0.5 text-slate-900">
+      {/* Grouped Undo & Redo Column Pill below toolbar (Width and button sizes matching the main toolbar above) */}
+      <div className="w-full bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-md backdrop-blur-md flex flex-col items-center gap-1 text-slate-900">
         <button
           title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
           onClick={undoStroke}
           disabled={strokes.length === 0}
-          className={`w-7.5 h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             strokes.length > 0
-              ? 'text-slate-800 hover:bg-slate-100 hover:text-black'
+              ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Undo2 className="w-4 h-4 stroke-[2.4]" />
+          <Undo2 className="w-5 h-5 stroke-[2.4]" />
         </button>
 
         <button
           title="Làm lại nét vẽ (Redo • Ctrl+Y)"
           onClick={redoStroke}
           disabled={redoStack.length === 0}
-          className={`w-7.5 h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             redoStack.length > 0
-              ? 'text-slate-800 hover:bg-slate-100 hover:text-black'
+              ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Redo2 className="w-4 h-4 stroke-[2.4]" />
+          <Redo2 className="w-5 h-5 stroke-[2.4]" />
         </button>
 
         {strokes.length > 0 && (
           <>
-            <div className="w-4 h-[1px] bg-slate-200 my-0.5" />
+            <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
             <button
               title="Xóa toàn bộ nét vẽ"
               onClick={clearStrokes}
-              className="w-7.5 h-7.5 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95"
             >
-              <Trash2 className="w-3.5 h-3.5 stroke-[2.4]" />
+              <Trash2 className="w-5 h-5 stroke-[2.4]" />
             </button>
           </>
         )}

@@ -328,7 +328,7 @@ export function BottomLeftKnowledge() {
   };
 
   return (
-    <div className="absolute bottom-1 left-1 z-40 flex items-center gap-2 pointer-events-auto select-none font-sans">
+    <div className="relative flex items-center gap-2 pointer-events-auto select-none font-sans">
       {/* Hidden Native File Explorer Input */}
       <input
         ref={fileInputRef}
