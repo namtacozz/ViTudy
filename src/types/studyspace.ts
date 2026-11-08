@@ -51,6 +51,7 @@ export interface DeskItem {
   sourceDocuments?: { id: string; title: string; pageCount: number }[];
   stickyText?: string;
   stickyColor?: string;
+  coverColor?: string; // Rich leather hardcover color preset
   textAlign?: 'left' | 'center' | 'right';
   isBold?: boolean;
   isExamSheet?: boolean;

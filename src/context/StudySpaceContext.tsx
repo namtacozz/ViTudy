@@ -40,6 +40,7 @@ interface StudySpaceContextType {
   tidyUpDesk?: () => void;
   fitAllToScreen?: () => void;
   updateStickyNoteColor?: (id: string, color: string) => void;
+  updateBookCoverColor?: (id: string, color: string) => void;
   updateStickyNoteText?: (id: string, text: string) => void;
   updateStickyNoteTextAlign?: (id: string, align: 'left' | 'center' | 'right') => void;
   updateStickyNoteIsBold?: (id: string, isBold: boolean) => void;
@@ -549,6 +550,20 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           ...s,
           items: s.items.map(item =>
             item.id === id ? { ...item, stickyColor: color } : item
+          )
+        };
+      })
+    );
+  };
+
+  const updateBookCoverColor = (id: string, color: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, coverColor: color } : item
           )
         };
       })
@@ -1146,6 +1161,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         detachPageFromBinder,
         updateStickyNoteText,
         updateStickyNoteColor,
+        updateBookCoverColor,
         updateStickyNoteTextAlign,
         updateStickyNoteIsBold,
         tidyUpDesk,

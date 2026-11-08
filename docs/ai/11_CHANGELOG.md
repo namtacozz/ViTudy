@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-11-08 18:05 — commit BROWSER_PDF_READER_BOOK_LEATHER_PRESETS_SHARP_QUIZ_AND_VITUDY_BRAND
+- **Task:** Triển khai trọn bộ 5 yêu cầu cải tiến giao diện theo hình ảnh thực tế và phản hồi của người dùng:
+  1. **Triệt tiêu khung viền đậm và làm chữ thẻ trắc nghiệm sắc nét như sách thật (`ExamQuizCard.tsx`):**
+     - Gỡ bỏ hoàn toàn `ring-2 ring-slate-900` và khung viền đậm rỗng xung quanh thẻ, chỉ giữ bóng đổ mềm tự nhiên `shadow-xl` / `shadow-2xl`.
+     - Khắc phục hiện tượng mờ chữ khi thu nhỏ bàn học: Gỡ bỏ toàn bộ layer 3D compositing (`perspective`, `transform-style: preserve-3d`) khi thẻ ở trạng thái nghỉ (`idle`), kích hoạt `textRendering: 'geometricPrecision'` và `WebkitFontSmoothing: 'antialiased'` giúp chữ và lựa chọn đáp án hiển thị sắc nét 100% như trang sách thật.
+     - Bổ sung ô chọn màu nền pastel trên thanh công cụ nổi của thẻ trắc nghiệm với 8 màu tương ứng giấy note.
+  2. **Bỏ nhãn chữ "NOTE" khi chọn tạo note mới (`LeftCreationBar.tsx`):**
+     - Loại bỏ header "NOTE", giữ lại bảng 5 ô màu pastel tối giản.
+  3. **Đa dạng 5 gam màu da bìa sách cao cấp & Thanh nhắc bookmark "Màu Bìa" (`BookSpread.tsx`, `StudySpaceContext.tsx`, `studyspace.ts`):**
+     - Bổ sung 5 preset da thật: Nâu Da Cổ Điển (`#5c3920`), Đỏ Đậm Burgundy (`#6b1d28`), Xanh Nước Biển Đậm Navy (`#1e3a5f`), Xanh Lá Rừng Đậm Forest (`#1b4d3e`), và Hồng Mận Đậm Plum (`#5b2149`).
+     - Thanh nhắc bookmark thứ 5 màu Vàng Kim (`#ca8a04`) với quy trình tương tác 3 trạng thái: Icon `Palette` -> Rê chuột hiện `Màu Bìa [Palette icon]` -> Bấm mở rộng `[Bảng 5 màu da] | Màu Bìa [Palette icon]` để chuyển màu da bìa sách tức thì.
+  4. **Chữ thương hiệu ViTudy chuẩn Cam ViT (`TopLeftNav.tsx`):**
+     - Loại bỏ nút icon La bàn (Compass) bên trái chữ ViTudy.
+     - Giữ nguyên vẹn chữ "ViTudy" với màu Cam ViT (`#E0562D`), cỡ chữ to rõ (`text-lg font-black leading-none`).
+  5. **Tái thiết kế trình đọc toàn màn hình chuẩn trình duyệt PDF (`FullScreenDocModal.tsx`):**
+     - Thay thế toàn bộ tông nền tối AI bằng ngôn ngữ HUD trắng / Slate-50 thanh lịch, nền đọc `#e8ebf0` chống chói.
+     - Thanh điều khiển trên đỉnh màn hình phong cách browser PDF reader (`PanelLeft`, Title, `< 1 / N >`, `- 100% + Đặt lại`, `Xoay`, `1/2 Trang`, `In`, `Thoát Esc`).
+     - Bảng danh mục trang thu nhỏ (collapsible thumbnails sidebar) bên trái trực quan với viền cam `#E0562D` cho trang đang đọc.
+     - Tích hợp KaTeX math formulas hiển thị hoàn hảo các công thức toán học.
+- **Verified by:**
+  - Chạy kiểm thử tự động trên Chrome CDP (port 9222):
+    - `verified_pdf_viewer_hud_style.png`: Trình đọc PDF toàn màn hình chuẩn browser, thanh công cụ HUD và bảng trang thu nhỏ bên trái.
+    - `verified_note_flyout_no_text.png`: Flyout chọn màu note không còn chữ "NOTE".
+    - `verified_book_cover_tabs_open.png`: Thanh nhắc Màu Bìa mở bảng 5 màu da thật.
+    - `verified_book_navy_cover.png`: Bìa sách chuyển sang màu da Xanh Nước Biển Đậm Navy (`#1e3a5f`) sang trọng.
+    - `verified_vitudy_brand_text.png`: Chữ ViTudy màu cam to rõ không có icon la bàn thừa.
+- **Open follow-ups:** Sẵn sàng nghiệm thu và deploy.
+
+---
+
 ## 2026-11-08 17:40 — commit QUIZ_CARD_CLEAN_3D_FLIP_AND_ATTACHED_FOCUS_DRAWERS
 - **Task:** Xử lý triệt để các lỗi giao diện và trải nghiệm 3D theo ảnh chụp thực tế của người dùng:
   1. **Khắc phục lỗi lật thẻ trắc nghiệm 3D (`ExamQuizCard.tsx`):**

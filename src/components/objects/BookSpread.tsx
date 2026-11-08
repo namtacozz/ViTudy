@@ -16,7 +16,9 @@ import {
   Loader2,
   Lightbulb,
   BookOpen,
-  Eye
+  Eye,
+  Palette,
+  Check
 } from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { MathRenderer } from '../common/MathRenderer';
@@ -33,6 +35,49 @@ interface BookSpreadProps {
   isSelected: boolean;
 }
 
+export const BOOK_COVER_PRESETS = [
+  {
+    id: 'brown',
+    name: 'Nâu Da',
+    gradient: 'linear-gradient(135deg, #5c3920 0%, #462814 50%, #341c0c 100%)',
+    border: '2px solid rgba(113, 67, 36, 0.85)',
+    tabBg: '#78350f',
+    swatch: '#5c3920'
+  },
+  {
+    id: 'burgundy',
+    name: 'Đỏ Đậm',
+    gradient: 'linear-gradient(135deg, #6b1d28 0%, #4e121b 50%, #360a12 100%)',
+    border: '2px solid rgba(140, 40, 55, 0.85)',
+    tabBg: '#881337',
+    swatch: '#6b1d28'
+  },
+  {
+    id: 'navy',
+    name: 'Xanh Nước Đậm',
+    gradient: 'linear-gradient(135deg, #1e3a5f 0%, #152843 50%, #0d1a2d 100%)',
+    border: '2px solid rgba(45, 85, 135, 0.85)',
+    tabBg: '#0369a1',
+    swatch: '#1e3a5f'
+  },
+  {
+    id: 'forest',
+    name: 'Xanh Lá Đậm',
+    gradient: 'linear-gradient(135deg, #1b4d3e 0%, #13382d 50%, #0c241d 100%)',
+    border: '2px solid rgba(38, 105, 85, 0.85)',
+    tabBg: '#047857',
+    swatch: '#1b4d3e'
+  },
+  {
+    id: 'plum',
+    name: 'Hồng Đậm',
+    gradient: 'linear-gradient(135deg, #5b2149 0%, #421634 50%, #2b0c21 100%)',
+    border: '2px solid rgba(125, 45, 100, 0.85)',
+    tabBg: '#9d174d',
+    swatch: '#5b2149'
+  }
+];
+
 export function BookSpread({ item, isSelected }: BookSpreadProps) {
   const { 
     transform, 
@@ -44,7 +89,8 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
     setTransform,
     focusedItemId,
     enterFocusMode,
-    exitFocusMode
+    exitFocusMode,
+    updateBookCoverColor
   } = useStudySpace();
 
   const { spendTokens } = useViToken();
@@ -53,6 +99,9 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
   const [isConfirmDelete, setIsConfirmDelete] = useState(false);
+  const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
+
+  const currentCover = BOOK_COVER_PRESETS.find(p => p.id === item.coverColor || p.gradient === item.coverColor) || BOOK_COVER_PRESETS[0];
 
   // Focus Reading Mode: True when this book is the focused item
   const isFocusReading = focusedItemId === item.id;
@@ -315,17 +364,17 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
           selectItem(item.id);
         }}
       >
-        {/* ================= RICH BROWN LEATHER HARDCOVER (3X HORIZONTAL MARGIN: 42PX - DRAGGABLE ON LEATHER) ================= */}
+        {/* ================= RICH LEATHER HARDCOVER (3X HORIZONTAL MARGIN: 42PX - DRAGGABLE ON LEATHER) ================= */}
         <div 
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
               handleMouseDown(e);
             }
           }}
-          className="w-full h-full rounded-2xl flex relative z-10 overflow-visible cursor-grab active:cursor-grabbing"
+          className="w-full h-full rounded-2xl flex relative z-10 overflow-visible cursor-grab active:cursor-grabbing transition-colors duration-300"
           style={{
-            background: 'linear-gradient(135deg, #5c3920 0%, #462814 50%, #341c0c 100%)',
-            border: '2px solid rgba(113, 67, 36, 0.85)',
+            background: currentCover.gradient,
+            border: currentCover.border,
             boxShadow: '0 16px 40px -4px rgba(35, 18, 8, 0.45), 0 30px 60px -12px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.4)',
             padding: '12px 42px' // Increased horizontal padding to 42px (3x from 14px)
           }}
@@ -434,6 +483,57 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                   Xoay
                 </span>
                 <RotateTwoWay className="w-4 h-4 text-amber-100 flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Tab: Màu bìa (icon -> Màu Bìa [icon] -> Bảng màu | Màu Bìa [icon]) */}
+            <div className="relative group/tab flex items-center">
+              <button
+                type="button"
+                onClick={() => setIsCoverPickerOpen(prev => !prev)}
+                title="Đổi màu bìa sách (Bấm để mở 5 màu da cao cấp)"
+                className={clsx(
+                  "h-8 flex items-center justify-between pl-[14px] pr-4 gap-0 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden text-white",
+                  isCoverPickerOpen
+                    ? "w-[272px] bg-slate-900 ring-2 ring-amber-400/60"
+                    : "w-[48px] group-hover/tab:w-[120px] bg-amber-800 hover:bg-amber-700 active:scale-95 group-hover/tab:gap-2"
+                )}
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+              >
+                {isCoverPickerOpen ? (
+                  <div className="flex items-center gap-1.5 pr-2" onClick={(e) => e.stopPropagation()}>
+                    {BOOK_COVER_PRESETS.map((c) => {
+                      const isCur = c.id === currentCover.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          title={c.name}
+                          onClick={() => {
+                            updateBookCoverColor?.(item.id, c.id);
+                          }}
+                          style={{ background: c.gradient }}
+                          className={`w-5 h-5 rounded-full border border-white/60 hover:scale-125 transition-transform flex items-center justify-center cursor-pointer shadow-xs ${
+                            isCur ? 'ring-2 ring-white scale-110' : 'opacity-85'
+                          }`}
+                        >
+                          {isCur && <Check className="w-3 h-3 stroke-[3] text-white" />}
+                        </button>
+                      );
+                    })}
+                    <div className="w-[1px] h-4 bg-white/30 mx-1" />
+                    <span className="text-xs font-bold text-amber-200 whitespace-nowrap">
+                      Màu Bìa
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap max-w-0 opacity-0 group-hover/tab:max-w-[70px] group-hover/tab:opacity-100 transition-all duration-200 overflow-hidden">
+                    Màu bìa
+                  </span>
+                )}
+                <Palette className="w-4 h-4 text-amber-100 flex-shrink-0" />
               </button>
             </div>
 

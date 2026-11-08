@@ -251,10 +251,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
         {isNoteFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white/95 border border-slate-300 rounded-2xl p-2.5 shadow-xl backdrop-blur-md flex flex-col gap-2 z-50 animate-fade-in">
-            <div className="text-[10px] font-black text-slate-500 px-0.5 text-center uppercase tracking-wider">
-              NOTE
-            </div>
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white/95 border border-slate-300 rounded-2xl p-2 shadow-xl backdrop-blur-md flex flex-col gap-2 z-50 animate-fade-in">
             {stickyColors.map(c => (
               <button
                 key={c.value}

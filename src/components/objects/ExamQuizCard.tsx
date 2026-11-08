@@ -37,6 +37,9 @@ const NOTE_PALETTE = [
   { bg: '#bbf7d0', border: '#86efac', accent: '#16a34a', name: 'Xanh lá nhạt' },
   { bg: '#bae6fd', border: '#7dd3fc', accent: '#0284c7', name: 'Xanh dương nhạt' },
   { bg: '#fbcfe8', border: '#f472b6', accent: '#db2777', name: 'Hồng phấn' },
+  { bg: '#ddd6fe', border: '#c4b5fd', accent: '#7c3aed', name: 'Tím nhạt' },
+  { bg: '#ffffff', border: '#e2e8f0', accent: '#475569', name: 'Trắng' },
+  { bg: '#e2e8f0', border: '#cbd5e1', accent: '#334155', name: 'Xám sáng' },
 ];
 
 export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
@@ -46,10 +49,12 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
     updateExamAnswer,
     gradeExam,
     resetExam,
-    updateItemTitle
+    updateItemTitle,
+    updateStickyNoteColor
   } = useStudySpace();
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
   // Dimensions: Compact rectangular flashcard size
   const CARD_WIDTH = 380;
@@ -241,32 +246,36 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
         selectItem(item.id);
       }}
     >
-      {/* 3D Flip Perspective Container */}
+      {/* 3D Flip Perspective Container: only active during 3D flip to prevent font blurriness */}
       <div 
         style={{
-          perspective: '1200px',
+          perspective: flipState.phase !== 'idle' ? '1200px' : undefined,
           width: '100%',
           height: '100%'
         }}
       >
-        {/* Card Shell with Pastel Note Background */}
+        {/* Card Shell with Pastel Note Background: drops 3D layer at idle for razor-sharp vector text */}
         <div
           style={{
             backgroundColor: cardColor,
-            transform: `rotateY(${flipState.angle}deg) ${flipState.phase !== 'idle' ? 'scale(0.96)' : 'scale(1)'}`,
+            transform: flipState.phase !== 'idle' 
+              ? `rotateY(${flipState.angle}deg) scale(0.96)` 
+              : undefined,
             transition: flipState.withTransition
               ? flipState.phase === 'out'
                 ? 'transform 0.16s cubic-bezier(0.4, 0, 0.7, 0.2)'
                 : 'transform 0.18s cubic-bezier(0.2, 0.8, 0.4, 1)'
-              : 'none',
-            transformStyle: 'preserve-3d',
+              : undefined,
+            transformStyle: flipState.phase !== 'idle' ? 'preserve-3d' : undefined,
             transformOrigin: 'center center',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
+            backfaceVisibility: flipState.phase !== 'idle' ? 'hidden' : undefined,
+            WebkitBackfaceVisibility: flipState.phase !== 'idle' ? 'hidden' : undefined,
+            textRendering: 'geometricPrecision',
+            WebkitFontSmoothing: 'antialiased',
           }}
           className={`w-full h-full rounded-2xl flex flex-col justify-between border border-black/10 relative overflow-hidden font-sans text-slate-900 transition-shadow ${
             isSelected && flipState.phase === 'idle'
-              ? 'ring-2 ring-slate-900 shadow-2xl'
+              ? 'shadow-2xl'
               : 'shadow-xl'
           }`}
         >
@@ -665,6 +674,43 @@ export function ExamQuizCard({ item, isSelected }: ExamQuizCardProps) {
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Color Palette Selector matching Sticky Note */}
+        <div className="relative flex items-center pr-1 border-r border-slate-200">
+          <button
+            title="Đổi màu nền thẻ trắc nghiệm"
+            onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+            style={{ backgroundColor: cardColor }}
+            className="w-5 h-5 rounded-full border-2 border-white shadow-xs ring-1 ring-black/20 hover:scale-115 transition-transform cursor-pointer flex items-center justify-center flex-shrink-0"
+          />
+
+          {isColorPickerOpen && (
+            <div 
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 p-2 grid grid-cols-4 gap-1.5 z-50 animate-fade-in w-40"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {NOTE_PALETTE.map((c) => {
+                const isCur = cardColor.toLowerCase() === c.bg.toLowerCase();
+                return (
+                  <button
+                    key={c.bg}
+                    title={c.name}
+                    onClick={() => {
+                      updateStickyNoteColor?.(item.id, c.bg);
+                      setIsColorPickerOpen(false);
+                    }}
+                    style={{ backgroundColor: c.bg }}
+                    className="w-7 h-7 rounded-full border border-black/10 hover:scale-110 transition-transform flex items-center justify-center cursor-pointer shadow-2xs relative"
+                  >
+                    {isCur && (
+                      <Check className="w-3.5 h-3.5 stroke-[2.5] text-slate-900" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Nút Xoay 360 */}
         <button
           title="Kéo để xoay thẻ trắc nghiệm 360°, nhấn đúp căn thẳng 0°"

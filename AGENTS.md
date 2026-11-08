@@ -156,11 +156,30 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Tên Sách Dưới Bìa (Bottom Title Badge):**
     * Chỉ hiển thị tên sách tinh gọn, không có icon quyển sách, không có thanh trượt tiến trình (scrubber) hay dòng chữ lật trang.
     * Nằm hở một khoảng cách bên dưới đáy bìa sách (`top-full mt-3.5`), tuyệt đối không đè lên trang sách hay bìa sách.
+  * **Đa Dạng 5 Màu Bìa Sách Da Thật & Thanh Nhắc Bookmark "Màu Bìa" (Leather Hardcover Presets):**
+    * Cung cấp 5 gam màu da bìa sách cao cấp giữ trọn chiều sâu sang trọng: **Nâu Da Cổ Điển** (`#5c3920`), **Đỏ Đậm Burgundy** (`#6b1d28`), **Xanh Nước Biển Đậm Navy** (`#1e3a5f`), **Xanh Lá Rừng Đậm Forest** (`#1b4d3e`), và **Hồng Mận Đậm Plum** (`#5b2149`).
+    * Thanh nhắc bookmark thứ 5 màu Vàng Kim (`#ca8a04`) với biểu tượng `Palette`:
+      * *Trạng thái nghỉ (idle):* Thu gọn `w-[48px]`, chỉ hiển thị icon `Palette`.
+      * *Rê chuột (hover):* Trượt mở nhẹ hiển thị `Màu Bìa [Palette icon]` (`w-[120px]`).
+      * *Nhấp chọn (click):* Trượt mở rộng hiển thị `[Bảng 5 màu da] | Màu Bìa [Palette icon]` (`w-[272px]`). Nhấp vào bất kỳ màu nào sẽ cập nhật tức thì màu bìa của cuốn sách.
   * **Hỏi AI Inteline:**
     * Kích hoạt độc quyền theo cơ chế bôi đen văn bản: Khi người dùng **bôi đen đoạn văn bản trong sách**, một thẻ card hỏi nhanh nổi lên **ngay tại vị trí kết thúc của đoạn bôi đen** kèm khung đặt câu hỏi, các gợi ý câu hỏi nhanh (Giải thích, Ví dụ, Ý chính) và trả lời trực tiếp tại chỗ.
     * Không đặt nút bấm Inteline rời rạc trên bất kỳ thanh overlay nào.
-* **Chế Độ Xem Toàn Màn Hình (Full-Screen Document Reader / PDF View):**
-  * Nút "Xem Full" (`Maximize2`) trên thẻ bookmark tab bìa phải cho phép mở giao diện đọc toàn màn hình kiểu PDF reader, hỗ trợ chuyển trang, zoom (60%–160%), chuyển đổi 1 trang / 2 trang, và nút thoát rõ ràng (kèm phím tắt `Esc`).
+* **Chế Độ Xem Toàn Màn Hình Chuẩn Trình Duyệt PDF (Browser PDF Reader Standard):**
+  * Nút "Xem Full" (`Maximize2`) trên thẻ bookmark tab bìa phải cho phép mở giao diện đọc toàn màn hình chuẩn trình duyệt PDF với ngôn ngữ thiết kế HUD đơn sắc:
+    * Nền canvas `#e8ebf0` dịu mắt, chống lóa.
+    * Thanh điều khiển trên đỉnh màn hình phong cách HUD màu trắng / Slate-50: nút bật/tắt bảng trang thu nhỏ (`PanelLeft`), tiêu đề tài liệu kèm số trang, chuyển trang trực tiếp (`< 1 / N >`), thanh trượt zoom (`- 100% + Đặt lại`), xoay trang (`RotateTwoWay`), chuyển đổi chế độ xem 1 trang / 2 trang song song, nút In (`Printer`), và nút Thoát (`X` kèm phím tắt `Esc`).
+    * Bảng danh mục trang thu nhỏ bên trái (collapsible thumbnails sidebar) có thể thu gọn mượt mà, hiển thị thumbnail trực quan của từng trang, trang đang đọc được viền nổi bật bằng màu Cam ViT (`ring-2 ring-[#E0562D]`).
+    * Tích hợp render công thức toán học KaTeX đầy đủ cho cả trang đọc và danh mục thu nhỏ.
+* **Quy Chuẩn Thẻ Trắc Nghiệm Đề Thi (`ExamQuizCard`):**
+  * **Triệt tiêu hoàn toàn viền đậm/ring đen:** Không sử dụng ring đen hay viền khung thô kệch quanh thẻ. Thẻ đổ bóng nhẹ nhàng tự nhiên (`shadow-xl` / `shadow-2xl`) bám theo mép giấy bo góc `rounded-2xl`.
+  * **Nét chữ sắc nét tuyệt đối (Zero Font Blurring):** Chỉ kích hoạt thuộc tính 3D compositing (`perspective`, `transform-style: preserve-3d`) trong quá trình lật thẻ (`flipState.phase !== 'idle'`). Khi ở trạng thái nghỉ (`idle`), toàn bộ layer 3D được gỡ bỏ hoàn toàn, kết hợp `textRendering: 'geometricPrecision'` và `WebkitFontSmoothing: 'antialiased'` giúp văn bản và các lựa chọn đáp án hiển thị sắc nét 100% như trang sách ở mọi độ phân giải và mức zoom.
+  * **Tùy biến màu nền thẻ trắc nghiệm (Color Picker):** Trên thanh công cụ nổi của thẻ trắc nghiệm, tích hợp nút tròn chọn màu với 8 gam màu pastel đồng bộ với bảng màu Sticky Note, cho phép người học thay đổi màu thẻ đề thi theo sở thích.
+* **Quy Chuẩn Chữ Thương Hiệu ViTudy (Brand Identity):**
+  * Bỏ hoàn toàn icon La bàn (Compass) bên trái chữ ViTudy ở thanh điều hướng `TopLeftNav`.
+  * Giữ duy nhất chữ **ViTudy** với màu Cam ViT thương hiệu (`#E0562D`), phông chữ to rõ (`text-lg font-black leading-none`) tương đương chiều cao của cụm icon cũ.
+* **Bỏ Chữ "NOTE" Khi Tạo Ghi Chú Mới:**
+  * Flyout chọn màu giấy note ở thanh công cụ bên trái (`LeftCreationBar`) chỉ hiển thị thuần túy 5 ô màu pastel, triệt tiêu hoàn toàn nhãn chữ "NOTE" thừa để giữ giao diện tối giản.
 * **Phân trang thật & Không kẹt số trang (Zero Text Clipping & Unbounded Navigation):**
   * `turnBookPage` luôn truyền và tiếp nhận tham số `totalPages` của tài liệu để người học có thể lật tới trang cuối cùng mà không bị chặn ở số trang thô.
   * Không dùng thanh cuộn dọc lộ liễu bên trong trang sách để giữ đúng ẩn dụ "tờ giấy", đồng thời tích hợp lớp bảo hiểm `overflow-y-auto no-scrollbar` để chống tràn sub-pixel.

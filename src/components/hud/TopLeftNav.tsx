@@ -101,21 +101,13 @@ export function TopLeftNav() {
     <div className="relative flex flex-col gap-2 pointer-events-auto">
       {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size, bold strokes) */}
       <div className="flex items-center gap-2.5 bg-white/95 border border-slate-300 rounded-2xl px-4 py-2.5 shadow-sm backdrop-blur-md text-slate-900">
-        {/* Brand Logo & Compass (Click to reset view rotation when tilted) */}
-        <div className="flex items-center gap-2 pr-3 border-r border-slate-200">
-          <button
+        {/* Brand Text ViTudy in Cam ViT (#E0562D), larger font matching the removed icon height */}
+        <div className="flex items-center pr-3 border-r border-slate-200">
+          <span 
             onClick={() => resetDeskRotation?.()}
             title={transform.rotation ? `Góc nhìn: ${transform.rotation}° • Nhấp để đặt lại 0°` : 'ViTudy - Không gian học thức'}
-            className={`w-6 h-6 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-xs transition-transform cursor-pointer ${
-              transform.rotation ? 'hover:scale-110 hover:bg-[#E0562D]' : ''
-            }`}
+            className="text-lg font-black tracking-tight text-[#E0562D] select-none cursor-pointer hover:opacity-90 transition-opacity leading-none"
           >
-            <Compass 
-              className="w-3.5 h-3.5 stroke-[2.4] transition-transform duration-150" 
-              style={{ transform: `rotate(${-(transform.rotation || 0)}deg)` }}
-            />
-          </button>
-          <span className="text-sm font-black tracking-tight text-slate-900">
             ViTudy
           </span>
         </div>
