@@ -1,140 +1,356 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
-import { Users, Radio, Sparkles, Smile, Share2, Copy, Check } from 'lucide-react';
-
-interface PeerUser {
-  id: string;
-  name: string;
-  avatarColor: string;
-  status: string;
-}
+import { useRealtimeMultiplayer, PeerUser } from '@/hooks/useRealtimeMultiplayer';
+import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig } from '@/lib/supabase';
+import { 
+  Users, 
+  Share2, 
+  Copy, 
+  Check, 
+  X, 
+  UserPlus,
+  LogOut,
+  Database,
+  Radio,
+  ExternalLink,
+  ShieldCheck,
+  Sparkles
+} from 'lucide-react';
 
 export function MultiplayerBar() {
-  const { activeSpace } = useStudySpace();
-  const [reactions, setReactions] = useState<{ id: string; emoji: string; x: number }[]>([]);
+  const { activeSpace, setTransform } = useStudySpace();
   const [copiedLink, setCopiedLink] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isDbConfigOpen, setIsDbConfigOpen] = useState(false);
 
-  // Simulated peer members on the desk
-  const peers: PeerUser[] = [
-    { id: 'u1', name: 'Bạn (Chủ Bàn)', avatarColor: '#06b6d4', status: 'Đang thao tác' },
-    { id: 'u2', name: 'Lê Hoàng', avatarColor: '#10b981', status: 'Đang đọc Trang 3' },
-    { id: 'u3', name: 'Minh Thư', avatarColor: '#f59e0b', status: 'Đang ôn trắc nghiệm' }
-  ];
+  // Supabase input fields
+  const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
+  const [supabaseKeyInput, setSupabaseKeyInput] = useState('');
+  const [dbSavedNotice, setDbSavedNotice] = useState(false);
 
-  const triggerReaction = (emoji: string) => {
-    const newId = `reaction-${Date.now()}`;
-    const xPos = Math.random() * 80 - 40;
-    setReactions(prev => [...prev, { id: newId, emoji, x: xPos }]);
+  const {
+    peers,
+    isConnected,
+    isConfigured,
+    hasPeers,
+    setHasPeers,
+    isFollowPresenter,
+    setIsFollowPresenter,
+    toggleSimulation
+  } = useRealtimeMultiplayer(activeSpace.id, 'Bạn (Chủ bàn)', true);
 
-    setTimeout(() => {
-      setReactions(prev => prev.filter(r => r.id !== newId));
-    }, 2000);
-  };
+  useEffect(() => {
+    const cfg = getSupabaseConfig();
+    setSupabaseUrlInput(cfg.url);
+    setSupabaseKeyInput(cfg.anonKey);
+  }, [isDbConfigOpen]);
 
   const handleCopyShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
+  const handleSaveDb = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSupabaseConfig(supabaseUrlInput, supabaseKeyInput);
+    setDbSavedNotice(true);
+    setTimeout(() => {
+      setDbSavedNotice(false);
+      setIsDbConfigOpen(false);
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    }, 1000);
+  };
+
+  const toggleSyncViewport = () => {
+    if (!isFollowPresenter) {
+      const targetItem = activeSpace.items.find(i => i.type === 'book') || activeSpace.items[0];
+      if (targetItem && typeof window !== 'undefined') {
+        const itemW = targetItem.type === 'book' ? 980 : 400;
+        const itemH = targetItem.type === 'book' ? 640 : 500;
+        const targetScale = 0.95;
+        const targetX = Math.round(window.innerWidth / 2 - (targetItem.x + itemW / 2) * targetScale);
+        const targetY = Math.round(window.innerHeight / 2 - (targetItem.y + itemH / 2) * targetScale);
+        setTransform({ x: targetX, y: targetY, scale: targetScale });
+      }
+      setIsFollowPresenter(true);
+    } else {
+      setIsFollowPresenter(false);
+    }
   };
 
   return (
     <>
-      {/* Floating Multiplayer & Reaction Pill at Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto">
-        <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-700/80 rounded-full px-3 py-1.5 shadow-hud-glow backdrop-blur-md">
-          {/* Peer Avatars */}
-          <div className="flex items-center -space-x-1.5 pr-2 border-r border-slate-800">
-            {peers.map(p => (
-              <div
-                key={p.id}
-                title={`${p.name} - ${p.status}`}
-                style={{ backgroundColor: p.avatarColor }}
-                className="w-6 h-6 rounded-full border border-slate-950 flex items-center justify-center text-[10px] font-bold text-slate-950 shadow-sm cursor-pointer hover:scale-110 transition-transform"
-              >
-                {p.name.charAt(0)}
-              </div>
-            ))}
+      {/* Top Center: Multiplayer Bar (Chỉ hiển thị khi có bạn bè trong phòng hoặc đang kết nối Realtime) */}
+      {hasPeers && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
+          <div className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-md animate-fade-in text-slate-900">
+            {/* Host Tag & Live Status */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold pr-2 border-r border-slate-200">
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+              <Users className="w-3.5 h-3.5 text-slate-700" />
+              <span>Chủ phòng: Bạn</span>
+            </div>
+
+            {/* Peer Avatars */}
+            <div className="flex items-center -space-x-1.5 pr-2 border-r border-slate-200">
+              {peers.map(p => (
+                <div
+                  key={p.id}
+                  title={`${p.name} (${p.role === 'owner' ? 'Chủ phòng' : p.role === 'editor' ? 'Người thuyết trình' : 'Người xem'}) - ${p.status}`}
+                  style={{ backgroundColor: p.avatarColor }}
+                  className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold text-white shadow-2xs cursor-pointer hover:scale-110 transition-transform"
+                >
+                  {p.name.charAt(0)}
+                </div>
+              ))}
+            </div>
+
+            {/* Follow Presenter Mode (Functional Synced Viewport) */}
+            <button
+              onClick={toggleSyncViewport}
+              title="Đồng bộ góc nhìn: Camera tự động bay tới và theo sát góc nhìn người thuyết trình"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                isFollowPresenter 
+                  ? 'bg-slate-900 text-white shadow-xs' 
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${isFollowPresenter ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+              <span className="text-[11px] font-semibold">{isFollowPresenter ? 'Đang đồng bộ' : 'Đồng bộ góc nhìn'}</span>
+            </button>
+
+            <div className="w-[1px] h-3 bg-slate-200 mx-0.5" />
+
+            {/* Add More Peers */}
+            <button
+              title="Mời thêm bạn bè hoặc cấu hình Supabase"
+              onClick={() => setIsShareModalOpen(true)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 hover:text-black px-2 py-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-slate-600" />
+              <span className="hidden sm:inline">Mời thêm</span>
+            </button>
+
+            {/* Leave / Return to Solo */}
+            <button
+              title="Về chế độ học cá nhân"
+              onClick={() => {
+                setHasPeers(false);
+                setIsFollowPresenter(false);
+              }}
+              className="text-slate-400 hover:text-rose-600 p-1 rounded-full hover:bg-rose-50 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
+        </div>
+      )}
 
-          {/* Quick Reaction Emoji Buttons */}
-          <div className="flex items-center gap-0.5">
-            {['👏', '💡', '🔥', '🎯', '❓'].map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => triggerReaction(emoji)}
-                className="p-1 hover:bg-slate-800 rounded-full text-xs hover:scale-125 transition-transform"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
-
-          {/* Share Desk Button */}
+      {/* Floating Presenter Sync Notification Banner */}
+      {isFollowPresenter && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Đang đồng bộ góc nhìn theo người thuyết trình</span>
           <button
-            title="Mời bạn bè cùng học (Multiplayer)"
-            onClick={() => setIsShareModalOpen(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 px-2 py-0.5 rounded-full hover:bg-cyan-500/10 transition-colors"
+            onClick={() => setIsFollowPresenter(false)}
+            className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-300 transition-colors cursor-pointer"
           >
-            <Share2 className="w-3 h-3" />
-            <span className="hidden sm:inline">Mời Bạn</span>
+            Dừng theo dõi
           </button>
         </div>
+      )}
 
-        {/* Floating Animated Reaction Bubbles */}
-        <div className="relative">
-          {reactions.map(r => (
-            <div
-              key={r.id}
-              style={{ transform: `translateX(${r.x}px)` }}
-              className="absolute -top-12 left-1/2 -translate-x-1/2 text-2xl animate-float-up pointer-events-none select-none"
-            >
-              {r.emoji}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Share Desk Modal */}
+      {/* MODAL 1: Mời bạn bè cùng học & Quản lý kết nối Supabase */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-cyan-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
-            <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto mb-3 text-cyan-400">
-              <Users className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+            <button
+              onClick={() => setIsShareModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
+                <Users className="w-4 h-4 stroke-[2.4]" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Phòng Học Nhóm & Cộng Tác Trực Tuyến</h3>
             </div>
-            <h3 className="text-base font-bold text-white mb-1">
-              Học Nhóm Thời Gian Thực
-            </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Gửi liên kết này cho bạn bè để cùng vào bàn học, lật sách chung, thảo luận và dùng Inteline.
+            <p className="text-xs text-slate-500 mb-4">
+              Chia sẻ liên kết để bạn bè cùng tham gia học nhóm, đồng bộ camera và tương tác thời gian thực trên bàn học 2.5D.
             </p>
 
-            <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl p-2 mb-4 text-xs font-mono text-slate-300">
+            {/* Room Link Input Box */}
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-3">
               <input
                 type="text"
                 readOnly
-                value={typeof window !== 'undefined' ? window.location.href : 'https://vitudy.com/space'}
-                className="w-full bg-transparent outline-none truncate"
+                value={typeof window !== 'undefined' ? window.location.href : 'https://namtacozz.github.io/ViTudy/'}
+                className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono"
               />
               <button
                 onClick={handleCopyShareLink}
-                className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1 flex-shrink-0"
+                className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? 'Đã Chép' : 'Sao Chép'}</span>
+                <span>{copiedLink ? 'Đã chép' : 'Sao chép'}</span>
               </button>
             </div>
 
+            {/* Supabase Status Banner */}
+            <div className={`p-3 rounded-xl border mb-4 flex items-center justify-between text-xs ${
+              isConnected 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                : isConfigured 
+                ? 'bg-blue-50 border-blue-200 text-blue-800'
+                : 'bg-amber-50 border-amber-200 text-amber-800'
+            }`}>
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 flex-shrink-0" />
+                <div>
+                  <div className="font-bold flex items-center gap-1.5">
+                    <span>Cơ sở dữ liệu Supabase:</span>
+                    <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white/80 border border-current">
+                      {isConnected ? 'Đang kết nối Realtime' : isConfigured ? 'Đã cấu hình' : 'Chưa kết nối'}
+                    </span>
+                  </div>
+                  <div className="text-[11px] opacity-80">
+                    {isConnected 
+                      ? `${peers.length} thành viên đang kết nối trực tiếp trong phòng` 
+                      : 'Hỗ trợ đồng bộ đa người dùng qua Supabase Realtime Channels.'}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsDbConfigOpen(true)}
+                className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-[11px] font-bold text-slate-800 shadow-2xs transition-colors cursor-pointer flex-shrink-0 ml-2"
+              >
+                Cấu hình
+              </button>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+              <button
+                onClick={toggleSimulation}
+                className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline cursor-pointer"
+              >
+                {!hasPeers ? 'Bật mô phỏng bạn bè' : 'Tắt hiển thị bạn bè'}
+              </button>
+
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="px-4 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Cấu hình Supabase Database & Realtime */}
+      {isDbConfigOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
-              onClick={() => setIsShareModalOpen(false)}
-              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium"
+              onClick={() => setIsDbConfigOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
-              Đóng
+              <X className="w-4 h-4" />
             </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+                <Database className="w-4 h-4 stroke-[2.4]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Kết Nối Cơ Sở Dữ Liệu Supabase</h3>
+                <p className="text-[11px] text-slate-500">PostgreSQL + Realtime Channels + pgvector</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Nhập thông tin kết nối từ Supabase Dashboard của bạn (Settings &gt; API). Hệ thống sẽ lưu an toàn trong trình duyệt và kích hoạt tính năng đồng bộ nhiều người chơi ngay lập tức.
+            </p>
+
+            <form onSubmit={handleSaveDb} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Project URL (NEXT_PUBLIC_SUPABASE_URL)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://your-project.supabase.co"
+                  value={supabaseUrlInput}
+                  onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-[#E0562D] focus:bg-white text-slate-900 font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Anon Key (NEXT_PUBLIC_SUPABASE_ANON_KEY)
+                </label>
+                <input
+                  type="password"
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  value={supabaseKeyInput}
+                  onChange={(e) => setSupabaseKeyInput(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-[#E0562D] focus:bg-white text-slate-900 font-mono"
+                  required
+                />
+              </div>
+
+              {dbSavedNotice && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-1.5 animate-fade-in">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Đã lưu thành công! Đang tải lại kết nối Realtime...</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearSupabaseConfig();
+                    setSupabaseUrlInput('');
+                    setSupabaseKeyInput('');
+                    alert('Đã xóa cấu hình Supabase cục bộ.');
+                  }}
+                  className="text-xs text-slate-500 hover:text-rose-600 font-medium cursor-pointer"
+                >
+                  Xóa cấu hình
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsDbConfigOpen(false)}
+                    className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-semibold transition-colors cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  >
+                    Lưu & Kết Nối Ngay
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -23,6 +23,7 @@ export interface AiConfig {
   model: string;
   hasCustomKey: boolean;
   isOauthConnected: boolean;
+  apiKey?: string;
 }
 
 export interface ViTokenWallet {

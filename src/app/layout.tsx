@@ -1,11 +1,25 @@
 import type { Metadata } from 'next';
+import { Open_Sans, Patrick_Hand } from 'next/font/google';
 import './globals.css';
 import { ViTokenProvider } from '@/context/ViTokenContext';
 import { StudySpaceProvider } from '@/context/StudySpaceContext';
 
+const openSans = Open_Sans({
+  subsets: ['latin', 'latin-ext', 'vietnamese'],
+  variable: '--font-ui',
+  display: 'swap',
+});
+
+const patrickHand = Patrick_Hand({
+  weight: '400',
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-note',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'ViTudy — Không Gian Học Thức Tích Hợp AI',
-  description: 'Nền tảng bàn học 2.5D tương tác, ôn tập thông minh Non-AI & AI, chợ tri thức KnowInherit và đơn vị tiền tệ ViToken.',
+  title: 'ViTudy — Bàn Học Tương Tác',
+  description: 'Bàn học tương tác, tài liệu học tập và hỗ trợ ôn thi thông minh.',
 };
 
 export default function RootLayout({
@@ -14,10 +28,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className="dark" suppressHydrationWarning>
+    <html lang="vi" className={`${openSans.variable} ${patrickHand.variable}`} suppressHydrationWarning spellCheck={false}>
       <body 
         suppressHydrationWarning
-        className="bg-slate-950 text-slate-100 antialiased overflow-hidden selection:bg-cyan-500/30 selection:text-cyan-200"
+        spellCheck={false}
+        className="font-sans bg-white text-slate-800 antialiased overflow-hidden selection:bg-slate-200 selection:text-slate-900"
       >
         <ViTokenProvider>
           <StudySpaceProvider>

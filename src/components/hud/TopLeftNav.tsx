@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { 
   Compass, 
   Search, 
   Plus, 
-  Users, 
-  Radio, 
   ChevronDown,
-  BookMarked
+  BookMarked,
+  BookOpen,
+  FileText,
+  StickyNote,
+  GraduationCap,
+  X
 } from 'lucide-react';
 
 export function TopLeftNav() {
@@ -20,14 +23,33 @@ export function TopLeftNav() {
     switchSpace, 
     createSpace,
     searchQuery,
-    setSearchQuery 
+    setSearchQuery,
+    selectItem,
+    transform,
+    resetDeskRotation,
+    setTransform
   } = useStudySpace();
 
   const [isSpaceMenuOpen, setIsSpaceMenuOpen] = useState(false);
   const [isNewSpaceModalOpen, setIsNewSpaceModalOpen] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
   const [newSpaceSubject, setNewSpaceSubject] = useState('');
-  const [isFollowMeActive, setIsFollowMeActive] = useState(false);
+
+  // Slide-out search & 3-item dropdown state
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchHovered, setIsSearchHovered] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    window.addEventListener('mousedown', handleOutsideClick);
+    return () => window.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   const handleCreateNewSpace = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,16 +61,61 @@ export function TopLeftNav() {
     setIsSpaceMenuOpen(false);
   };
 
+  // Filtered documents on current desk
+  const filteredDeskItems = activeSpace.items.filter(item => {
+    if (!searchQuery.trim()) return true;
+    return item.title.toLowerCase().includes(searchQuery.toLowerCase().trim());
+  });
+
+  const handleSelectDeskItem = (itemId: string) => {
+    const targetItem = activeSpace.items.find(i => i.id === itemId);
+    if (!targetItem) return;
+
+    selectItem(itemId);
+
+    // Pan camera smoothly to center on the target item
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const itemCenterX = targetItem.x + (targetItem.type === 'book' ? 490 : 180);
+    const itemCenterY = targetItem.y + (targetItem.type === 'book' ? 320 : 250);
+
+    setTransform(prev => ({
+      ...prev,
+      x: winW / 2 - itemCenterX * prev.scale,
+      y: winH / 2 - itemCenterY * prev.scale
+    }));
+
+    setIsSearchFocused(false);
+  };
+
+  const getItemTypeIcon = (item: typeof activeSpace.items[0]) => {
+    if (item.isExamSheet) return <GraduationCap className="w-3.5 h-3.5 text-[#E0562D] flex-shrink-0" />;
+    if (item.type === 'book') return <BookOpen className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />;
+    if (item.type === 'sticky_note') return <StickyNote className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />;
+    return <FileText className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />;
+  };
+
+  const isSearchExpanded = isSearchFocused || isSearchHovered || searchQuery.length > 0;
+
   return (
     <div className="absolute top-4 left-4 z-40 flex flex-col gap-2 pointer-events-auto">
-      {/* HUD Pill: Brand & Space Selector */}
-      <div className="flex items-center gap-2 bg-slate-950/80 border border-cyan-500/30 rounded-xl px-3 py-2 shadow-hud-glow backdrop-blur-md">
-        {/* Brand Logo / VR indicator */}
-        <div className="flex items-center gap-1.5 pr-2 border-r border-slate-800">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-600 to-sky-400 flex items-center justify-center text-white shadow-sm">
-            <Compass className="w-3.5 h-3.5 animate-spin-slow" />
-          </div>
-          <span className="text-xs font-black tracking-wider bg-gradient-to-r from-cyan-300 via-sky-200 to-white bg-clip-text text-transparent">
+      {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size, bold strokes) */}
+      <div className="flex items-center gap-2.5 bg-white/95 border border-slate-300 rounded-2xl px-4 py-2.5 shadow-sm backdrop-blur-md text-slate-900">
+        {/* Brand Logo & Compass (Click to reset view rotation when tilted) */}
+        <div className="flex items-center gap-2 pr-3 border-r border-slate-200">
+          <button
+            onClick={() => resetDeskRotation?.()}
+            title={transform.rotation ? `Góc nhìn: ${transform.rotation}° • Nhấp để đặt lại 0°` : 'ViTudy - Không gian học thức'}
+            className={`w-6 h-6 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-xs transition-transform cursor-pointer ${
+              transform.rotation ? 'hover:scale-110 hover:bg-[#E0562D]' : ''
+            }`}
+          >
+            <Compass 
+              className="w-3.5 h-3.5 stroke-[2.4] transition-transform duration-150" 
+              style={{ transform: `rotate(${-(transform.rotation || 0)}deg)` }}
+            />
+          </button>
+          <span className="text-sm font-black tracking-tight text-slate-900">
             ViTudy
           </span>
         </div>
@@ -57,18 +124,18 @@ export function TopLeftNav() {
         <div className="relative">
           <button
             onClick={() => setIsSpaceMenuOpen(!isSpaceMenuOpen)}
-            className="flex items-center gap-1.5 text-xs font-medium text-slate-200 hover:text-cyan-300 transition-colors px-1 py-0.5 rounded"
+            className="flex items-center gap-1.5 text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
           >
-            <BookMarked className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="max-w-[140px] truncate">{activeSpace.name}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <BookMarked className="w-4 h-4 text-slate-800 stroke-[2.4]" />
+            <span className="max-w-[160px] truncate">{activeSpace.name}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
           </button>
 
           {/* Spaces Menu */}
           {isSpaceMenuOpen && (
-            <div className="absolute top-full left-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl p-2 z-50 backdrop-blur-lg">
-              <div className="text-[10px] uppercase font-bold text-slate-400 px-2 py-1">
-                Danh sách Bàn học
+            <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-300 rounded-xl shadow-xl p-2 z-50 text-slate-900 animate-fade-in font-medium">
+              <div className="text-[10px] font-black text-slate-500 px-2 py-1 tracking-wider uppercase">
+                Bàn học của bạn
               </div>
               <div className="space-y-1 max-h-48 overflow-y-auto my-1">
                 {spaces.map(s => (
@@ -78,115 +145,153 @@ export function TopLeftNav() {
                       switchSpace(s.id);
                       setIsSpaceMenuOpen(false);
                     }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between ${
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       s.id === activeSpaceId 
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-medium' 
-                        : 'text-slate-300 hover:bg-slate-800'
+                        ? 'bg-slate-100 text-slate-900 border border-slate-300 font-bold' 
+                        : 'text-slate-800 hover:bg-slate-50 font-semibold'
                     }`}
                   >
                     <span className="truncate">{s.name}</span>
-                    <span className="text-[10px] text-slate-500">{s.items.length} món</span>
+                    <span className="text-[10px] text-slate-400 font-mono font-bold">{s.items.length} món</span>
                   </button>
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-slate-800">
+              <div className="pt-2 border-t border-slate-200">
                 <button
                   onClick={() => {
                     setIsSpaceMenuOpen(false);
                     setIsNewSpaceModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-slate-800 hover:bg-cyan-600/30 text-cyan-300 hover:text-white rounded-lg text-xs font-medium transition-all"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Tạo Bàn Học Mới</span>
+                  <Plus className="w-4 h-4 stroke-[2.4]" />
+                  <span>Tạo bàn học mới</span>
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Global Desk Search Bar (Ctrl+F) */}
-        <div className="relative pl-2 border-l border-slate-800 flex items-center">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm tài liệu..."
-            className="w-36 focus:w-48 transition-all bg-slate-900/60 border border-slate-700/50 rounded-lg pl-6 pr-2 py-1 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-400"
-          />
-        </div>
-
-        {/* Multiplayer Presence & Follow Me Sync Pill */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-          <div 
-            title="Đang có 1 người trên bàn học này"
-            className="flex items-center gap-1 bg-slate-900/80 px-2 py-1 rounded-lg text-[11px] text-emerald-400 font-mono border border-emerald-500/20"
+        {/* Slide-out Search Bar (Chỉ hiện icon kính lúp, hover trượt sang phải, ấn vào list tối đa 3 tài liệu) */}
+        <div 
+          ref={searchContainerRef}
+          onMouseEnter={() => setIsSearchHovered(true)}
+          onMouseLeave={() => setIsSearchHovered(false)}
+          className="relative pl-2.5 border-l border-slate-200 flex items-center"
+        >
+          <button
+            title="Tìm tài liệu trên bàn học"
+            onClick={() => setIsSearchFocused(true)}
+            className="text-slate-700 hover:text-black transition-colors p-1 rounded-lg flex-shrink-0 cursor-pointer"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <Users className="w-3 h-3 text-emerald-400" />
-            <span>Host</span>
+            <Search className="w-4.5 h-4.5 text-slate-800 stroke-[2.4]" />
+          </button>
+
+          {/* Slide-out Input container */}
+          <div className={`transition-all duration-300 ease-out flex items-center overflow-hidden ${
+            isSearchExpanded ? 'w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
+          }`}>
+            <input
+              type="text"
+              placeholder="Tìm tài liệu trên bàn..."
+              value={searchQuery}
+              onFocus={() => setIsSearchFocused(true)}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none pr-1"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-slate-800 pr-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5 stroke-[2.4]" />
+              </button>
+            )}
           </div>
 
-          <button
-            title="Đồng bộ góc nhìn bàn học (Follow Me)"
-            onClick={() => setIsFollowMeActive(!isFollowMeActive)}
-            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all ${
-              isFollowMeActive
-                ? 'bg-cyan-500 text-slate-950 shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-cyan-300 hover:bg-slate-800'
-            }`}
-          >
-            <Radio className="w-3 h-3" />
-            <span className="hidden sm:inline">Follow Me</span>
-          </button>
+          {/* Search Dropdown: List max 3 items on screen, scrollable if more */}
+          {isSearchFocused && (
+            <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-slate-300 rounded-xl shadow-2xl p-1.5 z-50 text-slate-900 animate-fade-in">
+              <div className="text-[10px] font-bold text-slate-400 px-2 py-1 flex items-center justify-between">
+                <span>TÀI LIỆU TRÊN BÀN</span>
+                <span className="font-mono">{filteredDeskItems.length} mục</span>
+              </div>
+
+              {filteredDeskItems.length === 0 ? (
+                <div className="py-3 text-center text-xs text-slate-400 italic">
+                  Không tìm thấy tài liệu phù hợp
+                </div>
+              ) : (
+                <div className="max-h-[142px] overflow-y-auto space-y-1 my-0.5 no-scrollbar">
+                  {filteredDeskItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelectDeskItem(item.id)}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-2 hover:bg-slate-100 transition-colors group cursor-pointer"
+                    >
+                      <div className="flex-shrink-0">
+                        {getItemTypeIcon(item)}
+                      </div>
+                      <span className="truncate font-semibold text-slate-800 group-hover:text-[#E0562D] flex-1">
+                        {item.title}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Modal Tạo Space Mới */}
+      {/* Modal: Tạo Bàn Học Mới */}
       {isNewSpaceModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl w-full max-w-sm p-5 shadow-2xl">
-            <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-cyan-400" />
-              <span>Tạo Không Gian Học Thức Mới</span>
-            </h3>
-            <form onSubmit={handleCreateNewSpace} className="space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-slate-900 animate-fade-in">
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Tạo bàn học mới</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Mỗi bàn học là một không gian riêng để bạn sắp xếp sách vở, tài liệu và ghi chú.
+            </p>
+            <form onSubmit={handleCreateNewSpace} className="space-y-3.5">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Tên Bàn Học</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Tên bàn học
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ví dụ: Ôn thi Đại số Tuyến tính"
+                  placeholder="Ví dụ: Ôn thi giữa kỳ Machine Learning"
                   value={newSpaceName}
                   onChange={(e) => setNewSpaceName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-400"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800"
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Bộ Môn / Lĩnh Vực</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Môn học / Chủ đề
+                </label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Toán học, Lập trình..."
+                  placeholder="Ví dụ: Toán ứng dụng, AI..."
                   value={newSpaceSubject}
                   onChange={(e) => setNewSpaceSubject(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-400"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsNewSpaceModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950"
+                  className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer"
                 >
-                  Khởi Tạo
+                  Tạo bàn học
                 </button>
               </div>
             </form>

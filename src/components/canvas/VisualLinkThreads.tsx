@@ -1,24 +1,73 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 
 export function VisualLinkThreads() {
-  const { activeSpace, threads } = useStudySpace();
+  const { activeSpace, threads, transform, updateThreadSourceOffset } = useStudySpace();
+
+  const [draggingPin, setDraggingPin] = useState<{
+    threadId: string;
+    sourceItemId: string;
+    startClientX: number;
+    startClientY: number;
+    initialOffsetX: number;
+    initialOffsetY: number;
+    currentOffsetX: number;
+    currentOffsetY: number;
+  } | null>(null);
+
+  const dragRef = useRef(draggingPin);
+  dragRef.current = draggingPin;
+
+  // Window listeners for smooth global drag of pushpin
+  useEffect(() => {
+    if (!draggingPin) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const cur = dragRef.current;
+      if (!cur) return;
+
+      const deltaX = (e.clientX - cur.startClientX) / transform.scale;
+      const deltaY = (e.clientY - cur.startClientY) / transform.scale;
+
+      const nextOffset = {
+        x: Math.round(cur.initialOffsetX + deltaX),
+        y: Math.round(cur.initialOffsetY + deltaY)
+      };
+
+      setDraggingPin(prev => prev ? {
+        ...prev,
+        currentOffsetX: nextOffset.x,
+        currentOffsetY: nextOffset.y
+      } : null);
+
+      updateThreadSourceOffset(cur.threadId, nextOffset);
+    };
+
+    const handleMouseUp = () => {
+      setDraggingPin(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingPin, transform.scale, updateThreadSourceOffset]);
 
   if (!threads || threads.length === 0) return null;
 
   return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible">
+    <svg 
+      className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+      style={{ zIndex: 100 }}
+    >
       <defs>
-        <linearGradient id="threadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
-          <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#f97316" stopOpacity="0.8" />
-        </linearGradient>
-        <filter id="threadGlow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        {/* Soft shadow for physical detective pinned thread */}
+        <filter id="threadShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="1" dy="2" stdDeviation="2" floodColor="#0f172a" floodOpacity="0.3" />
         </filter>
       </defs>
 
@@ -28,64 +77,112 @@ export function VisualLinkThreads() {
 
         if (!sourceItem || !targetSticky) return null;
 
+        const defaultOffsetX = sourceItem.type === 'book' ? 640 : 300;
+        const defaultOffsetY = 140;
+
+        const offsetX = draggingPin && draggingPin.threadId === thread.id
+          ? draggingPin.currentOffsetX
+          : (thread.sourceOffset?.x ?? defaultOffsetX);
+
+        const offsetY = draggingPin && draggingPin.threadId === thread.id
+          ? draggingPin.currentOffsetY
+          : (thread.sourceOffset?.y ?? defaultOffsetY);
+
         // Source anchor on book / paper
-        const startX = sourceItem.x + (sourceItem.type === 'book' ? 640 : 300);
-        const startY = sourceItem.y + 140;
+        const startX = sourceItem.x + offsetX;
+        const startY = sourceItem.y + offsetY;
 
-        // Target anchor on sticky note pin
-        const endX = targetSticky.x + 10;
-        const endY = targetSticky.y + 24;
+        // Target anchor on sticky note header pin
+        const endX = targetSticky.x + 24;
+        const endY = targetSticky.y + 16;
 
-        // Bézier curve control points
+        // Realistic hanging thread curve: Slight catenary gravity droop
         const deltaX = endX - startX;
-        const cp1X = startX + deltaX * 0.45;
-        const cp1Y = startY - 20;
-        const cp2X = startX + deltaX * 0.55;
-        const cp2Y = endY + 20;
+        const deltaY = endY - startY;
+        const distance = Math.hypot(deltaX, deltaY);
+        const sag = Math.min(distance * 0.15, 45); // gravity sag
+
+        const cp1X = startX + deltaX * 0.35;
+        const cp1Y = startY + deltaY * 0.25 + sag;
+        const cp2X = startX + deltaX * 0.65;
+        const cp2Y = startY + deltaY * 0.75 + sag;
 
         const pathData = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
+        const isThisPinDragging = draggingPin?.threadId === thread.id;
 
         return (
-          <g key={thread.id} className="transition-all duration-300">
-            {/* Glow Backing */}
+          <g key={thread.id} className="transition-all duration-75">
+            {/* Thread Shadow under the yarn */}
             <path
               d={pathData}
               fill="none"
-              stroke="#fbbf24"
-              strokeWidth="5"
-              strokeOpacity="0.25"
-              filter="url(#threadGlow)"
+              stroke="#0f172a"
+              strokeWidth="2.5"
+              strokeOpacity="0.18"
+              filter="url(#threadShadow)"
             />
 
-            {/* Main Visual Link Thread Line */}
+            {/* Realistic Red Detective String (Sợi chỉ đỏ ghim bảng thám tử) */}
             <path
               d={pathData}
               fill="none"
-              stroke="url(#threadGradient)"
+              stroke="#dc2626"
               strokeWidth="2"
-              strokeDasharray="6 3"
-              className="animate-pulse"
+              strokeLinecap="round"
             />
 
-            {/* Source Pin Anchor Dot */}
-            <circle
-              cx={startX}
-              cy={startY}
-              r="4"
-              fill="#38bdf8"
-              stroke="#0f172a"
-              strokeWidth="1.5"
+            {/* Subtle fiber texture line */}
+            <path
+              d={pathData}
+              fill="none"
+              stroke="#ef4444"
+              strokeWidth="1"
+              strokeDasharray="4 2"
+              strokeOpacity="0.8"
             />
 
-            {/* Target Pin Anchor Dot */}
-            <circle
-              cx={endX}
-              cy={endY}
-              r="4"
-              fill="#f59e0b"
-              stroke="#0f172a"
-              strokeWidth="1.5"
-            />
+            {/* Source Physical Pushpin with Dedicated Small Hitbox */}
+            <g 
+              transform={`translate(${startX}, ${startY})`}
+              className="pointer-events-auto"
+              style={{ cursor: isThisPinDragging ? 'grabbing' : 'grab' }}
+              onMouseDown={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                e.stopPropagation();
+                setDraggingPin({
+                  threadId: thread.id,
+                  sourceItemId: thread.sourceItemId,
+                  startClientX: e.clientX,
+                  startClientY: e.clientY,
+                  initialOffsetX: offsetX,
+                  initialOffsetY: offsetY,
+                  currentOffsetX: offsetX,
+                  currentOffsetY: offsetY
+                });
+              }}
+            >
+              {/* Invisible Small Hitbox Circle (r=14) */}
+              <circle r="14" fill="transparent" />
+
+              {/* Pushpin visuals */}
+              <circle r="6.5" fill="#000000" opacity="0.3" cx="1" cy="2" />
+              <circle 
+                r="5.5" 
+                fill={isThisPinDragging ? '#b91c1c' : '#dc2626'} 
+                stroke="#991b1b" 
+                strokeWidth="1.2" 
+                className="transition-transform hover:scale-125"
+              />
+              <circle r="2" fill="#fca5a5" cx="-1" cy="-1" />
+            </g>
+
+            {/* Target Physical Pushpin on Sticky Note */}
+            <g transform={`translate(${endX}, ${endY})`}>
+              <circle r="6" fill="#000000" opacity="0.25" cx="1" cy="2" />
+              <circle r="5" fill="#dc2626" stroke="#991b1b" strokeWidth="1.2" />
+              <circle r="2" fill="#fca5a5" cx="-1" cy="-1" />
+            </g>
           </g>
         );
       })}

@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import { FileUp } from 'lucide-react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { DeskGrid } from './DeskGrid';
 import { PaperSheet } from '../objects/PaperSheet';
 import { BookSpread } from '../objects/BookSpread';
 import { StickyNoteItem } from '../objects/StickyNoteItem';
 import { VisualLinkThreads } from './VisualLinkThreads';
+import { DeskDrawingCanvas } from './DeskDrawingCanvas';
+import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
 
 export function InfiniteDesk() {
   const { 
@@ -14,29 +17,183 @@ export function InfiniteDesk() {
     transform, 
     panBy, 
     zoomBy, 
+    rotateDeskBy,
+    resetDeskRotation,
     selectItem, 
     selectedItemId,
-    addUploadedDocument 
+    addUploadedDocument,
+    activeTool,
+    isViewRotateMode
   } = useStudySpace();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [isRotatingView, setIsRotatingView] = useState(false);
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Wheel zoom handler
+  // SVG Bi-directional View Rotation Cursor
+  const rotateCursorSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M7 16 A 10 10 0 0 1 25 16" stroke="white" stroke-width="4.5" stroke-linecap="round"/><path d="M7 16 A 10 10 0 0 1 25 16" stroke="%230f172a" stroke-width="2.5" stroke-linecap="round"/><path d="M4 12 L7 16 L11 13" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12 L7 16 L11 13" stroke="%230f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 12 L25 16 L21 13" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 12 L25 16 L21 13" stroke="%230f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  // Keyboard navigation (WASD / Arrow Keys for Camera Pan)
+  useEffect(() => {
+    const activeKeys = new Set<string>();
+    let animId: number | null = null;
+
+    const isTyping = () => {
+      const el = document.activeElement;
+      if (!el) return false;
+      return (
+        el.tagName === 'INPUT' ||
+        el.tagName === 'TEXTAREA' ||
+        (el as HTMLElement).isContentEditable ||
+        Boolean(el.closest('[contenteditable="true"]'))
+      );
+    };
+
+    const updateMovement = () => {
+      if (activeKeys.size === 0) {
+        animId = null;
+        return;
+      }
+
+      // WASD / Arrow keys for camera pan navigation
+      let dx = 0;
+      let dy = 0;
+      const speed = 14;
+
+      if (activeKeys.has('w') || activeKeys.has('arrowup')) dy += speed;
+      if (activeKeys.has('s') || activeKeys.has('arrowdown')) dy -= speed;
+      if (activeKeys.has('a') || activeKeys.has('arrowleft')) dx += speed;
+      if (activeKeys.has('d') || activeKeys.has('arrowright')) dx -= speed;
+
+      if (dx !== 0 || dy !== 0) {
+        panBy(dx, dy);
+      }
+
+      animId = requestAnimationFrame(updateMovement);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isTyping()) return;
+
+      const k = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
+        if (!activeKeys.has(k)) {
+          activeKeys.add(k);
+          if (!animId) {
+            animId = requestAnimationFrame(updateMovement);
+          }
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      activeKeys.delete(k);
+    };
+
+    const handleWindowBlur = () => {
+      activeKeys.clear();
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleWindowBlur);
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [panBy]);
+
+  // Wheel zoom handler: Prevent zooming desk if scrolling inside an overlay, modal, dropdown, or scrollable element
   const handleWheel = (e: React.WheelEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('[data-overlay="true"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('.overflow-y-auto') ||
+      target.closest('.overflow-auto') ||
+      target.closest('textarea') ||
+      target.closest('input')
+    ) {
+      return;
+    }
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.08 : 0.92;
     zoomBy(factor, e.clientX, e.clientY);
   };
 
+  // Global View Rotation when isViewRotateMode is toggled ON (User can drag anywhere to rotate)
+  const handleMouseDownCapture = (e: React.MouseEvent) => {
+    if (isViewRotateMode && e.button === 0) {
+      // Don't intercept clicks on HUD buttons or modals
+      const target = e.target as HTMLElement;
+      if (target.closest('button[title*="xoay"]') || target.closest('[data-hud="true"]')) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      setIsRotatingView(true);
+      let lastX = e.clientX;
+
+      const handleRotateMouseMove = (moveEvent: MouseEvent) => {
+        const dx = moveEvent.clientX - lastX;
+        lastX = moveEvent.clientX;
+        // Dragging right rotates view left; dragging left rotates view right
+        rotateDeskBy(-dx * 0.35);
+      };
+
+      const handleRotateMouseUp = () => {
+        setIsRotatingView(false);
+        window.removeEventListener('mousemove', handleRotateMouseMove);
+        window.removeEventListener('mouseup', handleRotateMouseUp);
+      };
+
+      window.addEventListener('mousemove', handleRotateMouseMove);
+      window.addEventListener('mouseup', handleRotateMouseUp);
+    }
+  };
+
+  const handleDoubleClickCapture = (e: React.MouseEvent) => {
+    if (isViewRotateMode) {
+      e.preventDefault();
+      e.stopPropagation();
+      resetDeskRotation();
+    }
+  };
+
   // Background pointer down (Canvas Pan)
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only pan if clicking on empty desk background (not on an item)
-    if (e.target !== containerRef.current && !(e.target as HTMLElement).classList.contains('desk-bg-target')) {
+    if (e.button !== 0) return;
+    if (isViewRotateMode) return;
+
+    // Never pan via desk background when a drawing/erasing/creating tool is active
+    if (activeTool !== 'cursor') {
       return;
     }
+
+    const target = e.target as HTMLElement;
+
+    // Don't pan if clicking directly on a desk item (book, paper, sticky note) or an interactive control
+    if (
+      target.closest('[data-desk-item="true"]') ||
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('textarea')
+    ) {
+      return;
+    }
+
     // Deselect active item when clicking empty space
     selectItem(null);
 
@@ -78,6 +235,14 @@ export function InfiniteDesk() {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Double click while in rotate mode resets view rotation to 0°
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (isViewRotateMode) {
+      e.preventDefault();
+      resetDeskRotation();
+    }
   };
 
   // Drag and drop external file directly onto desk
@@ -123,42 +288,54 @@ export function InfiniteDesk() {
     }
   };
 
+  const getDeskCursor = () => {
+    if (isRotatingView) return 'cursor-grabbing';
+    if (isViewRotateMode) return 'cursor-grab';
+    if (isPanning) return 'cursor-grabbing';
+    return 'cursor-default';
+  };
+
   return (
     <div
       ref={containerRef}
+      onMouseDownCapture={handleMouseDownCapture}
+      onDoubleClickCapture={handleDoubleClickCapture}
       onMouseDown={handleMouseDown}
+      onDoubleClick={handleDoubleClick}
       onWheel={handleWheel}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`relative w-screen h-screen overflow-hidden select-none cursor-default ${
-        isPanning ? 'cursor-grabbing' : ''
-      }`}
+      className={`relative w-screen h-screen overflow-hidden select-none ${getDeskCursor()}`}
+      style={{
+        cursor: isRotatingView
+          ? 'grabbing'
+          : isViewRotateMode
+          ? `url('${rotateCursorSvg}') 16 16, grab`
+          : undefined
+      }}
     >
       {/* Visual Desk Grid Background */}
       <DeskGrid />
 
-      {/* Drop Target Overlay Highlight */}
+      {/* Drop Target Overlay Highlight (Clean White Miro Styling) */}
       {isDragOver && (
-        <div className="absolute inset-0 z-50 bg-sky-500/10 border-4 border-dashed border-sky-400 pointer-events-none flex items-center justify-center backdrop-blur-[2px]">
-          <div className="bg-slate-900/90 text-sky-300 font-bold px-6 py-3 rounded-xl border border-sky-500/50 shadow-2xl flex items-center gap-3">
-            <span className="text-xl">📥</span>
-            <span>Thả tài liệu vào bàn học (Tự động nhận diện Giấy hoặc Sách)</span>
+        <div className="absolute inset-0 z-50 bg-slate-900/5 border-4 border-dashed border-[#E0562D]/60 pointer-events-none flex items-center justify-center backdrop-blur-[2px]">
+          <div className="bg-white/95 text-slate-800 font-semibold px-6 py-3.5 rounded-2xl border border-slate-300 shadow-2xl flex items-center gap-3 backdrop-blur-md">
+            <FileUp className="w-5 h-5 text-[#E0562D]" />
+            <span>Thả tệp vào đây để mở trên bàn học</span>
           </div>
         </div>
       )}
 
-      {/* 2.5D World Transform Container (GPU Accelerated) */}
+      {/* 2.5D World Transform Container (Crisp Vector Font Rendering) */}
       <div
-        className="absolute top-0 left-0 w-full h-full transform-gpu will-change-transform"
+        className="absolute top-0 left-0 w-full h-full"
         style={{
-          transform: `translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`,
+          transform: `translate(${Math.round(transform.x)}px, ${Math.round(transform.y)}px) rotate(${transform.rotation || 0}deg) scale(${transform.scale})`,
           transformOrigin: '0 0'
         }}
       >
-        {/* Animated Visual Link Threads connecting Inteline Q&A to Source Text */}
-        <VisualLinkThreads />
-
         {/* Render all Desk Items */}
         {activeSpace.items.map((item) => {
           const isSelected = selectedItemId === item.id;
@@ -173,7 +350,18 @@ export function InfiniteDesk() {
           }
           return null;
         })}
+
+        {/* Freehand Drawing & Highlighter Strokes Layer */}
+        <DeskDrawingCanvas />
+
+        {/* Physical Detective Red String Threads on TOP of items and pins */}
+        <VisualLinkThreads />
       </div>
+
+      {/* Top-Level Full-Screen Drawing, Creation & Eraser Layer */}
+      {activeTool !== 'cursor' && (
+        <DeskDrawingInteractionLayer />
+      )}
     </div>
   );
 }

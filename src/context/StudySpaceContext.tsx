@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DeskItem, StudySpace, CanvasTransform, PageContent, IntelineThread } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
+import { recognizeSmartShape } from '@/utils/smartShape';
 
 interface StudySpaceContextType {
   spaces: StudySpace[];
@@ -18,20 +19,50 @@ interface StudySpaceContextType {
   setTransform: React.Dispatch<React.SetStateAction<CanvasTransform>>;
   panBy: (dx: number, dy: number) => void;
   zoomBy: (factor: number, originX?: number, originY?: number) => void;
+  rotateDeskBy: (deltaDegrees: number, originX?: number, originY?: number) => void;
+  resetDeskRotation: () => void;
   resetView: () => void;
   selectItem: (id: string | null) => void;
   updateItemPosition: (id: string, x: number, y: number) => void;
   updateItemRotation: (id: string, deltaAngle: number) => void;
+  updateItemTitle?: (id: string, newTitle: string) => void;
+  setItemRotation: (id: string, rotation: number) => void;
   bringToFront: (id: string) => void;
-  turnBookPage: (id: string, direction: 'prev' | 'next') => void;
+  turnBookPage: (id: string, direction: 'prev' | 'next', maxPages?: number) => void;
   setBookPage: (id: string, pageIndex: number) => void;
   combineIntoBinder: (targetId: string, draggedId: string) => boolean;
   detachPageFromBinder: (bookId: string, pageIndex: number) => void;
-  addStickyNote: (text?: string, x?: number, y?: number, color?: string) => string;
+  tidyUpDesk?: () => void;
+  fitAllToScreen?: () => void;
+  updateStickyNoteColor?: (id: string, color: string) => void;
+  updateStickyNoteText?: (id: string, text: string) => void;
+  updateStickyNoteTextAlign?: (id: string, align: 'left' | 'center' | 'right') => void;
+  updateStickyNoteIsBold?: (id: string, isBold: boolean) => void;
+  addStickyNote: (text?: string, x?: number, y?: number, color?: string, width?: number, height?: number) => string;
   addUploadedDocument: (title: string, pages: { title?: string; text: string }[]) => void;
   removeDeskItem: (id: string) => void;
   setSearchQuery: (query: string) => void;
   togglePanLock: () => void;
+  // Drawing & Note creation tools
+  activeTool: import('@/types/studyspace').ActiveToolType;
+  setActiveTool: (tool: import('@/types/studyspace').ActiveToolType) => void;
+  penColor: string;
+  setPenColor: (color: string) => void;
+  penWidthLevel: 'small' | 'medium' | 'large';
+  setPenWidthLevel: (level: 'small' | 'medium' | 'large') => void;
+  stickyCreationColor: string | null;
+  setStickyCreationColor: (color: string | null) => void;
+  strokes: import('@/types/studyspace').DrawingStroke[];
+  currentStroke: import('@/types/studyspace').DrawingStroke | null;
+  startStroke: (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => void;
+  appendPoint: (point: { x: number; y: number }) => void;
+  finishStroke: () => void;
+  addStroke: (stroke: import('@/types/studyspace').DrawingStroke) => void;
+  undoStroke: () => void;
+  clearStrokes: () => void;
+  removeStrokeById: (id: string) => void;
+  removeStrokesInBox: (box: { x1: number; y1: number; x2: number; y2: number }) => void;
+  updateThreadSourceOffset: (threadId: string, offset: { x: number; y: number }) => void;
   addIntelineThread: (params: {
     sourceItemId: string;
     sourcePageNumber: number;
@@ -40,12 +71,24 @@ interface StudySpaceContextType {
     answer: string;
     sourceOffset?: { x: number; y: number };
   }) => string;
+  isViewRotateMode: boolean;
+  setIsViewRotateMode: React.Dispatch<React.SetStateAction<boolean>>;
+  addExamSheet: (
+    title: string, 
+    questions: import('@/types/studyspace').ExamQuestion[], 
+    timeLimitMinutes?: number,
+    pos?: { x: number; y: number }
+  ) => string;
+  updateExamAnswer: (itemId: string, questionId: string, answerIdx: number) => void;
+  gradeExam: (itemId: string) => void;
+  resetExam: (itemId: string) => void;
 }
 
 const DEFAULT_TRANSFORM: CanvasTransform = {
   x: 0,
   y: 0,
-  scale: 1
+  scale: 1,
+  rotation: 0
 };
 
 const StudySpaceContext = createContext<StudySpaceContextType | null>(null);
@@ -58,15 +101,166 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [isPanLocked, setIsPanLocked] = useState(false);
   const [maxZIndex, setMaxZIndex] = useState(20);
+  const [isViewRotateMode, setIsViewRotateMode] = useState(false);
 
-  // Load spaces from localStorage on startup
+  // Drawing & Note creation tools state
+  const [activeTool, setActiveTool] = useState<import('@/types/studyspace').ActiveToolType>('cursor');
+  const [penColor, setPenColor] = useState<string>('#2563eb');
+  const [penWidthLevel, setPenWidthLevel] = useState<'small' | 'medium' | 'large'>('medium');
+  const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
+  const [strokes, setStrokes] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
+  const [currentStroke, setCurrentStroke] = useState<import('@/types/studyspace').DrawingStroke | null>(null);
+
+  const startStroke = (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => {
+    setCurrentStroke({
+      id: `stroke-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      points: [point],
+      color,
+      width,
+      isHighlighter
+    });
+  };
+
+  const appendPoint = (point: { x: number; y: number }) => {
+    setCurrentStroke(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        points: [...prev.points, point]
+      };
+    });
+  };
+
+  const finishStroke = () => {
+    setCurrentStroke(prev => {
+      if (prev && prev.points.length > 1) {
+        let finalPoints = prev.points;
+        if (activeTool === 'smart_shape') {
+          finalPoints = recognizeSmartShape(prev.points);
+        }
+
+        // Check if stroke started over a desk document (book, paper, or sticky note)
+        const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
+        const sortedItems = [...(curSpace?.items || [])].sort((a, b) => b.zIndex - a.zIndex);
+        const p0 = finalPoints[0];
+
+        let targetItem: import('@/types/studyspace').DeskItem | null = null;
+        let localPoints = finalPoints;
+
+        for (const item of sortedItems) {
+          const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 460 : 360) : (item.width || 220);
+          const h = item.type === 'book' ? 640 : item.type === 'paper' ? (item.isExamSheet ? 620 : 500) : (item.height || 200);
+
+          const dx = p0.x - item.x;
+          const dy = p0.y - item.y;
+          const rad = (-item.rotation * Math.PI) / 180;
+          const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+          const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+          if (localX >= -10 && localX <= w + 10 && localY >= -10 && localY <= h + 10) {
+            targetItem = item;
+            localPoints = finalPoints.map(p => {
+              const pdx = p.x - item.x;
+              const pdy = p.y - item.y;
+              return {
+                x: Math.round((pdx * Math.cos(rad) - pdy * Math.sin(rad)) * 10) / 10,
+                y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
+              };
+            });
+            break;
+          }
+        }
+
+        if (targetItem) {
+          setStrokes(s => [...s, { ...prev, points: localPoints, attachedToItemId: targetItem.id }]);
+        } else {
+          setStrokes(s => [...s, { ...prev, points: finalPoints, attachedToItemId: undefined }]);
+        }
+      }
+      return null;
+    });
+  };
+
+  const addStroke = (stroke: import('@/types/studyspace').DrawingStroke) => {
+    setStrokes(prev => [...prev, stroke]);
+  };
+
+  const undoStroke = () => {
+    setStrokes(prev => prev.slice(0, -1));
+  };
+
+  const clearStrokes = () => {
+    setStrokes([]);
+  };
+
+  const removeStrokeById = (id: string) => {
+    setStrokes(prev => prev.filter(s => s.id !== id));
+  };
+
+  const removeStrokesInBox = (box: { x1: number; y1: number; x2: number; y2: number }) => {
+    const minX = Math.min(box.x1, box.x2);
+    const maxX = Math.max(box.x1, box.x2);
+    const minY = Math.min(box.y1, box.y2);
+    const maxY = Math.max(box.y1, box.y2);
+
+    const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
+
+    setStrokes(prev => prev.filter(stroke => {
+      if (stroke.attachedToItemId) {
+        const item = curSpace?.items.find(i => i.id === stroke.attachedToItemId);
+        if (item) {
+          const rad = (item.rotation * Math.PI) / 180;
+          const isInside = stroke.points.some(p => {
+            const wx = item.x + p.x * Math.cos(rad) - p.y * Math.sin(rad);
+            const wy = item.y + p.x * Math.sin(rad) + p.y * Math.cos(rad);
+            return wx >= minX && wx <= maxX && wy >= minY && wy <= maxY;
+          });
+          return !isInside;
+        }
+      }
+      const isInside = stroke.points.some(p => p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY);
+      return !isInside;
+    }));
+  };
+
+  const updateThreadSourceOffset = (threadId: string, offset: { x: number; y: number }) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          threads: (s.threads || []).map(t =>
+            t.id === threadId ? { ...t, sourceOffset: offset } : t
+          )
+        };
+      })
+    );
+  };
+
+  // Deep NFC normalization & Zero-Emoji sanitizer for persistent storage safety
+  const removeEmojis = (str: string) => str.replace(/([\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u27BF])/g, '').trim();
+  const normalizeNFC = (text: string) => (text ? removeEmojis(text.normalize('NFC')) : '');
+
+  // Load spaces from localStorage on startup with deep NFC normalization
   useEffect(() => {
     try {
       const saved = localStorage.getItem('vitudy_spaces');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setSpaces(parsed);
+          const deepNormalize = (data: any): any => {
+            if (typeof data === 'string') return normalizeNFC(data);
+            if (Array.isArray(data)) return data.map(deepNormalize);
+            if (data && typeof data === 'object') {
+              const res: any = {};
+              for (const k of Object.keys(data)) {
+                res[k] = deepNormalize(data[k]);
+              }
+              return res;
+            }
+            return data;
+          };
+          setSpaces(deepNormalize(parsed));
           setActiveSpaceId(parsed[0].id);
         }
       }
@@ -112,22 +306,86 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     if (isPanLocked) return;
     setTransform(prev => ({
       ...prev,
-      x: prev.x + dx,
-      y: prev.y + dy
+      x: Math.round(prev.x + dx),
+      y: Math.round(prev.y + dy)
     }));
   };
 
   const zoomBy = (factor: number, originX?: number, originY?: number) => {
     setTransform(prev => {
-      const newScale = Math.min(Math.max(prev.scale * factor, 0.4), 2.2);
+      const newScale = Math.min(Math.max(Number((prev.scale * factor).toFixed(3)), 0.4), 2.2);
       if (originX === undefined || originY === undefined) {
         return { ...prev, scale: newScale };
       }
-      // Zoom centered on pointer
+      // Zoom centered on pointer with pixel-grid integer snapping
       const scaleChange = newScale / prev.scale;
-      const newX = originX - (originX - prev.x) * scaleChange;
-      const newY = originY - (originY - prev.y) * scaleChange;
+      const newX = Math.round(originX - (originX - prev.x) * scaleChange);
+      const newY = Math.round(originY - (originY - prev.y) * scaleChange);
       return { x: newX, y: newY, scale: newScale };
+    });
+  };
+
+  const rotateDeskBy = (deltaDegrees: number, originX?: number, originY?: number) => {
+    if (isPanLocked) return;
+    setTransform(prev => {
+      const curRot = prev.rotation || 0;
+      let newRot = curRot + deltaDegrees;
+
+      // Normalize to (-180, 180]
+      while (newRot > 180) newRot -= 360;
+      while (newRot <= -180) newRot += 360;
+
+      // Magnetic snap to 0 if within +/- 2.5 degrees
+      if (Math.abs(newRot) < 2.5) {
+        newRot = 0;
+      }
+
+      const effectiveDelta = newRot - curRot;
+      if (Math.abs(effectiveDelta) < 0.0001) {
+        return { ...prev, rotation: newRot };
+      }
+
+      // Pivot around given origin or window center
+      const cx = originX !== undefined ? originX : (typeof window !== 'undefined' ? window.innerWidth / 2 : 0);
+      const cy = originY !== undefined ? originY : (typeof window !== 'undefined' ? window.innerHeight / 2 : 0);
+
+      const vx = cx - prev.x;
+      const vy = cy - prev.y;
+      const rad = (effectiveDelta * Math.PI) / 180;
+
+      const unrotVx = vx * Math.cos(rad) - vy * Math.sin(rad);
+      const unrotVy = vx * Math.sin(rad) + vy * Math.cos(rad);
+
+      const newX = Math.round(cx - unrotVx);
+      const newY = Math.round(cy - unrotVy);
+
+      return {
+        ...prev,
+        x: newX,
+        y: newY,
+        rotation: Number(newRot.toFixed(2))
+      };
+    });
+  };
+
+  const resetDeskRotation = () => {
+    setTransform(prev => {
+      if (!prev.rotation) return prev;
+      const curRot = prev.rotation;
+      const effectiveDelta = -curRot;
+      const cx = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
+      const cy = typeof window !== 'undefined' ? window.innerHeight / 2 : 0;
+      const vx = cx - prev.x;
+      const vy = cy - prev.y;
+      const rad = (effectiveDelta * Math.PI) / 180;
+      const unrotVx = vx * Math.cos(rad) - vy * Math.sin(rad);
+      const unrotVy = vx * Math.sin(rad) + vy * Math.cos(rad);
+      return {
+        ...prev,
+        x: Math.round(cx - unrotVx),
+        y: Math.round(cy - unrotVy),
+        rotation: 0
+      };
     });
   };
 
@@ -168,6 +426,163 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     );
   };
 
+  const updateItemTitle = (id: string, newTitle: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, title: normalizeNFC(newTitle) } : item
+          )
+        };
+      })
+    );
+  };
+
+  const updateStickyNoteText = (id: string, text: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, stickyText: text.normalize('NFC') } : item
+          )
+        };
+      })
+    );
+  };
+
+  const updateStickyNoteColor = (id: string, color: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, stickyColor: color } : item
+          )
+        };
+      })
+    );
+  };
+
+  const updateStickyNoteTextAlign = (id: string, align: 'left' | 'center' | 'right') => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, textAlign: align } : item
+          )
+        };
+      })
+    );
+  };
+
+  const updateStickyNoteIsBold = (id: string, isBold: boolean) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, isBold } : item
+          )
+        };
+      })
+    );
+  };
+
+  const tidyUpDesk = () => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+
+        const books = s.items.filter(i => i.type === 'book');
+        const papers = s.items.filter(i => i.type === 'paper');
+        const notes = s.items.filter(i => i.type === 'sticky_note');
+        const others = s.items.filter(i => i.type !== 'book' && i.type !== 'paper' && i.type !== 'sticky_note');
+
+        // Central Book(s)
+        let bookOffset = 0;
+        const arrangedBooks = books.map(b => {
+          const item = { ...b, x: 120 + bookOffset, y: 80, rotation: 0 };
+          bookOffset += 1020;
+          return item;
+        });
+
+        // Papers on the right
+        let paperOffsetY = 80;
+        const arrangedPapers = papers.map(p => {
+          const item = { ...p, x: 1160, y: paperOffsetY, rotation: 0 };
+          paperOffsetY += 520;
+          return item;
+        });
+
+        // Sticky Notes placed neatly on the left in a 2-column grid
+        let noteOffsetY = 80;
+        const arrangedNotes = notes.map((n, idx) => {
+          const col = idx % 2;
+          const row = Math.floor(idx / 2);
+          const item = {
+            ...n,
+            x: -160 - (col * 240),
+            y: noteOffsetY + (row * 220),
+            rotation: 0
+          };
+          return item;
+        });
+
+        return {
+          ...s,
+          items: [...arrangedBooks, ...arrangedPapers, ...arrangedNotes, ...others]
+        };
+      })
+    );
+
+    // Center camera comfortably
+    setTransform({
+      x: 350,
+      y: 120,
+      scale: 0.72
+    });
+  };
+
+  const fitAllToScreen = () => {
+    const items = activeSpace.items;
+    if (items.length === 0) {
+      resetView();
+      return;
+    }
+
+    const minX = Math.min(...items.map(i => i.x));
+    const maxX = Math.max(...items.map(i => i.x + (i.type === 'book' ? 980 : i.type === 'paper' ? 400 : 240)));
+    const minY = Math.min(...items.map(i => i.y));
+    const maxY = Math.max(...items.map(i => i.y + (i.type === 'book' ? 660 : i.type === 'paper' ? 560 : 220)));
+
+    const contentW = Math.max(maxX - minX, 400);
+    const contentH = Math.max(maxY - minY, 300);
+
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    const pad = 120;
+    const scale = Math.min((winW - pad * 2) / contentW, (winH - pad * 2) / contentH, 1.2);
+    const clampedScale = Math.max(0.25, Math.min(scale, 1.0));
+
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    setTransform({
+      x: winW / 2 - cx * clampedScale,
+      y: winH / 2 - cy * clampedScale,
+      scale: clampedScale
+    });
+  };
+
   const updateItemRotation = (id: string, deltaAngle: number) => {
     setSpaces(sList =>
       sList.map(s => {
@@ -182,7 +597,23 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     );
   };
 
-  const turnBookPage = (id: string, direction: 'prev' | 'next') => {
+  const setItemRotation = (id: string, rotation: number) => {
+    const normalized = ((rotation % 360) + 360) % 360;
+    const finalRot = normalized > 180 ? normalized - 360 : normalized;
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id ? { ...item, rotation: finalRot } : item
+          )
+        };
+      })
+    );
+  };
+
+  const turnBookPage = (id: string, direction: 'prev' | 'next', maxPages?: number) => {
     setSpaces(sList =>
       sList.map(s => {
         if (s.id !== activeSpaceId) return s;
@@ -192,8 +623,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             if (item.id !== id) return item;
             // For a book spread, turn 2 pages at a time (0, 2, 4, ...)
             const step = item.type === 'book' ? 2 : 1;
+            const total = maxPages !== undefined ? maxPages : item.pageCount;
+            const limit = Math.max(0, total - 1);
             const newIndex = direction === 'next' 
-              ? Math.min(item.currentPageIndex + step, Math.max(0, item.pageCount - 1))
+              ? Math.min(item.currentPageIndex + step, limit)
               : Math.max(item.currentPageIndex - step, 0);
             return { ...item, currentPageIndex: newIndex };
           })
@@ -286,7 +719,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       title: detachedPage.title || `Trích từ: ${book.title} (Trang ${detachedPage.pageNumber})`,
       x: book.x + 380,
       y: book.y + 20,
-      rotation: Math.floor(Math.random() * 8) - 4,
+      rotation: 0,
       scale: 1,
       zIndex: maxZIndex + 2,
       pageCount: 1,
@@ -319,7 +752,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     );
   };
 
-  const addStickyNote = (text = 'Ghi chú học tập mới...', x = 400, y = 300, color = '#fef08a'): string => {
+  const addStickyNote = (text = '', x = 400, y = 300, color = '#fef08a', width?: number, height?: number): string => {
     const noteId = `sticky-${Date.now()}`;
     const newNote: DeskItem = {
       id: noteId,
@@ -327,14 +760,16 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       title: 'Ghi chú',
       x,
       y,
-      rotation: Math.floor(Math.random() * 12) - 6,
+      rotation: 0,
       scale: 1,
       zIndex: maxZIndex + 1,
       pageCount: 1,
       currentPageIndex: 0,
       stickyColor: color,
-      stickyText: text,
-      pages: []
+      stickyText: normalizeNFC(text),
+      pages: [],
+      width: width || 220,
+      height: height || 200
     };
 
     setSpaces(sList =>
@@ -343,6 +778,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         return { ...s, items: [...s.items, newNote] };
       })
     );
+    setSelectedItemId(noteId);
     return noteId;
   };
 
@@ -359,7 +795,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     const placeY = sourceItem ? sourceItem.y + 30 : 300;
 
     const stickyId = `sticky-inteline-${Date.now()}`;
-    const stickyText = `📌 [INTELINE TRÍ TUỆ TỪNG DÒNG]\n"${params.selectedText.slice(0, 90)}..."\n\n💡 Trả lời:\n${params.answer}`;
+    const stickyText = `[INTELINE TRÍ TUỆ TỪNG DÒNG]\n"${params.selectedText.slice(0, 90)}..."\n\nTrả lời:\n${params.answer}`;
 
     const newSticky: DeskItem = {
       id: stickyId,
@@ -411,14 +847,14 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     const pages: PageContent[] = rawPages.map((p, idx) => ({
       id: `p-${Date.now()}-${idx}`,
       pageNumber: idx + 1,
-      title: p.title || `Trang ${idx + 1}`,
-      text: p.text
+      title: normalizeNFC(p.title || `Trang ${idx + 1}`),
+      text: normalizeNFC(p.text)
     }));
 
     const newItem: DeskItem = {
       id: `doc-${Date.now()}`,
       type,
-      title,
+      title: normalizeNFC(title),
       x: 320 + Math.random() * 80,
       y: 200 + Math.random() * 60,
       rotation: Math.floor(Math.random() * 6) - 3,
@@ -438,6 +874,135 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     );
   };
 
+  const addExamSheet = (
+    title: string, 
+    questions: import('@/types/studyspace').ExamQuestion[], 
+    timeLimitMinutes = 15,
+    pos?: { x: number; y: number }
+  ): string => {
+    const sheetId = `exam-${Date.now()}`;
+    const examItem: DeskItem = {
+      id: sheetId,
+      type: 'paper',
+      title: normalizeNFC(title),
+      x: pos ? pos.x : (380 + Math.random() * 40),
+      y: pos ? pos.y : (160 + Math.random() * 40),
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 2,
+      pageCount: 1,
+      currentPageIndex: 0,
+      isExamSheet: true,
+      examData: {
+        timeLimitMinutes,
+        remainingSeconds: timeLimitMinutes * 60,
+        questions,
+        userAnswers: {},
+        isGraded: false,
+        totalQuestions: questions.length
+      },
+      pages: [{
+        id: `p-exam-${sheetId}`,
+        pageNumber: 1,
+        title: normalizeNFC(title),
+        text: questions.map((q, idx) => `Câu ${idx + 1}: ${q.question}`).join('\n\n')
+      }]
+    };
+
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, items: [...s.items, examItem] };
+      })
+    );
+
+    return sheetId;
+  };
+
+  const updateExamAnswer = (itemId: string, questionId: string, answerIdx: number) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item => {
+            if (item.id !== itemId || !item.examData) return item;
+            return {
+              ...item,
+              examData: {
+                ...item.examData,
+                userAnswers: {
+                  ...item.examData.userAnswers,
+                  [questionId]: answerIdx
+                }
+              }
+            };
+          })
+        };
+      })
+    );
+  };
+
+  const gradeExam = (itemId: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item => {
+            if (item.id !== itemId || !item.examData) return item;
+            const { questions, userAnswers } = item.examData;
+            let correct = 0;
+            questions.forEach(q => {
+              if (userAnswers[q.id] === q.correctAnswer) {
+                correct++;
+              }
+            });
+            const score = Math.round((correct / (questions.length || 1)) * 100) / 10;
+            let teacherNote = 'Cần cố gắng thêm ở các câu lý thuyết!';
+            if (score >= 9) teacherNote = 'Xuất sắc! Nắm rất vững toàn bộ trọng tâm bài học.';
+            else if (score >= 7) teacherNote = 'Khá tốt! Đã nắm được các khái niệm cốt lõi.';
+            else if (score >= 5) teacherNote = 'Đạt yêu cầu cơ bản. Hãy xem lại các câu sai.';
+
+            return {
+              ...item,
+              examData: {
+                ...item.examData,
+                isGraded: true,
+                score,
+                teacherNote
+              }
+            };
+          })
+        };
+      })
+    );
+  };
+
+  const resetExam = (itemId: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item => {
+            if (item.id !== itemId || !item.examData) return item;
+            return {
+              ...item,
+              examData: {
+                ...item.examData,
+                isGraded: false,
+                userAnswers: {},
+                score: undefined,
+                teacherNote: undefined
+              }
+            };
+          })
+        };
+      })
+    );
+  };
+
   const removeDeskItem = (id: string) => {
     setSpaces(sList =>
       sList.map(s => {
@@ -445,6 +1010,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         return { ...s, items: s.items.filter(item => item.id !== id) };
       })
     );
+    setStrokes(prev => prev.filter(s => s.attachedToItemId !== id));
     if (selectedItemId === id) setSelectedItemId(null);
   };
 
@@ -467,22 +1033,57 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         setTransform,
         panBy,
         zoomBy,
+        rotateDeskBy,
+        resetDeskRotation,
         resetView,
         selectItem,
         updateItemPosition,
         updateItemRotation,
+        updateItemTitle,
+        setItemRotation,
         bringToFront,
         turnBookPage,
         setBookPage,
         combineIntoBinder,
         detachPageFromBinder,
+        updateStickyNoteText,
+        updateStickyNoteColor,
+        updateStickyNoteTextAlign,
+        updateStickyNoteIsBold,
+        tidyUpDesk,
+        fitAllToScreen,
         addStickyNote,
         addUploadedDocument,
+        addExamSheet,
+        updateExamAnswer,
+        gradeExam,
+        resetExam,
         removeDeskItem,
         setSearchQuery,
         togglePanLock,
+        activeTool,
+        setActiveTool,
+        penColor,
+        setPenColor,
+        penWidthLevel,
+        setPenWidthLevel,
+        stickyCreationColor,
+        setStickyCreationColor,
+        strokes,
+        currentStroke,
+        startStroke,
+        appendPoint,
+        finishStroke,
+        addStroke,
+        undoStroke,
+        clearStrokes,
+        removeStrokeById,
+        removeStrokesInBox,
+        updateThreadSourceOffset,
         threads: activeSpace.threads || [],
-        addIntelineThread
+        addIntelineThread,
+        isViewRotateMode,
+        setIsViewRotateMode
       }}
     >
       {children}

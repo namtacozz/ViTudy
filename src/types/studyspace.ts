@@ -14,6 +14,26 @@ export interface PageContent {
   }[];
 }
 
+export interface ExamQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+  type?: 'mcq' | 'true_false' | 'short_answer';
+}
+
+export interface ExamSheetData {
+  timeLimitMinutes?: number;
+  remainingSeconds?: number;
+  questions: ExamQuestion[];
+  userAnswers: Record<string, number>;
+  isGraded?: boolean;
+  score?: number;
+  totalQuestions?: number;
+  teacherNote?: string;
+}
+
 export interface DeskItem {
   id: string;
   type: ItemType;
@@ -31,7 +51,12 @@ export interface DeskItem {
   sourceDocuments?: { id: string; title: string; pageCount: number }[];
   stickyText?: string;
   stickyColor?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  isBold?: boolean;
   isExamSheet?: boolean;
+  examData?: ExamSheetData;
+  width?: number;
+  height?: number;
 }
 
 export interface IntelineThread {
@@ -57,8 +82,27 @@ export interface StudySpace {
   threads?: IntelineThread[];
 }
 
+export type ActiveToolType = 
+  | 'cursor' 
+  | 'pen' 
+  | 'highlighter' 
+  | 'smart_shape' 
+  | 'eraser' 
+  | 'area_eraser' 
+  | 'create_note';
+
+export interface DrawingStroke {
+  id: string;
+  points: { x: number; y: number }[];
+  color: string;
+  width: number;
+  isHighlighter?: boolean;
+  attachedToItemId?: string;
+}
+
 export interface CanvasTransform {
   x: number;
   y: number;
   scale: number;
+  rotation?: number;
 }

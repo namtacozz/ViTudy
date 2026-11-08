@@ -13,9 +13,9 @@ export const INITIAL_SPACES: StudySpace[] = [
         id: 'doc-book-ml',
         type: 'book',
         title: 'Giáo trình Cơ Sở Machine Learning & Deep Learning',
-        x: 460,
-        y: 180,
-        rotation: -2,
+        x: 160,
+        y: 80,
+        rotation: 0,
         scale: 1,
         zIndex: 10,
         pageCount: 8,
@@ -40,7 +40,7 @@ Ví dụ: Phân cụm khách hàng (K-Means), giảm số chiều (PCA).`
           {
             id: 'p2',
             pageNumber: 2,
-            title: 'Chương 1: Các Độ đo Đánh giá Mô hình',
+            title: 'Chương 2: Các Độ đo Đánh giá Mô hình',
             text: `Để đánh giá một mô hình phân loại (Classification), ta sử dụng Ma trận nhầm lẫn (Confusion Matrix):
 - True Positive (TP): Dự đoán Đúng là Dương tính
 - False Positive (FP): Dự đoán Sai là Dương tính (Lỗi loại I)
@@ -62,7 +62,7 @@ F1 = 2 * (Precision * Recall) / (Precision + Recall)`
           {
             id: 'p3',
             pageNumber: 3,
-            title: 'Chương 2: Hồi quy Tuyến tính (Linear Regression)',
+            title: 'Chương 3: Hồi quy Tuyến tính (Linear Regression)',
             text: `Hồi quy tuyến tính là thuật toán cơ bản mô hình hóa mối quan hệ giữa biến phụ thuộc liên tục y và một hoặc nhiều biến độc lập X.
 
 Mô hình dạng ma trận:
@@ -79,7 +79,7 @@ Có hai phương pháp chính để tìm nghiệm:
           {
             id: 'p4',
             pageNumber: 4,
-            title: 'Chương 2: Thuật toán Tối ưu Gradient Descent',
+            title: 'Chương 3: Thuật toán Tối ưu Gradient Descent',
             text: `Gradient Descent là phương pháp tối ưu hóa bậc nhất tìm cực tiểu địa phương của hàm khả vi.
 
 Quy tắc cập nhật trọng số:
@@ -152,15 +152,15 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
         ]
       },
       {
-        id: 'doc-paper-review',
+        id: 'doc-paper-derivative',
         type: 'paper',
-        title: 'Tờ Tóm Tắt Nhanh: Đạo hàm & Gradient',
-        x: 100,
-        y: 220,
-        rotation: 4,
+        title: 'Công thức Đạo hàm Cơ bản',
+        x: -240,
+        y: 80,
+        rotation: 0,
         scale: 1,
         zIndex: 12,
-        pageCount: 2,
+        pageCount: 1,
         currentPageIndex: 0,
         colorTheme: '#047857',
         isBinder: false,
@@ -176,10 +176,56 @@ Ghi chú từ ViTudy: Hãy dùng tính năng Inteline bôi đen bất kỳ công
 - Quy tắc tích: (u * v)' = u' * v + u * v'
 - Quy tắc thương: (u / v)' = (u' * v - u * v') / v^2
 - Đạo hàm hàm hợp (Chain rule): dy/dx = (dy/du) * (du/dx)`
-          },
+          }
+        ]
+      },
+      {
+        id: 'doc-roadmap-ml',
+        type: 'paper',
+        title: 'Lộ trình Ôn tập Machine Learning',
+        x: -240,
+        y: 560,
+        rotation: 0,
+        scale: 1,
+        zIndex: 14,
+        pageCount: 1,
+        currentPageIndex: 0,
+        colorTheme: '#0284c7',
+        isBinder: false,
+        pages: [
+          {
+            id: 'p-road-1',
+            pageNumber: 1,
+            title: 'Lộ trình Ôn tập Machine Learning',
+            text: `[CHẶNG 1: KHÁI NIỆM MỞ ĐẦU & PHÂN LOẠI]
+  ├── [x] Định nghĩa Học có giám sát (Supervised) vs Không giám sát (Unsupervised)
+  ├── [x] Ma trận nhầm lẫn (Confusion Matrix): TP, FP, TN, FN
+  └── [x] Độ đo Accuracy, Precision, Recall, F1-Score
+
+[CHẶNG 2: HỒI QUY TUYẾN TÍNH & HÀM MẤT MÁT]
+  ├── [ ] Mô hình y = X*w + b và Hàm mất mát MSE
+  ├── [ ] Nghiệm giải tích Normal Equation
+  └── [ ] Thuật toán Gradient Descent: Batch, Mini-batch, SGD`
+          }
+        ]
+      },
+      {
+        id: 'doc-paper-gradient',
+        type: 'paper',
+        title: 'Gradient trong Không gian Đa chiều',
+        x: 1200,
+        y: 460,
+        rotation: 0,
+        scale: 1,
+        zIndex: 13,
+        pageCount: 1,
+        currentPageIndex: 0,
+        colorTheme: '#0284c7',
+        isBinder: false,
+        pages: [
           {
             id: 'p-rev-2',
-            pageNumber: 2,
+            pageNumber: 1,
             title: 'Gradient trong Không gian Đa chiều',
             text: `Cho hàm nhiều biến f(x_1, x_2, ..., x_n):
 Gradient của f, ký hiệu ∇f, là một vectơ gồm tất cả các đạo hàm riêng:
@@ -196,16 +242,29 @@ Gradient của f, ký hiệu ∇f, là một vectơ gồm tất cả các đạo
         id: 'doc-sticky-1',
         type: 'sticky_note',
         title: 'Ghi chú nhớ ôn thi',
-        x: 1080,
-        y: 200,
-        rotation: -6,
+        x: 1200,
+        y: 120,
+        rotation: 0,
         scale: 1,
         zIndex: 15,
         pageCount: 1,
         currentPageIndex: 0,
         stickyColor: '#fef08a',
-        stickyText: '💡 Lưu ý: Tuần sau thi giữa kỳ môn Học máy! Nhớ dùng công cụ STudy tạo 20 câu hỏi trắc nghiệm từ Chương 2 & 3 để luyện tập!',
+        stickyText: 'Lưu ý: Tuần sau thi giữa kỳ môn Học máy! Nhớ dùng công cụ STudy tạo 20 câu hỏi trắc nghiệm từ Chương 2 & 3 để luyện tập!',
         pages: []
+      }
+    ],
+    threads: [
+      {
+        id: 'thread-demo-1',
+        sourceItemId: 'doc-book-ml',
+        sourcePageNumber: 1,
+        selectedText: 'Supervised Learning (Học có giám sát)',
+        sourceOffset: { x: 300, y: 140 },
+        targetStickyId: 'doc-sticky-1',
+        question: 'Tại sao cần ghi nhớ kỹ phần Học có giám sát?',
+        answer: 'Vì đây là trọng tâm 40% câu hỏi trong đề thi giữa kỳ.',
+        createdAt: '2026-01-01T00:00:00.000Z'
       }
     ]
   }

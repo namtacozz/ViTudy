@@ -1,20 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 
-export function Minimap() {
+interface MinimapProps {
+  isVisible?: boolean;
+  onClose?: () => void;
+}
+
+export function Minimap({ isVisible = true, onClose }: MinimapProps) {
   const { activeSpace, transform, setTransform } = useStudySpace();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Minimap dimensions
-  const miniWidth = 160;
-  const miniHeight = 100;
-  // World bounds approximation
-  const worldSize = 3000;
-  const scaleRatio = miniWidth / worldSize;
+  const miniWidth = 190;
+  const miniHeight = 120;
+  const pad = 10;
 
-  // Window viewport representation with safe client hydration
-  const [viewSize, setViewSize] = useState({ width: 1200, height: 800 });
+  // Window viewport representation
+  const [viewSize, setViewSize] = useState(() => 
+    typeof window !== 'undefined' 
+      ? { width: window.innerWidth, height: window.innerHeight } 
+      : { width: 1200, height: 800 }
+  );
 
   useEffect(() => {
     setViewSize({ width: window.innerWidth, height: window.innerHeight });
@@ -25,77 +34,178 @@ export function Minimap() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const rectW = Math.max(16, (viewSize.width / transform.scale) * scaleRatio);
-  const rectH = Math.max(12, (viewSize.height / transform.scale) * scaleRatio);
+  // Compute camera world viewport
+  const camWorldLeft = -transform.x / transform.scale;
+  const camWorldTop = -transform.y / transform.scale;
+  const camWorldWidth = viewSize.width / transform.scale;
+  const camWorldHeight = viewSize.height / transform.scale;
+  const camWorldRight = camWorldLeft + camWorldWidth;
+  const camWorldBottom = camWorldTop + camWorldHeight;
 
-  const rectX = miniWidth / 2 - (transform.x * scaleRatio);
-  const rectY = miniHeight / 2 - (transform.y * scaleRatio);
+  // Compute bounding box encompassing all items AND the viewport
+  const { minX, minY, scale, offsetX, offsetY } = useMemo(() => {
+    let itemsMinX = 0;
+    let itemsMaxX = 1200;
+    let itemsMinY = 0;
+    let itemsMaxY = 800;
 
-  const handleMinimapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    if (activeSpace.items.length > 0) {
+      itemsMinX = Math.min(...activeSpace.items.map(i => i.x));
+      itemsMaxX = Math.max(...activeSpace.items.map(i => i.x + (i.type === 'book' ? 940 : i.type === 'paper' ? 360 : 220)));
+      itemsMinY = Math.min(...activeSpace.items.map(i => i.y));
+      itemsMaxY = Math.max(...activeSpace.items.map(i => i.y + (i.type === 'book' ? 630 : i.type === 'paper' ? 440 : 200)));
+    }
 
-    const targetWorldX = (clickX - miniWidth / 2) / scaleRatio;
-    const targetWorldY = (clickY - miniHeight / 2) / scaleRatio;
+    const bMinX = Math.min(itemsMinX, camWorldLeft) - 200;
+    const bMaxX = Math.max(itemsMaxX, camWorldRight) + 200;
+    const bMinY = Math.min(itemsMinY, camWorldTop) - 200;
+    const bMaxY = Math.max(itemsMaxY, camWorldBottom) + 200;
+
+    const boundsW = Math.max(bMaxX - bMinX, 1000);
+    const boundsH = Math.max(bMaxY - bMinY, 700);
+
+    const usableW = miniWidth - pad * 2;
+    const usableH = miniHeight - pad * 2;
+    const s = Math.min(usableW / boundsW, usableH / boundsH);
+
+    const ox = pad + (usableW - boundsW * s) / 2;
+    const oy = pad + (usableH - boundsH * s) / 2;
+
+    return { minX: bMinX, minY: bMinY, scale: s, offsetX: ox, offsetY: oy };
+  }, [activeSpace.items, camWorldLeft, camWorldRight, camWorldTop, camWorldBottom]);
+
+  if (!isVisible) return null;
+
+  // World to Minimap converters
+  const toMiniX = (wx: number) => offsetX + (wx - minX) * scale;
+  const toMiniY = (wy: number) => offsetY + (wy - minY) * scale;
+  const toWorldX = (mx: number) => minX + (mx - offsetX) / scale;
+  const toWorldY = (my: number) => minY + (my - offsetY) / scale;
+
+  // Viewport Frame coordinates on minimap
+  const rectX = toMiniX(camWorldLeft);
+  const rectY = toMiniY(camWorldTop);
+  const rectW = Math.max(16, camWorldWidth * scale);
+  const rectH = Math.max(12, camWorldHeight * scale);
+
+  const moveCameraTo = (clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
+
+    const targetWorldCenterX = toWorldX(clickX);
+    const targetWorldCenterY = toWorldY(clickY);
+
+    const newX = viewSize.width / 2 - targetWorldCenterX * transform.scale;
+    const newY = viewSize.height / 2 - targetWorldCenterY * transform.scale;
 
     setTransform(prev => ({
       ...prev,
-      x: -targetWorldX,
-      y: -targetWorldY
+      x: newX,
+      y: newY
     }));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsNavigating(true);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    moveCameraTo(e.clientX, e.clientY);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isNavigating) return;
+    e.preventDefault();
+    e.stopPropagation();
+    moveCameraTo(e.clientX, e.clientY);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsNavigating(false);
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
   };
 
   return (
     <div
-      onClick={handleMinimapClick}
+      ref={containerRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       style={{ width: miniWidth, height: miniHeight }}
-      className="bg-slate-950/80 border border-slate-700/60 rounded-md relative overflow-hidden cursor-crosshair shadow-lg backdrop-blur-sm group"
-      title="Bản đồ thu nhỏ bàn học (Click để di chuyển camera)"
+      className="bg-white/95 border border-slate-200/90 rounded-xl relative overflow-hidden cursor-crosshair shadow-md backdrop-blur-md group select-none touch-none"
+      title="Bản đồ thu nhỏ bàn học (Kéo hoặc Click để điều hướng camera)"
     >
+      {/* Subtle Radar Background Grid */}
+      <div 
+        className="absolute inset-0 opacity-20 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(148, 163, 184, 0.3) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(148, 163, 184, 0.3) 1px, transparent 1px)
+          `,
+          backgroundSize: '16px 16px'
+        }}
+      />
+
       {/* Center crosshair */}
-      <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-slate-800/60 pointer-events-none" />
-      <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-slate-800/60 pointer-events-none" />
+      <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-slate-200/80 pointer-events-none" />
+      <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-slate-200/80 pointer-events-none" />
 
       {/* Desk Items on Minimap */}
       {activeSpace.items.map(item => {
-        const itemX = miniWidth / 2 + (item.x - 500) * scaleRatio;
-        const itemY = miniHeight / 2 + (item.y - 300) * scaleRatio;
-        const itemW = item.type === 'book' ? 24 : 14;
-        const itemH = item.type === 'book' ? 18 : 16;
+        const itemW = (item.type === 'book' ? 940 : item.type === 'paper' ? 360 : 220) * scale;
+        const itemH = (item.type === 'book' ? 630 : item.type === 'paper' ? 440 : 200) * scale;
+        const itemX = toMiniX(item.x);
+        const itemY = toMiniY(item.y);
 
         return (
           <div
             key={item.id}
             style={{
-              left: Math.max(2, Math.min(miniWidth - 10, itemX)),
-              top: Math.max(2, Math.min(miniHeight - 10, itemY)),
-              width: itemW,
-              height: itemH
+              left: itemX,
+              top: itemY,
+              width: Math.max(8, itemW),
+              height: Math.max(6, itemH)
             }}
-            className={`absolute rounded-[2px] transition-all pointer-events-none ${
+            className={`absolute rounded-[2px] shadow-xs pointer-events-none transition-all flex items-center justify-center ${
               item.type === 'book'
-                ? 'bg-sky-500/80'
+                ? 'bg-slate-800 border border-slate-600'
                 : item.type === 'paper'
-                ? 'bg-emerald-400/80'
-                : 'bg-amber-300/80'
+                ? 'bg-emerald-500/90 border border-emerald-600'
+                : 'bg-amber-400 border border-amber-500'
             }`}
-          />
+          >
+            {item.type === 'book' && (
+              <div className="w-[1px] h-full bg-slate-500 opacity-60" />
+            )}
+          </div>
         );
       })}
 
-      {/* Viewport Frame (Hardware-accelerated Transform) */}
+      {/* Viewport Frame (Bounding Box Guarantee: Always within Minimap) */}
       <div
         style={{
-          transform: `translate3d(${Math.max(0, Math.min(miniWidth - rectW, rectX))}px, ${Math.max(0, Math.min(miniHeight - rectH, rectY))}px, 0)`,
+          transform: `translate3d(${rectX}px, ${rectY}px, 0)`,
           width: rectW,
           height: rectH
         }}
-        className="absolute top-0 left-0 border border-cyan-400/80 bg-cyan-500/10 rounded-[2px] pointer-events-none shadow-[0_0_8px_rgba(34,211,238,0.3)] will-change-transform"
-      />
+        className="absolute top-0 left-0 border-2 border-cyan-500 bg-cyan-500/15 rounded-[3px] pointer-events-none shadow-[0_0_12px_rgba(6,182,212,0.4)] will-change-transform"
+      >
+        {/* Radar Corner Ticks */}
+        <div className="absolute -top-1 -left-1 w-1.5 h-1.5 border-t-2 border-l-2 border-cyan-600" />
+        <div className="absolute -top-1 -right-1 w-1.5 h-1.5 border-t-2 border-r-2 border-cyan-600" />
+        <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 border-b-2 border-l-2 border-cyan-600" />
+        <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 border-b-2 border-r-2 border-cyan-600" />
+      </div>
 
-      <div className="absolute bottom-1 right-1.5 text-[9px] font-mono text-slate-500 pointer-events-none">
-        MAP
+      <div className="absolute bottom-1.5 right-2 text-[9px] font-mono font-black text-slate-500 pointer-events-none tracking-wider select-none">
+        BẢN ĐỒ (Phím M)
       </div>
     </div>
   );

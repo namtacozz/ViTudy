@@ -1,22 +1,29 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { DeskItem } from '@/types/studyspace';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { 
-  RotateCw, 
-  RotateCcw, 
-  Trash2, 
   ChevronLeft, 
   ChevronRight, 
-  BookOpen, 
-  Layers, 
-  ExternalLink,
-  Bookmark,
-  Sparkles
+  Sparkles, 
+  Trash2, 
+  Scissors,
+  Maximize2,
+  X,
+  Send,
+  Loader2,
+  Lightbulb,
+  BookOpen
 } from 'lucide-react';
-import { StudyToolsModal } from '../modals/StudyToolsModal';
+import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { IntelineModal } from '../modals/IntelineModal';
+import { StudyToolsModal } from '../modals/StudyToolsModal';
+import { FullScreenDocModal } from '../modals/FullScreenDocModal';
+import { paginateDocument, PaginatedLeaf } from '@/utils/pagination';
+import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
+import { useViToken } from '@/context/ViTokenContext';
+import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
 
 interface BookSpreadProps {
   item: DeskItem;
@@ -25,336 +32,814 @@ interface BookSpreadProps {
 
 export function BookSpread({ item, isSelected }: BookSpreadProps) {
   const { 
-    updateItemPosition, 
-    updateItemRotation, 
+    transform, 
     selectItem, 
-    bringToFront, 
     removeDeskItem,
     turnBookPage,
-    setBookPage,
-    detachPageFromBinder
+    detachPageFromBinder,
+    addStickyNote
   } = useStudySpace();
 
-  const [isDragging, setIsDragging] = useState(false);
+  const { spendTokens } = useViToken();
+
   const [isStudyOpen, setIsStudyOpen] = useState(false);
-  const [intelineState, setIntelineState] = useState<{
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [fontsReady, setFontsReady] = useState(false);
+  
+  // Full modal fallback for complex multi-turn Inteline
+  const [intelineModalState, setIntelineModalState] = useState<{
     isOpen: boolean;
     pageNumber: number;
     selectedText: string;
   } | null>(null);
-  const dragStartRef = useRef<{ mouseX: number; mouseY: number; itemX: number; itemY: number } | null>(null);
 
-  const handleTextSelect = (pageNumber: number, fallbackText: string) => {
-    const selection = window.getSelection();
-    const str = selection ? selection.toString().trim() : '';
-    const text = str.length > 3 ? str : fallbackText.slice(0, 200);
+  // Floating Contextual Inteline Popover right at the end of selected text
+  const [selectionPopover, setSelectionPopover] = useState<{
+    x: number;
+    y: number;
+    text: string;
+    pageNumber: number;
+    question: string;
+    answer: string | null;
+    loading: boolean;
+  } | null>(null);
 
-    setIntelineState({
-      isOpen: true,
-      pageNumber,
-      selectedText: text
-    });
-  };
+  // 3D Realistic Page Drag & Curl state
+  const [dragFlip, setDragFlip] = useState<{
+    direction: 'next' | 'prev';
+    progress: number;
+    isDragging: boolean;
+  } | null>(null);
+
+  const bookRef = useRef<HTMLDivElement>(null);
+
+  // Recalculate pagination when custom fonts finish loading
+  useEffect(() => {
+    if (typeof document !== 'undefined' && document.fonts) {
+      document.fonts.ready
+        .then(() => setFontsReady(true))
+        .catch(() => setFontsReady(true));
+    }
+  }, []);
+
+  // Dynamic pagination: zero text loss, fits page height exactly
+  const paginatedLeaves: PaginatedLeaf[] = useMemo(() => {
+    return paginateDocument(item.pages);
+  }, [item.pages, fontsReady]);
+
+  const totalPages = Math.max(paginatedLeaves.length, 1);
 
   // Even index on left page, odd index on right page
   const leftPageIndex = item.currentPageIndex % 2 === 0 ? item.currentPageIndex : item.currentPageIndex - 1;
   const rightPageIndex = leftPageIndex + 1;
 
-  const leftPage = item.pages[leftPageIndex];
-  const rightPage = item.pages[rightPageIndex];
+  const leftLeaf = paginatedLeaves[leftPageIndex] || null;
+  const rightLeaf = paginatedLeaves[rightPageIndex] || null;
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    // Don't drag if clicking buttons, inputs or scrollable content
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('input')) return;
+  // Pre-rendered underlying leaves so when flipping, the leaf underneath already shows the next page
+  const underneathLeftLeaf = dragFlip?.direction === 'prev'
+    ? (paginatedLeaves[leftPageIndex - 2] || null)
+    : leftLeaf;
 
-    e.stopPropagation();
-    bringToFront(item.id);
-    selectItem(item.id);
+  const underneathRightLeaf = dragFlip?.direction === 'next'
+    ? (paginatedLeaves[rightPageIndex + 2] || null)
+    : rightLeaf;
 
-    setIsDragging(true);
-    dragStartRef.current = {
-      mouseX: e.clientX,
-      mouseY: e.clientY,
-      itemX: item.x,
-      itemY: item.y
+  // Keyboard navigation for turning pages (always passes totalPages so it never gets stuck)
+  useEffect(() => {
+    if (!isSelected || isFullScreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        turnBookPage(item.id, 'prev', totalPages);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        turnBookPage(item.id, 'next', totalPages);
+      }
     };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSelected, isFullScreen, item.id, turnBookPage, totalPages]);
 
-    let rafId: number | null = null;
-    let latestX = item.x;
-    let latestY = item.y;
+  // Hook for unified drag-and-move and continuous 360 rotation (width 980 to match 3x cover width)
+  const { isDragging, handleMouseDown, handleRotateMouseDown, handleRotateDoubleClick } = useDeskItemInteraction({
+    itemId: item.id,
+    itemX: item.x,
+    itemY: item.y,
+    rotation: item.rotation,
+    width: 980,
+    height: 640,
+  });
+
+  // Handle Text Selection: position Inteline card right at the end of the highlighted text
+  const handlePageMouseUp = (pageNumber: number, e: React.MouseEvent) => {
+    const selection = window.getSelection();
+    const text = selection ? selection.toString().trim() : '';
+    if (selection && text.length >= 3 && bookRef.current) {
+      try {
+        const range = selection.getRangeAt(0);
+        const rects = range.getClientRects();
+        const lastRect = rects[rects.length - 1] || range.getBoundingClientRect();
+        const bookRect = bookRef.current.getBoundingClientRect();
+
+        const clickX = (lastRect.right - bookRect.left) / transform.scale;
+        const clickY = (lastRect.bottom - bookRect.top) / transform.scale + 8;
+
+        setSelectionPopover({
+          x: Math.max(120, Math.min(clickX, 840)),
+          y: Math.max(60, Math.min(clickY, 520)),
+          text,
+          pageNumber,
+          question: '',
+          answer: null,
+          loading: false
+        });
+      } catch {
+        setSelectionPopover(null);
+      }
+    } else {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-inteline-popover="true"]')) {
+        setSelectionPopover(null);
+      }
+    }
+  };
+
+  // Inline Quick Inteline Ask
+  const handleQuickAsk = async (customQ?: string) => {
+    if (!selectionPopover) return;
+    const q = customQ || selectionPopover.question.trim();
+    if (!q) return;
+
+    setSelectionPopover(prev => prev ? { ...prev, loading: true, question: q } : null);
+
+    try {
+      const prompt = `Bạn là trợ lý học tập ViTudy (Inteline). Hãy trả lời câu hỏi của học sinh về đoạn văn bản sau đây:
+Đoạn trích: "${selectionPopover.text}"
+Câu hỏi: "${q}"
+Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối đa 3-4 câu).`;
+
+      spendTokens?.(2, 'Hỏi nhanh AI Inteline');
+
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          systemPrompt: 'Bạn là chuyên gia sư phạm ViTudy Inteline giải thích cô đọng, sắc bén, dễ nhớ.'
+        })
+      });
+
+      const data = await res.json();
+      const reply = data.text || 'Không nhận được câu trả lời từ AI. Vui lòng thử lại.';
+      setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: reply } : null);
+    } catch {
+      setSelectionPopover(prev => prev ? {
+        ...prev, 
+        loading: false, 
+        answer: 'Đã xảy ra lỗi khi kết nối AI. Vui lòng kiểm tra mạng hoặc thử lại.'
+      } : null);
+    }
+  };
+
+  // ================= 3D REALISTIC PAGE-FLIP DRAG CONTROLLER =================
+  const startDragFlip = useCallback((direction: 'next' | 'prev', e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (direction === 'next' && rightPageIndex >= totalPages - 1) return;
+    if (direction === 'prev' && leftPageIndex <= 0) return;
+
+    const startX = e.clientX;
+    let currentProgress = 0.05;
+    let didMove = false;
+
+    setDragFlip({
+      direction,
+      progress: 0.05,
+      isDragging: true
+    });
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!dragStartRef.current) return;
-      latestX = dragStartRef.current.itemX + (moveEvent.clientX - dragStartRef.current.mouseX);
-      latestY = dragStartRef.current.itemY + (moveEvent.clientY - dragStartRef.current.mouseY);
+      const deltaX = moveEvent.clientX - startX;
+      if (Math.abs(deltaX) > 4) didMove = true;
 
-      if (!rafId) {
-        rafId = requestAnimationFrame(() => {
-          updateItemPosition(item.id, latestX, latestY);
-          rafId = null;
-        });
+      let p = 0;
+      if (direction === 'next') {
+        p = Math.min(1, Math.max(0, -deltaX / 340));
+      } else {
+        p = Math.min(1, Math.max(0, deltaX / 340));
       }
+      currentProgress = p;
+
+      setDragFlip({
+        direction,
+        progress: currentProgress,
+        isDragging: true
+      });
     };
 
     const handleMouseUp = () => {
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-      updateItemPosition(item.id, latestX, latestY);
-      setIsDragging(false);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+
+      const shouldTurn = !didMove || currentProgress > 0.28;
+
+      if (shouldTurn) {
+        setDragFlip({
+          direction,
+          progress: 1,
+          isDragging: false
+        });
+        setTimeout(() => {
+          turnBookPage(item.id, direction, totalPages);
+          setDragFlip(null);
+        }, 260);
+      } else {
+        setDragFlip({
+          direction,
+          progress: 0,
+          isDragging: false
+        });
+        setTimeout(() => {
+          setDragFlip(null);
+        }, 220);
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  };
+  }, [rightPageIndex, leftPageIndex, totalPages, turnBookPage, item.id]);
+
+  const cleanTitle = item.title.replace(/^Sổ tổng hợp:\s*/i, '');
 
   return (
-    <div
-      style={{
-        transform: `translate3d(${item.x}px, ${item.y}px, 0) rotate(${item.rotation}deg) scale(${item.scale})`,
-        zIndex: item.zIndex,
-        width: 720,
-        height: 520,
-        transition: isDragging ? 'none' : 'box-shadow 0.2s',
-        willChange: isDragging ? 'transform' : 'auto'
-      }}
-      className={`absolute select-none group cursor-grab active:cursor-grabbing ${
-        isSelected ? 'ring-2 ring-hud-cyan shadow-hud-glow' : ''
-      }`}
-      onClick={(e) => {
-        e.stopPropagation();
-        selectItem(item.id);
-      }}
-    >
-      {/* 3D Book Cover Base (Hardcover Backing) */}
-      <div 
-        onMouseDown={handleMouseDown}
-        className="w-full h-full rounded-md shadow-book p-3 flex flex-col justify-between relative border border-slate-700/80"
+    <>
+      <div
+        ref={bookRef}
+        data-desk-item="true"
         style={{
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+          transform: `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${item.rotation}deg)`,
+          width: 980,
+          height: 640,
+          zIndex: item.zIndex || 1
+        }}
+        className={`absolute select-none group cursor-default ${
+          isSelected ? 'ring-2 ring-stone-900/40 ring-offset-4 ring-offset-white' : ''
+        }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          selectItem(item.id);
         }}
       >
-        {/* Binder / Multi-Document Indicator Ribbon */}
-        {item.isBinder && (
-          <div className="absolute -top-3 left-6 bg-amber-500 text-stone-950 text-[10px] font-bold px-2 py-0.5 rounded shadow-md flex items-center gap-1 z-30">
-            <Layers className="w-3 h-3" />
-            <span>SỔ TỔNG HỢP (BINDER)</span>
+        {/* ================= RICH BROWN LEATHER HARDCOVER (3X HORIZONTAL MARGIN: 42PX - DRAGGABLE ON LEATHER) ================= */}
+        <div 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              handleMouseDown(e);
+            }
+          }}
+          className="w-full h-full rounded-2xl flex relative z-10 overflow-visible cursor-grab active:cursor-grabbing"
+          style={{
+            background: 'linear-gradient(135deg, #5c3920 0%, #462814 50%, #341c0c 100%)',
+            border: '2px solid rgba(113, 67, 36, 0.85)',
+            boxShadow: '0 16px 40px -4px rgba(35, 18, 8, 0.45), 0 30px 60px -12px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.4)',
+            padding: '12px 42px' // Increased horizontal padding to 42px (3x from 14px)
+          }}
+        >
+          {/* ================= 5 BOOKMARK INDEX TABS TUCKED UNDER PAPER (SLIDE OUT FROM INSIDE BOOK) ================= */}
+          {/* Root tucked 8px under right paper edge, icon sits close to paper at idle; expands cleanly on hover */}
+          <div 
+            className="absolute top-10 flex flex-col gap-3 z-10 select-none pointer-events-auto"
+            style={{ left: 'calc(100% - 50px)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Tab 1: Green (Xanh lá) - Tóm tắt (STudy) */}
+            <div className="relative group/tab flex items-center">
+              <button
+                onClick={() => setIsStudyOpen(true)}
+                className="h-8 w-[48px] group-hover/tab:w-[106px] bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+              >
+                <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap max-w-0 opacity-0 group-hover/tab:max-w-[60px] group-hover/tab:opacity-100 transition-all duration-200 overflow-hidden">
+                  Tóm tắt
+                </span>
+                <Sparkles className="w-4 h-4 text-emerald-100 flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Tab 2: Orange (Cam) - Phóng to (Xem Full) */}
+            <div className="relative group/tab flex items-center">
+              <button
+                onClick={() => setIsFullScreen(true)}
+                className="h-8 w-[48px] group-hover/tab:w-[110px] bg-orange-600 hover:bg-orange-500 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+              >
+                <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap max-w-0 opacity-0 group-hover/tab:max-w-[65px] group-hover/tab:opacity-100 transition-all duration-200 overflow-hidden">
+                  Phóng to
+                </span>
+                <Maximize2 className="w-4 h-4 text-orange-100 flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Tab 3: Blue (Xanh lam) - Tách trang */}
+            <div className="relative group/tab flex items-center">
+              <button
+                onClick={() => {
+                  const targetPage = rightPageIndex < totalPages ? rightPageIndex : leftPageIndex;
+                  detachPageFromBinder(item.id, targetPage);
+                }}
+                className="h-8 w-[48px] group-hover/tab:w-[124px] bg-sky-700 hover:bg-sky-600 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+                title="Tách trang đang mở ra tờ rời trên bàn học"
+              >
+                <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap max-w-0 opacity-0 group-hover/tab:max-w-[78px] group-hover/tab:opacity-100 transition-all duration-200 overflow-hidden">
+                  Tách trang
+                </span>
+                <Scissors className="w-4 h-4 text-sky-100 flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Tab 4: Brown (Nâu) - Xoay */}
+            <div className="relative group/tab flex items-center">
+              <button
+                onMouseDown={handleRotateMouseDown}
+                onDoubleClick={handleRotateDoubleClick}
+                className="h-8 w-[48px] group-hover/tab:w-[92px] bg-[#78350f] hover:bg-[#92400e] active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-grab active:cursor-grabbing overflow-hidden"
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+              >
+                <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap max-w-0 opacity-0 group-hover/tab:max-w-[45px] group-hover/tab:opacity-100 transition-all duration-200 overflow-hidden">
+                  Xoay
+                </span>
+                <RotateTwoWay className="w-4 h-4 text-amber-100 flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Tab 5: Red (Đỏ) - Xoá */}
+            <div className="relative group/tab flex items-center">
+              <button
+                onClick={() => removeDeskItem(item.id)}
+                className="h-8 w-[48px] group-hover/tab:w-[86px] bg-rose-600 hover:bg-rose-500 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+              >
+                <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap max-w-0 opacity-0 group-hover/tab:max-w-[40px] group-hover/tab:opacity-100 transition-all duration-200 overflow-hidden">
+                  Xoá
+                </span>
+                <Trash2 className="w-4 h-4 text-rose-100 flex-shrink-0" />
+              </button>
+            </div>
+          </div>
+
+          {/* ================= INNER PAGES CONTAINER (Z-20: OVERLAPS BOOKMARK TABS) ================= */}
+          <div 
+            className="w-full h-full rounded-xl flex relative overflow-visible shadow-inner bg-[#fdfbf7] z-20"
+            style={{ perspective: '2000px' }}
+          >
+            {/* In-Document Drawing Layer (strokes permanently attached to this book) */}
+            <ItemDrawingOverlay itemId={item.id} />
+
+            {/* Spine Shadow & Crease Effect — CONFINED ONLY INSIDE THE PAPER CONTAINER */}
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-10 pointer-events-none z-20 bg-gradient-to-r from-black/15 via-black/35 to-black/15" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-stone-400 z-20 opacity-50" />
+
+            {/* ================= LEFT PAGE ================= */}
+            <div 
+              style={{ backgroundColor: '#fdfbf7', color: '#0f172a' }}
+              className="flex-1 rounded-l-md p-7 pr-8 flex flex-col justify-between shadow-inner relative border-r border-stone-300/80 overflow-hidden paper-texture book-page font-sans group/page"
+              onMouseUp={(e) => handlePageMouseUp(underneathLeftLeaf?.pageNumber || leftPageIndex + 1, e)}
+            >
+              {underneathLeftLeaf ? (
+                <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Chapter Header (Drag handle) */}
+                    <div 
+                      onMouseDown={handleMouseDown}
+                      className="pb-2 mb-3 border-b border-stone-200/90 flex items-center justify-between flex-shrink-0 cursor-grab active:cursor-grabbing select-none"
+                    >
+                      <span className="text-xs font-bold tracking-tight text-slate-800 truncate font-sans block flex-1 pr-2">
+                        {underneathLeftLeaf.chapterTitle}
+                        {underneathLeftLeaf.isContinuation ? ' (tiếp)' : ''}
+                      </span>
+                    </div>
+
+                    {/* Page Body Text */}
+                    <p 
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
+                    >
+                      {underneathLeftLeaf.text}
+                    </p>
+                  </div>
+
+                  {/* Left Page Footer (Drag handle): Only Page Number in Bottom-Left Corner */}
+                  <div 
+                    onMouseDown={handleMouseDown}
+                    className="flex-shrink-0 text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200/80 mt-2 pl-2 select-none cursor-grab active:cursor-grabbing"
+                  >
+                    {underneathLeftLeaf.pageNumber}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-stone-400 text-xs italic font-sans">
+                  Trang trống
+                </div>
+              )}
+
+              {/* Left Edge Interactive Grab & Turn Zone */}
+              {leftPageIndex > 0 && (
+                <div
+                  className="absolute top-0 left-0 bottom-0 w-12 z-30 cursor-grab active:cursor-grabbing group/left-curl flex items-center justify-start pl-1 select-none"
+                  title="Kéo sang phải hoặc bấm để lật trang trước"
+                  onMouseDown={(e) => startDragFlip('prev', e)}
+                >
+                  <div className="w-5 h-9 rounded-r-md bg-stone-300/30 group-hover/left-curl:bg-stone-400/50 transition-colors pointer-events-none flex items-center justify-center">
+                    <ChevronLeft className="w-3 h-3 text-stone-600" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ================= RIGHT PAGE ================= */}
+            <div 
+              style={{ backgroundColor: '#fdfbf7', color: '#0f172a' }}
+              className="flex-1 rounded-r-md p-7 pl-8 flex flex-col justify-between shadow-inner relative border-l border-stone-300/80 overflow-hidden paper-texture book-page font-sans group/page"
+              onMouseUp={(e) => handlePageMouseUp(underneathRightLeaf?.pageNumber || rightPageIndex + 1, e)}
+            >
+              {underneathRightLeaf ? (
+                <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Chapter Header (Drag handle) */}
+                    <div 
+                      onMouseDown={handleMouseDown}
+                      className="pb-2 mb-3 border-b border-stone-200/90 flex items-center justify-between flex-shrink-0 cursor-grab active:cursor-grabbing select-none"
+                    >
+                      <span className="text-xs font-bold tracking-tight text-slate-800 truncate font-sans block flex-1 pr-2">
+                        {underneathRightLeaf.chapterTitle}
+                        {underneathRightLeaf.isContinuation ? ' (tiếp)' : ''}
+                      </span>
+                    </div>
+
+                    {/* Page Body Text */}
+                    <p 
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
+                    >
+                      {underneathRightLeaf.text}
+                    </p>
+                  </div>
+
+                  {/* Right Page Footer (Drag handle): Only Page Number in Bottom-Right Corner */}
+                  <div 
+                    onMouseDown={handleMouseDown}
+                    className="flex-shrink-0 text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200/80 mt-2 pr-2 select-none cursor-grab active:cursor-grabbing"
+                  >
+                    {underneathRightLeaf.pageNumber}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-stone-400 text-xs italic font-sans">
+                  (Hết cuốn sách)
+                </div>
+              )}
+
+              {/* Right Edge Interactive Grab & Turn Zone */}
+              {rightPageIndex < totalPages - 1 && (
+                <div
+                  className="absolute top-0 right-0 bottom-0 w-12 z-30 cursor-grab active:cursor-grabbing group/right-curl flex items-center justify-end pr-1 select-none"
+                  title="Kéo sang trái hoặc bấm để lật trang sau"
+                  onMouseDown={(e) => startDragFlip('next', e)}
+                >
+                  <div className="w-5 h-9 rounded-l-md bg-stone-300/30 group-hover/right-curl:bg-stone-400/50 transition-colors pointer-events-none flex items-center justify-center">
+                    <ChevronRight className="w-3 h-3 text-stone-600" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ================= 3D INTERACTIVE PAGE-CURL OVERLAY LAYER ================= */}
+            {dragFlip && (
+              <div 
+                className="absolute inset-0 pointer-events-none z-40 overflow-visible"
+                style={{ perspective: '2200px', transformStyle: 'preserve-3d' }}
+              >
+                {dragFlip.direction === 'next' ? (
+                  /* Flipping Forward: Right Page Turning to Left */
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '50%',
+                      top: '-10px',
+                      width: '50%',
+                      height: 'calc(100% + 20px)',
+                      transformOrigin: 'left center',
+                      transform: `rotateY(${-180 * dragFlip.progress}deg)`,
+                      transformStyle: 'preserve-3d',
+                      transition: dragFlip.isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                      filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.32))'
+                    }}
+                  >
+                    {/* Front Face: Current Right Leaf */}
+                    <div 
+                      className="absolute inset-0 p-7 pl-8 flex flex-col justify-between paper-texture book-page font-sans border-l border-stone-300 rounded-r-lg overflow-hidden"
+                      style={{
+                        backgroundColor: '#fdfbf7',
+                        backfaceVisibility: 'hidden',
+                        color: '#0f172a'
+                      }}
+                    >
+                      {rightLeaf && (
+                        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                          <div>
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                              {rightLeaf.chapterTitle}
+                            </div>
+                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                              {rightLeaf.text}
+                            </p>
+                          </div>
+                          <div className="text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                            {rightLeaf.pageNumber}
+                          </div>
+                        </div>
+                      )}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: `linear-gradient(to right, rgba(0,0,0,${Math.sin(dragFlip.progress * Math.PI) * 0.25}), transparent 40%)`
+                        }}
+                      />
+                    </div>
+
+                    {/* Back Face: Upcoming Left Leaf (Mirrored 180deg) */}
+                    <div 
+                      className="absolute inset-0 p-7 pr-8 flex flex-col justify-between paper-texture book-page font-sans border-r border-stone-300 rounded-l-lg overflow-hidden"
+                      style={{
+                        backgroundColor: '#fdfbf7',
+                        transform: 'rotateY(180deg)',
+                        backfaceVisibility: 'hidden',
+                        color: '#0f172a'
+                      }}
+                    >
+                      {paginatedLeaves[rightPageIndex + 1] ? (
+                        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                          <div>
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                              {paginatedLeaves[rightPageIndex + 1].chapterTitle}
+                            </div>
+                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                              {paginatedLeaves[rightPageIndex + 1].text}
+                            </p>
+                          </div>
+                          <div className="text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                            {paginatedLeaves[rightPageIndex + 1].pageNumber}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-stone-400 text-xs italic">
+                          (Hết sách)
+                        </div>
+                      )}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: `linear-gradient(to left, rgba(0,0,0,${Math.sin(dragFlip.progress * Math.PI) * 0.25}), transparent 40%)`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* Flipping Backward: Left Page Turning to Right */
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: '-10px',
+                      width: '50%',
+                      height: 'calc(100% + 20px)',
+                      transformOrigin: 'right center',
+                      transform: `rotateY(${180 * dragFlip.progress}deg)`,
+                      transformStyle: 'preserve-3d',
+                      transition: dragFlip.isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                      filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.32))'
+                    }}
+                  >
+                    {/* Front Face: Current Left Leaf */}
+                    <div 
+                      className="absolute inset-0 p-7 pr-8 flex flex-col justify-between paper-texture book-page font-sans border-r border-stone-300 rounded-l-lg overflow-hidden"
+                      style={{
+                        backgroundColor: '#fdfbf7',
+                        backfaceVisibility: 'hidden',
+                        color: '#0f172a'
+                      }}
+                    >
+                      {leftLeaf && (
+                        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                          <div>
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                              {leftLeaf.chapterTitle}
+                            </div>
+                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                              {leftLeaf.text}
+                            </p>
+                          </div>
+                          <div className="text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                            {leftLeaf.pageNumber}
+                          </div>
+                        </div>
+                      )}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: `linear-gradient(to left, rgba(0,0,0,${Math.sin(dragFlip.progress * Math.PI) * 0.25}), transparent 40%)`
+                        }}
+                      />
+                    </div>
+
+                    {/* Back Face: Previous Right Leaf (Mirrored 180deg) */}
+                    <div 
+                      className="absolute inset-0 p-7 pl-8 flex flex-col justify-between paper-texture book-page font-sans border-l border-stone-300 rounded-r-lg overflow-hidden"
+                      style={{
+                        backgroundColor: '#fdfbf7',
+                        transform: 'rotateY(180deg)',
+                        backfaceVisibility: 'hidden',
+                        color: '#0f172a'
+                      }}
+                    >
+                      {paginatedLeaves[leftPageIndex - 1] && (
+                        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                          <div>
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                              {paginatedLeaves[leftPageIndex - 1].chapterTitle}
+                            </div>
+                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                              {paginatedLeaves[leftPageIndex - 1].text}
+                            </p>
+                          </div>
+                          <div className="text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                            {paginatedLeaves[leftPageIndex - 1].pageNumber}
+                          </div>
+                        </div>
+                      )}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: `linear-gradient(to right, rgba(0,0,0,${Math.sin(dragFlip.progress * Math.PI) * 0.25}), transparent 40%)`
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ================= BOTTOM TITLE BADGE (Drag handle - Miro-style clean white) ================= */}
+        <div 
+          onMouseDown={handleMouseDown}
+          className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 flex items-center bg-white/95 text-slate-800 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md border border-slate-200/90 backdrop-blur-md pointer-events-auto select-none transition-all duration-200 z-20 cursor-grab active:cursor-grabbing hover:border-slate-300"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="truncate max-w-[420px]">
+            {cleanTitle}
+          </span>
+        </div>
+
+        {/* ================= INLINE INTELINE POPOVER AT THE END OF HIGHLIGHTED TEXT ================= */}
+        {selectionPopover && (
+          <div 
+            data-inteline-popover="true"
+            style={{ left: selectionPopover.x, top: selectionPopover.y }}
+            className="absolute -translate-x-1/2 z-50 animate-fade-in pointer-events-auto w-[340px] bg-white text-stone-900 rounded-xl shadow-2xl border border-stone-300/90 p-3 select-text font-sans"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-stone-200 text-xs">
+              <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                <Lightbulb className="w-4 h-4 text-[#E0562D]" />
+                <span className="text-xs font-black tracking-tight">Inteline — Hỏi đáp & Phân tích</span>
+              </div>
+              <button 
+                onClick={() => setSelectionPopover(null)}
+                className="p-1 text-stone-400 hover:text-stone-700 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Selected Quote Preview */}
+            <p className="text-[11.5px] italic text-stone-700 line-clamp-2 mb-2.5 bg-stone-50 p-2 rounded-lg border border-stone-200/80 leading-relaxed">
+              &ldquo;{selectionPopover.text}&rdquo;
+            </p>
+
+            {/* AI Answer Box if answered */}
+            {selectionPopover.answer && (
+              <div className="mb-2.5 p-3 bg-[#ECFDF5] rounded-xl border border-[#A7F3D0] text-xs leading-relaxed text-[#15803D]">
+                <div className="font-bold text-[#15803D] mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#15803D]" />
+                    <span>Cơ sở lý thuyết & Phân tích:</span>
+                  </span>
+                  <button
+                    onClick={() => {
+                      addStickyNote(`[Inteline Q&A]\n${selectionPopover.text.slice(0, 50)}...\n\n${selectionPopover.answer}`, item.x + 1000, item.y + 40, '#fef08a');
+                      setSelectionPopover(null);
+                    }}
+                    className="text-[10px] text-[#15803D] hover:underline font-bold bg-white px-2 py-0.5 rounded border border-[#A7F3D0]"
+                  >
+                    + Ghim Note
+                  </button>
+                </div>
+                <p className="whitespace-pre-line text-slate-900 font-medium">{selectionPopover.answer}</p>
+              </div>
+            )}
+
+            {/* Quick Suggestion Pills (Warm Coral/Amber Accents) */}
+            {!selectionPopover.answer && (
+              <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+                <button
+                  disabled={selectionPopover.loading}
+                  onClick={() => handleQuickAsk('Giải thích ngắn gọn đoạn này')}
+                  className="px-2.5 py-1 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#9A3412] text-[11px] font-bold rounded-full border border-[#FFEDD5] transition-all cursor-pointer active:scale-95"
+                >
+                  Giải thích ngắn
+                </button>
+                <button
+                  disabled={selectionPopover.loading}
+                  onClick={() => handleQuickAsk('Cho ví dụ thực tế về đoạn này')}
+                  className="px-2.5 py-1 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#9A3412] text-[11px] font-bold rounded-full border border-[#FFEDD5] transition-all cursor-pointer active:scale-95"
+                >
+                  Cho ví dụ
+                </button>
+                <button
+                  disabled={selectionPopover.loading}
+                  onClick={() => handleQuickAsk('Tóm 1 ý chính quan trọng nhất')}
+                  className="px-2.5 py-1 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#9A3412] text-[11px] font-bold rounded-full border border-[#FFEDD5] transition-all cursor-pointer active:scale-95"
+                >
+                  Ý chính
+                </button>
+              </div>
+            )}
+
+            {/* Input Row */}
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                spellCheck={false}
+                placeholder={selectionPopover.loading ? 'AI đang phân tích...' : 'Đặt câu hỏi về đoạn này...'}
+                value={selectionPopover.question}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectionPopover(prev => prev ? { ...prev, question: val } : null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleQuickAsk();
+                  }
+                }}
+                disabled={selectionPopover.loading}
+                className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-[#E0562D] focus:bg-white text-slate-900"
+              />
+              <button
+                onClick={() => handleQuickAsk()}
+                disabled={selectionPopover.loading || !selectionPopover.question.trim()}
+                className="p-2 bg-[#E0562D] hover:bg-[#FF5722] disabled:opacity-40 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95"
+              >
+                {selectionPopover.loading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
           </div>
         )}
-
-        {/* Top Header / Book Title Bar */}
-        <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-700/60 z-10">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <BookOpen className="w-4 h-4 text-sky-400 flex-shrink-0" />
-            <h3 className="text-xs font-semibold text-slate-200 truncate">
-              {item.title}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
-            <span>Trang {leftPageIndex + 1}-{Math.min(rightPageIndex + 1, item.pageCount)}</span>
-            <span className="text-slate-600">/</span>
-            <span>{item.pageCount} trang</span>
-          </div>
-        </div>
-
-        {/* The Two Pages Spread (Left & Right) */}
-        <div className="flex-1 flex gap-2 pt-2 relative overflow-hidden">
-          {/* Central Book Spine Shadow Effect */}
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 pointer-events-none z-20 bg-gradient-to-r from-black/25 via-black/40 to-black/25" />
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-stone-300 z-20 opacity-40" />
-
-          {/* LEFT PAGE */}
-          <div className="flex-1 bg-[#fcfaf4] rounded-l-sm p-5 flex flex-col justify-between shadow-inner relative border-r border-stone-300/80 overflow-hidden">
-            {leftPage ? (
-              <>
-                <div className="overflow-y-auto max-h-[380px] pr-1">
-                  <div className="flex items-center justify-between pb-1 mb-2 border-b border-stone-200">
-                    <span className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
-                      {leftPage.title || `Trang ${leftPage.pageNumber}`}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        title="Bôi đen hoặc bấm để hỏi AI Inteline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTextSelect(leftPage.pageNumber, leftPage.text);
-                        }}
-                        className="text-[10px] text-cyan-600 hover:text-cyan-800 flex items-center gap-0.5 font-semibold hover:underline"
-                      >
-                        <Sparkles className="w-2.5 h-2.5 text-cyan-500" />
-                        <span>Inteline</span>
-                      </button>
-                      <button
-                        title="Rút trang này ra mặt bàn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          detachPageFromBinder(item.id, leftPageIndex);
-                        }}
-                        className="text-[10px] text-stone-400 hover:text-emerald-700 flex items-center gap-0.5 hover:underline"
-                      >
-                        <ExternalLink className="w-2.5 h-2.5" />
-                        <span>Rút ra bàn</span>
-                      </button>
-                    </div>
-                  </div>
-                  <h4 className="text-sm font-bold text-stone-900 mb-2 leading-tight">
-                    {leftPage.title}
-                  </h4>
-                  <p className="text-xs leading-relaxed text-stone-800 whitespace-pre-line font-serif">
-                    {leftPage.text}
-                  </p>
-                </div>
-                <div className="text-center text-[10px] font-mono text-stone-400 pt-2 border-t border-stone-200">
-                  - {leftPage.pageNumber} -
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full text-stone-400 text-xs italic font-serif">
-                Trang trống
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT PAGE */}
-          <div className="flex-1 bg-[#fcfaf4] rounded-r-sm p-5 flex flex-col justify-between shadow-inner relative border-l border-stone-300/80 overflow-hidden">
-            {rightPage ? (
-              <>
-                <div className="overflow-y-auto max-h-[380px] pr-1">
-                  <div className="flex items-center justify-between pb-1 mb-2 border-b border-stone-200">
-                    <span className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
-                      {rightPage.title || `Trang ${rightPage.pageNumber}`}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        title="Bôi đen hoặc bấm để hỏi AI Inteline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTextSelect(rightPage.pageNumber, rightPage.text);
-                        }}
-                        className="text-[10px] text-cyan-600 hover:text-cyan-800 flex items-center gap-0.5 font-semibold hover:underline"
-                      >
-                        <Sparkles className="w-2.5 h-2.5 text-cyan-500" />
-                        <span>Inteline</span>
-                      </button>
-                      <button
-                        title="Rút trang này ra mặt bàn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          detachPageFromBinder(item.id, rightPageIndex);
-                        }}
-                        className="text-[10px] text-stone-400 hover:text-emerald-700 flex items-center gap-0.5 hover:underline"
-                      >
-                        <ExternalLink className="w-2.5 h-2.5" />
-                        <span>Rút ra bàn</span>
-                      </button>
-                    </div>
-                  </div>
-                  <h4 className="text-sm font-bold text-stone-900 mb-2 leading-tight">
-                    {rightPage.title}
-                  </h4>
-                  <p className="text-xs leading-relaxed text-stone-800 whitespace-pre-line font-serif">
-                    {rightPage.text}
-                  </p>
-                </div>
-                <div className="text-center text-[10px] font-mono text-stone-400 pt-2 border-t border-stone-200">
-                  - {rightPage.pageNumber} -
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full text-stone-400 text-xs italic font-serif">
-                (Hết cuốn sách)
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Page Navigation Controls & Scrubber */}
-        <div className="flex items-center justify-between px-3 pt-2 border-t border-slate-700/60 z-10">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              turnBookPage(item.id, 'prev');
-            }}
-            disabled={leftPageIndex <= 0}
-            className="flex items-center gap-1 text-xs text-slate-300 hover:text-white px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800/80"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Trang trước</span>
-          </button>
-
-          {/* Quick Page Slider */}
-          <div className="flex-1 mx-4 flex items-center gap-2">
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, item.pageCount - 1)}
-              step={2}
-              value={leftPageIndex}
-              onChange={(e) => {
-                e.stopPropagation();
-                setBookPage(item.id, parseInt(e.target.value));
-              }}
-              className="w-full accent-sky-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
-            />
-          </div>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              turnBookPage(item.id, 'next');
-            }}
-            disabled={rightPageIndex >= item.pageCount - 1}
-            className="flex items-center gap-1 text-xs text-slate-300 hover:text-white px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800/80"
-          >
-            <span>Trang sau</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
-      {/* Floating Control Toolbar */}
-      <div 
-        className={`absolute -top-11 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-slate-900/90 text-white px-2.5 py-1 rounded-full shadow-xl border border-slate-700 backdrop-blur-sm transition-opacity duration-150 z-40 ${
-          isSelected ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover:opacity-100 pointer-events-auto'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          title="STudy: Tóm tắt, Trắc nghiệm, Flashcard & Lộ trình học"
-          onClick={() => setIsStudyOpen(true)}
-          className="flex items-center gap-1 px-2.5 py-0.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-full text-xs shadow-md transition-all mr-1"
-        >
-          <Sparkles className="w-3 h-3" />
-          <span>STudy</span>
-        </button>
-        <button
-          title="Xoay trái 15°"
-          onClick={() => updateItemRotation(item.id, -15)}
-          className="p-1 hover:bg-slate-800 rounded-full text-slate-300 hover:text-white"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
-        <button
-          title="Xoay phải 15°"
-          onClick={() => updateItemRotation(item.id, 15)}
-          className="p-1 hover:bg-slate-800 rounded-full text-slate-300 hover:text-white"
-        >
-          <RotateCw className="w-3.5 h-3.5" />
-        </button>
-        <div className="w-[1px] h-3 bg-slate-700 mx-0.5" />
-        <button
-          title="Đóng & Xoá cuốn sách này"
-          onClick={() => removeDeskItem(item.id)}
-          className="p-1 hover:bg-red-900/60 rounded-full text-red-400 hover:text-red-300"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
+      {/* Full Screen Document Reader Modal */}
+      {isFullScreen && (
+        <FullScreenDocModal
+          isOpen={isFullScreen}
+          onClose={() => setIsFullScreen(false)}
+          item={item}
+          initialPageIndex={leftPageIndex}
+        />
+      )}
 
       {/* STudy Tools Modal */}
       <StudyToolsModal
@@ -363,16 +848,16 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
         onClose={() => setIsStudyOpen(false)}
       />
 
-      {/* Inteline Modal */}
-      {intelineState && (
+      {/* Full Inteline Modal for expanded multi-turn chat if needed */}
+      {intelineModalState && (
         <IntelineModal
           sourceItem={item}
-          pageNumber={intelineState.pageNumber}
-          selectedText={intelineState.selectedText}
-          isOpen={intelineState.isOpen}
-          onClose={() => setIntelineState(null)}
+          pageNumber={intelineModalState.pageNumber}
+          selectedText={intelineModalState.selectedText}
+          isOpen={intelineModalState.isOpen}
+          onClose={() => setIntelineModalState(null)}
         />
       )}
-    </div>
+    </>
   );
 }

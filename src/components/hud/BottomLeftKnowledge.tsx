@@ -1,312 +1,562 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
-import { useViToken } from '@/context/ViTokenContext';
 import { 
-  FolderArchive, 
-  Store, 
   Upload, 
-  Sparkles, 
+  Share2,
+  Copy,
+  Check,
   FileText, 
-  Lock, 
-  Check, 
   X,
-  Star,
-  ShieldCheck,
-  Plus
+  Video,
+  Square,
+  Mic,
+  MicOff,
+  Download,
+  AlertCircle
 } from 'lucide-react';
-import { KnowInheritPublishModal } from '../modals/KnowInheritPublishModal';
+
+interface PendingDocument {
+  file: File;
+  title: string;
+  description: string;
+  pages: { title?: string; text: string }[];
+  fileSize: string;
+  fileType: string;
+}
 
 export function BottomLeftKnowledge() {
-  const { addUploadedDocument, activeSpace } = useStudySpace();
-  const { wallet, spendTokens, addTokens } = useViToken();
+  const { addUploadedDocument } = useStudySpace();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDoc, setPendingDoc] = useState<PendingDocument | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  const [isMarketOpen, setIsMarketOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isPublishOpen, setIsPublishOpen] = useState(false);
-  const [selectedDeskItemId, setSelectedDeskItemId] = useState<string>('');
+  // ================= SCREEN & MIC RECORDING STATE =================
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
+  const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
+  const [includeMic, setIncludeMic] = useState(true);
+  const [recordedBlobUrl, setRecordedBlobUrl] = useState<string | null>(null);
+  const [recordedBlobSize, setRecordedBlobSize] = useState<string>('');
+  const [recordError, setRecordError] = useState<string | null>(null);
 
-  // Upload modal inputs
-  const [docTitle, setDocTitle] = useState('');
-  const [docContent, setDocContent] = useState('');
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const activeStreamRef = useRef<MediaStream | null>(null);
+  const activeMicStreamRef = useRef<MediaStream | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Mock KnowInherit Listings
-  const [marketItems, setMarketItems] = useState([
-    {
-      id: 'ki-1',
-      title: 'Tuyển tập 100 Câu Hỏi Tối Ưu Giải Tích & Đại Số (Thầy Nguyễn Văn A)',
-      author: 'Lê Hoàng (Thủ khoa K64)',
-      tier: 'S',
-      aiScore: 94,
-      price: 25,
-      purchased: false,
-      summary: 'Tóm lược trọng tâm giải tích hàm nhiều biến, đạo hàm ma trận, ứng dụng trong lan truyền ngược mạng nơ-ron.',
-      previewText: `CHƯƠNG 1: ĐẠO HÀM MA TRẬN & TỐI ƯU HOÁ KHÔNG RÀNG BUỘC
-1.1 Khái niệm vi phân toàn phần trong Rn...
-1.2 Ma trận Hessian và quy tắc kiểm tra cực trị địa phương:
-- Nếu H(x*) là ma trận xác định dương -> Điểm cực tiểu ngặt.
-- Nếu H(x*) là ma trận xác định âm -> Điểm cực đại ngặt.`
-    },
-    {
-      id: 'ki-2',
-      title: 'Sổ Tay Cheat-Sheet Phân Tích Dữ Liệu & Thống Kê Xác Suất',
-      author: 'Trần Minh Đức (Data Engineer)',
-      tier: 'A',
-      aiScore: 88,
-      price: 15,
-      purchased: false,
-      summary: 'Các phân phối xác suất quan trọng (Gaussian, Poisson, Bernoulli), định lý giới hạn trung tâm, kiểm định giả thuyết.',
-      previewText: `PHẦN 1: CÁC PHÂN PHỐI XÁC SUẤT CỐT LÕI
-- Phân phối Chuẩn (Normal / Gaussian Distribution):
-  N(mu, sigma^2) = (1 / sqrt(2*pi*sigma^2)) * exp(-(x-mu)^2 / (2*sigma^2))
-- Định lý Giới hạn Trung tâm (CLT):
-  Tổng của các biến ngẫu nhiên độc lập có cùng phân phối sẽ tiến dần về phân phối chuẩn.`
-    }
-  ]);
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
-  const handleBuyMarketItem = (item: typeof marketItems[0]) => {
-    if (wallet.balance < item.price) {
-      alert('Số dư ViToken không đủ! Hãy duy trì điểm danh mỗi ngày hoặc nạp thêm ViToken.');
-      return;
-    }
+  // Format seconds to mm:ss
+  const formatRecordingTime = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const remainingSecs = sec % 60;
+    return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+  };
 
-    const success = spendTokens(item.price, `Mở khoá tài liệu KnowInherit: ${item.title}`);
-    if (success) {
-      // Mark as purchased
-      setMarketItems(prev => prev.map(m => m.id === item.id ? { ...m, purchased: true } : m));
-      
-      // Spawn directly onto desk as a verified Book / Paper!
-      const pages = [
-        { title: 'Trang Bìa: ' + item.title, text: `${item.title}\nTác giả chia sẻ: ${item.author}\nĐánh giá AI: ${item.aiScore}/100 (Hạng ${item.tier})\n\n${item.summary}` },
-        { title: 'Nội dung cốt lõi', text: item.previewText },
-        { title: 'Chương 2: Bài tập vận dụng', text: '1. Tính đạo hàm riêng của hàm số f(x, y) = x^2 * y + sin(xy) tại điểm (1, pi).\n2. Tìm các điểm dừng và xác định cực trị bằng ma trận Hessian.' },
-        { title: 'Chương 3: Giải chi tiết & Đáp án', text: 'Bước 1: Tính fx = 2xy + y*cos(xy), fy = x^2 + x*cos(xy).\nBước 2: Thay toạ độ (1, pi)...' },
-        { title: 'Lời khuyên từ người đi trước', text: 'Nên nắm vững phương pháp nhân tử Lagrange trước khi bước vào phòng thi!' }
-      ];
-      addUploadedDocument(`[KnowInherit] ${item.title}`, pages);
-      setIsMarketOpen(false);
-      alert(`Đã mở khoá thành công! Cuốn sách đã bay thẳng vào Bàn Học StudySpace của bạn.`);
+  const handleStartRecording = async () => {
+    setRecordError(null);
+    setIsSetupModalOpen(false);
+
+    try {
+      // 1. Capture screen with display audio if available
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser' },
+        audio: true
+      });
+
+      let combinedStream = displayStream;
+
+      // 2. Mix microphone audio if requested
+      if (includeMic) {
+        try {
+          const micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true
+            }
+          });
+          activeMicStreamRef.current = micStream;
+
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            audioCtxRef.current = audioCtx;
+            const dest = audioCtx.createMediaStreamDestination();
+
+            if (displayStream.getAudioTracks().length > 0) {
+              audioCtx.createMediaStreamSource(displayStream).connect(dest);
+            }
+            if (micStream.getAudioTracks().length > 0) {
+              audioCtx.createMediaStreamSource(micStream).connect(dest);
+            }
+
+            combinedStream = new MediaStream([
+              ...displayStream.getVideoTracks(),
+              ...dest.stream.getAudioTracks()
+            ]);
+          }
+        } catch (micErr) {
+          console.warn('Không thể truy cập microphone, tiếp tục ghi màn hình:', micErr);
+        }
+      }
+
+      activeStreamRef.current = displayStream;
+      chunksRef.current = [];
+
+      // Determine supported mime type
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+        ? 'video/webm;codecs=vp9,opus'
+        : MediaRecorder.isTypeSupported('video/webm')
+        ? 'video/webm'
+        : '';
+
+      const recorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setRecordedBlobUrl(url);
+        const sizeMb = (blob.size / (1024 * 1024)).toFixed(1);
+        setRecordedBlobSize(blob.size > 1024 * 1024 ? `${sizeMb} MB` : `${Math.round(blob.size / 1024)} KB`);
+        setIsFinishModalOpen(true);
+        setIsRecording(false);
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+
+      // Native stop share button listener
+      displayStream.getVideoTracks()[0].onended = () => {
+        handleStopRecording();
+      };
+
+      recorder.start(1000); // 1s slice
+      setIsRecording(true);
+      setRecordingSeconds(0);
+
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1);
+      }, 1000);
+
+    } catch (err: any) {
+      if (err.name !== 'NotAllowedError') {
+        setRecordError(err.message || 'Không thể bắt đầu ghi hình.');
+        setIsSetupModalOpen(true);
+      }
     }
   };
 
-  const handleManualUpload = (e: React.FormEvent) => {
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    // Stop all media tracks to turn off recording indicator
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach(t => t.stop());
+      activeStreamRef.current = null;
+    }
+    if (activeMicStreamRef.current) {
+      activeMicStreamRef.current.getTracks().forEach(t => t.stop());
+      activeMicStreamRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {});
+      audioCtxRef.current = null;
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const handleDownloadVideo = () => {
+    if (!recordedBlobUrl) return;
+    const a = document.createElement('a');
+    a.href = recordedBlobUrl;
+    const dateStr = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    a.download = `ViTudy_Video_${dateStr}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // Handle native file input selection
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const rawName = file.name.replace(/\.[^/.]+$/, '');
+    const isText = file.type.includes('text') || file.name.endsWith('.md') || file.name.endsWith('.txt');
+
+    let parsedPages: { title?: string; text: string }[] = [];
+
+    if (isText) {
+      const content = await file.text();
+      const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+      parsedPages = paragraphs.length > 0
+        ? paragraphs.map((p, idx) => ({ title: `Trang ${idx + 1}`, text: p.trim() }))
+        : [{ title: rawName, text: content.trim() }];
+    } else {
+      const simulatedCount = file.size > 250000 ? 6 : 2;
+      parsedPages = Array.from({ length: simulatedCount }, (_, i) => ({
+        title: `Chương ${i + 1}: ${rawName}`,
+        text: `Nội dung trích xuất từ tệp "${file.name}" (${(file.size / 1024).toFixed(1)} KB).\n\nTrang ${i + 1} của tài liệu.\n\nSử dụng Inteline để hỏi nhanh hoặc STudy để tạo flashcard và đề thi ôn tập.`
+      }));
+    }
+
+    setPendingDoc({
+      file,
+      title: rawName,
+      description: '',
+      pages: parsedPages,
+      fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+      fileType: file.name.split('.').pop()?.toUpperCase() || 'TỆP'
+    });
+
+    setIsConfirmModalOpen(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleConfirmUpload = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!docTitle.trim() || !docContent.trim()) return;
+    if (!pendingDoc) return;
 
-    const paras = docContent.split('\n\n').filter(p => p.trim().length > 0);
-    const pages = paras.length > 0 
-      ? paras.map((p, idx) => ({ title: `Trang ${idx + 1}`, text: p }))
-      : [{ title: docTitle, text: docContent }];
+    const pages = pendingDoc.pages.map(p => ({
+      ...p,
+      title: pendingDoc.title
+    }));
 
-    addUploadedDocument(docTitle.trim(), pages);
-    setDocTitle('');
-    setDocContent('');
-    setIsUploadModalOpen(false);
+    addUploadedDocument(pendingDoc.title, pages);
+    setIsConfirmModalOpen(false);
+    setPendingDoc(null);
+  };
+
+  const handleCopyShareLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
   };
 
   return (
-    <div className="absolute bottom-4 left-4 z-40 flex items-center gap-2 pointer-events-auto">
-      {/* Upload Manual Document Button */}
+    <div className="absolute bottom-4 left-4 z-40 flex items-center gap-2 pointer-events-auto select-none font-sans">
+      {/* Hidden Native File Explorer Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.txt,.md,.epub,image/*"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
+      {/* 1. Button: Tải lên tài liệu (Màu Cam ViT, icon trắng) */}
       <button
-        onClick={() => setIsUploadModalOpen(true)}
-        className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 shadow-lg backdrop-blur-md text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 transition-all text-xs font-medium"
+        onClick={() => fileInputRef.current?.click()}
+        title="Tải lên tài liệu"
+        className="w-12 h-12 rounded-full bg-[#E0562D] hover:bg-[#c9451e] text-white shadow-lg border border-[#c9451e]/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
       >
-        <Upload className="w-3.5 h-3.5 text-cyan-400" />
-        <span>Tải Tài Liệu Lên Bàn</span>
+        <Upload className="w-5 h-5 text-white stroke-[2.4] group-hover:scale-110 transition-transform" />
       </button>
 
-      {/* KnowInherit Marketplace Launcher Button */}
+      {/* 2. Button: Ghi hình buổi học (Icon camera, màu trắng chữ đen, nằm giữa Tải lên và Mời bạn) */}
+      {isRecording ? (
+        <div className="flex items-center gap-2 bg-white/95 border border-red-300 rounded-full px-3 py-1.5 shadow-lg backdrop-blur-md animate-fade-in">
+          <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" />
+          <span className="text-xs font-mono font-black text-red-600 select-none">
+            {formatRecordingTime(recordingSeconds)}
+          </span>
+          <button
+            onClick={handleStopRecording}
+            title="Dừng ghi hình"
+            className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ml-0.5 active:scale-95"
+          >
+            <Square className="w-3.5 h-3.5 fill-white stroke-none" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsSetupModalOpen(true)}
+          title="Ghi hình buổi học (Màn hình & Micro)"
+          className="w-12 h-12 rounded-full bg-white hover:bg-slate-100 text-slate-900 shadow-md border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+        >
+          <Video className="w-5 h-5 text-slate-900 stroke-[2.4] group-hover:scale-110 transition-transform" />
+        </button>
+      )}
+
+      {/* 3. Button: Mời bạn bè (Màu trắng chữ đen) */}
       <button
-        onClick={() => setIsMarketOpen(true)}
-        className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-950/80 to-slate-950/90 border border-cyan-500/40 rounded-xl px-3 py-2 shadow-hud-glow backdrop-blur-md text-cyan-300 hover:border-cyan-400 transition-all text-xs font-semibold"
+        onClick={() => setIsShareModalOpen(true)}
+        title="Mời bạn bè cùng tham gia học nhóm"
+        className="w-12 h-12 rounded-full bg-white hover:bg-slate-100 text-slate-900 shadow-md border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
       >
-        <Store className="w-3.5 h-3.5 text-cyan-400" />
-        <span>Chợ KnowInherit</span>
-        <span className="bg-cyan-500/20 text-cyan-300 text-[10px] px-1.5 py-0.2 rounded-full border border-cyan-500/30">
-          85/15
-        </span>
+        <Share2 className="w-5 h-5 text-slate-900 stroke-[2.4] group-hover:scale-110 transition-transform" />
       </button>
 
-      {/* MODAL: Chợ KnowInherit */}
-      {isMarketOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-cyan-500/40 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+      {/* MODAL 1: Cài đặt & Bắt đầu ghi hình */}
+      {isSetupModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-sm p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
-              onClick={() => setIsMarketOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              onClick={() => setIsSetupModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2.5">
-                <Store className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-base font-bold text-white">Chợ Tri Thức KnowInherit</h3>
-              </div>
 
-              {/* Publish Button */}
-              {activeSpace.items.length > 0 && (
-                <button
-                  onClick={() => {
-                    const firstDoc = activeSpace.items.find(i => i.type === 'book' || i.type === 'paper');
-                    if (firstDoc) {
-                      setSelectedDeskItemId(firstDoc.id);
-                      setIsPublishOpen(true);
-                    } else {
-                      alert('Hãy tạo hoặc tải một cuốn sách/tờ giấy lên bàn trước khi đăng bán!');
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1 shadow-md mr-6"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Đăng Bán Tài Liệu (85%)</span>
-                </button>
-              )}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-900">
+                <Video className="w-4 h-4 text-slate-900 stroke-[2.4]" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Ghi hình buổi học</h3>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Tài liệu được người đi trước chia sẻ đã qua AI kiểm duyệt chống trùng lặp & thẩm định chất lượng. <strong>85% ViToken</strong> sẽ được chuyển trực tiếp cho tác giả.
+
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Ghi lại video màn hình học tập và tương tác trên bàn học để xem lại bài giảng hoặc tải về lưu trữ.
             </p>
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {marketItems.map(item => (
-                <div 
-                  key={item.id}
-                  className="bg-slate-950/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl p-4 transition-all"
-                >
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded font-mono ${
-                          item.tier === 'S' ? 'bg-amber-500 text-slate-950' : 'bg-sky-500 text-slate-950'
-                        }`}>
-                          HẠNG {item.tier}
-                        </span>
-                        <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>AI Thẩm định: {item.aiScore}/100</span>
-                        </div>
-                      </div>
-                      <h4 className="text-sm font-bold text-white leading-snug">
-                        {item.title}
-                      </h4>
-                      <div className="text-[11px] text-slate-400">
-                        Chia sẻ bởi: <span className="text-slate-200">{item.author}</span>
-                      </div>
-                    </div>
+            {recordError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2 mb-3">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
+                <span>{recordError}</span>
+              </div>
+            )}
 
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-base font-black text-amber-400 font-mono">
-                        {item.price} <span className="text-xs">ViToken</span>
-                      </div>
-                      <button
-                        onClick={() => handleBuyMarketItem(item)}
-                        disabled={item.purchased}
-                        className={`mt-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          item.purchased
-                            ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 cursor-default'
-                            : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md'
-                        }`}
-                      >
-                        {item.purchased ? '✓ Đã Mở Khoá' : 'Mở Khoá Ngay'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-400 mb-2">
-                    {item.summary}
-                  </p>
-
-                  <div className="bg-slate-900/90 rounded-lg p-2.5 text-[11px] text-stone-300 font-serif border border-slate-800">
-                    <div className="text-[10px] text-cyan-400 font-mono mb-1 font-bold">
-                      TRÍCH ĐOẠN XEM TRƯỚC (PREVIEW 15%):
-                    </div>
-                    <div className="whitespace-pre-line line-clamp-3">
-                      {item.previewText}
-                    </div>
+            {/* Toggle Mic Option */}
+            <div 
+              onClick={() => setIncludeMic(!includeMic)}
+              className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl cursor-pointer transition-colors mb-4"
+            >
+              <div className="flex items-center gap-2.5">
+                {includeMic ? (
+                  <Mic className="w-4 h-4 text-[#E0562D] stroke-[2.4]" />
+                ) : (
+                  <MicOff className="w-4 h-4 text-slate-400 stroke-[2.4]" />
+                )}
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Thu âm Micro</div>
+                  <div className="text-[11px] text-slate-500">
+                    {includeMic ? 'Đang bật ghi âm giọng nói' : 'Chỉ ghi hình, tắt micro'}
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${includeMic ? 'bg-[#E0562D]' : 'bg-slate-300'}`}>
+                <div className={`w-4 h-4 rounded-full bg-white transition-transform ${includeMic ? 'translate-x-4' : 'translate-x-0'}`} />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsSetupModalOpen(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleStartRecording}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+              >
+                <Video className="w-3.5 h-3.5 text-white stroke-[2.4]" />
+                <span>Bắt đầu ghi hình</span>
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: Nhập văn bản hoặc tạo tài liệu thủ công */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+      {/* MODAL 2: Xem lại & Tải video đã ghi về máy */}
+      {isFinishModalOpen && recordedBlobUrl && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-lg p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
-              onClick={() => setIsUploadModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              onClick={() => setIsFinishModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-2 mb-2">
-              <Upload className="w-5 h-5 text-cyan-400" />
-              <h3 className="text-sm font-bold text-white">Thêm Tài Liệu Mới Vào Bàn Học</h3>
-            </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Nhập tiêu đề và nội dung. Hệ thống sẽ tự động tách thành <strong className="text-emerald-400">Tờ Giấy rời (&lt;5 trang)</strong> hoặc <strong className="text-sky-400">Cuốn Sách (&ge;5 trang)</strong>.
-            </p>
 
-            <form onSubmit={handleManualUpload} className="space-y-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-slate-900 stroke-[2.4]" />
+                <h3 className="text-sm font-bold text-slate-900">Bản ghi buổi học hoàn tất</h3>
+              </div>
+              <div className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg mr-6">
+                {formatRecordingTime(recordingSeconds)} • {recordedBlobSize}
+              </div>
+            </div>
+
+            {/* Video Preview */}
+            <div className="bg-black rounded-xl overflow-hidden mb-4 border border-slate-200">
+              <video 
+                src={recordedBlobUrl} 
+                controls 
+                autoPlay 
+                className="w-full max-h-72 object-contain"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-[11px] text-slate-500">
+                Định dạng chuẩn WebM độ phân giải cao
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFinishModalOpen(false)}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadVideo}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5"
+                >
+                  <Download className="w-4 h-4 text-white stroke-[2.4]" />
+                  <span>Tải video về máy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Đặt tên và viết mô tả ngắn cho tệp vừa chọn */}
+      {isConfirmModalOpen && pendingDoc && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+            <button
+              onClick={() => {
+                setIsConfirmModalOpen(false);
+                setPendingDoc(null);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-5 h-5 text-slate-800" />
+              <h3 className="text-sm font-bold text-slate-900">Thêm tài liệu vào bàn học</h3>
+            </div>
+
+            {/* Selected File Info Pill */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-4 text-xs flex items-center justify-between text-slate-600">
+              <span className="font-medium truncate mr-2">{pendingDoc.file.name}</span>
+              <span className="font-mono text-[11px] text-slate-400 flex-shrink-0">{pendingDoc.fileSize}</span>
+            </div>
+
+            <form onSubmit={handleConfirmUpload} className="space-y-3.5">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Tên tài liệu / bài học</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Tên tài liệu</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ví dụ: Tóm tắt Giải tích chương 3"
-                  value={docTitle}
-                  onChange={(e) => setDocTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-400"
+                  value={pendingDoc.title}
+                  onChange={(e) => setPendingDoc({ ...pendingDoc, title: e.target.value })}
+                  placeholder="Nhập tên tài liệu hiển thị..."
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">
-                  Nội dung tài liệu (Cách nhau 2 dòng trống để chia thành từng trang)
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                  Mô tả ngắn <span className="text-slate-400 font-normal">(tùy chọn)</span>
                 </label>
                 <textarea
-                  required
-                  rows={8}
-                  placeholder="Nhập nội dung bài học..."
-                  value={docContent}
-                  onChange={(e) => setDocContent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-white outline-none focus:border-cyan-400 font-serif leading-relaxed"
+                  rows={3}
+                  value={pendingDoc.description}
+                  onChange={(e) => setPendingDoc({ ...pendingDoc, description: e.target.value })}
+                  placeholder="Ghi chú tóm tắt nội dung tài liệu..."
+                  className="w-full bg-white border border-slate-300 rounded-lg p-3 text-xs text-slate-900 outline-none focus:border-slate-800 transition-colors resize-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
-                  onClick={() => setIsUploadModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white"
+                  onClick={() => {
+                    setIsConfirmModalOpen(false);
+                    setPendingDoc(null);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Huỷ
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950"
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#E0562D] hover:bg-[#c9451e] text-white transition-colors shadow-sm cursor-pointer"
                 >
-                  Đặt Lên Bàn Học
+                  Đặt lên bàn học
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* MODAL: Đăng bán tài liệu lên KnowInherit */}
-      {isPublishOpen && (
-        <KnowInheritPublishModal
-          item={activeSpace.items.find(i => i.id === selectedDeskItemId) || activeSpace.items[0]}
-          isOpen={isPublishOpen}
-          onClose={() => setIsPublishOpen(false)}
-          onPublished={(newListing) => {
-            setMarketItems(prev => [newListing, ...prev]);
-            // Reward publishing bonus: author gets tokens for publishing
-            addTokens(2, `Thưởng đăng tài liệu lên KnowInherit: ${newListing.title}`);
-          }}
-        />
+
+      {/* MODAL 4: Mời bạn bè cùng học */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-sm p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+            <button
+              onClick={() => setIsShareModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Mời bạn bè vào bàn học</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Gửi liên kết dưới đây để bạn bè cùng tham gia học nhóm và trao đổi trực tiếp trên bàn học 2.5D.
+            </p>
+
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-4">
+              <input
+                type="text"
+                readOnly
+                value={typeof window !== 'undefined' ? window.location.href : 'http://localhost:3000'}
+                className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono"
+              />
+              <button
+                onClick={handleCopyShareLink}
+                className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? 'Đã chép' : 'Sao chép'}</span>
+              </button>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+              <div className="text-[11px] text-slate-500">
+                Phòng học nhóm trực tiếp
+              </div>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="px-3.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

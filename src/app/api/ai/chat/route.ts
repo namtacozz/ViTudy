@@ -16,9 +16,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Thiếu nội dung câu hỏi (prompt)' }, { status: 400 });
     }
 
+    // Chuẩn hóa Unicode NFC toàn diện trước khi gửi tới các LLMs
+    const cleanPrompt = typeof prompt === 'string' ? prompt.normalize('NFC').trim() : '';
+    const cleanContext = typeof context === 'string' ? context.normalize('NFC').trim() : '';
+
     const systemInstruction = `Bạn là Trợ lý Học Tập ViTudy chuyên nghiệp, thông minh, ngắn gọn và chính xác. 
 Nhiệm vụ của bạn là giải thích kiến thức, tóm tắt, giải bài tập và làm rõ ngữ cảnh từ tài liệu người học cung cấp.
-Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ngữ cảnh đó để giải thích.`;
+Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ngữ cảnh đó để giải thích.`.normalize('NFC');
 
     // 1. CHATGPT PLUS/TEAM CODEX BACKEND ROUTING (codex_cli_rs)
     if (provider === 'oauth_chatgpt') {
@@ -42,7 +46,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
             model: 'gpt-4o',
             messages: [
               { role: 'system', content: systemInstruction },
-              { role: 'user', content: context ? `NGỮ CẢNH TÀI LIỆU:\n${context}\n\nCÂU HỎI:\n${prompt}` : prompt }
+              { role: 'user', content: cleanContext ? `NGỮ CẢNH TÀI LIỆU:\n${cleanContext}\n\nCÂU HỎI:\n${cleanPrompt}` : cleanPrompt }
             ]
           })
         });
@@ -80,7 +84,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
           contents: [
             {
               role: 'user',
-              parts: [{ text: `${systemInstruction}\n\n${context ? `NGỮ CẢNH:\n${context}\n\n` : ''}CÂU HỎI:\n${prompt}` }]
+              parts: [{ text: `${systemInstruction}\n\n${cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : ''}CÂU HỎI:\n${cleanPrompt}` }]
             }
           ]
         })
@@ -103,7 +107,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
       // Fallback mô phỏng thông minh nếu server chưa gắn OPENAI_API_KEY ở môi trường dev
       const simulatedReply = `[ViTudy AI Assistant - Phản hồi thử nghiệm]
 Dựa trên tài liệu bạn cung cấp:
-${context ? `"${context.slice(0, 150)}..."` : 'Chủ đề: ' + prompt}
+${cleanContext ? `"${cleanContext.slice(0, 150)}..."` : 'Chủ đề: ' + cleanPrompt}
 
 Giải đáp:
 1. Trọng tâm cốt lõi: Vấn đề được nêu là một khái niệm cơ bản nhưng rất quan trọng trong chương trình học.
@@ -127,7 +131,7 @@ Giải đáp:
         model: model || 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemInstruction },
-          { role: 'user', content: context ? `NGỮ CẢNH:\n${context}\n\nCÂU HỎI:\n${prompt}` : prompt }
+          { role: 'user', content: cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\nCÂU HỎI:\n${cleanPrompt}` : cleanPrompt }
         ],
         temperature: 0.7
       })

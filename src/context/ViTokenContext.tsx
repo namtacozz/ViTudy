@@ -9,8 +9,10 @@ interface ViTokenContextType {
   claimDailyStreak: () => { success: boolean; earned: number; message: string };
   addTokens: (amount: number, description: string, type?: ViTokenTransaction['type']) => void;
   spendTokens: (amount: number, description: string, modelUsed?: string) => boolean;
+  purchaseKnowledgeItem: (price: number, title: string, author: string) => boolean;
   updateAiConfig: (config: Partial<AiConfig>) => void;
   resetWallet: () => void;
+  activeSecondsOnDesk: number;
 }
 
 const DEFAULT_WALLET: ViTokenWallet = {
@@ -23,7 +25,7 @@ const DEFAULT_WALLET: ViTokenWallet = {
       type: 'signup_bonus',
       amount: 50,
       description: 'Quà tặng chào mừng thành viên mới ViTudy',
-      timestamp: '2026-01-01T00:00:00.000Z'
+      timestamp: new Date().toISOString()
     }
   ]
 };
@@ -40,7 +42,16 @@ const ViTokenContext = createContext<ViTokenContextType | null>(null);
 export function ViTokenProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<ViTokenWallet>(DEFAULT_WALLET);
   const [aiConfig, setAiConfig] = useState<AiConfig>(DEFAULT_AI_CONFIG);
+  const [activeSecondsOnDesk, setActiveSecondsOnDesk] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Đếm thời gian tương tác thực tế trên bàn học
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSecondsOnDesk(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -77,16 +88,27 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       return { success: false, earned: 0, message: 'Hôm nay bạn đã điểm danh rồi! Hãy quay lại vào ngày mai nhé.' };
     }
 
+    // Yêu cầu mở bàn học tương tác tối thiểu 3 phút (180s)
+    if (activeSecondsOnDesk < 180 && wallet.lastClaimDate !== null) {
+      const remainingSec = 180 - activeSecondsOnDesk;
+      return {
+        success: false,
+        earned: 0,
+        message: `Vui lòng học và tương tác trên bàn học thêm ${remainingSec} giây để xác thực điểm danh hôm nay.`
+      };
+    }
+
     const nextStreak = wallet.streakDays + 1;
-    // Streak reward from 2 to 10 ViToken
-    const earned = Math.min(2 + nextStreak, 10);
+    // Cố định 5 ViToken mỗi ngày, riêng Chủ Nhật x2 nhận 10 ViToken
+    const isSunday = new Date().getDay() === 0;
+    const earned = isSunday ? 10 : 5;
 
     const newTx: ViTokenTransaction = {
       id: `tx-streak-${Date.now()}`,
       type: 'daily_streak',
       amount: earned,
-      description: `Điểm danh liên tiếp ngày ${nextStreak} (+${earned} ViToken)`,
-      timestamp: '2026-01-01T00:00:00.000Z'
+      description: `Điểm danh liên tiếp ngày ${nextStreak} (+${earned} ViToken${isSunday ? ' - Chủ Nhật x2' : ''})`,
+      timestamp: new Date().toISOString()
     };
 
     setWallet(prev => ({
@@ -97,7 +119,11 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       history: [newTx, ...prev.history]
     }));
 
-    return { success: true, earned, message: `Điểm danh thành công! Bạn nhận được +${earned} ViToken cho chuỗi ngày ${nextStreak}.` };
+    return { 
+      success: true, 
+      earned, 
+      message: `Điểm danh thành công! Bạn nhận được +${earned} ViToken${isSunday ? ' (Thưởng Chủ Nhật x2)' : ''}.` 
+    };
   };
 
   const addTokens = (amount: number, description: string, type: ViTokenTransaction['type'] = 'referral') => {
@@ -106,7 +132,7 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       type,
       amount,
       description,
-      timestamp: '2026-01-01T00:00:00.000Z'
+      timestamp: new Date().toISOString()
     };
     setWallet(prev => ({
       ...prev,
@@ -131,13 +157,39 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       amount: -amount,
       description,
       modelUsed: modelUsed || aiConfig.model,
-      timestamp: '2026-01-01T00:00:00.000Z'
+      timestamp: new Date().toISOString()
     };
 
     setWallet(prev => ({
       ...prev,
       balance: prev.balance - amount,
       history: [newTx, ...prev.history]
+    }));
+
+    return true;
+  };
+
+  // Giao dịch chia sẻ doanh thu 85% cho tác giả, 15% phí nền tảng
+  const purchaseKnowledgeItem = (price: number, title: string, author: string): boolean => {
+    if (wallet.balance < price) {
+      return false;
+    }
+
+    const authorEarned = Math.floor(price * 0.85);
+    const platformFee = price - authorEarned;
+
+    const buyerTx: ViTokenTransaction = {
+      id: `tx-buy-${Date.now()}`,
+      type: 'know_buy',
+      amount: -price,
+      description: `Mở khoá tài liệu KnowInherit: "${title}" (Tác giả: ${author} nhận ${authorEarned}V, Phí sàn: ${platformFee}V)`,
+      timestamp: new Date().toISOString()
+    };
+
+    setWallet(prev => ({
+      ...prev,
+      balance: prev.balance - price,
+      history: [buyerTx, ...prev.history]
     }));
 
     return true;
@@ -159,8 +211,10 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
         claimDailyStreak,
         addTokens,
         spendTokens,
+        purchaseKnowledgeItem,
         updateAiConfig,
-        resetWallet
+        resetWallet,
+        activeSecondsOnDesk
       }}
     >
       {children}
