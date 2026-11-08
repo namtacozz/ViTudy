@@ -28,7 +28,8 @@ RootLayout (src/app/layout.tsx)
                 ├── VisualLinkThreads (src/components/canvas/VisualLinkThreads.tsx)
                 ├── Desk Items (Canvas Objects 2.5D) [Sử dụng hook useDeskItemInteraction]
                 │   ├── BookSpread (src/components/objects/BookSpread.tsx)
-                │   ├── PaperSheet (src/components/objects/PaperSheet.tsx) [Hỗ trợ A4 Exam Sheet]
+                │   ├── PaperSheet (src/components/objects/PaperSheet.tsx) [Tờ đơn học thuật & In-Situ STudy]
+                │   ├── ExamQuizCard (src/components/objects/ExamQuizCard.tsx) [Thẻ trắc nghiệm 3D lật mặt tương tác]
                 │   └── StickyNoteItem (src/components/objects/StickyNoteItem.tsx)
                 └── DeskDrawingInteractionLayer (src/components/canvas/DeskDrawingInteractionLayer.tsx)
 ```

@@ -29,6 +29,7 @@ import { QuizTab } from '../modals/study-tools/QuizTab';
 import { FullScreenDocModal } from '../modals/FullScreenDocModal';
 import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
 import { generateFlashcardsFromRules } from '@/lib/nonAiEngine';
+import { ExamQuizCard } from './ExamQuizCard';
 
 interface PaperSheetProps {
   item: DeskItem;
@@ -36,6 +37,10 @@ interface PaperSheetProps {
 }
 
 export function PaperSheet({ item, isSelected }: PaperSheetProps) {
+  if (item.isExamSheet && item.examData) {
+    return <ExamQuizCard item={item} isSelected={isSelected} />;
+  }
+
   const { 
     selectItem, 
     removeDeskItem,

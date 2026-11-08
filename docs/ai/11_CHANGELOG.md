@@ -4,6 +4,56 @@
 
 ---
 
+## 2026-11-08 17:05 — commit INTERACTIVE_3D_FLIPPING_EXAM_QUIZ_CARD
+- **Task:** Xây dựng và kiểm thử hoàn chỉnh thực thể Thẻ Trắc Nghiệm Tương Tác 3D Lật Mặt (`ExamQuizCard`) trên bàn học 2.5D:
+  1. **Thực thể Thẻ Trắc Nghiệm Riêng Biệt (`ExamQuizCard.tsx`):**
+     - Kích thước thẻ gọn gàng `380 × 490px`, đủ cho 1 câu hỏi + 4 phương án lựa chọn và bộ điều khiển mà không cần cuộn dọc.
+     - Lấy màu ngẫu nhiên từ bộ màu giấy ghi chú pastel (`#fef08a`, `#fed7aa`, `#bbf7d0`, `#bae6fd`, `#fbcfe8`).
+     - Tích hợp lớp vẽ mực cục bộ `ItemDrawingOverlay` di chuyển và xoay cùng thẻ.
+     - Thanh công cụ nổi trên hover: Nút xoay tự do 360° (`RotateTwoWay`) và Xóa (`Trash2`).
+  2. **Máy Trạng Thái 3 Pha & Hiệu Ứng Lật Mặt 3D Như Sách:**
+     - **Pha 1 - Bìa Bộ Đề (`intro`):** Tiêu đề bộ đề, số câu hỏi, thời gian làm bài, và nút **"Bắt đầu làm bài"** màu Cam ViT (`#E0562D`) chữ trắng ở chính giữa đáy thẻ.
+     - **Pha 2 - Làm Bài Trắc Nghiệm (`question`):**
+       - Bấm bắt đầu kích hoạt lật xoay 3D từ trái sang phải (`rotateY(180deg)` $\rightarrow$ `0deg`) để lộ Câu 1 ở mặt sau.
+       - Tích hợp `MathRenderer` (KaTeX) hiển thị trọn vẹn các công thức toán đa biến, gradient, ma trận.
+       - Chọn đáp án $\rightarrow$ Bấm **"Xác nhận"** $\rightarrow$ Hiển thị phán quyết tức thì: Xanh lục bảo ngọc (`✓ ĐÚNG`) hoặc Đỏ ruby (`✕ SAI`), lời giải thích chi tiết, và nút chuyển thành **"Câu tiếp theo"** (hoặc **"Hoàn thành"** ở câu cuối).
+       - Bấm "Câu tiếp theo" tiếp tục lật xoay 3D sang câu tiếp theo.
+     - **Pha 3 - Màn Hình Tổng Kết & Xem Lại (`summary`):**
+       - Hoàn thành câu cuối bấm "Hoàn thành", thẻ lật 3D sang màn hình Tổng kết.
+       - Tổng điểm cỡ to nổi bật ở trên giữa: `X / 10` (`text-4xl`/`text-5xl`) màu Cam ViT (`#E0562D`), tỷ lệ phần trăm và lời nhận xét sư phạm.
+       - Bảng lưới các ô câu trả lời với trạng thái đúng/sai. Bấm vào ô bất kỳ sẽ lật thẻ 3D về câu hỏi đó để xem lại chi tiết (`Review Mode`).
+       - Trong chế độ xem lại có nút **"Quay lại tổng kết"** ở góc trên; bấm vào sẽ lật ngược về màn hình Tổng kết.
+       - Nút **"Làm lại bộ đề này"** cho phép reset để làm lại từ đầu.
+  3. **Thanh Điều Hướng Câu Hỏi Dạng List Ngang Ở Đáy Thẻ:**
+     - Nằm sát mép đáy bên trong thẻ, bề rộng không vượt quá thẻ.
+     - Ở hai đầu: 2 nút mũi tên `<` và `>` để lùi/tiến câu hỏi.
+     - Danh sách các ô pill câu hỏi:
+       - Câu đã làm: Màu xanh lá (`#15803D`) nếu đúng, màu đỏ (`#DC2626`) nếu sai.
+       - Câu hiện tại: Tô xám (`bg-slate-300 text-slate-900 border-slate-400 ring-1 ring-slate-400 font-black`).
+       - Câu tương lai: Màu trắng chữ đen.
+       - Bấm vào bất kỳ ô nào để chủ động nhảy câu và lật thẻ tức thì.
+  4. **Tích hợp & Khai báo (`PaperSheet.tsx`, `StudySpaceContext.tsx`):**
+     - `PaperSheet.tsx`: Ủy quyền render sang `<ExamQuizCard item={item} isSelected={isSelected} />` khi `item.isExamSheet && item.examData` là `true`.
+     - `StudySpaceContext.tsx`: Cập nhật `addExamSheet` gán kích thước chuẩn `width: 380`, `height: 490`, màu `stickyColor` ngẫu nhiên từ `NOTE_COLORS`.
+- **Verified by:**
+  - Automated CDP test `scripts/test-exam-quiz-card.mjs` chạy qua Chrome DevTools MCP port 9222 vượt qua 100% 6 kịch bản kiểm thử:
+    - Cover: `found: true`, `width: 380`, `height: 490`, `bg: rgb(186, 230, 253)`, nút "Bắt đầu làm bài" Cam ViT.
+    - Question 1: 3D Flip, math rendering, choices, "Xác nhận", bottom strip 4 pills.
+    - Confirmed Verdict: `✓ ĐÚNG`, giải thích, nút "Câu tiếp theo" Cam ViT, pill 1 chuyển xanh.
+    - Answering questions: Q2, Q3, Q4 chuyển câu, nút "Hoàn thành".
+    - Summary Screen: `scoreText: '10.0 / 10'`, 4 review cells, nút "Làm lại bộ đề này".
+    - Review Mode: Click ô 1 lật về câu 1, hiển thị nút "Quay lại tổng kết".
+  - Chụp 5 ảnh bằng chứng kiểm chứng:
+    - `verified_quiz_card_cover.png`
+    - `verified_quiz_card_question1.png`
+    - `verified_quiz_card_answer_confirmed.png`
+    - `verified_quiz_card_summary.png`
+    - `verified_quiz_card_review_back_btn.png`
+  - `pnpm run build:pages`: Passed 100% (code 0), tạo thư mục `out/` tĩnh cho GitHub Pages.
+- **Open follow-ups:** Sẵn sàng cho người dùng nghiệm thu trực tiếp.
+
+---
+
 ## 2026-11-08 16:35 — commit COMPREHENSIVE_UPGRADES_ZOOM_FOCUS_MARKET_STREAK_AI
 - **Task:** Hoàn thiện gói 6 nâng cấp cốt lõi về Zoom, Focus Mode HUD, Thanh công cụ trái, Chợ tài liệu, Chuỗi điểm danh & AI Provider:
   1. **Zoom chuột bất kỳ lúc nào & trên nội dung tài liệu (`InfiniteDesk.tsx`, `StudySpaceContext.tsx`):**

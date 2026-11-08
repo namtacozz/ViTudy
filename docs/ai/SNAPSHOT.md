@@ -1,17 +1,17 @@
 # SNAPSHOT.md — Bản Tiêu Hóa Dự Án Toàn Diện ViTudy
 
-> **Commit Hash:** `uncommitted (Phase 5 Refined)` | **Ngày cập nhật:** `2026-11-07` | **Tác giả:** Senior Staff Engineer
+> **Commit Hash:** `Current Working Tree (Production Ready)` | **Ngày cập nhật:** `2026-11-08` | **Tác giả:** Senior Staff Engineer
 
 ---
 
 ## 1. Tóm Tắt Dự Án & Sức Khỏe Repo (Health Summary)
 * **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini BYOK, OpenAI System) qua tiền tệ ViToken, và chợ tri thức KnowInherit 85/15.
-* **Giai đoạn phát triển:** Đã hoàn thành Phase 1–5 theo Master Completion Plan (`vitudy_master_completion_plan.md`): Chuẩn monochromatic hoàn hảo, Zero-Emoji 100% SVG, Sách 940x630, Hook tương tác xoay 360° `useDeskItemInteraction`, Module hóa STudy modal 5 subtabs, Tờ đề thi A4 tương tác trực tiếp (`exam_sheet`), chuẩn hóa NFC, bảng `space_members`, và bộ test tự động qua Chrome DevTools MCP.
+* **Giai đoạn phát triển:** Hoàn thành toàn diện: Chuẩn monochromatic, Zero-Emoji 100% SVG, Sách 980x640 da nâu, Hook tương tác xoay 360° `useDeskItemInteraction`, Nét vẽ in-document bám vật thể, Chế độ tập trung đọc Focus Mode tự động thu gọn HUD kèm nút nhòm Peek/Retract, Chợ tài liệu với Điểm AI & Xem thử, Modal Chuỗi điểm danh với đếm ngược, và Thẻ Trắc Nghiệm Tương Tác 3D Lật Mặt (`ExamQuizCard`) kích thước 380x490 màu pastel.
 * **Sức khỏe Repo (Health):**
-  * `Build`: **Pass** (`pnpm build` biên dịch sạch 100%, không lỗi kiểu/lint).
-  * `Docs Check`: **Pass** (`pnpm run docs:check` hợp lệ, 62 symbols hợp lệ).
-  * `Chrome DevTools Automated Test`: **Pass** (`node scripts/test-chrome-devtools.mjs` đạt 0 lỗi console, 0 emoji, tương tác thành công).
-  * `Server`: **Running** (`http://localhost:3000` 200 OK, render 5 desk items mượt mà).
+  * `Build`: **Pass** (`pnpm run build:pages` biên dịch sạch 100%, xuất tĩnh `out/` sẵn sàng GitHub Pages).
+  * `Docs Check`: **Pass** (`pnpm run docs:check` hợp lệ, 82 symbols hợp lệ).
+  * `Chrome DevTools Automated Test`: **Pass** (`node scripts/test-exam-quiz-card.mjs` đạt 100% 6 kịch bản kiểm thử, chụp 5 ảnh bằng chứng).
+  * `Server`: **Running** (`http://localhost:3000` 200 OK).
 
 ---
 

@@ -209,8 +209,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         let localPoints = finalPoints;
 
         for (const item of sortedItems) {
-          const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 460 : 360) : (item.width || 220);
-          const h = item.type === 'book' ? 640 : item.type === 'paper' ? (item.isExamSheet ? 620 : 500) : (item.height || 200);
+          const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 380 : 360) : (item.width || 220);
+          const h = item.type === 'book' ? 640 : item.type === 'paper' ? (item.isExamSheet ? 490 : 500) : (item.height || 200);
 
           const dx = p0.x - item.x;
           const dy = p0.y - item.y;
@@ -968,6 +968,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     pos?: { x: number; y: number }
   ): string => {
     const sheetId = `exam-${Date.now()}`;
+    const NOTE_COLORS = ['#fef08a', '#fed7aa', '#bbf7d0', '#bae6fd', '#fbcfe8'];
+    const randomColor = NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)];
+
     const examItem: DeskItem = {
       id: sheetId,
       type: 'paper',
@@ -980,6 +983,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       pageCount: 1,
       currentPageIndex: 0,
       isExamSheet: true,
+      stickyColor: randomColor,
+      width: 380,
+      height: 490,
       examData: {
         timeLimitMinutes,
         remainingSeconds: timeLimitMinutes * 60,

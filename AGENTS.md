@@ -189,6 +189,33 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Vị trí xuất vật thể tương tác luôn cạnh tài liệu gốc:** Mọi tài liệu xuất ra từ STudy hoặc Thẻ ghi nhớ (Flashcard note, Summary note, Exam sheet) đều tự động định vị tại `x = item.x + item.width + 30`, `y = item.y`.
   * **Hỏi AI Inteline:** Bôi đen bất kỳ đoạn văn bản nào trên giấy để làm nổi thẻ card Inteline ngay tại vị trí con trỏ chuột.
 
+* **Quy Chuẩn Thẻ Trắc Nghiệm Tương Tác 3D Lật Mặt (`ExamQuizCard`):**
+  * **Kích thước & Màu sắc thẻ:**
+    * Kích thước chuẩn: `380 × 490px`, đủ cho 1 câu hỏi + 4 đáp án và bảng điều khiển mà không cần cuộn dọc.
+    * Màu nền: Lấy ngẫu nhiên từ bộ màu giấy ghi chú pastel (`#fef08a`, `#fed7aa`, `#bbf7d0`, `#bae6fd`, `#fbcfe8`), bo góc lớn `rounded-2xl`, bóng đổ thẻ vật lý 2.5D.
+  * **Màn hình Bìa Bộ Đề (Intro Screen):**
+    * Tiêu đề bộ đề, số lượng câu hỏi, thời gian làm bài dự kiến.
+    * Ở giữa đáy thẻ: Nút **"Bắt đầu làm bài"** nổi bật với màu **Cam ViT (`#E0562D`)**, chữ trắng.
+  * **Cơ Chế Lật Mặt 3D Như Trang Sách (Interactive 3D Page Flip):**
+    * Khi bấm "Bắt đầu làm bài", thẻ lật xoay 3D từ trái sang phải (`rotateY(180deg)` $\rightarrow$ `0deg`) để lộ Câu 1 ở mặt sau.
+    * Khi người dùng chọn đáp án và bấm **"Xác nhận"**: hiển thị phán quyết ngay lập tức (Xanh lá `✓ ĐÚNG` hoặc Đỏ `✕ SAI`), giải thích chi tiết, và nút chuyển thành **"Câu tiếp theo"** (hoặc **"Hoàn thành"** ở câu cuối cùng).
+    * Bấm "Câu tiếp theo" sẽ tiếp tục lật xoay 3D sang câu tiếp theo.
+  * **Thanh Điều Hướng Câu Hỏi Dạng List Ngang Ở Đáy Thẻ (Bottom Horizontal Strip):**
+    * Nằm sát mép đáy bên trong thẻ, độ rộng được giới hạn nghiêm ngặt không vượt quá chiều rộng thẻ.
+    * Hai đầu: 2 nút mũi tên chuyển câu `<` (Lùi) và `>` (Tiến).
+    * Ở giữa: Danh sách các ô tròn/pill đại diện cho các câu hỏi:
+      * **Câu đã làm:** Màu Xanh lá (`#15803D`) nếu trả lời đúng, Màu Đỏ (`#DC2626`) nếu trả lời sai.
+      * **Câu hiện tại:** Tô xám đậm (`bg-slate-300 text-slate-900 border-slate-400 ring-1 ring-slate-400 font-black`) tương tự trạng thái công cụ HUD đang chọn.
+      * **Câu tương lai / chưa làm:** Màu trắng chữ đen.
+    * Người học có thể bấm vào bất kỳ ô nào để chủ động nhảy câu hoặc lật tới/lui tự do trong lúc làm bài.
+  * **Màn hình Tổng Kết & Xem Lại Câu (Summary & Review Screen):**
+    * Khi hoàn thành câu cuối và bấm "Hoàn thành", thẻ lật 3D sang màn hình Tổng kết.
+    * **Tổng điểm cỡ to nổi bật ở trên giữa:** Render số điểm `X / 10` với cỡ chữ lớn (`text-4xl`/`text-5xl`) màu Cam ViT (`#E0562D`), kèm tỷ lệ phần trăm và lời nhận xét sư phạm.
+    * **Bảng lưới các ô câu trả lời:** Hiển thị toàn bộ các câu hỏi kèm trạng thái đúng/sai.
+    * **Chế độ Xem Lại Chi Tiết (Review Mode):** Nhấp vào ô câu hỏi bất kỳ trong bảng sẽ lật thẻ 3D từ trái sang phải về câu hỏi đó để xem lại đáp án và giải thích chi tiết.
+    * Ở chế độ xem lại: Xuất hiện nút **"Quay lại tổng kết"** ở góc trên; bấm vào sẽ lật ngược từ phải sang trái về lại màn hình Tổng kết.
+    * Nút **"Làm lại bộ đề này"** cho phép reset toàn bộ trạng thái để luyện tập lại từ đầu.
+
 ---
 
 ## 6. Cơ Chế Xoay Tự Do 360° & Chế Độ Xoay Bàn Học (View Rotation Mode)
