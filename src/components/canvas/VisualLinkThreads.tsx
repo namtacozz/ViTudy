@@ -161,33 +161,6 @@ export function VisualLinkThreads() {
               strokeOpacity="0.5"
             />
 
-            {/* Relationship Label Badge at Midpoint (Nhãn mô tả liên kết) */}
-            <g transform={`translate(${midX}, ${midY})`} className="pointer-events-auto cursor-default select-none">
-              <rect 
-                x="-38" 
-                y="-9" 
-                width="76" 
-                height="18" 
-                rx="9" 
-                fill="#ffffff" 
-                stroke="#fca5a5" 
-                strokeWidth="0.8" 
-                className="shadow-xs drop-shadow-xs"
-              />
-              <text 
-                x="0" 
-                y="3.2" 
-                textAnchor="middle" 
-                fill="#b91c1c" 
-                fontSize="9" 
-                fontWeight="700" 
-                fontFamily="sans-serif"
-                letterSpacing="0.2px"
-              >
-                Liên quan đến
-              </text>
-            </g>
-
             {/* Source Physical Pushpin with Dedicated Small Hitbox */}
             <g 
               transform={`translate(${startX}, ${startY})`}

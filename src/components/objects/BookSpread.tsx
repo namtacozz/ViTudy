@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import clsx from 'clsx';
 import { DeskItem } from '@/types/studyspace';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { 
@@ -14,7 +15,8 @@ import {
   Send,
   Loader2,
   Lightbulb,
-  BookOpen
+  BookOpen,
+  Eye
 } from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { MathRenderer } from '../common/MathRenderer';
@@ -39,7 +41,10 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
     turnBookPage,
     detachPageFromBinder,
     addStickyNote,
-    setTransform
+    setTransform,
+    focusedItemId,
+    enterFocusMode,
+    exitFocusMode
   } = useStudySpace();
 
   const { spendTokens } = useViToken();
@@ -48,18 +53,16 @@ export function BookSpread({ item, isSelected }: BookSpreadProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
   const [isConfirmDelete, setIsConfirmDelete] = useState(false);
-  const [isFocusReading, setIsFocusReading] = useState(false);
 
-  // Smooth Focus Reading Mode: Automatically animates camera to frame the book at 100% reading scale
-  const handleFocusRead = () => {
-    if (typeof window === 'undefined') return;
-    const w = 980;
-    const h = 640;
-    const targetScale = Math.min(1.15, Math.max(0.92, (window.innerHeight * 0.85) / h));
-    const targetX = Math.round(window.innerWidth / 2 - (item.x + w / 2) * targetScale);
-    const targetY = Math.round(window.innerHeight / 2 - (item.y + h / 2) * targetScale);
-    setTransform({ x: targetX, y: targetY, scale: targetScale, rotation: 0 });
-    setIsFocusReading(true);
+  // Focus Reading Mode: True when this book is the focused item
+  const isFocusReading = focusedItemId === item.id;
+
+  const toggleFocusRead = () => {
+    if (isFocusReading) {
+      exitFocusMode();
+    } else {
+      enterFocusMode(item.id, item.x, item.y, 980, 640);
+    }
   };
   
   // Full modal fallback for complex multi-turn Inteline
@@ -348,6 +351,34 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                   Tóm tắt
                 </span>
                 <Sparkles className="w-4 h-4 text-emerald-100 flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Tab Focus: Indigo (Chàm) - Tập trung đọc (Giữ yên kéo ra khi đang bật) */}
+            <div className="relative group/tab flex items-center">
+              <button
+                type="button"
+                onClick={toggleFocusRead}
+                title={isFocusReading ? "Thoát chế độ tập trung đọc" : "Chế độ tập trung đọc (Phóng to & Căn giữa sách)"}
+                className={clsx(
+                  "h-8 flex items-center justify-between pl-[16px] pr-4 gap-0 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden",
+                  isFocusReading
+                    ? "w-[116px] bg-indigo-700 text-white ring-2 ring-indigo-400/60"
+                    : "w-[48px] group-hover/tab:w-[116px] bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white group-hover/tab:gap-2"
+                )}
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
+                }}
+              >
+                <span className={clsx(
+                  "text-xs font-bold text-white tracking-wide whitespace-nowrap transition-all duration-200 overflow-hidden",
+                  isFocusReading
+                    ? "max-w-[70px] opacity-100 mr-2"
+                    : "max-w-0 opacity-0 group-hover/tab:max-w-[70px] group-hover/tab:opacity-100"
+                )}>
+                  Tập trung
+                </span>
+                <Eye className="w-4 h-4 text-indigo-100 flex-shrink-0" />
               </button>
             </div>
 
@@ -734,22 +765,12 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         {/* ================= BOTTOM TITLE BADGE (Drag handle - Miro-style clean white) ================= */}
         <div 
           onMouseDown={handleMouseDown}
-          onDoubleClick={handleFocusRead}
           className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 flex items-center gap-2.5 bg-white/95 text-slate-800 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md border border-slate-200/90 backdrop-blur-md pointer-events-auto select-none transition-all duration-200 z-20 cursor-grab active:cursor-grabbing hover:border-slate-300"
           onClick={(e) => e.stopPropagation()}
         >
           <span className="truncate max-w-[340px]">
             {cleanTitle}
           </span>
-          <button
-            type="button"
-            onClick={handleFocusRead}
-            title="Tập trung đọc: Phóng to và căn giữa toàn bộ cuốn sách để đọc rõ ràng"
-            className="flex items-center gap-1 text-[11px] font-bold text-[#E0562D] hover:text-[#c9451e] bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
-          >
-            <BookOpen className="w-3 h-3 stroke-[2.4]" />
-            <span>Tập trung</span>
-          </button>
         </div>
 
         {/* ================= INLINE INTELINE POPOVER AT THE END OF HIGHLIGHTED TEXT ================= */}
@@ -907,19 +928,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         </div>
       )}
 
-      {/* Floating Focus Mode Banner */}
-      {isFocusReading && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
-          <BookOpen className="w-4 h-4 text-[#E0562D]" />
-          <span>Đang ở chế độ đọc tập trung: <strong>{cleanTitle}</strong></span>
-          <button
-            onClick={() => setIsFocusReading(false)}
-            className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-300 transition-colors cursor-pointer"
-          >
-            Thoát tập trung
-          </button>
-        </div>
-      )}
+
 
       {/* Full Screen Document Reader Modal */}
       {isFullScreen && (

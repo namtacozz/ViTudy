@@ -96,15 +96,22 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
 * **Hiển Thị Công Thức Toán Học Chuẩn Mực Bằng KaTeX (`MathRenderer`):**
   * Toàn bộ tài liệu, sách học thuật, công thức toán (đạo hàm, gradient $\nabla f$, ma trận, phân số, vector) bắt buộc render qua `<MathRenderer />` sử dụng thư viện `KaTeX` với cú pháp LaTeX inline (`$...$`) và display block (`$$...$$`).
   * Danh sách liệt kê học thuật chuẩn hóa bằng dấu bullet `•` rõ ràng, tiêu đề in đậm cho các định lý và khái niệm cốt lõi.
-* **Chế Độ "Tập Trung Đọc" (Focus Reading Mode):**
-  * Nút "Tập trung đọc" trên huy hiệu tên sách (`BookSpread`) và thanh công cụ nổi của tờ giấy (`PaperSheet`) cho phép người dùng click để camera tự động zoom mượt mà đến 100%–110% căn giữa tài liệu trên màn hình, giải quyết triệt để vấn đề chữ nhỏ khi đang ở mức zoom xa của bàn học.
-  * Kèm banner nổi ở đỉnh màn hình với nút "Thoát tập trung" để trả camera về góc nhìn toàn cảnh bàn học.
+* **Chế Độ "Tập Trung Đọc" (Focus Reading Mode) & Khóa Điều Hướng Bàn Học:**
+  * **Vị trí thanh nhắc chuẩn:** Nút chế độ tập trung được tích hợp trực tiếp thành **thanh nhắc (bookmark tab) màu Chàm (`indigo-600`)** nằm ngay dưới tab "Tóm tắt" và trên tab "Phóng to".
+  * **Hành vi kéo ra / thụt vào:**
+    * Khi kích hoạt chế độ tập trung: thanh nhắc tự động **được giữ yên ở trạng thái kéo ra** (`w-[116px]`, nền `indigo-700`, viền sáng `ring-2 ring-indigo-400/60`, hiện rõ chữ "Tập trung").
+    * Khi nhấp vào lại: thanh nhắc tự động thụt vào (`w-[48px]`) và thoát chế độ tập trung.
+    * Tuyệt đối không dùng overlay banner cố định ở đỉnh màn hình ("Đang ở chế độ tập trung... Thoát").
+  * **Khóa thao tác camera & Popup cảnh báo:**
+    * Trong lúc đang tập trung đọc: hệ thống **khóa hoàn toàn thao tác cuộn chuột (zoom) và di chuyển góc nhìn (kéo rê chuột, phím WASD, 4 phím mũi tên)**.
+    * Khi người dùng cố gắng zoom hoặc lia camera, xuất hiện popup thông báo chuẩn style app: **`Đang tập trung (nhấn để thoát)`** kèm icon `Eye` Cam ViT.
+    * Nhấp vào nút `(nhấn để thoát)` trên popup cũng lập tức giải phóng góc nhìn và thoát chế độ tập trung.
 * **Xác Nhận An Toàn Khi Xóa Sách (Delete Confirmation Dialog):**
   * Nút Xóa (tab đỏ) trên thẻ bookmark sách được tách biệt bằng một vạch phân cách mỏng (`bg-amber-950/25`) và có tooltip rõ ràng.
   * Khi bấm nút Xóa, hệ thống bắt buộc mở modal xác nhận an toàn ("Xóa sách khỏi bàn học? [Hủy] [Xác nhận xóa]") để bảo vệ dữ liệu người dùng, tránh thao tác click nhầm.
 * **Đường Nối Chỉ Đỏ Tránh Nội Dung Sách (Smart Bezier Routing):**
   * Khi sợi chỉ đỏ xuất phát từ một trang sách và nối sang tài liệu bên phải, đường cong Bezier tự động uốn cong dạng vòm bay vượt lên trên đỉnh gáy sách (`archApexY < sourceItem.y - 22`), hoàn toàn không đè lên nội dung văn bản Chương 2.
-  * Nét chỉ mảnh tinh tế `1.5px`, bán trong suốt (`strokeOpacity="0.6"`), đinh ghim nhỏ gọn `r="4"`, và có nhãn mô tả quan hệ ("Liên quan đến") tại trung điểm đường cong.
+  * Nét chỉ mảnh tinh tế `1.5px`, bán trong suốt (`strokeOpacity="0.6"`), đinh ghim nhỏ gọn `r="4"`. Tuyệt đối không đính kèm nhãn chữ thừa (như "Liên quan đến") trên đường chỉ để giữ không gian học gọn gàng, thanh thoát.
 
 * **Kích thước & Chiều sâu 2.5D:**
   * Sách dạng mở đôi (`BookSpread`) có kích thước chuẩn **`980 × 640px`**, chiếm khoảng 55–60% chiều ngang màn hình ở mức zoom 100%.
@@ -119,12 +126,13 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Trạng thái bình thường (idle - chưa kéo):** Thanh nhắc thu gọn tinh tế (`w-[48px]`, chỉ lộ ra ngoài giấy 40px), icon vector nằm sát mép giấy trắng (chỉ hở một khoảng đệm nhỏ 8px). Khoảng cách giữa icon và rìa phải khuyết chữ V được bảo toàn nguyên vẹn (`pr-4` kèm notch 10px).
     * **Hiệu ứng trượt mở khi hover (Compact Slide-out Ribbon on Hover):** Khi rê chuột, thanh nhắc trượt mở sang phải với chiều dài vừa khít nội dung (`w-[86px]` đến `w-[124px]`). Chữ cái đầu tiên (ví dụ chữ "T" của "Tóm tắt") nằm ngay sát hở 8px so với tờ giấy trắng, triệt tiêu hoàn toàn khoảng trống thừa ở giữa và không kéo thanh nhắc ra dài quá đà.
     * Đầu ngoài thanh nhắc có hình chữ V khuyết lõm vào trong (`polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)`).
-    * Sử dụng 5 màu chuẩn theo thứ tự từ trên xuống dưới:
+    * Sử dụng 6 màu chuẩn theo thứ tự từ trên xuống dưới:
       1. **Màu Xanh Lá (`emerald-600`):** Icon `Sparkles` + Chữ **"Tóm tắt"** (Mở STudy).
-      2. **Màu Cam (`orange-600`):** Icon `Maximize2` + Chữ **"Phóng to"** (Mở toàn màn hình PDF View).
-      3. **Màu Xanh Lam (`sky-700`):** Icon `Scissors` + Chữ **"Tách trang"** (Tách trang đang mở ra tờ rời trên bàn học).
-      4. **Màu Nâu (`#78350f`):** Icon `RotateTwoWay` + Chữ **"Xoay"** (Xoay tự do 360°, nhấn đúp căn $0^\circ$).
-      5. **Màu Đỏ (`rose-600`):** Icon `Trash2` + Chữ **"Xoá"** (Xóa sách khỏi bàn học).
+      2. **Màu Chàm (`indigo-600`):** Icon `Eye` + Chữ **"Tập trung"** (Giữ yên kéo ra khi bật, nhấp lại để thoát).
+      3. **Màu Cam (`orange-600`):** Icon `Maximize2` + Chữ **"Phóng to"** (Mở toàn màn hình PDF View).
+      4. **Màu Xanh Lam (`sky-700`):** Icon `Scissors` + Chữ **"Tách trang"** (Tách trang đang mở ra tờ rời trên bàn học).
+      5. **Màu Nâu (`#78350f`):** Icon `RotateTwoWay` + Chữ **"Xoay"** (Xoay tự do 360°, nhấn đúp căn $0^\circ$).
+      6. **Màu Đỏ (`rose-600`):** Icon `Trash2` + Chữ **"Xoá"** (Xóa sách khỏi bàn học, có vạch ngăn cách & xác nhận an toàn).
   * **Số Trang Đặt Ở Góc Trang Như Sách Thật (Physical Corner Pagination):**
     * Trang bên trái: Chỉ hiển thị duy nhất số trang ở **góc dưới cùng bên trái** (không có chữ ViTudy Desk thừa).
     * Trang bên phải: Chỉ hiển thị duy nhất số trang ở **góc dưới cùng bên phải** (không có tên sách thừa ở chân trang).

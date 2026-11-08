@@ -44,7 +44,10 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
     resetExam,
     updateItemTitle,
     addStickyNote,
-    setTransform
+    setTransform,
+    focusedItemId,
+    enterFocusMode,
+    exitFocusMode
   } = useStudySpace();
 
   const { spendTokens } = useViToken();
@@ -53,18 +56,18 @@ export function PaperSheet({ item, isSelected }: PaperSheetProps) {
   const [paperStudyTab, setPaperStudyTab] = useState<'summary' | 'quiz'>('summary');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isFocusReading, setIsFocusReading] = useState(false);
+
+  const isFocusReading = focusedItemId === item.id;
 
   // Focus Reading Mode: Automatically centers and scales paper smoothly
   const handleFocusRead = () => {
-    if (typeof window === 'undefined') return;
-    const w = isExam ? 460 : 360;
-    const h = isExam ? 620 : 500;
-    const targetScale = Math.min(1.3, Math.max(1.02, (window.innerHeight * 0.82) / h));
-    const targetX = Math.round(window.innerWidth / 2 - (item.x + w / 2) * targetScale);
-    const targetY = Math.round(window.innerHeight / 2 - (item.y + h / 2) * targetScale);
-    setTransform({ x: targetX, y: targetY, scale: targetScale, rotation: 0 });
-    setIsFocusReading(true);
+    if (isFocusReading) {
+      exitFocusMode();
+    } else {
+      const w = isExam ? 460 : 360;
+      const h = isExam ? 620 : 500;
+      enterFocusMode(item.id, item.x, item.y, w, h);
+    }
   };
   
   const cleanTitle = (item.title || '')
@@ -712,19 +715,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
 
 
-      {/* Floating Focus Mode Banner */}
-      {isFocusReading && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
-          <BookOpen className="w-4 h-4 text-[#E0562D]" />
-          <span>Đang ở chế độ đọc tập trung: <strong>{cleanTitle}</strong></span>
-          <button
-            onClick={() => setIsFocusReading(false)}
-            className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-300 transition-colors cursor-pointer"
-          >
-            Thoát tập trung
-          </button>
-        </div>
-      )}
+
 
       {/* Drag & Merge Hint */}
       {!isExam && (

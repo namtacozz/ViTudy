@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { FileUp } from 'lucide-react';
+import { FileUp, Eye } from 'lucide-react';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { DeskGrid } from './DeskGrid';
 import { PaperSheet } from '../objects/PaperSheet';
@@ -23,7 +23,11 @@ export function InfiniteDesk() {
     selectedItemId,
     addUploadedDocument,
     activeTool,
-    isViewRotateMode
+    isViewRotateMode,
+    focusedItemId,
+    isFocusNoticeVisible,
+    triggerFocusNotice,
+    exitFocusMode
   } = useStudySpace();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,6 +83,11 @@ export function InfiniteDesk() {
 
       const k = e.key.toLowerCase();
       if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
+        if (focusedItemId) {
+          e.preventDefault();
+          triggerFocusNotice();
+          return;
+        }
         if (!activeKeys.has(k)) {
           activeKeys.add(k);
           if (!animId) {
@@ -111,7 +120,7 @@ export function InfiniteDesk() {
       window.removeEventListener('blur', handleWindowBlur);
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [panBy]);
+  }, [panBy, focusedItemId, triggerFocusNotice]);
 
   // Wheel zoom handler: Prevent zooming desk if scrolling inside an overlay, modal, dropdown, or scrollable element
   const handleWheel = (e: React.WheelEvent) => {
@@ -127,16 +136,27 @@ export function InfiniteDesk() {
       return;
     }
     e.preventDefault();
+    if (focusedItemId) {
+      triggerFocusNotice();
+      return;
+    }
     const factor = e.deltaY < 0 ? 1.08 : 0.92;
     zoomBy(factor, e.clientX, e.clientY);
   };
 
   // Global View Rotation when isViewRotateMode is toggled ON (User can drag anywhere to rotate)
   const handleMouseDownCapture = (e: React.MouseEvent) => {
+    if (focusedItemId && isViewRotateMode && e.button === 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerFocusNotice();
+      return;
+    }
+
     if (isViewRotateMode && e.button === 0) {
       // Don't intercept clicks on HUD buttons or modals
       const target = e.target as HTMLElement;
-      if (target.closest('button[title*="xoay"]') || target.closest('[data-hud="true"]')) {
+      if (target.closest('button[title*="xoay"]') || target.closest('[data-hud="true"]') || target.closest('[data-focus-notice="true"]')) {
         return;
       }
 
@@ -189,8 +209,15 @@ export function InfiniteDesk() {
       target.closest('button') ||
       target.closest('input') ||
       target.closest('select') ||
-      target.closest('textarea')
+      target.closest('textarea') ||
+      target.closest('[data-focus-notice="true"]')
     ) {
+      return;
+    }
+
+    // Intercept pan attempt when in Focus Reading Mode
+    if (focusedItemId) {
+      triggerFocusNotice();
       return;
     }
 
@@ -361,6 +388,24 @@ export function InfiniteDesk() {
       {/* Top-Level Full-Screen Drawing, Creation & Eraser Layer */}
       {activeTool !== 'cursor' && (
         <DeskDrawingInteractionLayer />
+      )}
+
+      {/* Focus Mode Toast Notification when attempting to navigate/pan/zoom */}
+      {isFocusNoticeVisible && (
+        <div 
+          data-focus-notice="true"
+          className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2 bg-white/95 text-slate-800 border border-slate-300/90 shadow-2xl rounded-full text-xs font-semibold backdrop-blur-md animate-fade-in pointer-events-auto select-none"
+        >
+          <Eye className="w-4 h-4 text-[#E0562D]" />
+          <span>Đang tập trung</span>
+          <button
+            type="button"
+            onClick={exitFocusMode}
+            className="px-2.5 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-full text-[11px] font-bold transition-all shadow-xs cursor-pointer active:scale-95 ml-1"
+          >
+            (nhấn để thoát)
+          </button>
+        </div>
       )}
     </div>
   );

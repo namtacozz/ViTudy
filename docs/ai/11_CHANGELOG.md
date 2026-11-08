@@ -4,6 +4,35 @@
 
 ---
 
+## 2026-11-08 12:15 — commit FOCUS_TAB_AND_INTERACTION_LOCK
+- **Task:** Tinh chỉnh Thanh nhắc Tập trung, Khóa Camera khi Tập trung & Gỡ bỏ nhãn chữ đường chỉ:
+  1. **Bỏ chữ "Liên quan đến" trên đường chỉ đỏ (`VisualLinkThreads.tsx`):**
+     - Loại bỏ toàn bộ badge text thừa trên đường chỉ đỏ, giữ lại nét chỉ mảnh vòm Bezier tinh tế `1.5px` bán trong suốt `0.6` và đinh ghim nhỏ gọn `r=4px`.
+  2. **Tích hợp Nút Tập Trung thành Thanh Nhắc Bookmark Tab (`BookSpread.tsx`):**
+     - Đưa nút chế độ tập trung vào làm thanh nhắc bookmark tab thứ 2 màu Chàm (`indigo-600`), nằm ngay dưới tab "Tóm tắt" (xanh lá) và trên tab "Phóng to" (cam).
+     - Bỏ toàn bộ overlay banner cố định ở đỉnh màn hình ("Đang ở chế độ tập trung... Thoát").
+     - Khi kích hoạt: thanh nhắc tự động **được giữ yên ở trạng thái kéo ra** (`w-[116px]`, nền `indigo-700`, viền sáng `ring-2 ring-indigo-400/60`, hiện rõ chữ "Tập trung").
+     - Khi nhấp vào lại: thanh nhắc tự động thụt vào (`w-[48px]`) và thoát chế độ tập trung.
+     - Dọn dẹp nút tập trung cũ ở huy hiệu tên sách dưới đáy bìa sách.
+  3. **Khóa Điều Hướng Bàn Học Khi Đang Tập Trung & Popup Cảnh Báo Chuẩn Style App (`InfiniteDesk.tsx`, `StudySpaceContext.tsx`):**
+    - Khi đang trong chế độ tập trung: khóa hoàn toàn cuộn chuột (zoom) và di chuyển camera (kéo rê chuột, phím WASD, 4 phím mũi tên).
+    - Nếu người dùng cố ý zoom hoặc pan, hệ thống lập tức hiển thị popup thông báo chuẩn style app: **`Đang tập trung (nhấn để thoát)`** (kèm icon `Eye` Cam ViT và nút bấm `(nhấn để thoát)`).
+    - Nhấp vào nút `(nhấn để thoát)` trên thông báo cũng lập tức thoát chế độ tập trung và thu gọn thanh nhắc.
+- **Verified by:**
+  - Script CDP kiểm thử trực tiếp `scripts/verify-focus-and-thread.mjs` trên Chrome port 9222:
+    - Thread check: Không còn chữ "Liên quan đến" trong SVG/DOM.
+    - Tabs order check: Thứ tự chuẩn xác: [1] Tóm tắt -> [2] Tập trung -> [3] Phóng to.
+    - Active state: Tab mở rộng `w-[116px]`, không có top banner.
+    - Locked interaction: Bấm phím 'w' hoặc cuộn chuột kích hoạt popup `Đang tập trung (nhấn để thoát)`.
+    - Exit interaction: Bấm `(nhấn để thoát)` giải phóng camera, ẩn popup và thụt thanh nhắc về vị trí cũ.
+  - Ảnh chụp màn hình:
+    - `verified_focus_tab_active.png`
+    - `verified_focus_popup_notice.png`
+    - `verified_focus_mode_exited.png`
+  - `pnpm tsc --noEmit` & `pnpm run docs:check`: Pass 100%.
+
+---
+
 ## 2026-11-08 11:55 — commit 8_IMPROVEMENTS_VERIFIED
 - **Task:** Hoàn thiện 8 điểm cải tiến UX/UI, Khả năng đọc, KaTeX, Bố cục & Thẩm mỹ bàn học 2.5D:
   1. **Khả năng đọc nội dung & Chế độ "Tập trung đọc" (Focus Mode):**

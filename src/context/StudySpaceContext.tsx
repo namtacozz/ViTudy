@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { DeskItem, StudySpace, CanvasTransform, PageContent, IntelineThread } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { recognizeSmartShape } from '@/utils/smartShape';
@@ -14,6 +14,11 @@ interface StudySpaceContextType {
   selectedItemId: string | null;
   searchQuery: string;
   isPanLocked: boolean;
+  focusedItemId: string | null;
+  isFocusNoticeVisible: boolean;
+  enterFocusMode: (itemId: string, itemX: number, itemY: number, width: number, height: number) => void;
+  exitFocusMode: () => void;
+  triggerFocusNotice: () => void;
   switchSpace: (spaceId: string) => void;
   createSpace: (name: string, subject: string) => void;
   setTransform: React.Dispatch<React.SetStateAction<CanvasTransform>>;
@@ -104,6 +109,51 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [isPanLocked, setIsPanLocked] = useState(false);
   const [maxZIndex, setMaxZIndex] = useState(20);
   const [isViewRotateMode, setIsViewRotateMode] = useState(false);
+
+  // Focus Reading Mode state
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [preFocusTransform, setPreFocusTransform] = useState<CanvasTransform | null>(null);
+  const [isFocusNoticeVisible, setIsFocusNoticeVisible] = useState(false);
+  const focusNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerFocusNotice = () => {
+    setIsFocusNoticeVisible(true);
+    if (focusNoticeTimeoutRef.current) {
+      clearTimeout(focusNoticeTimeoutRef.current);
+    }
+    focusNoticeTimeoutRef.current = setTimeout(() => {
+      setIsFocusNoticeVisible(false);
+    }, 3200);
+  };
+
+  const enterFocusMode = (itemId: string, itemX: number, itemY: number, width: number, height: number) => {
+    setPreFocusTransform({ ...transform });
+    setFocusedItemId(itemId);
+    setIsFocusNoticeVisible(false);
+
+    if (typeof window !== 'undefined') {
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+      const targetScale = Math.min(screenW / (width + 120), screenH / (height + 120), 1.1);
+      const targetX = (screenW - width * targetScale) / 2 - itemX * targetScale;
+      const targetY = (screenH - height * targetScale) / 2 - itemY * targetScale;
+
+      setTransform({
+        x: Math.round(targetX),
+        y: Math.round(targetY),
+        scale: Math.max(0.85, Math.min(Number(targetScale.toFixed(3)), 1.15)),
+        rotation: 0
+      });
+    }
+  };
+
+  const exitFocusMode = () => {
+    setFocusedItemId(null);
+    setIsFocusNoticeVisible(false);
+    if (preFocusTransform) {
+      setTransform(preFocusTransform);
+    }
+  };
 
   // Drawing & Note creation tools state
   const [activeTool, setActiveTool] = useState<import('@/types/studyspace').ActiveToolType>('cursor');
@@ -323,6 +373,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const panBy = (dx: number, dy: number) => {
+    if (focusedItemId) {
+      triggerFocusNotice();
+      return;
+    }
     if (isPanLocked) return;
     setTransform(prev => ({
       ...prev,
@@ -332,6 +386,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const zoomBy = (factor: number, originX?: number, originY?: number) => {
+    if (focusedItemId) {
+      triggerFocusNotice();
+      return;
+    }
     setTransform(prev => {
       const newScale = Math.min(Math.max(Number((prev.scale * factor).toFixed(3)), 0.4), 2.2);
       if (originX === undefined || originY === undefined) {
@@ -346,6 +404,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const rotateDeskBy = (deltaDegrees: number, originX?: number, originY?: number) => {
+    if (focusedItemId) {
+      triggerFocusNotice();
+      return;
+    }
     if (isPanLocked) return;
     setTransform(prev => {
       const curRot = prev.rotation || 0;
@@ -1048,6 +1110,11 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         selectedItemId,
         searchQuery,
         isPanLocked,
+        focusedItemId,
+        isFocusNoticeVisible,
+        enterFocusMode,
+        exitFocusMode,
+        triggerFocusNotice,
         switchSpace,
         createSpace,
         setTransform,
