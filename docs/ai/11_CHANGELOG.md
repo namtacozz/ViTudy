@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-11-08 22:02 — main (Triển Khai Thành Công Lên GitHub Pages & Biên Soạn README.md)
+- **Task:** Triển khai sản phẩm hoàn chỉnh lên GitHub Pages và bổ sung tài liệu hướng dẫn `README.md`:
+  1. **Triển khai tự động lên GitHub Pages:**
+     - Sửa lỗi TypeScript tại `src/app/dashboard/page.tsx` (thiếu biến `today` trong guest activity grid).
+     - Biên dịch thành công Static Export (`pnpm run build:pages`) tạo đầy đủ 12 static routes, thư mục `_next` và file `.nojekyll`.
+     - Chạy toàn bộ test suite (`pnpm test`): 14/14 test suites passed (34/34 tests).
+     - Commit và push lên `origin/main` kích hoạt GitHub Actions workflow (`deploy.yml`).
+     - GitHub Actions hoàn tất 100% trong 1m9s (`build` 1m1s, `deploy` 8s).
+     - Xác minh trực tiếp trên URL thật qua CDP 9222 (`https://namtacozz.github.io/ViTudy/`): Mặt bàn học 2.5D, sách mở đôi, thanh nhắc chữ V, ghi chú, thẻ trắc nghiệm, minimap, onboarding tour và banner khách hoạt động mượt mà với 100% CSS và icons.
+  2. **Biên soạn README.md:**
+     - Soạn thảo tài liệu giới thiệu dự án chi tiết, tự nhiên, tuân thủ nghiêm ngặt kỹ năng `humanizer` và Zero-Emoji Policy của `AGENTS.md`.
+     - Bao gồm: Giới thiệu tổng quan, Link Live Demo, 8 nhóm tính năng cốt lõi, công nghệ sử dụng, hướng dẫn cài đặt và chạy cục bộ, quy trình deploy tự động lên GitHub Pages.
+- **Verified by:**
+  - GitHub Actions Workflow Run #42492351819 (Success).
+  - Trực tiếp kiểm chứng và chụp ảnh màn hình live trang: `gh_pages_live_verified.png`.
+- **Docs updated:** `README.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-08 21:16 — uncommitted (Báo Cáo Tổng Hợp, E2E CDP Testing & Tinh Chỉnh Toàn Diện)
 - **Task:** Tổng hợp dự án chi tiết, xây dựng và thực thi Plan kiểm thử tự động qua Chrome DevTools Debug Protocol (CDP port 9222), chụp và kiểm tra trực tiếp ảnh toàn bộ các luồng giao diện, khắc phục triệt để các khiếm khuyết phát hiện:
   1. **Báo cáo tổng hợp dự án toàn diện:**
