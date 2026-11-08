@@ -195,6 +195,7 @@ export function LeftCreationBar() {
 
         {/* Unified Pen Button with Miro-style Full Overlay Flyout */}
         <button
+          data-tour="tool-pen"
           title="Bộ công cụ bút vẽ, dạ quang, vẽ thông minh & tẩy (Bấm để mở bảng chọn)"
           onClick={() => {
             setIsPenFlyoutOpen(!isPenFlyoutOpen);

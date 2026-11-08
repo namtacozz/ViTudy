@@ -117,8 +117,11 @@ export function StudyToolsModal({ item, isOpen, onClose, isPaper: explicitIsPape
   // Full layout for Books (Sách mở đôi)
   return createPortal(
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in select-none font-sans"
-      onClick={onClose}
+      id="study-modal-backdrop"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4 animate-fade-in select-none font-sans"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       onWheel={(e) => e.stopPropagation()}
     >
       <div 
@@ -148,6 +151,8 @@ export function StudyToolsModal({ item, isOpen, onClose, isPaper: explicitIsPape
           </div>
 
           <button
+            id="close-study-tools-modal"
+            aria-label="Đóng STudy"
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >

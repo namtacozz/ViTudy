@@ -4,7 +4,246 @@
 
 ---
 
-## 2026-11-08 18:21 — commit SMOOTH_60FPS_ZERO_LAG_CANVAS_ZOOM
+## 2026-11-08 21:16 — uncommitted (Báo Cáo Tổng Hợp, E2E CDP Testing & Tinh Chỉnh Toàn Diện)
+- **Task:** Tổng hợp dự án chi tiết, xây dựng và thực thi Plan kiểm thử tự động qua Chrome DevTools Debug Protocol (CDP port 9222), chụp và kiểm tra trực tiếp ảnh toàn bộ các luồng giao diện, khắc phục triệt để các khiếm khuyết phát hiện:
+  1. **Báo cáo tổng hợp dự án toàn diện:**
+     - Tạo artifact `vitudy-project-comprehensive-report.md` bao quát: chức năng, giao diện, use-case, giá trị người học, kiến trúc kỹ thuật.
+  2. **E2E CDP Test Suite qua cổng 9222:**
+     - Xây dựng `scripts/e2e-automated-test-suite.mjs` chụp 18 bức ảnh kiểm chứng E2E cho 7 phân hệ: Landing Page, Bàn học 2.5D, TopUp VietQR, Chợ KnowInherit, Dashboard Nhật ký học, Hỏi đáp FAQ, Đăng nhập Auth.
+  3. **Sửa lỗi nghiêm trọng TopUpModal bị bó hẹp góc phải:**
+     - Sử dụng React `createPortal(..., document.body)` để đưa `TopUpModal` ra lớp ngoài cùng `z-[9999]`, triệt tiêu ảnh hưởng của CSS `transform` từ thanh `TopRightWallet`.
+     - Đồng bộ hóa 100% 5 gói nạp chuẩn trong `PaymentService.ts` và `PricingTiers.tsx`: Khởi đầu (2k/2k V), Ôn giữa kỳ (10k/10k V), Học kỳ (27k/30k V - Tặng 3k), Đồ án (85k/100k V - Tặng 15k), Nhóm học (255k/300k V - Tặng 45k).
+     - Bổ sung nút nạp thử nghiệm 50 ViToken 0đ phục vụ chấm điểm đồ án học thuật.
+  4. **Cải thiện trải nghiệm Dashboard (Nhật ký học):**
+     - Sửa `src/app/dashboard/page.tsx`: Gỡ bỏ hành vi cưỡng chế redirect sang `/auth` khi là khách; hỗ trợ chế độ khách xem đầy đủ các thẻ thống kê, biểu đồ tuần, ma trận 28 ngày kèm banner đăng nhập thanh lịch.
+  5. **Chuẩn hóa chính tả & Nhãn hiển thị:**
+     - Sửa lỗi chính tả `120kí` $\to$ `120 ký tự` ở chân ghi chú `StickyNoteItem.tsx`.
+     - Nới rộng `max-w-[220px]` trong `TopLeftNav.tsx` giúp tiêu đề sách hiển thị đầy đủ không bị cắt cụt.
+  6. **Áp dụng văn phong Humanizer:**
+     - Mọi thông báo, nhãn và mô tả mới đều được viết bằng giọng văn người học tự nhiên, súc tích, loại bỏ hoàn toàn văn phong AI slop.
+- **Verified by:**
+  - `pnpm test`: 14/14 test suites passed (34/34 tests).
+  - `scripts/verify-fixes.mjs`: Chụp và kiểm chứng trực tiếp `verify_dashboard_guest.png`, `verify_topup_modal_fixed.png`, `verify_topup_qr_fixed.png`, `verify_desk_clean.png`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: 171 symbols, không có drift.
+- **Docs updated:** `03_SYMBOL_INDEX.md`, `11_CHANGELOG.md`.
+
+---
+
+## 2026-11-08 20:25 — uncommitted (Plan 06 & Plan 07 Execution — 100% Roadmap Complete)
+- **Task:** Thực thi trọn vẹn Plan 06 (Quality, Security & Onboarding) và Plan 07 (Operations, Legal Docs & Sẵn Sàng Báo Cáo):
+  1. **Khóa API Riêng Tư BYOK & Client Xử Lý Status Hạn Mức:**
+     - `src/lib/byokStore.ts` & `src/lib/byokStore.test.ts`: Quản lý an toàn khóa Gemini và OpenAI API Key lưu trực tiếp trong `localStorage` người dùng, không bao giờ lưu trữ trên server.
+     - `src/lib/aiClient.ts` & `src/lib/aiClient.test.ts`: Tự động nạp key từ BYOK Store, xử lý thân thiện lỗi 429 (hết lượt suy luận) và 402 (không đủ ViToken).
+  2. **Tối Ưu Tầm Nhìn Viewport Culling 60 FPS:**
+     - `src/lib/viewportCulling.ts` & `src/lib/viewportCulling.test.ts`: Thuật toán bounding sphere bao trọn góc xoay 360 độ và kích thước vật thể, tự động loại trừ các phần tử nằm ngoài màn hình (+500px margin đệm).
+     - Tích hợp vào [`InfiniteDesk.tsx`](file:///F:/AppMaking/ViTudy/src/components/canvas/InfiniteDesk.tsx), luôn bảo toàn vật thể đang chọn (`selectedItemId`) hoặc đang tập trung (`focusedItemId`).
+  3. **Hướng Dẫn Làm Quen Onboarding Tour 7 Bước:**
+     - `src/components/onboarding/TourStep.tsx` & `src/components/onboarding/OnboardingTour.tsx`: Spotlight mờ nền 7 bước công thái học (Tâm bàn, Tải lên, Bút vẽ, Lia phím WASD, Minimap, Ví & Chợ, Trợ lý AI Inteline).
+     - Gắn các thẻ định vị `data-tour` vào các nút tương ứng trên 4 đảo HUD.
+     - `supabase/migrations/0010_onboarding.sql`: Thêm cột `onboarding_done` vào `profiles` và RPC `complete_onboarding`.
+  4. **Landing Page Độc Bản & Cổng Vào Bàn Học:**
+     - `src/components/landing/HeroSection.tsx`: Tiêu đề sắc bén, nút CTA trải nghiệm bàn học ngay, preview faux desk UI KaTeX.
+     - `src/components/landing/FeatureGrid.tsx`: Trình diễn 6 trụ cột cốt lõi của ViTudy.
+     - `src/components/landing/PricingSection.tsx`: Bảng giá 5 gói nạp ViToken theo quyết định D4 (2k, 10k, 27k, 85k, 255k) kèm huy hiệu chế độ mô phỏng học thuật 0đ.
+     - `src/components/landing/LandingPage.tsx`: Header dính, điều hướng nhạy bén, liên kết trực tiếp vào Bàn học.
+     - Cập nhật [`src/app/page.tsx`](file:///F:/AppMaking/ViTudy/src/app/page.tsx): Khách mới truy cập lần đầu được xem Landing Page, nút "Vào bàn học" ghi cờ `vitudy_has_visited_desk` để mở bàn học tức thì; nút `Info` trên `TopLeftNav.tsx` cho phép xem lại Landing Page bất kỳ lúc nào.
+  5. **Bộ 3 Văn Bản Pháp Lý & Chân Trang Chung:**
+     - `src/components/common/SiteFooter.tsx`: Chân trang chuẩn mực có liên kết pháp lý và bản quyền học thuật.
+     - `src/app/terms/page.tsx`: Điều khoản dịch vụ và quy định sử dụng ViToken.
+     - `src/app/privacy/page.tsx`: Chính sách quyền riêng tư, cam kết bảo mật BYOK và phân quyền Supabase RLS.
+     - `src/app/faq/page.tsx`: 7 câu hỏi thường gặp về bàn học 2.5D, thuật toán SM-2, nạp VietQR và Discord Activity.
+  6. **PWA Web App Manifest & Content Security Policy (CSP):**
+     - `src/app/manifest.ts`: Khai báo manifest chuẩn standalone `theme_color: #E0562D` với `export const dynamic = 'force-static'`.
+     - `public/icon.svg`: Vector SVG icon độ phân giải cao cho PWA và favicon.
+     - `src/app/layout.tsx`: Thẻ meta CSP siết chặt kết nối tới Supabase, VietQR, Sepay, Discord và Google Gemini API.
+  7. **Tài Liệu Bàn Giao Vận Hành & Bảng Kiểm Tra Khởi Chạy:**
+     - `docs/ops/DEPLOY_RUNBOOK.md`: Sổ tay hướng dẫn triển khai Supabase, Edge Functions, Sepay Webhook, GitHub Pages và Discord Activity.
+     - `docs/ops/LAUNCH_CHECKLIST.md`: Bảng kiểm tra toàn diện 100% tiêu chí báo cáo giảng viên.
+- **Verified by:**
+  - `pnpm test`: 14/14 test files, 34 tests passed 100% (Vitest).
+  - `pnpm run build:pages`: Static export thành công 100%, xuất 13 trang tĩnh và `.nojekyll` vào thư mục `out/`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: 173 symbols được lập chỉ mục, PASS 100%.
+- **Status:** **HOÀN THÀNH 100% ROADMAP ĐƯA VÀO VẬN HÀNH THƯƠNG MẠI & BÁO CÁO HỌC THUẬT.**
+
+---
+
+## 2026-11-08 20:05 — uncommitted (Plan 05 Execution)
+- **Task:** Thực thi trọn vẹn Plan 05 (Feature Completion — SM-2, Learning Data, Chợ, Dashboard, Pomodoro, Demo Desk):
+  1. **Migration CSDL 0008_learning.sql:**
+     - Tạo bảng `flashcard_reviews` lưu lịch ôn tập lặp lại ngắt quãng SM-2 (`card_hash`, `easiness_factor`, `interval_days`, `repetitions`, `next_review_date`).
+     - Tạo bảng `study_sessions` theo dõi số giây học tập thực tế mỗi ngày.
+     - Tạo bảng `exam_attempts` lưu lịch sử nộp bài kiểm tra (`score`, `total`, `correct`).
+     - Viết các Postgres RPC bảo mật (`SECURITY DEFINER`): `record_heartbeat` (kẹp 1–30s chống giả mạo thời gian) và `submit_exam_attempt`.
+  2. **Thuật Toán Spaced Repetition SuperMemo SM-2 & Flashcard Service:**
+     - `src/lib/sm2.ts`: Xây dựng thuật toán SM-2 chuẩn với 4 mức chất lượng nhớ (Quên, Khó, Tốt, Dễ); kiểm soát EF tối thiểu 1.3 và interval tối thiểu 1 ngày.
+     - `src/lib/sm2.test.ts`: Bộ kiểm thử tự động 5 ca kiểm thử bao phủ toàn bộ nhánh thuật toán (PASS).
+     - `src/services/FlashcardService.ts`: Lọc thẻ đến hạn ôn tập hôm nay (`getCardsForReview`) và cập nhật tiến trình ôn tập (`submitReview`).
+     - `src/components/modals/study-tools/FlashcardTab.tsx`: Bổ sung chế độ "Ôn tập hôm nay" và 4 nút đánh giá nhớ trực quan khi lật mặt sau thẻ.
+  3. **Activity Heartbeat & Tự Động Lưu Kết Quả Bài Thi:**
+     - `src/services/ActivityService.ts`: Khởi động chu kỳ heartbeat 20 giây một lần khi tab đang hiển thị và người dùng có tương tác thực tế (`startHeartbeat`).
+     - Tích hợp `submitExamAttempt` khi nộp bài thi trên thẻ trắc nghiệm [`ExamQuizCard.tsx`](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) và tờ giấy A4 [`PaperSheet.tsx`](file:///F:/AppMaking/ViTudy/src/components/objects/PaperSheet.tsx).
+     - Gắn heartbeat theo dõi tương tác chuột/phím vào [`StudySpaceDeskView.tsx`](file:///F:/AppMaking/ViTudy/src/components/canvas/StudySpaceDeskView.tsx).
+  4. **Dashboard Thống Kê Học Tập Toàn Diện (`/dashboard`):**
+     - `src/services/StatsService.ts`: Tổng hợp phút học trong 7 ngày, điểm thi trung bình, và ma trận 28 ngày qua.
+     - `src/components/dashboard/StudyStats.tsx`: 4 thẻ chỉ số học tập nổi bật và biểu đồ cột nhịp độ tuần.
+     - `src/components/dashboard/StreakCalendar.tsx`: Ma trận 28 ngày với các sắc độ Cam ViT `#E0562D` trực quan.
+     - `src/components/dashboard/TokenHistory.tsx`: Sổ cái biến động số dư ViToken kèm số dư hiện có.
+     - Trang [`/dashboard`](file:///F:/AppMaking/ViTudy/src/app/dashboard/page.tsx) với điều hướng an toàn và nút truy cập trên HUD [`TopLeftNav.tsx`](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx).
+  5. **Trang Chợ Tri Thức KnowInherit Đầy Đủ (`/market`):**
+     - `src/services/MarketService.ts`: Tích hợp tìm kiếm từ khóa an toàn (loại trừ SQL wildcards), lọc theo chủ đề và mua tài liệu.
+     - Trang [`/market`](file:///F:/AppMaking/ViTudy/src/app/market/page.tsx): Bộ lọc 6 chủ đề, phân loại tài liệu, xem trước nội dung có rào chắn mờ tĩnh bảo vệ bản quyền và mua bằng ViToken.
+  6. **Phòng Học Mời Bạn (?room=), Pomodoro Timer & Khởi Tạo Bàn Demo:**
+     - `src/components/hud/InviteModal.tsx`: Hộp thoại chia sẻ link phòng học `?room={spaceId}` với nút sao chép và Web Share API.
+     - `src/app/page.tsx`: Tự động tham gia bàn học với quyền `viewer` khi người dùng mở link có tham số `?room=`.
+     - `src/hooks/usePomodoro.ts` & `src/hooks/usePomodoro.test.ts`: Bộ đếm thời gian Pomodoro 25/5 chuẩn công thái học (PASS 100%).
+     - `src/data/demoSpace.ts`: Tự động khởi tạo bàn học mẫu kèm giáo trình Machine Learning (KaTeX) và ghi chú hướng dẫn khi người dùng mới đăng nhập.
+- **Verified by:**
+  - `pnpm test`: 12/12 test files, 27 tests passed (Vitest).
+  - `pnpm run build:pages`: Build Static Export thành công 100%, xuất 9 static pages (`/`, `/_not-found`, `/auth`, `/auth/callback`, `/dashboard`, `/market`, `/profile`).
+  - `pnpm run docs:index` & `pnpm run docs:check`: Pass 100% (156 symbols).
+- **Open follow-ups:** Chuyển sang thực thi Plan 06 (Quality & Security Hardening).
+
+---
+
+## 2026-11-08 19:50 — uncommitted (Plan 04 Execution)
+- **Task:** Thực thi trọn vẹn Plan 04 (Tích Hợp Discord Embedded App Activity):
+  1. **Phát Hiện Môi Trường & Cấu Hình Base Path:**
+     - Sửa `next.config.ts` hỗ trợ biến môi trường `NEXT_PUBLIC_BASE_PATH` (cho phép chạy ở root user site `https://namtacozz.github.io/` để Discord URL Mapping trỏ vào `/`).
+     - Tạo `src/lib/discord/detect.ts` (`isDiscordActivity`): phát hiện cờ `frame_id` từ query string của iframe Discord.
+  2. **URL Mappings & Discord SDK Dynamic Loading:**
+     - Cài đặt `@discord/embedded-app-sdk`.
+     - Tạo `src/lib/discord/urlMappings.ts`: tự động gọi `patchUrlMappings` định tuyến `/supabase` $\rightarrow$ Supabase API host và `/discord-cdn` $\rightarrow$ Discord CDN để triệt tiêu lỗi CSP khi chạy trong iframe.
+     - Cập nhật `src/lib/supabase.ts` để luôn khởi tạo URL mappings trước khi client Supabase tạo kết nối mạng.
+     - Tạo `src/lib/discord/sdk.ts`: dynamic import SDK, khởi tạo `DiscordSDK`, gọi `authorize({ scope: ['identify', 'guilds.members.read'] })`, cung cấp hàm cập nhật Rich Presence `setDiscordPresence` với throttle 5s.
+  3. **Migration CSDL 0006_discord.sql & Edge Function `discord-auth`:**
+     - Thêm cột `discord_id` duy nhất vào `profiles` và thu hồi quyền cập nhật trực tiếp từ client.
+     - Tạo bảng `activity_rooms` và hàm RPC `join_activity_room(p_instance_id, p_space_id)` giúp các thành viên cùng voice channel tự động đồng bộ vào cùng một bàn học.
+     - Tạo Supabase Edge Function `supabase/functions/discord-auth/index.ts` (deploy `--no-verify-jwt`): đổi `code` lấy token Discord, truy vấn `@me`, so khớp tài khoản và sinh `token_hash` magic link an toàn.
+  4. **Tích Hợp Tự Động Vào AuthContext & Multiplayer Presence:**
+     - `src/hooks/useDiscordActivity.ts`: Hook trạng thái quản lý chu trình khởi tạo Activity (`idle` | `authorizing` | `ready` | `error`).
+     - Cập nhật `src/context/AuthContext.tsx`: Khi phát hiện môi trường Discord, tự động kích hoạt luồng đăng nhập Discord SDK và đổi sang session Supabase thật mà không ảnh hưởng người dùng web thông thường.
+     - Cập nhật `src/hooks/useRealtimeMultiplayer.ts`: Bổ sung cơ chế dọn dẹp `channel.untrack()` và `removeChannel` khi đóng Activity.
+- **Verified by:**
+  - `pnpm test`: 10/10 test files, 18 tests passed (Vitest).
+  - `pnpm run build:pages`: Build Static Export thành công 100%, xuất thư mục `out/`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: Pass 100% (136 symbols).
+- **Open follow-ups:** Chuyển sang thực thi Plan 05 (Feature Completion & Polish).
+
+---
+
+## 2026-11-08 19:45 — uncommitted (Plan 03 Execution)
+- **Task:** Thực thi trọn vẹn Plan 03 (Tích Hợp Cổng Thanh Toán VietQR & Sepay Webhook Tự Động):
+  1. **Migration CSDL 0005_payments.sql:**
+     - Thiết lập bảng `app_settings` (cờ `demo_mode`), `vitoken_packages` (5 gói nạp theo quyết định D4: Demo 2.000đ, Cơ bản 10.000đ, Tiêu chuẩn 27.000đ, Nâng cao 85.000đ, VIP 255.000đ).
+     - Thiết lập bảng `payment_requests` quản lý mã `VT` + 8 ký tự alphanumeric, hạn 15 phút, sequence sinh mã học thuật.
+     - Thiết lập bảng `unmatched_payments` ghi nhận giao dịch cần đối soát.
+     - Viết các Postgres RPC an toàn (`SECURITY DEFINER`): `create_payment_request`, `apply_payment`, `admin_simulate_payment`.
+  2. **Supabase Edge Function `sepay-webhook`:**
+     - Tạo `supabase/functions/sepay-webhook/index.ts` tiếp nhận HTTP POST webhook từ cổng Sepay.
+     - Xác thực an toàn qua header `Authorization: Apikey <SEPAY_API_KEY>`, chạy chế độ `--no-verify-jwt`.
+     - Trích xuất mã giao dịch `VT...`, tự động gọi RPC `apply_payment` để cộng ViToken và gửi tín hiệu Realtime tức thì.
+  3. **Payment Service Layer & Hook Trạng Thái:**
+     - `src/services/PaymentService.ts`: Xây dựng hàm `buildVietQrUrl` sinh ảnh QR VietQR chuẩn ngân hàng MBBank/VietinBank; các phương thức `listPackages`, `createRequest`, `simulatePayment`, `listMyPayments`.
+     - `src/services/PaymentService.test.ts`: Unit test Vitest cho QR builder và package fallback (PASS).
+     - `src/hooks/usePaymentStatus.ts`: Hook lắng nghe Realtime `postgres_changes` trên bảng `payment_requests`, kết hợp polling dự phòng 5s, tự động đếm ngược 15:00 và dừng poll khi đạt trạng thái kết thúc.
+  4. **Giao Diện Thanh Toán Hiện Đại (Modern Educational Cockpit):**
+     - `src/components/payment/PricingTiers.tsx`: Lưới 5 gói nạp với viền Cam ViT `#E0562D`, huy hiệu "Phổ biến" / "Tiết kiệm nhất".
+     - `src/components/payment/QRCodeDisplay.tsx`: Hiển thị mã QR, nút sao chép mã giao dịch chữ to, thông tin ngân hàng thụ hưởng và nút "Giả lập đã nhận tiền" phục vụ báo cáo giảng viên.
+     - `src/components/payment/PaymentSuccess.tsx`: Màn hình chúc mừng nạp thành công, thống kê số token được cộng.
+     - `src/components/payment/PaymentHistory.tsx`: Lịch sử 20 giao dịch nạp tiền gần nhất kèm nhãn trạng thái trực quan.
+     - `src/components/payment/TopUpModal.tsx`: Hộp thoại trung tâm điều phối toàn bộ quy trình nạp tiền và xem lịch sử.
+     - Tích hợp nút nạp `+` trên HUD ví [`TopRightWallet.tsx`](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) và thẻ lịch sử nạp trên trang [`/profile`](file:///F:/AppMaking/ViTudy/src/app/profile/page.tsx).
+- **Verified by:**
+  - `pnpm test`: 8/8 test files, 15 tests passed (Vitest).
+  - `pnpm run build:pages`: Build Static Export thành công 100%, xuất thư mục `out/`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: Pass 100% (128 symbols).
+- **Open follow-ups:** Chuyển sang thực thi Plan 04 (Discord Activity).
+
+---
+
+## 2026-11-08 19:32 — uncommitted (Plan 02 Execution)
+- **Task:** Thực thi trọn vẹn Plan 02 (Kết Nối Supabase Cloud, Service Layer & Offline-First):
+  1. **Migration Supabase Storage 0004 & Generated Types:**
+     - Tạo `supabase/migrations/0004_storage.sql`: thiết lập 3 bucket (`avatars` public 2MB, `documents` private 20MB, `listing-content` DRM 50MB) kèm toàn bộ RLS policies bảo vệ theo thư mục người dùng `{uid}/`.
+     - Tạo `src/types/database.types.ts` định kiểu dữ liệu TypeScript cho toàn bộ các bảng CSDL.
+  2. **Service Layer Pattern:**
+     - `src/services/StudySpaceService.ts`: CRUD bàn học, tài liệu, nét vẽ và đường nối trực quan. Cung cấp mapper hai chiều `deskItemToRow` / `rowToDeskItem`.
+     - `src/services/ViTokenService.ts`: Tải ví, lịch sử giao dịch và tích hợp RPC gọi `claim_daily_streak`, `process_know_inherit_purchase`.
+     - `src/services/DocumentService.ts`: Quản lý upload/download tài liệu Storage bucket `documents` với giới hạn 20MB.
+  3. **Tích Hợp Cloud & Realtime Vào Contexts:**
+     - `src/context/StudySpaceContext.tsx`: Đọc/ghi Supabase Cloud khi người dùng đăng nhập; cơ chế debounce 500ms chống spam request; xóa vật thể đồng bộ cloud.
+     - `src/context/ViTokenContext.tsx`: Tự động tải số dư từ Cloud và subscribe Realtime `postgres_changes` trên bảng `profiles` (lọc `id=eq.{uid}`).
+  4. **Hạ Tầng Ngoại Tuyến (Offline-First) & Migration Dữ Liệu:**
+     - Cài đặt thư viện `idb` và tạo wrapper `src/lib/indexeddb.ts`.
+     - `src/services/SyncService.ts`: Hỗ trợ phát hiện và di chuyển dữ liệu localStorage lên đám mây với bảng remap ID sang chuẩn UUID an toàn.
+     - `src/services/OfflineQueue.ts`: Lưu trữ hàng đợi các thao tác thay đổi vào IndexedDB khi mất mạng và tự động đồng bộ (auto-flush) khi online trở lại.
+     - `src/components/auth/MigrationDialog.tsx`: Modal thân thiện thông báo người dùng đồng bộ bàn học cũ lên tài khoản mới đăng nhập.
+- **Verified by:**
+  - `pnpm test`: 7/7 test files, 13 tests passed (Vitest).
+  - `pnpm run build:pages`: Build Static Export thành công 100%, xuất thư mục `out/` sạch, không còn `api/`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: Pass 100% (115 symbols).
+- **Open follow-ups:** Tiếp tục Plan 03 (Thanh Toán VietQR & Sepay Webhook).
+
+---
+
+
+- **Task:** Thực thi trọn vẹn Plan 01 (Auth & Tài Khoản Người Dùng):
+  1. **Hệ Thống AuthContext & Hook useAuth:**
+     - Tạo `src/context/AuthContext.tsx` và `src/hooks/useAuth.ts` hỗ trợ trạng thái ba bậc (`loading` | `guest` | `authenticated`).
+     - Lắng nghe thay đổi phiên đăng nhập theo thời gian thực qua `supabase.auth.onAuthStateChange` đồng bộ liên tab.
+     - Cấu hình client Supabase chuẩn PKCE (`flowType: 'pkce'`, `detectSessionInUrl: true`, `persistSession: true`) trong `src/lib/supabase.ts`.
+     - Bọc `<AuthProvider>` trong `src/app/layout.tsx`.
+  2. **Trang Đăng Nhập / Đăng Ký (`/auth`) & OAuth Providers:**
+     - Tạo `src/components/auth/AuthForm.tsx` (kiểm thử TDD Unit Test pass 100%).
+     - Tạo `src/components/auth/OAuthButtons.tsx` (Google & Discord với SVG vector chuẩn, Zero-Emoji).
+     - Tạo trang `src/app/auth/page.tsx` hỗ trợ chuyển đổi linh hoạt chế độ Đăng nhập / Đăng ký và nút quay về chế độ khách.
+  3. **Trình Xử Lý OAuth Callback (`/auth/callback`):**
+     - Tạo trang `src/app/auth/callback/page.tsx` tiếp nhận mã PKCE `code` và đổi phiên an toàn không làm mới trình duyệt.
+  4. **Banner Chế Độ Khách & Route Guard:**
+     - Tạo `src/components/auth/GuestBanner.tsx` cố định đáy màn hình thông báo người dùng đang trải nghiệm bàn học khách.
+     - Tích hợp vào `src/app/page.tsx`.
+  5. **Trang Quản Lý Hồ Sơ Cá Nhân (`/profile`):**
+     - Tạo `src/components/profile/ProfileHeader.tsx` (avatar, tên, email, số dư ViToken, upload avatar vào Storage `avatars`).
+     - Tạo `src/components/profile/AccountSettings.tsx` (đổi tên hiển thị, quản lý khóa cá nhân BYOK an toàn trên thiết bị).
+     - Tạo `src/components/profile/DeleteAccount.tsx` (modal xác nhận nhập email + Edge Function xoá tài khoản).
+     - Tạo Supabase Edge Function `supabase/functions/delete-user/index.ts`.
+     - Tạo trang `src/app/profile/page.tsx`.
+  6. **Cập Nhật HUD TopLeftNav:**
+     - Tích hợp avatar cá nhân (khi đã đăng nhập) và nút Đăng nhập nổi bật Cam ViT (khi là khách) vào thanh điều hướng HUD trên-trái.
+- **Verified by:**
+  - `pnpm test`: 4/4 test files, 7 tests passed (Vitest).
+  - `pnpm run build:pages`: Build Static Export thành công 100%, xuất đủ các trang static `/auth`, `/auth/callback`, `/profile`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: Pass 100% (104 symbols).
+- **Open follow-ups:** Tiếp tục Plan 02 (Supabase Cloud Sync & Realtime Data).
+
+---
+
+
+- **Task:** Thực thi trọn vẹn Plan 02a (Hạ tầng Test, Siết bảo mật DB & AI Gateway Edge Function):
+  1. **Hạ tầng kiểm thử tự động (Vitest & Testing Library):**
+     - Cài đặt `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`, `vitest`, `@vitejs/plugin-react`, `jsdom`.
+     - Cấu hình `vitest.config.mts` và `src/test/setup.ts`.
+     - Thêm scripts `pnpm test` và `pnpm test:db` vào `package.json`.
+     - Viết unit tests kiểm thử client AI `src/lib/aiClient.test.ts` (PASS 100%).
+  2. **Bộ 3 Migration PostgreSQL Supabase (`supabase/migrations/`):**
+     - `0001_hardening.sql`: Siết chặt bảo mật toàn diện; thu hồi quyền tự sửa số dư ViToken trên `profiles`; triển khai các RPC hàm giao dịch `credit_vitoken`, `debit_vitoken` (`SECURITY DEFINER`, chỉ `service_role` được gọi); viết lại `process_know_inherit_purchase` an toàn chống gian lận và hỗ trợ phân chia doanh thu 85/15; chuẩn hóa `claim_daily_streak` theo múi giờ `Asia/Ho_Chi_Minh`; bảo vệ RLS cho `study_spaces`, `desk_documents`, `document_pages`, `inteline_threads`, `know_inherit_listings`.
+     - `0002_desk_items_alignment.sql`: Đồng bộ schema `desk_documents` với toàn bộ kiểu dữ liệu TypeScript `DeskItem` (hỗ trợ `sticky_note`, `roadmap`, `exam_data`, `cover_color`, `attached_to_item_id`); gộp toàn bộ vật thể bàn học vào `desk_documents`.
+     - `0003_rate_limit_and_ai_costs.sql`: Thiết lập bảng giá `ai_model_costs` và hàm phân phối hạn mức `consume_rate_limit` (20 lượt/giờ, 60 lượt/ngày).
+  3. **Supabase Edge Function `ai-chat` & Client Service:**
+     - Tạo `supabase/functions/ai-chat/index.ts`, `_shared/cors.ts`, `_shared/auth.ts`.
+     - Tạo Client Service `src/lib/aiClient.ts` (`askAi`) với khả năng chuyển đổi thông minh giữa Supabase Edge Function và Direct/Demo fallback.
+     - Di chuyển và refactor 6 component gọi AI (`IntelineModal`, `QuizTab`, `SummaryTab`, `BookSpread`, `PaperSheet`, `StickyNoteItem`) sang dùng `askAi`.
+     - Xóa bỏ Next.js API Route `/api/ai/chat/route.ts` nhằm đảm bảo ứng dụng đạt chuẩn Static Export 100% trên GitHub Pages.
+     - Cấu hình `tsconfig.json` loại trừ thư mục Edge Functions (`supabase`) khỏi trình biên dịch Next.js.
+- **Verified by:**
+  - `pnpm test`: 2/2 tests pass (Vitest).
+  - `pnpm run build:pages`: Build Static Export thành công 100%, xuất thư mục `out/` sạch, không còn `api/`.
+  - `pnpm run docs:index` & `pnpm run docs:check`: Pass.
+- **Open follow-ups:** Tiếp tục thực thi Plan 01 (Auth & Accounts).
+
+---
+
+
 - **Task:** Giải quyết triệt để vấn đề lag / giật khung hình khi người dùng zoom in/out trên bàn học:
   1. **Nguyên nhân cốt lõi gây lag:**
      - Sự kiện `wheel` của React synthetic firing liên tục (30–60 sự kiện/giây khi lăn chuột hoặc vuốt trackpad), mỗi tick gọi `zoomBy` $\rightarrow$ kích hoạt hàng loạt đợt re-render chồng chéo.

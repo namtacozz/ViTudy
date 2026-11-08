@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
 const isGithubPages = process.env.GITHUB_PAGES === "true";
+const configuredBasePath = process.env.NEXT_PUBLIC_BASE_PATH !== undefined
+  ? process.env.NEXT_PUBLIC_BASE_PATH
+  : (isGithubPages ? "/ViTudy" : "");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -12,7 +15,7 @@ const nextConfig: NextConfig = {
   },
   ...(isGithubPages ? {
     output: "export",
-    basePath: "/ViTudy",
+    basePath: configuredBasePath,
     images: {
       unoptimized: true,
     },

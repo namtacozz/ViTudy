@@ -24,6 +24,7 @@ import {
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { MathRenderer } from '../common/MathRenderer';
 import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
+import { ActivityService } from '@/services/ActivityService';
 
 interface ExamQuizCardProps {
   item: DeskItem;
@@ -183,6 +184,16 @@ export function ExamQuizCardComponent({ item, isSelected }: ExamQuizCardProps) {
     } else {
       // Completed all questions -> Flip to Summary
       gradeExam(item.id);
+      if (questions.length > 0) {
+        const correct = questions.filter(q => exam.userAnswers[q.id] === q.correctAnswer).length;
+        const score = Math.round((correct / Math.max(1, totalQuestions)) * 100) / 10;
+        ActivityService.submitExamAttempt({
+          documentId: item.id,
+          score,
+          total: totalQuestions,
+          correct
+        }).catch(() => {});
+      }
       triggerFlip('forward', () => {
         setView('summary');
         setViewingFromSummary(false);

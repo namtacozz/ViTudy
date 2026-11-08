@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { DeskItem } from '@/types/studyspace';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
 import { 
   Sparkles, 
   Send, 
@@ -66,32 +67,27 @@ export function IntelineModal({
       const attachedDocs = activeSpace.items.filter(i => attachedDocIds.includes(i.id));
       const contextContent = attachedDocs.map(d => `--- TÀI LIỆU KÈM THEO: ${d.title} ---\n${d.pages[0]?.text || ''}`).join('\n\n');
 
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: aiConfig.provider,
-          apiKey: aiConfig.apiKey,
-          model: aiConfig.model,
-          prompt: `Bạn là trợ lý học tập ViTudy. Hãy giải thích hoặc trả lời câu hỏi của người học dựa trên đoạn trích dẫn sau:
+      const data = await askAi({
+        provider: aiConfig.provider,
+        apiKey: aiConfig.apiKey,
+        model: aiConfig.model,
+        prompt: `Bạn là trợ lý học tập ViTudy. Hãy giải thích hoặc trả lời câu hỏi của người học dựa trên đoạn trích dẫn sau:
 TÀI LIỆU NGUỒN: "${sourceItem.title}" (Trang ${pageNumber})
 ĐOẠN TRÍCH DẪN: "${selectedText}"
 ${contextContent ? `TÀI LIỆU ĐỐI CHIẾU:\n${contextContent}` : ''}
 
 CÂU HỎI: "${q}"
 
-Yêu cầu: Trả lời tự nhiên, chính xác, súc tích và dễ hiểu.`
-        })
+Yêu cầu: Trả lời tự nhiên, chính xác, súc tích và dễ hiểu.`,
       });
 
-      const data = await response.json();
       if (data.reply) {
         setAnswer(data.reply);
       } else {
         setAnswer('Chưa nhận được phản hồi. Bạn hãy thử lại sau giây lát.');
       }
-    } catch {
-      setAnswer('Lỗi kết nối khi gửi câu hỏi. Vui lòng kiểm tra lại mạng hoặc khóa API.');
+    } catch (err: any) {
+      setAnswer(err.message || 'Lỗi kết nối khi gửi câu hỏi. Vui lòng kiểm tra lại mạng hoặc khóa API.');
     } finally {
       setLoading(false);
     }

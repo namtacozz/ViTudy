@@ -1,4 +1,4 @@
-export type ItemType = 'paper' | 'book' | 'sticky_note' | 'roadmap';
+export type ItemType = 'paper' | 'book' | 'sticky_note' | 'roadmap' | 'exam_sheet';
 
 export interface PageContent {
   id: string;

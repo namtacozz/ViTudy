@@ -34,7 +34,7 @@ interface PendingDocument {
 }
 
 export function BottomLeftKnowledge() {
-  const { addUploadedDocument } = useStudySpace();
+  const { addUploadedDocument, activeSpace } = useStudySpace();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDoc, setPendingDoc] = useState<PendingDocument | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -340,6 +340,7 @@ export function BottomLeftKnowledge() {
 
       {/* 1. Button: Tải lên tài liệu (Hài hòa với thanh dock) */}
       <button
+        data-tour="upload-btn"
         onClick={() => fileInputRef.current?.click()}
         title="Tải lên tài liệu (PDF, Word, Text, Ảnh...)"
         className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
@@ -612,16 +613,23 @@ export function BottomLeftKnowledge() {
             </p>
 
             {/* 1. Share Room Link Box */}
-            <label className="text-[11px] font-bold text-slate-700 block mb-1">Liên kết mời bạn cùng bàn học:</label>
+            <label className="text-[11px] font-bold text-slate-700 block mb-1">Liên kết mời bạn cùng bàn học (?room={activeSpace.id.slice(0, 8)}...):</label>
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-3.5">
               <input
                 type="text"
                 readOnly
-                value={typeof window !== 'undefined' ? window.location.href : 'https://namtacozz.github.io/ViTudy/'}
+                value={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${activeSpace.id}` : 'https://vitudy.edu.vn/'}
                 className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono"
               />
               <button
-                onClick={handleCopyShareLink}
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    const url = `${window.location.origin}${window.location.pathname}?room=${activeSpace.id}`;
+                    navigator.clipboard.writeText(url);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }
+                }}
                 className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

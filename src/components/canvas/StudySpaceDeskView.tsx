@@ -11,6 +11,8 @@ import { BottomLeftKnowledge } from '../hud/BottomLeftKnowledge';
 import { BottomRightToolkit } from '../hud/BottomRightToolkit';
 import { LeftCreationBar } from '../hud/LeftCreationBar';
 import { MultiplayerBar } from '../hud/MultiplayerBar';
+import { ActivityService } from '@/services/ActivityService';
+import { OnboardingTour } from '../onboarding/OnboardingTour';
 import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function StudySpaceDeskView() {
@@ -34,6 +36,27 @@ export default function StudySpaceDeskView() {
       setShowBottomRightInFocus(false);
     }
   }, [isFocusMode]);
+
+  useEffect(() => {
+    let lastActivityTime = Date.now();
+    const handleActivity = () => {
+      lastActivityTime = Date.now();
+    };
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('pointerdown', handleActivity);
+
+    const stopHeartbeat = ActivityService.startHeartbeat(() => {
+      return Date.now() - lastActivityTime < 60000;
+    });
+
+    return () => {
+      stopHeartbeat();
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('pointerdown', handleActivity);
+    };
+  }, []);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-white select-none">
@@ -179,6 +202,9 @@ export default function StudySpaceDeskView() {
       <div className={clsx("transition-opacity duration-300", isFocusMode ? "opacity-0 pointer-events-none" : "opacity-100")}>
         <MultiplayerBar />
       </div>
+
+      {/* ================= 7-STEP ONBOARDING TOUR ================= */}
+      <OnboardingTour />
     </div>
   );
 }

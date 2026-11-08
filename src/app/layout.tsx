@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { Open_Sans, Patrick_Hand } from 'next/font/google';
+import { Open_Sans, Patrick_Hand, Lora } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 import { ViTokenProvider } from '@/context/ViTokenContext';
 import { StudySpaceProvider } from '@/context/StudySpaceContext';
 
@@ -17,6 +18,12 @@ const patrickHand = Patrick_Hand({
   display: 'swap',
 });
 
+const lora = Lora({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-serif',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'ViTudy — Bàn Học Tương Tác',
   description: 'Bàn học tương tác, tài liệu học tập và hỗ trợ ôn thi thông minh.',
@@ -28,17 +35,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className={`${openSans.variable} ${patrickHand.variable}`} suppressHydrationWarning spellCheck={false}>
+    <html lang="vi" className={`${openSans.variable} ${patrickHand.variable} ${lora.variable}`} suppressHydrationWarning spellCheck={false}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <meta name="theme-color" content="#E0562D" />
+      </head>
       <body 
         suppressHydrationWarning
         spellCheck={false}
-        className="font-sans bg-white text-slate-800 antialiased overflow-hidden selection:bg-slate-200 selection:text-slate-900"
+        className="font-sans bg-white text-slate-800 antialiased selection:bg-slate-200 selection:text-slate-900"
       >
-        <ViTokenProvider>
-          <StudySpaceProvider>
-            {children}
-          </StudySpaceProvider>
-        </ViTokenProvider>
+        <AuthProvider>
+          <ViTokenProvider>
+            <StudySpaceProvider>
+              {children}
+            </StudySpaceProvider>
+          </ViTokenProvider>
+        </AuthProvider>
       </body>
     </html>
   );

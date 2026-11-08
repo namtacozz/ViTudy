@@ -117,7 +117,9 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     });
 
     return () => {
+      channel.untrack();
       channel.unsubscribe();
+      supabase.removeChannel(channel);
       channelRef.current = null;
     };
   }, [spaceId, currentUserName, isHost, userId]);

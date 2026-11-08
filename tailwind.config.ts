@@ -8,6 +8,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-ui)', 'Open Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Lora', 'Georgia', 'serif'],
         note: ['var(--font-note)', 'var(--font-ui)', 'cursive', 'sans-serif'],
       },
       colors: {

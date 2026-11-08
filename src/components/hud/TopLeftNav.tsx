@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Compass, 
   Search, 
@@ -12,7 +15,11 @@ import {
   FileText,
   StickyNote,
   GraduationCap,
-  X
+  X,
+  LogIn,
+  User as UserIcon,
+  BarChart2,
+  Info
 } from 'lucide-react';
 
 export function TopLeftNav() {
@@ -29,6 +36,9 @@ export function TopLeftNav() {
     resetDeskRotation,
     setTransform
   } = useStudySpace();
+
+  const { user, profile } = useAuth();
+  const router = useRouter();
 
   const [isSpaceMenuOpen, setIsSpaceMenuOpen] = useState(false);
   const [isNewSpaceModalOpen, setIsNewSpaceModalOpen] = useState(false);
@@ -119,7 +129,7 @@ export function TopLeftNav() {
             className="flex items-center gap-1.5 text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
           >
             <BookMarked className="w-4 h-4 text-slate-800 stroke-[2.4]" />
-            <span className="max-w-[160px] truncate">{activeSpace.name}</span>
+            <span className="max-w-[220px] truncate">{activeSpace.name}</span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
           </button>
 
@@ -233,6 +243,53 @@ export function TopLeftNav() {
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Dashboard & User Account / Login Button */}
+        <div className="pl-2 border-l border-slate-200 flex items-center gap-1.5">
+          <Link
+            href="/?view=landing"
+            title="Trang giới thiệu & tính năng (Landing Page)"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            <Info className="w-4 h-4 stroke-[2.2]" />
+          </Link>
+
+          <Link
+            href="/dashboard"
+            title="Thống kê học tập (Dashboard)"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            <BarChart2 className="w-4 h-4 stroke-[2.2]" />
+          </Link>
+
+          {user ? (
+            <Link
+              href="/profile"
+              title={`Hồ sơ cá nhân (${profile?.display_name || user.email})`}
+              className="w-7 h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs"
+            >
+              {profile?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.avatar_url}
+                  alt={profile?.display_name || 'Avatar'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{(profile?.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/auth"
+              title="Đăng nhập tài khoản"
+              className="px-2.5 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+            >
+              <LogIn className="w-3.5 h-3.5 stroke-[2.4]" />
+              <span className="hidden sm:inline">Đăng nhập</span>
+            </Link>
           )}
         </div>
       </div>

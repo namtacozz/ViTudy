@@ -52,11 +52,14 @@ export function BottomRightToolkit() {
   return (
     <div className="relative flex flex-col items-end gap-2.5 pointer-events-auto select-none">
       {/* Minimap Box (Toggled by M or reopening via the map button) */}
-      <Minimap isVisible={isMinimapVisible} onClose={() => setIsMinimapVisible(false)} />
+      <div data-tour="minimap-toggle">
+        <Minimap isVisible={isMinimapVisible} onClose={() => setIsMinimapVisible(false)} />
+      </div>
 
       {/* Standalone Map Reopen Button (shown when map is hidden, styled like Upload button per user request & image 2, 3) */}
       {!isMinimapVisible && (
         <button
+          data-tour="minimap-toggle"
           onClick={() => setIsMinimapVisible(true)}
           title="Mở bản đồ bàn học (Phím M)"
           className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer animate-fade-in group"
@@ -66,7 +69,10 @@ export function BottomRightToolkit() {
       )}
 
       {/* Navigation & Zoom Controls Bar (+30% size, bold strokes & font) */}
-      <div className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-2xl px-3 py-2 shadow-sm backdrop-blur-md text-slate-900">
+      <div 
+        data-tour="wasd-hint"
+        className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-2xl px-3 py-2 shadow-sm backdrop-blur-md text-slate-900"
+      >
         {/* Nút bật chế độ Xoay bàn học (nằm bên trái thanh zoom) */}
         <button
           title={isViewRotateMode ? "Đang bật chế độ xoay (Kéo bất kỳ đâu để xoay, nhấp để tắt)" : "Bật chế độ xoay bàn học (Kéo bất kỳ đâu để xoay)"}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useViToken } from '@/context/ViTokenContext';
 import { AiProvider } from '@/types/vitoken';
 import { 
@@ -21,9 +22,11 @@ import {
   Clock,
   ShieldCheck,
   Zap,
-  Bell
+  Bell,
+  Plus
 } from 'lucide-react';
 import { MarketModal } from '../modals/MarketModal';
+import { TopUpModal } from '../payment/TopUpModal';
 
 // Vector Coin SVG Icon
 function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
@@ -60,6 +63,20 @@ export function TopRightWallet() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isMarketOpen, setIsMarketOpen] = useState(false);
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const closeAllModals = () => {
+    setIsDailyModalOpen(false);
+    setIsHistoryModalOpen(false);
+    setIsAiModalOpen(false);
+    setIsMarketOpen(false);
+    setIsTopUpOpen(false);
+  };
 
   // Form states for AI config
   const [selectedProvider, setSelectedProvider] = useState<AiProvider>(aiConfig.provider);
@@ -111,11 +128,12 @@ export function TopRightWallet() {
         if (isDailyModalOpen) setIsDailyModalOpen(false);
         if (isHistoryModalOpen) setIsHistoryModalOpen(false);
         if (isAiModalOpen) setIsAiModalOpen(false);
+        if (isTopUpOpen) setIsTopUpOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDailyModalOpen, isHistoryModalOpen, isAiModalOpen]);
+  }, [isDailyModalOpen, isHistoryModalOpen, isAiModalOpen, isTopUpOpen]);
 
   // Check if AI config has changes
   const hasAiChanges = useMemo(() => {
@@ -184,10 +202,14 @@ export function TopRightWallet() {
 
   return (
     <>
-      <div className="relative flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none">
+      <div 
+        data-tour="wallet-market"
+        className="relative flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none"
+      >
         {/* Daily Streak Button */}
         <button
           onClick={() => {
+            closeAllModals();
             setDailyClaimResult(null);
             setIsDailyModalOpen(true);
           }}
@@ -219,7 +241,11 @@ export function TopRightWallet() {
 
         {/* Chợ Tài Liệu */}
         <button
-          onClick={() => setIsMarketOpen(true)}
+          id="market-trigger-btn"
+          onClick={() => {
+            closeAllModals();
+            setIsMarketOpen(true);
+          }}
           title="Chợ Tài Liệu"
           className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer group ${
             isMarketOpen 
@@ -232,27 +258,50 @@ export function TopRightWallet() {
 
         <div className="w-[1px] h-6 bg-slate-200 my-auto mx-0.5" />
 
-        {/* Credit Balance Pill */}
-        <button
-          onClick={() => setIsHistoryModalOpen(true)}
-          className={`flex items-center gap-2 px-3 h-11 rounded-xl transition-all cursor-pointer ${
-            isHistoryModalOpen ? 'bg-slate-200 text-slate-900' : 'text-slate-900 hover:bg-slate-100'
-          }`}
-          title="Xem lịch sử số dư ViToken (1 V = 1 ViToken)"
-        >
-          <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs">
-            V
-          </div>
-          <span className="text-sm font-black font-mono text-slate-900">
-            {wallet.balance}
-          </span>
-        </button>
+        {/* Credit Balance & Top Up Pill */}
+        <div className="flex items-center bg-slate-100/70 rounded-xl p-0.5 border border-slate-200">
+          <button
+            id="wallet-history-trigger-btn"
+            onClick={() => {
+              closeAllModals();
+              setIsHistoryModalOpen(true);
+            }}
+            className={`flex items-center gap-1.5 px-2.5 h-9 rounded-lg transition-all cursor-pointer ${
+              isHistoryModalOpen ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-800 hover:bg-white/80'
+            }`}
+            title="Xem lịch sử số dư ViToken (1 V = 1 ViToken)"
+          >
+            <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-[10px] shadow-xs">
+              V
+            </div>
+            <span className="text-xs font-black font-mono text-slate-900">
+              {wallet.balance}
+            </span>
+          </button>
+
+          <button
+            id="topup-trigger-btn"
+            onClick={() => {
+              closeAllModals();
+              setIsTopUpOpen(true);
+            }}
+            title="Nạp ViToken (VietQR)"
+            className="flex items-center justify-center w-7 h-9 rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-0.5"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+          </button>
+        </div>
 
         <div className="w-[1px] h-6 bg-slate-200 my-auto mx-0.5" />
 
         {/* AI Bot Pill */}
         <button
-          onClick={() => setIsAiModalOpen(true)}
+          id="ai-config-trigger-btn"
+          data-tour="inteline-btn"
+          onClick={() => {
+            closeAllModals();
+            setIsAiModalOpen(true);
+          }}
           className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer ${
             isAiModalOpen 
               ? 'bg-slate-200 text-slate-900' 
@@ -271,11 +320,21 @@ export function TopRightWallet() {
       />
 
       {/* MODAL: Điểm danh nhận ViToken (Section 5) */}
-      {isDailyModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-sm p-6 shadow-2xl relative text-center text-slate-900 animate-fade-in font-sans">
+      {isDailyModalOpen && mounted && createPortal(
+        <div 
+          id="streak-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsDailyModalOpen(false);
+          }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-slate-300 rounded-3xl w-full max-w-sm p-6 shadow-2xl relative text-center text-slate-900 animate-fade-in font-sans"
+          >
             {/* 44px close button touch target */}
             <button
+              id="close-streak-modal"
               onClick={() => setIsDailyModalOpen(false)}
               aria-label="Đóng điểm danh"
               className="absolute top-3.5 right-3.5 w-11 h-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -409,14 +468,25 @@ export function TopRightWallet() {
               </button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL: Lịch sử ViToken */}
-      {isHistoryModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+      {isHistoryModalOpen && mounted && createPortal(
+        <div 
+          id="history-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsHistoryModalOpen(false);
+          }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-slate-300 rounded-3xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans"
+          >
             <button
+              id="close-history-modal"
               onClick={() => setIsHistoryModalOpen(false)}
               aria-label="Đóng lịch sử"
               className="absolute top-3.5 right-3.5 w-11 h-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -424,14 +494,28 @@ export function TopRightWallet() {
               <X className="w-4 h-4" />
             </button>
             
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
-                <History className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                  <History className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">Lịch sử ViToken</h3>
+                  <p className="text-[11px] text-slate-500">Số dư hiện tại: <strong className="font-mono text-slate-900 font-black">{wallet.balance} ViToken</strong></p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-900">Lịch sử ViToken</h3>
-                <p className="text-[11px] text-slate-500">Số dư hiện tại: <strong className="font-mono text-slate-900 font-black">{wallet.balance} ViToken</strong> (1 V = 1 ViToken)</p>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHistoryModalOpen(false);
+                  setIsTopUpOpen(true);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Nạp ViToken</span>
+              </button>
             </div>
 
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1 mt-3">
@@ -459,15 +543,26 @@ export function TopRightWallet() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL: Cài đặt kết nối AI (Section 6) */}
-      {isAiModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+      {isAiModalOpen && mounted && createPortal(
+        <div 
+          id="ai-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAiModalOpen(false);
+          }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-slate-300 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans"
+          >
             {/* 44px close button touch target */}
             <button
+              id="close-ai-modal"
               onClick={() => setIsAiModalOpen(false)}
               aria-label="Đóng cài đặt AI"
               className="absolute top-3.5 right-3.5 w-11 h-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -718,8 +813,14 @@ export function TopRightWallet() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+      {/* MODAL: Nạp ViToken (VietQR & Sepay) */}
+      <TopUpModal
+        isOpen={isTopUpOpen}
+        onClose={() => setIsTopUpOpen(false)}
+      />
     </>
   );
 }

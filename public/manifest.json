@@ -1,0 +1,16 @@
+{
+  "name": "ViTudy — Bàn Học Tri Thức",
+  "short_name": "ViTudy",
+  "description": "Không gian học thức tích hợp AI 2.5D, hỗ trợ ôn thi thông minh.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E0562D",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

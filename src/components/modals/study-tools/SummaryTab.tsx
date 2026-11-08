@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { summarizeWithTextRank } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
 import { Sparkles, Copy, Check, StickyNote } from 'lucide-react';
 
 interface SummaryTabProps {
@@ -46,19 +47,14 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
 
     setLoading(true);
     try {
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: aiConfig.provider,
-          model: aiConfig.model,
-          apiKey: aiConfig.apiKey,
-          prompt: `Hãy tóm tắt văn bản sau thành 3 đến 5 gạch đầu dòng súc tích, làm nổi bật các khái niệm trọng tâm nhất để ôn thi:`,
-          context: fullText.slice(0, 4000)
-        })
+      const data = await askAi({
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        apiKey: aiConfig.apiKey,
+        prompt: `Hãy tóm tắt văn bản sau thành 3 đến 5 gạch đầu dòng súc tích, làm nổi bật các khái niệm trọng tâm nhất để ôn thi:`,
+        context: fullText.slice(0, 4000),
       });
 
-      const data = await res.json();
       if (data.reply) {
         setSummaryResult(data.reply);
       } else {

@@ -28,6 +28,7 @@ import { FullScreenDocModal } from '../modals/FullScreenDocModal';
 import { paginateDocument, PaginatedLeaf } from '@/utils/pagination';
 import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
 import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
 import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
 
 interface BookSpreadProps {
@@ -92,7 +93,7 @@ export function BookSpreadComponent({ item, isSelected }: BookSpreadProps) {
     updateBookCoverColor
   } = useStudySpace();
 
-  const { spendTokens } = useViToken();
+  const { spendTokens, aiConfig } = useViToken();
 
   const [isStudyOpen, setIsStudyOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -253,17 +254,17 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
       spendTokens?.(2, 'Hỏi nhanh AI Inteline');
 
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          systemPrompt: 'Bạn là chuyên gia sư phạm ViTudy Inteline giải thích cô đọng, sắc bén, dễ nhớ.'
-        })
+      const data = await askAi({
+        provider: aiConfig?.provider || 'system',
+        model: aiConfig?.model,
+        apiKey: aiConfig?.apiKey,
+        prompt: `Bạn là trợ lý học tập ViTudy (Inteline). Hãy trả lời câu hỏi của học sinh về đoạn văn bản sau đây:
+Đoạn trích: "${selectionPopover.text}"
+Câu hỏi: "${q}"
+Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối đa 3-4 câu).`,
       });
 
-      const data = await res.json();
-      const reply = data.text || 'Không nhận được câu trả lời từ AI. Vui lòng thử lại.';
+      const reply = data.reply || 'Không nhận được câu trả lời từ AI. Vui lòng thử lại.';
       setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: reply } : null);
     } catch {
       setSelectionPopover(prev => prev ? {

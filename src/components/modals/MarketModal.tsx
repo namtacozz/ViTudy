@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
 import { 
@@ -51,6 +52,11 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
   // Preview Modal state
   const [previewItem, setPreviewItem] = useState<MarketItem | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Keyboard shortcut Esc
   useEffect(() => {
@@ -224,11 +230,20 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-5xl p-6 shadow-2xl relative max-h-[92vh] flex flex-col text-slate-900 animate-fade-in font-sans">
+  return createPortal(
+    <div 
+      id="market-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white border border-slate-300 rounded-3xl w-full max-w-5xl p-6 shadow-2xl relative max-h-[92vh] flex flex-col text-slate-900 animate-fade-in font-sans"
+      >
         
         {/* Header bar */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -256,6 +271,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               <span>Chia sẻ tài liệu</span>
             </button>
             <button
+              id="close-market-modal"
               onClick={onClose}
               aria-label="Đóng chợ tài liệu"
               className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
@@ -850,6 +866,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
           }}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

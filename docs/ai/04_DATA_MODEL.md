@@ -2,8 +2,8 @@
 
 > **Commit Hash:** `74d4cc0`  
 > **Cập nhật lần cuối:** `2026-11-07`  
-> **Nguồn SQL:** [`supabase/schema.sql:L1-L289`](file:///F:/AppMaking/ViTudy/supabase/schema.sql#L1-L289)  
-> **Nguồn TypeScript:** [`src/types/studyspace.ts:L1-L72`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts#L1-L72), [`src/types/vitoken.ts:L1-L36`](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts#L1-L36)
+> **Nguồn SQL:** [`supabase/schema.sql`](file:///F:/AppMaking/ViTudy/supabase/schema.sql) + [`supabase/migrations/0001..0004`](file:///F:/AppMaking/ViTudy/supabase/migrations/)  
+> **Nguồn TypeScript:** [`src/types/database.types.ts`](file:///F:/AppMaking/ViTudy/src/types/database.types.ts), [`src/types/studyspace.ts`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts), [`src/types/vitoken.ts`](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts)
 
 ---
 
@@ -127,7 +127,7 @@
 | Bảng CSDL | TypeScript Type | Vị trí định nghĩa | Đánh giá độ lệch (Drift Status) |
 |---|---|---|---|
 | `study_spaces` | `StudySpace` | [`src/types/studyspace.ts:L63-L73`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts#L63-L73) | **Khớp 100%**: `id`, `name`, `subject`, `description`, `items`, `threads`. |
-| `desk_documents` + `desk_sticky_notes` | `DeskItem` (kèm `ExamSheetData`) | [`src/types/studyspace.ts:L36-L61`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts#L36-L61) | **Chủ đích gộp (Polymorphic UI):** Phía client dùng chung kiểu `DeskItem` phân biệt bằng `type: 'book' \| 'paper' \| 'sticky_note' \| 'exam_sheet'` và trường mở rộng `examData?: ExamSheetData`. |
+| `desk_documents` | `DeskItem` (kèm `ExamSheetData`) | [`src/types/studyspace.ts`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | **Đã đồng bộ 100% qua migration 0002:** Bảng `desk_documents` chứa toàn bộ thuộc tính (`cover_color`, `sticky_text`, `sticky_color`, `exam_data`, `attached_to_item_id`). Bảng cũ `desk_sticky_notes` đã deprecated. |
 | `desk_drawings` | `DrawingStroke` | [`src/types/studyspace.ts:L75-L81`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts#L75-L81) | **Khớp 100%**: `id`, `points`, `color`, `width`, `isHighlighter`. |
 | `inteline_threads` | `IntelineThread` | [`src/types/studyspace.ts:L3-L20`](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts#L3-L20) | **Khớp 100%**: nguồn, đích note, câu hỏi, câu trả lời. |
 | `profiles` & `vitoken_transactions` | `ViTokenWallet` & `ViTokenTransaction` | [`src/types/vitoken.ts:L1-L24`](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts#L1-L24) | **Khớp 100%**: Quản lý số dư, lịch sử giao dịch và chuỗi streak (Anti-sybil 180s desk activity). |

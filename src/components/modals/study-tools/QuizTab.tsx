@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { generateClozeQuestions, QuizQuestion } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
 import { 
   HelpCircle, 
   CheckCircle2, 
@@ -70,20 +71,15 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
   }
 ]`;
 
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: aiConfig.provider,
-          model: aiConfig.model,
-          apiKey: aiConfig.apiKey,
-          prompt,
-          context: fullText.slice(0, 4000)
-        })
+      const data = await askAi({
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        apiKey: aiConfig.apiKey,
+        prompt,
+        context: fullText.slice(0, 4000),
       });
 
-      const data = await res.json();
-      const rawText = data.text || data.reply || '';
+      const rawText = data.reply || '';
       const match = rawText.match(/\[[\s\S]*\]/);
       if (match) {
         const parsed = JSON.parse(match[0]);

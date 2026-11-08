@@ -473,3 +473,24 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Đinh Ghim Sợi Chỉ Đỏ Di Chuyển Được (`VisualLinkThreads` Draggable Pushpin):**
     * Đinh ghim đỏ trên sách và ghi chú cho phép người dùng đè chuột kéo thả để di chuyển vị trí neo ghim sang vị trí khác trên trang sách hoặc mặt bàn.
     * Hitbox của đinh ghim được thu nhỏ chính xác bằng kích thước hạt nút ghim (`r=14`), không gây cản trở thao tác đọc và bôi đen chữ của sách.
+
+---
+
+## 8. Quy Chuẩn Kiến Trúc Modal & Điều Hướng Người Dùng (Modal Architecture & Navigation Strict Rules)
+
+* **Quy chuẩn Portal bắt buộc cho mọi Modal toàn màn hình (Modal React Portals Strict):**
+  * Toàn bộ modal toàn màn hình (`TopUpModal`, `MarketModal`, `StudyToolsModal`, `DailyModal` Streak, `HistoryModal`, `AiConfigModal`) **bắt buộc render qua `createPortal(..., document.body)`**.
+  * **Lý do kỹ thuật cốt lõi:** Các thành phần HUD cha (như `TopRightWallet`, `LeftCreationBar`) sử dụng thuộc tính CSS `transform` (`translate-y-0`), điều này biến container cha thành containing block cho mọi phần tử con `position: fixed`. Nếu không dùng `createPortal`, modal toàn màn hình sẽ bị co hẹp thành cột nhỏ biến dạng ở góc màn hình.
+  * Lớp hiển thị bắt buộc: `z-[9990]` đến `z-[9999]`, nền mờ tối `bg-black/60 backdrop-blur-xs`.
+* **Cơ chế Backdrop Click-to-Close & Ngăn chặn sủi bọt (Backdrop Dismissal Protocol):**
+  * Container nền mờ bắt buộc có xử lý đóng an toàn: `onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}`.
+  * Hộp thoại trung tâm bắt buộc có `onClick={(e) => e.stopPropagation()}` để người dùng thao tác bên trong không bị đóng nhầm.
+  * Nút đóng `X` phải có `id` định danh duy nhất (ví dụ: `#close-topup-modal`, `#close-market-modal`, `#close-study-tools-modal`) và `aria-label` rõ ràng.
+* **Cơ chế Đóng Đơn Nhiệm trong HUD (Single-Active Modal Dispatcher):**
+  * Khi người dùng nhấp mở bất kỳ modal nào trên HUD (`Streak`, `Chợ Tài Liệu`, `Lịch sử Ví`, `Nạp ViToken`, `Cài đặt AI`), hệ thống tự động gọi hàm dọn dẹp đóng tất cả các modal khác trước đó (`closeAllModals()`).
+  * Tuyệt đối không cho phép nhiều modal/popup toàn màn hình mở chồng chéo lên nhau gây tắc nghẽn thao tác và xung đột thị giác.
+* **Quy Chuẩn Điều Hướng Landing Page & Bàn Học (Landing & Desk View Sync):**
+  * Trang chủ `/` hỗ trợ chuyển đổi mượt mà giữa chế độ giới thiệu (`?view=landing`) và không gian bàn học (`?view=desk`).
+  * Hệ thống tự động lắng nghe sự kiện `popstate` của trình duyệt và kiểm tra khóa `vitudy_has_visited_desk` trong `localStorage` để phân định luồng trải nghiệm sinh viên lần đầu truy cập và người dùng quay lại.
+
+

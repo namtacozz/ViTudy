@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { DeskItem } from '@/types/studyspace';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
 import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
 import { normalizeNFC } from '@/utils/textNormalization';
 import { 
@@ -27,6 +28,7 @@ import { MathRenderer } from '../common/MathRenderer';
 import { SummaryTab } from '../modals/study-tools/SummaryTab';
 import { QuizTab } from '../modals/study-tools/QuizTab';
 import { FullScreenDocModal } from '../modals/FullScreenDocModal';
+import { ActivityService } from '@/services/ActivityService';
 import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
 import { generateFlashcardsFromRules } from '@/lib/nonAiEngine';
 import { ExamQuizCard } from './ExamQuizCard';
@@ -54,7 +56,7 @@ export function PaperSheetComponent({ item, isSelected }: PaperSheetProps) {
     exitFocusMode
   } = useStudySpace();
 
-  const { spendTokens } = useViToken();
+  const { spendTokens, aiConfig } = useViToken();
 
   const [isStudyOpen, setIsStudyOpen] = useState(false);
   const [paperStudyTab, setPaperStudyTab] = useState<'summary' | 'quiz'>('summary');
@@ -168,17 +170,17 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
       spendTokens?.(2, 'Hỏi nhanh AI Inteline');
 
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          systemPrompt: 'Bạn là chuyên gia sư phạm ViTudy Inteline giải thích cô đọng, sắc bén, dễ nhớ.'
-        })
+      const data = await askAi({
+        provider: aiConfig?.provider || 'system',
+        model: aiConfig?.model,
+        apiKey: aiConfig?.apiKey,
+        prompt: `Bạn là trợ lý học tập ViTudy (Inteline). Hãy trả lời câu hỏi của học sinh về đoạn văn bản sau đây:
+Đoạn trích: "${selectionPopover.text}"
+Câu hỏi: "${q}"
+Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối đa 3-4 câu).`,
       });
 
-      const data = await res.json();
-      const reply = data.text || 'Không nhận được câu trả lời từ AI. Vui lòng thử lại.';
+      const reply = data.reply || 'Không nhận được câu trả lời từ AI. Vui lòng thử lại.';
       setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: reply } : null);
     } catch {
       setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: 'Lỗi kết nối máy chủ AI.' } : null);
@@ -448,7 +450,20 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                   </span>
                   <button
                     type="button"
-                    onClick={() => gradeExam(item.id)}
+                    onClick={() => {
+                      gradeExam(item.id);
+                      if (exam.questions.length > 0) {
+                        const total = exam.questions.length;
+                        const correct = exam.questions.filter(q => exam.userAnswers[q.id] === q.correctAnswer).length;
+                        const score = Math.round((correct / Math.max(1, total)) * 100) / 10;
+                        ActivityService.submitExamAttempt({
+                          documentId: item.id,
+                          score,
+                          total,
+                          correct
+                        }).catch(() => {});
+                      }
+                    }}
                     className="px-4 py-2 bg-[#E0562D] hover:bg-[#FF5722] text-white text-xs font-bold rounded-full shadow-[0_4px_16px_rgba(224,86,45,0.35)] transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <Award className="w-3.5 h-3.5 text-white" />

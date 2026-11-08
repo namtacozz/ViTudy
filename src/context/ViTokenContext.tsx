@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ViTokenWallet, ViTokenTransaction, AiConfig } from '@/types/vitoken';
+import { useAuth } from '@/hooks/useAuth';
+import { ViTokenService } from '@/services/ViTokenService';
+import { getSupabase } from '@/lib/supabase';
 
 interface ViTokenContextType {
   wallet: ViTokenWallet;
@@ -12,6 +15,7 @@ interface ViTokenContextType {
   purchaseKnowledgeItem: (price: number, title: string, author: string) => boolean;
   updateAiConfig: (config: Partial<AiConfig>) => void;
   resetWallet: () => void;
+  refreshWallet: () => Promise<void>;
   activeSecondsOnDesk: number;
 }
 
@@ -40,6 +44,7 @@ const DEFAULT_AI_CONFIG: AiConfig = {
 const ViTokenContext = createContext<ViTokenContextType | null>(null);
 
 export function ViTokenProvider({ children }: { children: React.ReactNode }) {
+  const { user, status } = useAuth();
   const [wallet, setWallet] = useState<ViTokenWallet>(DEFAULT_WALLET);
   const [aiConfig, setAiConfig] = useState<AiConfig>(DEFAULT_AI_CONFIG);
   const [activeSecondsOnDesk, setActiveSecondsOnDesk] = useState<number>(0);
@@ -53,7 +58,7 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount (guest fallback)
   useEffect(() => {
     try {
       const savedWallet = localStorage.getItem('vitudy_wallet');
@@ -69,6 +74,45 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     }
     setIsLoaded(true);
   }, []);
+
+  // Sync from Supabase Cloud and subscribe to Realtime balance changes
+  useEffect(() => {
+    if (status === 'authenticated' && user?.id) {
+      ViTokenService.getWallet(user.id).then((cloudWallet) => {
+        setWallet(cloudWallet);
+      });
+
+      const supabase = getSupabase();
+      if (!supabase) return;
+
+      const channel = supabase
+        .channel(`profile-balance-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`,
+          },
+          (payload: any) => {
+            if (payload.new && typeof payload.new.vitoken_balance === 'number') {
+              setWallet(prev => ({
+                ...prev,
+                balance: payload.new.vitoken_balance,
+                streakDays: payload.new.daily_streak_days ?? prev.streakDays,
+                lastClaimDate: payload.new.last_claim_date ?? prev.lastClaimDate,
+              }));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [status, user?.id]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -118,6 +162,12 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       lastClaimDate: today,
       history: [newTx, ...prev.history]
     }));
+
+    if (status === 'authenticated') {
+      ViTokenService.claimStreak().catch(err => {
+        console.warn('Lỗi đồng bộ claimStreak lên Cloud:', err);
+      });
+    }
 
     return { 
       success: true, 
@@ -203,6 +253,13 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     setWallet(DEFAULT_WALLET);
   };
 
+  const refreshWallet = async () => {
+    if (status === 'authenticated' && user?.id) {
+      const cloudWallet = await ViTokenService.getWallet(user.id);
+      setWallet(cloudWallet);
+    }
+  };
+
   return (
     <ViTokenContext.Provider
       value={{
@@ -214,6 +271,7 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
         purchaseKnowledgeItem,
         updateAiConfig,
         resetWallet,
+        refreshWallet,
         activeSecondsOnDesk
       }}
     >

@@ -4,6 +4,9 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { DeskItem, StudySpace, CanvasTransform, PageContent, IntelineThread } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { recognizeSmartShape } from '@/utils/smartShape';
+import { useAuth } from '@/hooks/useAuth';
+import { StudySpaceService } from '@/services/StudySpaceService';
+import { OfflineQueue } from '@/services/OfflineQueue';
 
 interface StudySpaceContextType {
   spaces: StudySpace[];
@@ -102,6 +105,7 @@ const DEFAULT_TRANSFORM: CanvasTransform = {
 const StudySpaceContext = createContext<StudySpaceContextType | null>(null);
 
 export function StudySpaceProvider({ children }: { children: React.ReactNode }) {
+  const { user, status } = useAuth();
   const [spaces, setSpaces] = useState<StudySpace[]>(INITIAL_SPACES);
   const [activeSpaceId, setActiveSpaceId] = useState<string>(INITIAL_SPACES[0].id);
   const [transform, setTransform] = useState<CanvasTransform>(DEFAULT_TRANSFORM);
@@ -172,6 +176,11 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
   const [strokes, setStrokes] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<import('@/types/studyspace').DrawingStroke | null>(null);
+
+  // Auto-flush offline queue when back online
+  useEffect(() => {
+    return OfflineQueue.initAutoFlush();
+  }, []);
 
   const startStroke = (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => {
     setCurrentStroke({
@@ -321,8 +330,26 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const removeEmojis = (str: string) => str.replace(/([\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u27BF])/g, '').trim();
   const normalizeNFC = (text: string) => (text ? removeEmojis(text.normalize('NFC')) : '');
 
-  // Load spaces from localStorage on startup with deep NFC normalization
+  // Load spaces on startup from Supabase Cloud (when authenticated) or localStorage (guest)
   useEffect(() => {
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
+        if (cloudSpaces && cloudSpaces.length > 0) {
+          setSpaces(cloudSpaces);
+          setActiveSpaceId(cloudSpaces[0].id);
+        } else {
+          // Tài khoản mới chưa có bàn học -> Khởi tạo bàn học mẫu Demo
+          import('@/data/demoSpace').then(({ createDemoStudySpace }) => {
+            const demoSpace = createDemoStudySpace(user.id);
+            setSpaces([demoSpace]);
+            setActiveSpaceId(demoSpace.id);
+            StudySpaceService.saveSpace(demoSpace, user.id).catch(() => {});
+          });
+        }
+      });
+      return;
+    }
+
     try {
       const saved = localStorage.getItem('vitudy_spaces');
       if (saved) {
@@ -347,16 +374,34 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     } catch {
       // fallback
     }
-  }, []);
+  }, [status, user?.id]);
 
-  // Save spaces to localStorage
+  // Save spaces to localStorage & Supabase Cloud (debounce 500ms)
   useEffect(() => {
     try {
       localStorage.setItem('vitudy_spaces', JSON.stringify(spaces));
     } catch {
       // ignore
     }
-  }, [spaces]);
+
+    if (status === 'authenticated' && user?.id) {
+      const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
+      if (!curSpace) return;
+
+      const timer = setTimeout(() => {
+        StudySpaceService.saveSpace(curSpace, user.id);
+        StudySpaceService.upsertItems(curSpace.id, curSpace.items);
+        if (curSpace.threads && curSpace.threads.length > 0) {
+          StudySpaceService.saveThreads(curSpace.id, curSpace.threads);
+        }
+        if (strokes.length > 0) {
+          StudySpaceService.saveStrokes(curSpace.id, strokes, user.id);
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [spaces, strokes, status, user?.id, activeSpaceId]);
 
   const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
 
@@ -369,8 +414,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const createSpace = (name: string, subject: string) => {
+    const newSpaceId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`;
     const newSpace: StudySpace = {
-      id: `space-${Date.now()}`,
+      id: newSpaceId,
       name,
       subject,
       description: `Không gian học tập bộ môn ${subject}`,
@@ -378,6 +424,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       updatedAt: new Date().toISOString(),
       items: []
     };
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.saveSpace(newSpace, user.id);
+    }
     setSpaces(prev => [...prev, newSpace]);
     setActiveSpaceId(newSpace.id);
   };
@@ -1113,6 +1162,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const removeDeskItem = (id: string) => {
+    if (status === 'authenticated') {
+      StudySpaceService.deleteItem(id);
+    }
     setSpaces(sList =>
       sList.map(s => {
         if (s.id !== activeSpaceId) return s;

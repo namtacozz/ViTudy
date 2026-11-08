@@ -1,15 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateFlashcardsFromRules, Flashcard } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { useAuth } from '@/hooks/useAuth';
+import { FlashcardService } from '@/services/FlashcardService';
+import { ReviewQuality } from '@/lib/sm2';
 import { 
   Layers, 
   RotateCw, 
   ChevronLeft, 
   ChevronRight, 
   StickyNote,
-  Sparkles
+  Sparkles,
+  CalendarCheck
 } from 'lucide-react';
 
 interface FlashcardTabProps {
@@ -19,10 +23,12 @@ interface FlashcardTabProps {
 
 export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
   const { addStickyNote } = useStudySpace();
+  const { user } = useAuth();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [sm2Notice, setSm2Notice] = useState<string | null>(null);
 
   const handleGenerateFlashcards = () => {
     if (!fullText) return;
@@ -30,6 +36,37 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
     setFlashcards(cards);
     setCurrentIdx(0);
     setIsFlipped(false);
+    setSm2Notice(null);
+  };
+
+  const handleLoadDueCards = async () => {
+    if (!user?.id) return;
+    const dueReviews = await FlashcardService.getCardsForReview(user.id);
+    if (dueReviews.length > 0) {
+      setFlashcards(dueReviews.map((r) => ({ id: r.id, front: r.front, back: r.back })));
+      setCurrentIdx(0);
+      setIsFlipped(false);
+      setSm2Notice(`Đã nạp ${dueReviews.length} thẻ đến hạn ôn tập hôm nay`);
+    } else {
+      setSm2Notice('Không có thẻ nào đến hạn ôn tập hôm nay');
+    }
+  };
+
+  const handleRateCard = async (quality: ReviewQuality) => {
+    if (!currentCard || !user?.id) {
+      handleNext();
+      return;
+    }
+    const result = await FlashcardService.submitReview(
+      user.id,
+      { front: currentCard.front, back: currentCard.back },
+      quality
+    );
+    setSm2Notice(`Lịch ôn tiếp: ${result.interval} ngày nữa (${result.nextReviewDate})`);
+    setTimeout(() => {
+      setSm2Notice(null);
+      handleNext();
+    }, 800);
   };
 
   const handleNext = () => {
@@ -65,13 +102,31 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
           </p>
         </div>
 
-        <button
-          onClick={handleGenerateFlashcards}
-          className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
-        >
-          {flashcards.length > 0 ? 'Tạo Lại Thẻ' : 'Trích Xuất Flashcards'}
-        </button>
+        <div className="flex items-center gap-2">
+          {user && (
+            <button
+              onClick={handleLoadDueCards}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <CalendarCheck className="w-3.5 h-3.5 text-[#E0562D]" />
+              <span>Ôn tập hôm nay</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleGenerateFlashcards}
+            className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer"
+          >
+            {flashcards.length > 0 ? 'Tạo Lại Thẻ' : 'Trích Xuất Flashcards'}
+          </button>
+        </div>
       </div>
+
+      {sm2Notice && (
+        <div className="mt-3 p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-xs text-[#9A3412] font-semibold text-center animate-fade-in">
+          {sm2Notice}
+        </div>
+      )}
 
       {/* Flashcard Area */}
       <div className="flex-1 flex flex-col items-center justify-center py-6">
@@ -101,6 +156,44 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
                 Thẻ {currentIdx + 1} trên {flashcards.length}
               </div>
             </div>
+
+            {/* SM-2 Spaced Repetition Rating Buttons */}
+            {isFlipped && (
+              <div className="w-full mt-4 flex items-center justify-center gap-2 animate-fade-in">
+                <button
+                  type="button"
+                  onClick={() => handleRateCard(1)}
+                  className="flex-1 py-1.5 px-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-700 cursor-pointer transition-colors shadow-2xs"
+                  title="Không nhớ / Lặp lại ngay"
+                >
+                  Quên (1 ngày)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRateCard(3)}
+                  className="flex-1 py-1.5 px-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-[11px] font-bold text-amber-800 cursor-pointer transition-colors shadow-2xs"
+                  title="Nhớ nhưng khó khăn"
+                >
+                  Khó
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRateCard(4)}
+                  className="flex-1 py-1.5 px-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800 cursor-pointer transition-colors shadow-2xs"
+                  title="Nhớ tốt"
+                >
+                  Tốt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRateCard(5)}
+                  className="flex-1 py-1.5 px-2 rounded-xl border border-orange-300 bg-[#FFF7ED] hover:bg-orange-100 text-[11px] font-bold text-[#E0562D] cursor-pointer transition-colors shadow-2xs"
+                  title="Nhớ hoàn hảo"
+                >
+                  Dễ
+                </button>
+              </div>
+            )}
 
             {/* Navigation Controls */}
             <div className="flex items-center gap-4 mt-6">

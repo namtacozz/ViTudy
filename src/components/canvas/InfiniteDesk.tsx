@@ -10,6 +10,7 @@ import { StickyNoteItem } from '../objects/StickyNoteItem';
 import { VisualLinkThreads } from './VisualLinkThreads';
 import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
+import { isItemVisible } from '@/lib/viewportCulling';
 
 export function InfiniteDesk() {
   const { 
@@ -398,9 +399,33 @@ export function InfiniteDesk() {
           WebkitBackfaceVisibility: 'hidden'
         }}
       >
-        {/* Render all Desk Items */}
+        {/* Render all Desk Items (with Viewport Culling optimization) */}
         {activeSpace.items.map((item) => {
           const isSelected = selectedItemId === item.id;
+          const isFocused = focusedItemId === item.id;
+          const isVisible =
+            isSelected ||
+            isFocused ||
+            isItemVisible(
+              {
+                x: item.x,
+                y: item.y,
+                width: item.width || (item.type === 'book' ? 980 : item.type === 'paper' ? 480 : 260),
+                height: item.height || (item.type === 'book' ? 640 : item.type === 'paper' ? 640 : 260),
+                rotation: item.rotation,
+              },
+              {
+                x: transform.x,
+                y: transform.y,
+                scale: transform.scale,
+                viewportW: typeof window !== 'undefined' ? window.innerWidth : 1920,
+                viewportH: typeof window !== 'undefined' ? window.innerHeight : 1080,
+              },
+              500
+            );
+
+          if (!isVisible) return null;
+
           if (item.type === 'book') {
             return <BookSpread key={item.id} item={item} isSelected={isSelected} />;
           }
