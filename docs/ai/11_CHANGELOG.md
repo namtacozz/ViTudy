@@ -4,6 +4,30 @@
 
 ---
 
+## 2026-11-08 11:30 — commit e2f32f7
+- **Task:** Tích hợp Cấu hình Supabase Trực tiếp vào Modal Chia sẻ & Kiểm thử Toàn diện Trực tiếp qua Chrome Debug (CDP):
+  1. **Nâng Cấp Modal Chia Sẻ & Cơ Sở Dữ Liệu (`BottomLeftKnowledge.tsx`):**
+     - Tích hợp trực tiếp bảng điều khiển cấu hình và trạng thái Cơ sở dữ liệu Supabase vào modal Chia sẻ ở góc dưới trái.
+     - Hiển thị huy hiệu trạng thái kết nối (`Chưa cấu hình` / `Đã cấu hình` / `Đang kết nối Realtime`).
+     - Cho phép xem, chỉnh sửa `Project URL` và `Anon Key` trực tiếp trên web với nút "Lưu & Kết nối".
+     - Tích hợp nút "Thử kết nối" đo độ trễ mạng thực tế tới Supabase REST & Realtime API.
+  2. **Triển Khai & Kích Hoạt GitHub Pages Thành Công:**
+     - Kích hoạt GitHub Pages trên repo `namtacozz/ViTudy` với build type `workflow`.
+     - Chạy workflow `.github/workflows/deploy.yml` qua GitHub Actions: Build và Deploy thành công 100%.
+     - URL trực tiếp [https://namtacozz.github.io/ViTudy/](https://namtacozz.github.io/ViTudy/) phản hồi `HTTP/1.1 200 OK`.
+  3. **Kiểm Thử Toàn Diện Trên Chrome Debugger Trực Tiếp:**
+     - Kết nối Chrome Debugging WebSocket trên port 9222.
+     - Kiểm thử và chụp ảnh màn hình lưu giữ bằng chứng:
+       - Modal Chuỗi điểm danh & nhận ViToken với màu cam Cam ViT (`live_chrome_test_streak.png`).
+       - Modal Chia sẻ & Cấu hình Supabase trên GitHub Pages (`live_gh_pages_supabase_modal.png`).
+       - Form nhập liệu Supabase & Nút thử kết nối (`live_gh_pages_supabase_form_tested.png`).
+       - Toàn cảnh bàn học vô tận 2.5D trên GitHub Pages (`live_gh_pages_desk_verified.png`).
+- **Verified by:**
+  - Chrome DevTools Protocol kiểm thử tự động qua các script `scripts/test-live-chrome.mjs` và `scripts/verify-live-gh-pages.mjs`: Pass 100%.
+  - `pnpm tsc --noEmit` & `pnpm run docs:check`: Pass.
+
+---
+
 ## 2026-11-08 11:15 — uncommitted
 - **Task:** Tích hợp Supabase Realtime Multiplayer và Thiết lập luồng triển khai GitHub Pages:
   1. **Tích hợp Thư viện & Client Supabase (`src/lib/supabase.ts`):**
