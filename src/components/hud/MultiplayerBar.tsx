@@ -89,7 +89,7 @@ export function MultiplayerBar() {
     <>
       {/* Top Center: Multiplayer Bar (Chỉ hiển thị khi có bạn bè trong phòng hoặc đang kết nối Realtime) */}
       {hasPeers && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
           <div className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-md animate-fade-in text-slate-900">
             {/* Host Tag & Live Status */}
             <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold pr-2 border-r border-slate-200">

@@ -4,6 +4,34 @@
 
 ---
 
+## 2026-11-08 17:16 — commit HUD_SNUG_SPACING_STREAK_FLAME_AND_MAP_BUTTON_STYLE
+- **Task:** Hoàn thiện 3 tinh chỉnh công thái học cho HUD bàn học:
+  1. **Căn chỉnh Biểu tượng Chuỗi Ngày Học Tập (`TopRightWallet.tsx`):**
+     - Đưa icon ngọn lửa lên cao hơn (`-translate-y-1`), giúp phần bụng tròn của ngọn lửa ôm trọn số ngày chuỗi màu trắng ở bên trong (`-translate-y-0.5`).
+     - Số hiển thị rõ ràng, sắc nét, không còn bị lệch hay đè lên phần khuyết ngọn lửa.
+  2. **Khoảng cách HUD bám sát tường (giảm còn 1/4 khoảng cách cũ):**
+     - Đưa toàn bộ các khung và nút HUD sát vào tường chỉ cách 4px (`top-1`, `bottom-1`, `left-1`, `right-1` thay vì 16px `top-4`, `bottom-4`...):
+       - `TopLeftNav`: `top-1 left-1`
+       - `TopRightWallet`: `top-1 right-1`
+       - `LeftCreationBar`: `left-1`
+       - `BottomLeftKnowledge`: `bottom-1 left-1`
+       - `BottomRightToolkit`: `bottom-1 right-1`
+       - `MultiplayerBar`: `top-1`
+     - Mở rộng tối đa không gian diện tích học tập ở trung tâm bàn học.
+  3. **Đồng bộ Style Nút Mở Bản Đồ Thu Nhỏ Khi Ẩn (`BottomRightToolkit.tsx`):**
+     - Chuyển đổi nút Mở bản đồ từ nút tròn màu cam thành style tương tự Nút Tải lên tài liệu: khung vuông bo góc `w-10 h-10 rounded-xl`, nền trắng `bg-white hover:bg-orange-50/80`, viền `border border-slate-300 hover:border-orange-300`, bóng nhẹ `shadow-sm`, icon `Map` SVG màu Cam ViT (`#E0562D`, `stroke-[2.4]`).
+- **Verified by:**
+  - Chạy kiểm thử tự động trực tiếp trên Chrome DevTools (port 9222):
+    - Khoảng cách các cụm HUD đến rìa web đo được chính xác 4px: `topLeft: { top: 4, left: 4 }`, `topRight: { top: 4, right: 4 }`, `bottomLeft: { bottom: 4, left: 4 }`, `bottomRight: { bottom: 4, right: 4 }`.
+    - Biểu tượng lửa chuỗi hiển thị số `1` trắng sắc nét trong ruột cam.
+    - Nút Mở bản đồ có `isStyleMatching: true` đồng bộ 100% kích thước `40x40px`, `borderRadius: 12px`, nền trắng và viền với nút Tải lên.
+  - Chụp 2 ảnh bằng chứng:
+    - `verified_hud_snug_walls.png`
+    - `verified_map_button_style.png`
+- **Open follow-ups:** Sẵn sàng cho người dùng nghiệm thu trực tiếp.
+
+---
+
 ## 2026-11-08 17:05 — commit INTERACTIVE_3D_FLIPPING_EXAM_QUIZ_CARD
 - **Task:** Xây dựng và kiểm thử hoàn chỉnh thực thể Thẻ Trắc Nghiệm Tương Tác 3D Lật Mặt (`ExamQuizCard`) trên bàn học 2.5D:
   1. **Thực thể Thẻ Trắc Nghiệm Riêng Biệt (`ExamQuizCard.tsx`):**

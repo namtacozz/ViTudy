@@ -41,18 +41,18 @@ export function BottomRightToolkit() {
   }, []);
 
   return (
-    <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end gap-2.5 pointer-events-auto select-none">
+    <div className="absolute bottom-1 right-1 z-40 flex flex-col items-end gap-2.5 pointer-events-auto select-none">
       {/* Minimap Box (Toggled by M or reopening via the map button) */}
       <Minimap isVisible={isMinimapVisible} onClose={() => setIsMinimapVisible(false)} />
 
-      {/* Standalone Circular Map Reopen Button (shown when map is hidden, per user request & image 1) */}
+      {/* Standalone Map Reopen Button (shown when map is hidden, styled like Upload button per user request & image 2, 3) */}
       {!isMinimapVisible && (
         <button
           onClick={() => setIsMinimapVisible(true)}
           title="Mở bản đồ bàn học (Phím M)"
-          className="w-12 h-12 rounded-full bg-[#E0562D] hover:bg-[#c9451e] text-white shadow-lg border border-[#c9451e]/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer animate-fade-in group"
+          className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer animate-fade-in group"
         >
-          <Map className="w-5 h-5 text-white stroke-[2.4] group-hover:scale-110 transition-transform" />
+          <Map className="w-4.5 h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
         </button>
       )}
 

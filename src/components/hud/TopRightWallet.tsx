@@ -184,7 +184,7 @@ export function TopRightWallet() {
 
   return (
     <>
-      <div className="absolute top-4 right-4 z-40 flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none">
+      <div className="absolute top-1 right-1 z-40 flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none">
         {/* Daily Streak Button */}
         <button
           onClick={() => {
@@ -197,21 +197,21 @@ export function TopRightWallet() {
           }`}
         >
           {wallet.streakDays > 0 ? (
-            <>
-              {/* Ngọn lửa tô đầy ruột màu cam ViT */}
-              <Flame className="w-8 h-8 text-[#E0562D] fill-[#E0562D] transition-transform group-hover:scale-105 drop-shadow-xs" />
-              {/* Số chuỗi to bằng với icon lửa ở sau và màu trắng */}
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-black font-mono text-white select-none pointer-events-none pt-0.5">
+            <div className="relative flex items-center justify-center w-9 h-9">
+              {/* Ngọn lửa đưa cao hơn để phần bụng tròn ôm trọn số bên trong */}
+              <Flame className="w-8 h-8 text-[#E0562D] fill-[#E0562D] -translate-y-1 transition-transform group-hover:scale-105 drop-shadow-xs" />
+              {/* Số chuỗi nằm gọn gàng bên trong bụng lửa rõ ràng không bị lệch */}
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-black font-mono text-white select-none pointer-events-none -translate-y-0.5">
                 {wallet.streakDays}
               </span>
-            </>
+            </div>
           ) : (
-            <>
-              <Flame className="w-7 h-7 text-slate-400 stroke-[2] transition-transform group-hover:scale-105" />
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold font-mono text-slate-500 select-none pointer-events-none pt-0.5">
+            <div className="relative flex items-center justify-center w-8 h-8">
+              <Flame className="w-7 h-7 text-slate-400 stroke-[2] -translate-y-0.5 transition-transform group-hover:scale-105" />
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold font-mono text-slate-500 select-none pointer-events-none -translate-y-0.5">
                 0
               </span>
-            </>
+            </div>
           )}
         </button>
 

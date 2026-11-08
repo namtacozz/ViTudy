@@ -155,7 +155,7 @@ export function LeftCreationBar() {
   })();
 
   return (
-    <div className="absolute left-[5px] top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 pointer-events-auto select-none">
+    <div className="absolute left-1 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 pointer-events-auto select-none">
       {/* Miro-style Vertical Tool Island (Optimized compact spacing) */}
       <div className="bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-lg backdrop-blur-md flex flex-col items-center gap-1 relative">
         {/* Select (Cursor) Tool */}
