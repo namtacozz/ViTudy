@@ -4,6 +4,50 @@
 
 ---
 
+## 2026-11-08 11:55 — commit 8_IMPROVEMENTS_VERIFIED
+- **Task:** Hoàn thiện 8 điểm cải tiến UX/UI, Khả năng đọc, KaTeX, Bố cục & Thẩm mỹ bàn học 2.5D:
+  1. **Khả năng đọc nội dung & Chế độ "Tập trung đọc" (Focus Mode):**
+     - Tích hợp nút "Tập trung đọc" trên huy hiệu tên sách (`BookSpread`) và thanh công cụ tờ giấy (`PaperSheet`), tự động zoom camera 100-110% căn giữa tài liệu để đọc sắc nét.
+     - Banner nổi "Chế độ đọc tập trung" ở đỉnh màn hình kèm nút "Thoát tập trung" trở về góc nhìn tổng quan.
+  2. **Hiển thị Công thức Toán học Học thuật với KaTeX (`MathRenderer.tsx`):**
+     - Tích hợp thư viện `katex` (^0.19.1) và `@types/katex`. Tạo component `MathRenderer` biên dịch tự động các ký hiệu LaTeX inline (`$...$`) và display (`$$...$$`).
+     - Chuẩn hóa toàn bộ công thức toán học về Đạo hàm, Gradient Descent ($\nabla f$), Perceptron, Neural Networks, Backpropagation, Overfitting và danh sách bullet `•`.
+  3. **Kiểu chữ & Khả năng co giãn của Giấy ghi chú (Sticky Note):**
+     - Đổi phông chữ sang chuẩn sans-serif rõ nét (`font-sans font-medium text-stone-900`), tính toán kích cỡ phông tự động (`13.5px`, `leading-[1.42]`).
+     - Tích hợp nút "Mở rộng" / "Thu gọn" ở chân note (cho phép mở rộng từ 200px lên 290px mà không bị tràn hay cắt chữ). Tăng độ tương phản footer lên `text-stone-700 font-semibold` đạt chuẩn WCAG AA.
+  4. **Đường nối chỉ đỏ thông minh (Smart Bezier Routing) & Nhãn quan hệ:**
+     - Đường Bezier uốn cong hình vòm cao vượt hẳn lên trên đỉnh gáy sách (`archApexY < sourceItem.y - 22`), hoàn toàn không cắt ngang qua nội dung văn bản Chương 2.
+     - Giảm độ dày nét xuống `1.5px` bán trong suốt (`strokeOpacity="0.6"`), đinh ghim nhỏ gọn `r="4"`, bổ sung nhãn mô tả mối liên kết "Liên quan đến" tại trung điểm đường cong.
+  5. **Hệ thống Tab Bookmark Sách: Tooltip, Phân nhóm & Xác nhận xóa:**
+     - Bổ sung tooltip chú thích đầy đủ cho toàn bộ 5 tab.
+     - Ngăn cách nút Xóa (màu đỏ) bằng một vạch phân vùng mỏng.
+     - Khi bấm nút Xóa, mở modal thoại xác nhận an toàn ("Xóa sách khỏi bàn học? [Hủy] [Xác nhận xóa]") chống bấm nhầm làm mất sách.
+  6. **Căn chỉnh & Bố cục Bàn học (Snap / Auto-Align):**
+     - Căn chỉnh tọa độ mặc định các tài liệu bên trái và bên phải với khoảng đệm chuẩn 24px.
+     - Bổ sung nút "Căn chỉnh bố cục bàn học (Snap Grid)" với icon `Sparkles` tại thanh công cụ góc dưới phải kết nối với hàm `tidyUpDesk`.
+  7. **Thanh điều hướng & Dock công cụ góc dưới trái:**
+     - Gom nhóm 2 nút Hoàn tác (`Undo2`) và Làm lại (`Redo2`) thành một cụm pill thống nhất trên thanh công cụ Miro bên trái.
+     - Đồng bộ kích thước dock 3 nút góc dưới trái (`w-10 h-10 rounded-xl`), nút Tải lên đổi sang nền trắng viền nhẹ icon Cam ViT để giảm bớt độ chói so với tần suất sử dụng.
+  8. **Minimap: Thu gọn & Tăng độ tương phản:**
+     - Thiết lập độ mờ `opacity-80 hover:opacity-100 transition-opacity`, bổ sung nút đóng/thu gọn (`X`) ở góc trên phải.
+     - Nhãn "BẢN ĐỒ (Phím M)" được nâng cấp lên `text-[9.5px] font-mono font-bold text-slate-700` đạt độ tương phản chuẩn.
+- **Verified by:**
+  - Script kiểm thử CDP tự động `scripts/verify-8-improvements.mjs` chạy trực tiếp trên Chrome Port 9222:
+    - KaTeX elements: 35 phần tử toán học, fraction, nabla render chuẩn xác.
+    - Path Bezier: vòm né Chương 2 `M 460 220 C 631 58, 973 70, 1144 116`, nhãn "Liên quan đến" hiển thị.
+    - Sticky note: font sans, 13.5px, nút mở rộng kích hoạt tốt.
+    - Nút "Tập trung đọc" và "Thoát tập trung" hoạt động mượt mà.
+    - Nút Xóa mở modal xác nhận an toàn.
+    - Cụm Undo/Redo và Minimap thu gọn hoạt động chính xác.
+  - Ảnh chụp màn hình bằng chứng:
+    - `live_verified_focus_mode_reading.png`
+    - `live_verified_delete_confirm_modal.png`
+    - `live_verified_all_8_improvements.png`
+  - `pnpm run build:pages`: Static export 100% thành công.
+  - `pnpm run docs:check`: Pass.
+
+---
+
 ## 2026-11-08 11:30 — commit e2f32f7
 - **Task:** Tích hợp Cấu hình Supabase Trực tiếp vào Modal Chia sẻ & Kiểm thử Toàn diện Trực tiếp qua Chrome Debug (CDP):
   1. **Nâng Cấp Modal Chia Sẻ & Cơ Sở Dữ Liệu (`BottomLeftKnowledge.tsx`):**

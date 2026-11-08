@@ -93,6 +93,19 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
 
 ## 5. Quy Chuẩn Sách & Tài Liệu 2.5D (Book & Document Standards)
 
+* **Hiển Thị Công Thức Toán Học Chuẩn Mực Bằng KaTeX (`MathRenderer`):**
+  * Toàn bộ tài liệu, sách học thuật, công thức toán (đạo hàm, gradient $\nabla f$, ma trận, phân số, vector) bắt buộc render qua `<MathRenderer />` sử dụng thư viện `KaTeX` với cú pháp LaTeX inline (`$...$`) và display block (`$$...$$`).
+  * Danh sách liệt kê học thuật chuẩn hóa bằng dấu bullet `•` rõ ràng, tiêu đề in đậm cho các định lý và khái niệm cốt lõi.
+* **Chế Độ "Tập Trung Đọc" (Focus Reading Mode):**
+  * Nút "Tập trung đọc" trên huy hiệu tên sách (`BookSpread`) và thanh công cụ nổi của tờ giấy (`PaperSheet`) cho phép người dùng click để camera tự động zoom mượt mà đến 100%–110% căn giữa tài liệu trên màn hình, giải quyết triệt để vấn đề chữ nhỏ khi đang ở mức zoom xa của bàn học.
+  * Kèm banner nổi ở đỉnh màn hình với nút "Thoát tập trung" để trả camera về góc nhìn toàn cảnh bàn học.
+* **Xác Nhận An Toàn Khi Xóa Sách (Delete Confirmation Dialog):**
+  * Nút Xóa (tab đỏ) trên thẻ bookmark sách được tách biệt bằng một vạch phân cách mỏng (`bg-amber-950/25`) và có tooltip rõ ràng.
+  * Khi bấm nút Xóa, hệ thống bắt buộc mở modal xác nhận an toàn ("Xóa sách khỏi bàn học? [Hủy] [Xác nhận xóa]") để bảo vệ dữ liệu người dùng, tránh thao tác click nhầm.
+* **Đường Nối Chỉ Đỏ Tránh Nội Dung Sách (Smart Bezier Routing):**
+  * Khi sợi chỉ đỏ xuất phát từ một trang sách và nối sang tài liệu bên phải, đường cong Bezier tự động uốn cong dạng vòm bay vượt lên trên đỉnh gáy sách (`archApexY < sourceItem.y - 22`), hoàn toàn không đè lên nội dung văn bản Chương 2.
+  * Nét chỉ mảnh tinh tế `1.5px`, bán trong suốt (`strokeOpacity="0.6"`), đinh ghim nhỏ gọn `r="4"`, và có nhãn mô tả quan hệ ("Liên quan đến") tại trung điểm đường cong.
+
 * **Kích thước & Chiều sâu 2.5D:**
   * Sách dạng mở đôi (`BookSpread`) có kích thước chuẩn **`980 × 640px`**, chiếm khoảng 55–60% chiều ngang màn hình ở mức zoom 100%.
   * **Bìa Sách Dày Dặn Màu Nâu (Rich Brown Leather Hardcover):** Sử dụng tông màu nâu da ấm sang trọng (`#5c3920` đến `#341c0c`), viền bìa hai bên mở rộng gấp 3 lần (`42px`), bo góc lớn `rounded-2xl`, không dùng thanh giả độ sâu ngoài bìa và không đổ bóng lên bìa sách (chỉ giữ bóng rãnh gáy bên trong giấy).
