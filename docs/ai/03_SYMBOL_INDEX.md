@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `c84274c`  
+> **Commit Hash:** `d809dc9`  
 > **Cập nhật lần cuối:** `2026-11-09`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -149,7 +149,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `buildVietQrUrl` | `fn` | [src/services/PaymentService.ts:L59-L72](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `CanvasTransform` | `type` | [src/types/studyspace.ts:L116-L121](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `createDemoStudySpace` | `fn` | [src/data/demoSpace.ts:L3-L97](file:///F:/AppMaking/ViTudy/src/data/demoSpace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `DashboardPage` | `component` | [src/app/dashboard/page.tsx:L13-L122](file:///F:/AppMaking/ViTudy/src/app/dashboard/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `DashboardPage` | `component` | [src/app/dashboard/page.tsx:L13-L134](file:///F:/AppMaking/ViTudy/src/app/dashboard/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `Database` | `type` | [src/types/database.types.ts:L9-L455](file:///F:/AppMaking/ViTudy/src/types/database.types.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `DayStudyTime` | `type` | [src/services/StatsService.ts:L3-L7](file:///F:/AppMaking/ViTudy/src/services/StatsService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `DEFAULT_BANK_CONFIG` | `component` | [src/services/PaymentService.ts:L39-L43](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -179,7 +179,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `LandingPage` | `component` | [src/components/landing/LandingPage.tsx:L16-L84](file:///F:/AppMaking/ViTudy/src/components/landing/LandingPage.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ListingReview` | `type` | [src/services/MarketService.ts:L4-L12](file:///F:/AppMaking/ViTudy/src/services/MarketService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MarketItem` | `type` | [src/data/marketMockData.ts:L3-L22](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `MarketPage` | `component` | [src/app/market/page.tsx:L28-L706](file:///F:/AppMaking/ViTudy/src/app/market/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `MarketPage` | `component` | [src/app/market/page.tsx:L28-L718](file:///F:/AppMaking/ViTudy/src/app/market/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MathRenderer` | `component` | [src/components/common/MathRenderer.tsx:L33-L80](file:///F:/AppMaking/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `metadata` | `const` | [src/app/layout.tsx:L29-L36](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MigrationDialog` | `component` | [src/components/auth/MigrationDialog.tsx:L9-L108](file:///F:/AppMaking/ViTudy/src/components/auth/MigrationDialog.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -201,7 +201,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `PricingTiers` | `component` | [src/components/payment/PricingTiers.tsx:L20-L97](file:///F:/AppMaking/ViTudy/src/components/payment/PricingTiers.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PrivacyPage` | `component` | [src/app/privacy/page.tsx:L8-L98](file:///F:/AppMaking/ViTudy/src/app/privacy/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ProfileHeader` | `component` | [src/components/profile/ProfileHeader.tsx:L13-L140](file:///F:/AppMaking/ViTudy/src/components/profile/ProfileHeader.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `ProfilePage` | `component` | [src/app/profile/page.tsx:L13-L86](file:///F:/AppMaking/ViTudy/src/app/profile/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `ProfilePage` | `component` | [src/app/profile/page.tsx:L122-L128](file:///F:/AppMaking/ViTudy/src/app/profile/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `QRCodeDisplay` | `component` | [src/components/payment/QRCodeDisplay.tsx:L29-L285](file:///F:/AppMaking/ViTudy/src/components/payment/QRCodeDisplay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `RootLayout` | `component` | [src/app/layout.tsx:L38-L65](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `RotateTwoWay` | `component` | [src/components/icons/RotateTwoWay.tsx:L11-L29](file:///F:/AppMaking/ViTudy/src/components/icons/RotateTwoWay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -214,7 +214,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StickerPickerItem` | `type` | [src/data/stickersAndEmojis.ts:L1-L11](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `StreakCalendar` | `component` | [src/components/dashboard/StreakCalendar.tsx:L10-L76](file:///F:/AppMaking/ViTudy/src/components/dashboard/StreakCalendar.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudySpace` | `type` | [src/types/studyspace.ts:L87-L96](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `StudySpacePage` | `component` | [src/app/page.tsx:L16-L94](file:///F:/AppMaking/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StudySpacePage` | `component` | [src/app/page.tsx:L84-L90](file:///F:/AppMaking/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudyStats` | `component` | [src/components/dashboard/StudyStats.tsx:L13-L103](file:///F:/AppMaking/ViTudy/src/components/dashboard/StudyStats.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TermsPage` | `component` | [src/app/terms/page.tsx:L8-L84](file:///F:/AppMaking/ViTudy/src/app/terms/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TokenHistory` | `component` | [src/components/dashboard/TokenHistory.tsx:L12-L82](file:///F:/AppMaking/ViTudy/src/components/dashboard/TokenHistory.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |

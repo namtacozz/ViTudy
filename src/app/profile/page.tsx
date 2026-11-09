@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { AccountSettings } from '@/components/profile/AccountSettings';
@@ -10,9 +10,29 @@ import { PaymentHistory } from '@/components/payment/PaymentHistory';
 import { ArrowLeft, LogOut, Loader2, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, profile, status, signOut, isLoading } = useAuth();
+
+  const fromParam = searchParams.get('from');
+  const [returnDestination, setReturnDestination] = useState<'desk' | 'home'>('home');
+
+  useEffect(() => {
+    if (fromParam === 'desk' || fromParam === 'home') {
+      setReturnDestination(fromParam);
+      return;
+    }
+    // Fallback: check last active view saved in sessionStorage
+    try {
+      const stored = sessionStorage.getItem('vitudy_last_view');
+      if (stored === 'desk' || stored === 'home') {
+        setReturnDestination(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }, [fromParam]);
 
   useEffect(() => {
     if (status === 'guest') {
@@ -23,6 +43,19 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     await signOut();
     router.replace('/');
+  };
+
+  const returnHref = returnDestination === 'desk' ? '/?view=desk' : '/?view=home';
+  const returnLabel = returnDestination === 'desk' ? 'Về Bàn Học' : 'Về Trang Chủ';
+
+  const handleBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Ưu tiên router.back() nếu lịch sử trình duyệt còn trong trang
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(returnHref);
+    }
   };
 
   if (status === 'loading' || !user) {
@@ -39,18 +72,19 @@ export default function ProfilePage() {
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
           <Link
-            href="/?view=desk"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm"
+            href={returnHref}
+            onClick={handleBack}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm cursor-pointer active:scale-95"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Về Bàn Học</span>
+            <span>{returnLabel}</span>
           </Link>
 
           <button
             type="button"
             onClick={handleSignOut}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-red-600 transition-colors bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-red-600 transition-colors bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm cursor-pointer active:scale-95"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Đăng xuất</span>
@@ -82,5 +116,13 @@ export default function ProfilePage() {
         <DeleteAccount userEmail={user.email || ''} />
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-100 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#E0562D]" /></div>}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }

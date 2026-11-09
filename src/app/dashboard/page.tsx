@@ -18,6 +18,18 @@ export default function DashboardPage() {
   const [examStats, setExamStats] = useState<ExamStats>({ averageScore: 0, totalExams: 0 });
   const [activityGrid, setActivityGrid] = useState<{ date: string; minutes: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [returnDestination, setReturnDestination] = useState<'desk' | 'home'>('desk');
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('vitudy_last_view');
+      if (stored === 'home' || stored === 'desk') {
+        setReturnDestination(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -70,11 +82,11 @@ export default function DashboardPage() {
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
           <Link
-            href="/?view=desk"
+            href={returnDestination === 'home' ? '/?view=home' : '/?view=desk'}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Về bàn học</span>
+            <span>{returnDestination === 'home' ? 'Về trang chủ' : 'Về bàn học'}</span>
           </Link>
 
           <div className="flex items-center gap-2">

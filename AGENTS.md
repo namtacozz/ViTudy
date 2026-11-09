@@ -59,6 +59,12 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Đúng (Success / Correct):** Xanh lục bảo ngọc (`#15803D`), nền `#ECFDF5`, viền `#A7F3D0`.
     * **Sai (Danger / Wrong):** Đỏ ruby thanh nhã (`#DC2626`), nền `#FEF2F2`, viền `#FECACA`.
     * **Gợi ý (Warning / Hint):** Vàng mật ong hổ phách (`#92400E`), nền `#FEF3C7`, viền `#FDE68A`.
+  * **Quy Chuẩn Điều Hướng Quay Lại (Context-Aware Back Navigation Standard):**
+    * **Đúng ngữ cảnh điểm xuất phát:**
+      * Khi người dùng vào Tài khoản từ Bàn học (`/profile?from=desk`), nút quay lại hiển thị rõ ràng **"Về Bàn Học"** và điều hướng chính xác về `/?view=desk`.
+      * Khi người dùng vào Tài khoản từ Trang chủ (`/profile?from=home`), nút quay lại hiển thị rõ ràng **"Về Trang Chủ"** và điều hướng chính xác về `/?view=home`.
+    * **Cơ chế lưu trữ ngữ cảnh dự phòng (`sessionStorage`):** Trạng thái view hiện tại (`'desk'` / `'home'`) được tự động ghi nhớ vào `sessionStorage('vitudy_last_view')` để các trang con (`/profile`, `/market`, `/dashboard`) luôn quay về đúng điểm xuất phát của người dùng.
+    * **Đồng bộ phản ứng thời gian thực trên Trang Chủ (`useSearchParams`):** Trang chủ `/` sử dụng `useSearchParams()` để lắng nghe thay đổi của tham số `view` (`?view=desk` / `?view=home`) trong Next.js App Router, tự động render view tương ứng ngay lập tức mà không bị lỗi trễ chu kỳ render hoặc nhảy nhầm trang.
   * **Quy Chuẩn Bảng Chọn Emoji & Hình Dán Chuẩn Miro (Miro-Grade Emoji & Sticker Flyout):**
     * **9 danh mục biểu tượng chuẩn Miro:** Gần đây (`recent`), Biểu cảm & Con người (`people`), Động vật & Tự nhiên (`nature`), Đồ ăn & Thức uống (`food`), Hoạt động & Thể thao (`activities`), Du lịch & Địa điểm (`travel`), Đồ vật & Dụng cụ (`objects`), Ký hiệu & Biểu trưng (`symbols`), Cờ các quốc gia (`flags`).
     * **Hiển thị Twemoji Vector SVG sắc nét 100% ở mọi mức zoom:** Toàn bộ biểu tượng cảm xúc được render qua vector SVG chính thức của Twitter Twemoji (`https://cdn.jsdelivr.net/gh/twitter/twemoji@.../svg/{cp}.svg`), triệt tiêu hoàn toàn hiện tượng vỡ hạt, răng cưa hoặc mờ nét khi phóng to thu nhỏ bàn học.

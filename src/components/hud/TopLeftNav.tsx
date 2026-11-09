@@ -291,7 +291,7 @@ export function TopLeftNav() {
 
           {user ? (
             <Link
-              href="/profile"
+              href="/profile?from=desk"
               title={`Hồ sơ cá nhân (${profile?.display_name || user.email})`}
               className="w-7 h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs"
             >

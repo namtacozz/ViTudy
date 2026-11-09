@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-11-09 21:14 — main (Khắc Phục Lỗi Ngược Hướng Điều Hướng Quay Lại Giữa Tài Khoản, Bàn Học & Trang Chủ)
+- **Task:** Sửa triệt để lỗi điều hướng ngược khi vào trang Tài khoản (`/profile`):
+  1. **Nhận diện điểm xuất phát (Context-Aware Navigation):**
+     - Từ Bàn học (`TopLeftNav`): Link vào hồ sơ kèm tham số `/profile?from=desk`.
+     - Từ Trang chủ (`HomePage`): Link vào hồ sơ kèm tham số `/profile?from=home`.
+     - Cơ chế dự phòng: Tự động lưu `vitudy_last_view` vào `sessionStorage` để ghi nhớ trang người dùng vừa ở.
+  2. **Hiển thị và điều hướng chuẩn xác trên `/profile`:**
+     - Nếu đến từ Bàn học: Nút quay lại hiển thị **"Về Bàn Học"** và điều hướng chuẩn xác về `/?view=desk`.
+     - Nếu đến từ Trang chủ: Nút quay lại hiển thị **"Về Trang Chủ"** và điều hướng chuẩn xác về `/?view=home`.
+     - Đồng bộ cả cơ chế `router.back()` với lịch sử trình duyệt.
+  3. **Tái cấu trúc phản ứng thời gian thực cho Trang Chủ (`src/app/page.tsx`):**
+     - Sử dụng hook chuẩn `useSearchParams()` của Next.js App Router bên trong `<Suspense>`, giúp trang tự động chuyển đổi giữa `HomePage` và `StudySpaceDeskView` tức thì khi tham số `?view=desk` hoặc `?view=home` thay đổi, loại bỏ hoàn toàn hiện tượng kẹt state hoặc nhảy nhầm trang.
+  4. **Áp dụng đồng bộ cho `market/page.tsx` và `dashboard/page.tsx`:** Tự động phát hiện `sessionStorage` để quay về đúng nơi người dùng xuất phát.
+- **Files Modified:**
+  - `src/app/page.tsx`
+  - `src/app/profile/page.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/app/market/page.tsx`
+  - `src/app/dashboard/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 21:02 — main (Nâng Cấp Kho Emoji Chuẩn Miro, Tích Hợp GIPHY Live, Tối Ưu Độ Sắc Nét Văn Bản & Ghi Hình)
 - **Task:** Nâng cấp toàn diện kho biểu tượng cảm xúc, hình dán và công cụ mở rộng dấu "+" theo mẫu giao diện Miro:
   1. **Bảng chọn Emoji chuẩn Miro (9 danh mục & Skin tone):**

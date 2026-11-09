@@ -42,6 +42,18 @@ export default function MarketPage() {
   const [previewItem, setPreviewItem] = useState<MarketItem | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [returnDestination, setReturnDestination] = useState<'desk' | 'home'>('desk');
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('vitudy_last_view');
+      if (stored === 'home' || stored === 'desk') {
+        setReturnDestination(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // New shared item form state
   const [shareTitle, setShareTitle] = useState('');
@@ -176,11 +188,11 @@ export default function MarketPage() {
         {/* Navigation Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
-            href="/?view=desk"
+            href={returnDestination === 'home' ? '/?view=home' : '/?view=desk'}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 hover:text-stone-900 transition-colors bg-white px-3.5 py-2 rounded-xl border border-stone-200 shadow-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Về Bàn Học</span>
+            <span>{returnDestination === 'home' ? 'Về Trang Chủ' : 'Về Bàn Học'}</span>
           </Link>
 
           <div className="flex items-center gap-2.5">

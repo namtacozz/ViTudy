@@ -319,7 +319,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
             {/* Avatar tròn bên phải */}
             <Link
-              href="/profile"
+              href="/profile?from=home"
               title={`Hồ sơ cá nhân (${userName})`}
               className="w-8.5 h-8.5 rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
             >
