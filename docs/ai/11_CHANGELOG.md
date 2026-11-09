@@ -4,6 +4,53 @@
 
 ---
 
+## 2026-11-09 11:35 — main (Khắc Phục 6 Vấn Đề: Bút Vẽ Realtime Trong Tài Liệu, Kéo Vật Thể Không Lệch View, Smart Shape Chính Xác, Đưa MultiplayerBar Xuống Dưới & Resize Sticker)
+- **Task:** Giải quyết triệt để 6 yêu cầu kỹ thuật & UX từ người dùng:
+  1. **Bút vẽ trong tài liệu bị delay & lệch tọa độ:**
+     - *Nguyên nhân delay:* `currentStroke` chỉ nằm ở `DeskDrawingCanvas` (`z-25`) trong container bàn học, nên khi vẽ trên sách hay tài liệu (có nền trắng và z-index cao hơn), nét vẽ bị che khuất trong suốt quá trình kéo chuột; chỉ khi nhả chuột (`finishStroke`) nét mới được chuyển sang `ItemDrawingOverlay` khiến nét vẽ bị giật delay.
+     - *Nguyên nhân lệch tọa độ:* Bìa sách `BookSpread` có `padding: 12px 42px`. `ItemDrawingOverlay` cũ nằm bên trong ruột sách nhưng `StudySpaceContext` lại tính tọa độ tương đối từ gốc `(item.x, item.y)` của bìa sách ngoài $\rightarrow$ Bị lệch sang phải 42px và lệch xuống 12px.
+     - *Khắc phục:*
+       - Tách riêng lớp `currentStroke` trong `DeskDrawingCanvas` lên lớp cao nhất `z-[1000]`, bảo đảm nét mực tuôn ra tức thì ngay dưới ngòi chuột thời gian thực khi vẽ trên mặt bàn lẫn trên ruột sách hay tài liệu.
+       - Đưa `<ItemDrawingOverlay />` trên `BookSpread` ra container ngoài của sách (`width: 980, height: 640`), đồng bộ tọa độ gốc `(0, 0)` với `item.x, item.y`, triệt tiêu hoàn toàn độ lệch 42px/12px.
+  2. **Đưa thanh MultiplayerBar xuống rìa dưới màn hình:**
+     - Chuyển vị trí từ `absolute top-1 left-1/2` sang `fixed bottom-1 left-1/2 -translate-x-1/2`, căn giữa sát mép đáy màn hình, đồng thời chuyển toast đồng bộ góc nhìn lên `fixed bottom-14 left-1/2`.
+  3. **Kéo khối lệnh (`CodeBlockItem`) và sticker (`StickerItem`) bị lệch tọa độ và làm di chuyển cả view:**
+     - *Nguyên nhân:* Thiếu thuộc tính `data-desk-item="true"`, đồng thời sử dụng `left/top` kết hợp `transform: rotate` và `transformOrigin: center center` thay vì `transform: translate(x, y) rotate(deg)` chuẩn như Sticky Note. Ngoài ra không gọi `e.stopPropagation()` khi mousedown làm sự kiện nổi bọt lên `InfiniteDesk` kích hoạt pan view bàn học.
+     - *Khắc phục:*
+       - Bổ sung `data-desk-item="true"` cho `CodeBlockItem`, `StickerItem`, `MindMapNodeItem`.
+       - Đồng bộ hóa định vị sang `transform: translate(x, y) rotate(deg)` và `transformOrigin: '0 0'`.
+       - Ngăn chặn nổi bọt sự kiện pan view trên thanh drag handle và ô textarea code editor.
+  4. **Smart Shape nhận diện chưa chuẩn hoàn toàn (Vẽ hình vuông ra tam giác hoặc tròn):**
+     - *Nguyên nhân:* Điều kiện nhận diện tam giác cũ quá lỏng lẻo (`fillRatio < 0.68 && (cornerCount <= 4 || sharpCorners <= 3)`), nuốt chửng các hình vuông vẽ tay có fillRatio ~0.66 thành tam giác. Đồng thời kiểm tra hình vuông dựa vào `cvR` bị nhầm lẫn giữa hình vuông và elip.
+     - *Khắc phục:*
+       - Siết chặt tam giác: Bắt buộc `fillRatio <= 0.62` (về mặt hình học, diện tích tam giác nội tiếp bounding box tối đa chỉ là 0.50). Mọi hình có `fillRatio > 0.62` không bao giờ bị nhận diện thành tam giác.
+       - Hình vuông / chữ nhật: Bắt buộc `fillRatio >= 0.63` và có ít nhất 2 góc vuông nhọn (`sharpCorners >= 2` hoặc `cornerCount === 4`). Tỷ lệ `aspectRatio in [0.70, 1.42]` ra hình vuông, ngoài dải này ra hình chữ nhật.
+       - Hình tròn / elip: Nét cong trơn mượt (`sharpCorners <= 1`).
+  5. **Gộp Sticker, Emoji & GIF vào 1 ô duy nhất trên thanh công cụ:**
+     - Trong `src/components/hud/LeftCreationBar.tsx`, gộp `stickers` và `emojis_and_gifs` thành 1 mục duy nhất: `stickers_and_emojis` ("Stickers, Emojis & GIFs").
+  6. **Thêm kéo ở góc (Resize Handle) để phóng to/thu nhỏ kích thước Emoji, GIF, Sticker:**
+     - Bổ sung hàm `updateItemDimensions(id, width, height)` trong `StudySpaceContext.tsx`.
+     - Trong `StickerItem.tsx`: Khi `isSelected`, hiển thị núm kéo tròn ở góc dưới bên phải (`cursor-nwse-resize`) cho phép người dùng kéo thả để co dãn kích thước emoji/sticker/gif theo tỷ lệ mượt mà.
+- **Files Modified:**
+  - `src/components/canvas/DeskDrawingCanvas.tsx`: Active stroke topmost layer `z-[1000]`.
+  - `src/components/objects/BookSpread.tsx`: Di chuyển `ItemDrawingOverlay` lên container ngoài sách.
+  - `src/components/canvas/ItemDrawingOverlay.tsx`: Tối ưu SVG overlay `z-30`.
+  - `src/components/hud/MultiplayerBar.tsx`: Đưa vị trí xuống `bottom-1 left-1/2`.
+  - `src/components/objects/CodeBlockItem.tsx`: Fix `data-desk-item="true"`, `transform: translate`, drag handle stopPropagation.
+  - `src/components/objects/StickerItem.tsx`: Fix transform, drag handle, thêm corner resize handle.
+  - `src/components/objects/MindMapNodeItem.tsx`: Thêm `data-desk-item="true"` và `transform: translate`.
+  - `src/context/StudySpaceContext.tsx`: Thêm `updateItemDimensions`.
+  - `src/components/hud/LeftCreationBar.tsx`: Gộp Sticker, Emoji, GIF thành 1 ô `stickers_and_emojis`.
+  - `src/utils/smartShape.ts` & `src/utils/smartShape.test.ts`: Tối ưu thuật toán phân loại và bổ sung test case.
+  - `AGENTS.md`: Tự động cập nhật toàn bộ quy chuẩn kỹ thuật mới.
+- **Verified by:**
+  - `pnpm test`: 15/15 test suites passed (42/42 tests pass 100%).
+  - `pnpm run docs:index ; pnpm run docs:check`: Pass.
+  - `pnpm run build:pages`: Export static Next.js 15 thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 11:12 — main (Khắc Phục Vỡ Chữ Khi Phóng To & Chữ Note Bị Nằm Dưới Thanh Ngang)
 - **Task:** Giải quyết 2 phản hồi của người dùng kèm ảnh:
   1. **Chữ bị vỡ khi phóng quá to (Zoom 232%):**

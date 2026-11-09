@@ -47,7 +47,7 @@ export function ItemDrawingOverlay({ itemId }: { itemId: string }) {
   };
 
   return (
-    <svg className="absolute inset-0 pointer-events-none z-20 overflow-visible w-full h-full">
+    <svg className="absolute inset-0 pointer-events-none z-30 overflow-visible w-full h-full">
       {itemStrokes.map(stroke => {
         const isHigh = stroke.isHighlighter;
         const strokeWidth = isHigh ? (stroke.width || 14) : (stroke.width || 2.5);

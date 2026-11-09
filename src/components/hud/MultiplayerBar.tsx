@@ -87,9 +87,9 @@ export function MultiplayerBar() {
 
   return (
     <>
-      {/* Top Center: Multiplayer Bar (Chỉ hiển thị khi có bạn bè trong phòng hoặc đang kết nối Realtime) */}
+      {/* Bottom Center: Multiplayer Bar (Chỉ hiển thị khi có bạn bè trong phòng hoặc đang kết nối Realtime) */}
       {hasPeers && (
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
+        <div className="fixed bottom-1 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
           <div className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-md animate-fade-in text-slate-900">
             {/* Host Tag & Live Status */}
             <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold pr-2 border-r border-slate-200">
@@ -155,7 +155,7 @@ export function MultiplayerBar() {
 
       {/* Floating Presenter Sync Notification Banner */}
       {isFollowPresenter && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
+        <div className="fixed bottom-14 left-1/2 -translate-x-1/2 z-40 bg-white/95 text-slate-800 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 text-xs font-medium backdrop-blur-md border border-slate-200 animate-fade-in pointer-events-auto">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Đang đồng bộ góc nhìn theo người thuyết trình</span>
           <button

@@ -134,4 +134,24 @@ describe('recognizeSmartShape', () => {
     const outH = maxY - minY;
     expect(outW).toBeGreaterThan(outH * 1.8); // Retains deliberate elliptical ratio
   });
+
+  it('recognizes a hand-drawn slightly rounded square with mouse jitter as a Square (not Triangle or Circle)', () => {
+    const handSquare: Point[] = [];
+    const size = 120;
+    // Top side with slight jitter
+    for (let i = 0; i <= 8; i++) handSquare.push({ x: 50 + (i / 8) * size, y: 50 + ((i % 2) ? 2 : 0) });
+    // Right side
+    for (let i = 1; i <= 8; i++) handSquare.push({ x: 50 + size + ((i % 2) ? -1 : 1), y: 50 + (i / 8) * size });
+    // Bottom side
+    for (let i = 1; i <= 8; i++) handSquare.push({ x: 50 + size - (i / 8) * size, y: 50 + size + ((i % 2) ? -2 : 0) });
+    // Left side returning to start
+    for (let i = 1; i <= 8; i++) handSquare.push({ x: 50 + ((i % 2) ? 1 : -1), y: 50 + size - (i / 8) * size });
+
+    const res = recognizeSmartShape(handSquare);
+    expect(res).toHaveLength(5); // 4 corners + 1 closing point (Square)
+    expect(res[0]).toEqual(res[4]);
+    const w = Math.abs(res[1].x - res[0].x);
+    const h = Math.abs(res[2].y - res[1].y);
+    expect(Math.abs(w - h)).toBeLessThanOrEqual(2);
+  });
 });

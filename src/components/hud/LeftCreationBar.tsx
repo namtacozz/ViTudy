@@ -80,15 +80,9 @@ export function LeftCreationBar() {
       icon: <Shapes className="w-5 h-5 text-slate-800 stroke-[2.2]" />
     },
     {
-      id: 'stickers',
-      title: 'Stickers',
-      desc: 'Nhãn dán ghi chú trực quan sinh động',
-      icon: <Tag className="w-5 h-5 text-slate-800 stroke-[2.2]" />
-    },
-    {
-      id: 'emojis_and_gifs',
-      title: 'Emojis and GIFs',
-      desc: 'Biểu tượng cảm xúc và hình ảnh động',
+      id: 'stickers_and_emojis',
+      title: 'Stickers, Emojis & GIFs',
+      desc: 'Hình dán, biểu tượng cảm xúc và GIF động',
       icon: <Smile className="w-5 h-5 text-slate-800 stroke-[2.2]" />
     },
     {
@@ -176,7 +170,7 @@ export function LeftCreationBar() {
       setActiveTool('create_note');
       return;
     }
-    if (toolId === 'stickers' || toolId === 'emojis_and_gifs') {
+    if (toolId === 'stickers' || toolId === 'emojis_and_gifs' || toolId === 'stickers_and_emojis') {
       setIsStickerPickerOpen(true);
       return;
     }

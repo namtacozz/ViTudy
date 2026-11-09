@@ -85,17 +85,28 @@ export const DeskDrawingCanvas = React.memo(function DeskDrawingCanvas() {
   };
 
   return (
-    <svg 
-      className="absolute inset-0 pointer-events-none z-25 overflow-visible"
-      style={{ width: 10000, height: 10000, left: -5000, top: -5000 }}
-    >
-      <g transform="translate(5000, 5000)">
-        {/* Completed Desk Strokes (not attached to any document) */}
-        {strokes.filter(s => !s.attachedToItemId).map(renderStrokeElement)}
+    <>
+      {/* Completed Desk Strokes (not attached to any document) */}
+      <svg 
+        className="absolute inset-0 pointer-events-none z-10 overflow-visible"
+        style={{ width: 10000, height: 10000, left: -5000, top: -5000 }}
+      >
+        <g transform="translate(5000, 5000)">
+          {strokes.filter(s => !s.attachedToItemId).map(renderStrokeElement)}
+        </g>
+      </svg>
 
-        {/* Current Active Stroke */}
-        {currentStroke && currentStroke.points.length > 0 && renderStrokeElement(currentStroke)}
-      </g>
-    </svg>
+      {/* Current Active Stroke (Topmost layer z-[1000] visible directly under cursor across all books and documents in real time) */}
+      {currentStroke && currentStroke.points.length > 0 && (
+        <svg 
+          className="absolute inset-0 pointer-events-none overflow-visible"
+          style={{ width: 10000, height: 10000, left: -5000, top: -5000, zIndex: 1000 }}
+        >
+          <g transform="translate(5000, 5000)">
+            {renderStrokeElement(currentStroke)}
+          </g>
+        </svg>
+      )}
+    </>
   );
 });

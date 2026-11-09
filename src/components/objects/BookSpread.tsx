@@ -365,6 +365,11 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
           selectItem(item.id);
         }}
       >
+        {/* In-Document Drawing Layer directly at outer book container (0, 0 to 980, 640) matching world transform coordinates */}
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-visible w-full h-full">
+          <ItemDrawingOverlay itemId={item.id} />
+        </div>
+
         {/* ================= RICH LEATHER HARDCOVER (3X HORIZONTAL MARGIN: 42PX - DRAGGABLE ON LEATHER) ================= */}
         <div 
           onMouseDown={(e) => {
@@ -564,9 +569,6 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             className="w-full h-full rounded-xl flex relative overflow-visible shadow-inner bg-[#fdfbf7] z-20"
             style={{ perspective: '2000px' }}
           >
-            {/* In-Document Drawing Layer (strokes permanently attached to this book) */}
-            <ItemDrawingOverlay itemId={item.id} />
-
             {/* Spine Shadow & Crease Effect — CONFINED ONLY INSIDE THE PAPER CONTAINER */}
             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-10 pointer-events-none z-20 bg-gradient-to-r from-black/15 via-black/35 to-black/15" />
             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-stone-400 z-20 opacity-50" />

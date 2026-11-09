@@ -53,6 +53,7 @@ interface StudySpaceContextType {
   resetView: () => void;
   selectItem: (id: string | null) => void;
   updateItemPosition: (id: string, x: number, y: number) => void;
+  updateItemDimensions?: (id: string, width: number, height: number) => void;
   updateItemRotation: (id: string, deltaAngle: number) => void;
   updateItemTitle?: (id: string, newTitle: string) => void;
   setItemRotation: (id: string, rotation: number) => void;
@@ -588,6 +589,18 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         return {
           ...s,
           items: s.items.map(item => (item.id === id ? { ...item, x, y } : item))
+        };
+      })
+    );
+  };
+
+  const updateItemDimensions = (id: string, width: number, height: number) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item => (item.id === id ? { ...item, width, height } : item))
         };
       })
     );
@@ -1423,6 +1436,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         resetView,
         selectItem,
         updateItemPosition,
+        updateItemDimensions,
         updateItemRotation,
         updateItemTitle,
         setItemRotation,

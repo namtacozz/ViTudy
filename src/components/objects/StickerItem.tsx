@@ -13,7 +13,7 @@ interface StickerItemProps {
 }
 
 export const StickerItem = React.memo(function StickerItem({ item, isSelected }: StickerItemProps) {
-  const { selectItem, removeDeskItem } = useStudySpace();
+  const { selectItem, removeDeskItem, transform, updateItemDimensions } = useStudySpace();
 
   const width = item.width || 100;
   const height = item.height || 100;
@@ -39,20 +39,53 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
     removeDeskItem(item.id);
   };
 
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startClientX = e.clientX;
+    const startClientY = e.clientY;
+    const startW = width;
+    const startH = height;
+    const ratio = startW / (startH || 1);
+    const scale = transform.scale || 1;
+
+    const handleMouseMove = (moveEv: MouseEvent) => {
+      const dx = (moveEv.clientX - startClientX) / scale;
+      const dy = (moveEv.clientY - startClientY) / scale;
+      const delta = (dx + dy) / 2;
+      const newW = Math.max(48, Math.min(600, Math.round(startW + delta)));
+      const newH = Math.round(newW / ratio);
+      updateItemDimensions?.(item.id, newW, newH);
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <div
+      data-desk-item="true"
       data-item-id={item.id}
       data-item-type="sticker"
-      onPointerDown={(e) => {
-        handleMouseDown(e);
+      onClick={(e) => {
+        e.stopPropagation();
         selectItem(item.id);
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        selectItem(item.id);
+        handleMouseDown(e);
       }}
       style={{
         position: 'absolute',
-        left: item.x,
-        top: item.y,
-        transform: `rotate(${item.rotation}deg)`,
-        transformOrigin: 'center center',
+        transform: `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${item.rotation}deg)`,
+        transformOrigin: '0 0',
         zIndex: isSelected ? 50 : item.zIndex || 20,
         width,
         height
@@ -63,9 +96,12 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
     >
       {/* Action controls appear when hovered or selected */}
       {(isSelected || isDragging) && (
-        <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-white border border-slate-200/90 shadow-md rounded-full text-slate-600 text-xs z-50 animate-fade-in select-none">
+        <div 
+          onMouseDown={(e) => e.stopPropagation()}
+          className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-white border border-slate-200/90 shadow-md rounded-full text-slate-600 text-xs z-50 animate-fade-in select-none"
+        >
           <button
-            onPointerDown={handleRotateMouseDown}
+            onMouseDown={handleRotateMouseDown}
             onDoubleClick={handleRotateDoubleClick}
             title="Xoay (Kéo để xoay, nhấp đúp về 0°)"
             className="p-1 rounded-full text-slate-500 hover:text-amber-700 hover:bg-slate-100 transition-colors cursor-grab"
@@ -75,7 +111,7 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
           <button
             onClick={handleDelete}
             title="Xoá hình dán"
-            className="p-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+            className="p-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -86,7 +122,7 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
       <div
         className={`w-full h-full flex items-center justify-center p-1 rounded-2xl transition-all ${
           isSelected
-            ? 'border-2 border-dashed border-indigo-400 bg-indigo-50/15'
+            ? 'border-2 border-dashed border-indigo-500 bg-indigo-50/15'
             : 'group-hover:border group-hover:border-dashed group-hover:border-slate-300'
         }`}
       >
@@ -110,6 +146,15 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
           </div>
         )}
       </div>
+
+      {/* Resize corner handle (Image & Emoji scaling) */}
+      {isSelected && (
+        <div
+          onMouseDown={handleResizeStart}
+          title="Kéo góc để phóng to/thu nhỏ kích thước"
+          className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-white border-2 border-indigo-600 rounded-full shadow-md cursor-nwse-resize flex items-center justify-center hover:scale-125 transition-transform z-50 pointer-events-auto"
+        />
+      )}
     </div>
   );
 });

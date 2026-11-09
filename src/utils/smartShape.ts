@@ -83,8 +83,8 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   const area = calculateShoelaceArea(points);
   const fillRatio = area / boxArea;
 
-  // Ramer-Douglas-Peucker polygon simplification to find corners
-  const simplified = ramerDouglasPeucker(points, maxDim * 0.08);
+  // Ramer-Douglas-Peucker polygon simplification to find corners (optimal ~4.5% tolerance)
+  const simplified = ramerDouglasPeucker(points, Math.max(7, maxDim * 0.045));
   const cornerCount = Math.max(2, simplified.length - 1);
   const sharpCorners = countSharpCorners(points, maxDim);
 
@@ -102,21 +102,22 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   const cvR = Math.sqrt(sumVarR / n) / (meanR || 1);
 
   // 2A. TRIANGLE
-  // Hand-drawn triangles typically have fillRatio < 0.68 and 3 sharp corners
-  if ((fillRatio < 0.68 && (cornerCount <= 4 || sharpCorners <= 3)) || cornerCount === 3 || (fillRatio < 0.65 && sharpCorners === 3)) {
+  // Mathematical fact: Maximum area of an enclosed triangle in a bounding box is 0.50 * boxArea.
+  // With hand-drawn curvature, fillRatio for a triangle is strictly <= 0.62.
+  const isTriangleCandidate = fillRatio <= 0.62 && (cornerCount === 3 || sharpCorners === 3 || (cornerCount <= 4 && fillRatio < 0.56));
+  if (isTriangleCandidate) {
     const triangleCorners = findBestTriangleCorners(simplified.length >= 3 ? simplified : points);
     if (triangleCorners && triangleCorners.length === 4) {
       return triangleCorners;
     }
   }
 
-  // 2B. SQUARE / RECTANGLE
-  // Quadrilaterals have 3-4 distinct sharp corners or high fillRatio with high radius variation
-  const hasSharpCorners = sharpCorners >= 3;
-  const isCollinearOrBoxy = fillRatio >= 0.74 && (cvR > 0.135 || hasSharpCorners);
-  const isQuadrilateral = (cornerCount === 4 && fillRatio >= 0.68) || 
-    (hasSharpCorners && fillRatio >= 0.70) ||
-    (isCollinearOrBoxy && fillRatio >= 0.80);
+  // 2B. SQUARE / RECTANGLE (QUADRILATERAL)
+  // Boxy shapes have distinct sharp corners (sharpCorners >= 2 or cornerCount === 4 with fillRatio >= 0.68)
+  // Pure smooth curves (circles & ellipses) have sharpCorners <= 1
+  const hasMultipleSharpCorners = sharpCorners >= 2;
+  const isBoxy = hasMultipleSharpCorners || (cornerCount === 4 && fillRatio >= 0.68);
+  const isQuadrilateral = fillRatio >= 0.63 && isBoxy;
 
   if (isQuadrilateral) {
     // If aspect ratio is close to 1, snap to a neat Square (generous 0.70 - 1.42 for freehand mouse drawing)
@@ -143,7 +144,7 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   }
 
   // 2C. CIRCLE
-  // Hand-drawn circles naturally have smooth curvature and aspect ratio ~1 (0.65 - 1.55)
+  // Smooth curvature (low cvR, no sharp corners) with aspect ratio ~1 (0.65 - 1.55)
   if (aspectRatio >= 0.65 && aspectRatio <= 1.55) {
     const radius = (w + h) / 4;
     const circlePoints: Point[] = [];

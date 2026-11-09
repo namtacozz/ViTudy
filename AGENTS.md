@@ -23,7 +23,7 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Hệ sắc độ đệm: Nền mềm `--accent-soft: #FFF7ED`, viền `--accent-border: #FFEDD5`, chữ `--accent-text: #9A3412` (chuẩn WCAG AA).
   * **Khoảng Cách HUD Bám Sát Mép Tường Trình Duyệt (Snug HUD Wall Spacing — 4px Strict):**
     * Toàn bộ các khung, nút ở HUD được đưa sát vào tường trình duyệt: khoảng cách từ mép hướng ra ngoài của HUD đến rìa web chỉ còn **4px (`1/4` so với 16px mặc định cũ: `top-1`, `bottom-1`, `left-1`, `right-1`)**.
-    * Áp dụng đồng bộ cho: `TopLeftNav` (`top-1 left-1`), `TopRightWallet` (`top-1 right-1`), `LeftCreationBar` (`left-1`), `BottomLeftKnowledge` (`bottom-1 left-1`), `BottomRightToolkit` (`bottom-1 right-1`), và `MultiplayerBar` (`top-1`).
+    * Áp dụng đồng bộ cho: `TopLeftNav` (`top-1 left-1`), `TopRightWallet` (`top-1 right-1`), `LeftCreationBar` (`left-1`), `BottomLeftKnowledge` (`bottom-1 left-1`), `BottomRightToolkit` (`bottom-1 right-1`), và `MultiplayerBar` (`bottom-1 left-1/2 -translate-x-1/2` căn giữa sát mép dưới).
     * Tối ưu hóa triệt để không gian học tập trung tâm của mặt bàn, triệt tiêu khoảng hở thừa không cần thiết.
   * **Biểu Tượng Chuỗi Ngày Học Tập (Streak Flame Icon):**
     * Biểu tượng ngọn lửa (`w-8.5 h-8.5`) màu Cam ViT (`#E0562D`) với phần bụng tròn ôm trọn số ngày chuỗi học tập màu trắng ở bên trong.
@@ -111,16 +111,26 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Đúng theo chuẩn Whiteboard hiện đại: Chỉ gồm tiêu đề `Code block` màu xám trung tính phía trên và khung code bo góc lớn `rounded-xl` màu nền xanh navy đen tối `#060b1c`.
     * Cột số dòng bên trái (`1, 2, 3...` màu xám mờ) tự động tăng giảm theo nội dung code.
     * Vùng nhập code `textarea` font `font-mono text-xs md:text-sm text-slate-100` thuần túy, hỗ trợ thụt lề Tab 2 spaces, tự động co dãn chiều cao.
-    * Tuyệt đối không nhét thông tin thừa, không dùng khung dán giấy ghi chú Sticky note vàng cồng kềnh.
+    * Bắt buộc có thuộc tính `data-desk-item="true"`. Tọa độ sử dụng `transform: translate(x, y) rotate(deg)` với `transformOrigin: '0 0'`. Thanh header là drag handle có `onMouseDown` gọi `e.stopPropagation()` và `handleMouseDown` để khi di chuyển khối lệnh thì camera bàn học đứng yên, không bị pan view.
   * **Sơ Đồ Tư Duy Chuẩn Viên Thuốc (`MindMapNodeItem` & `MindMapConnectors`):**
     * Node hình viên thuốc (Pill shape): bo tròn `rounded-full`, viền dày màu sắc nét `border-2 border-purple-500 bg-white`, ô nhập `Type something` ở tâm.
+    * Bắt buộc có `data-desk-item="true"`. Tọa độ sử dụng `transform: translate(x, y) rotate(deg)` với `transformOrigin: '0 0'`, chặn nổi bọt sự kiện pan view.
     * 4 nút tròn dấu cộng `+` ở 4 hướng (Trên, Dưới, Trái, Phải): nhấp chuột tự động sinh node con ở hướng tương ứng và liên kết nhánh.
     * Đường nối nhánh mềm mại (`MindMapConnectors`): sử dụng đường cong Bezier cubic nối từ mép node cha sang mép node con với màu viền tương ứng.
     * Floating toolbar phía trên khi chọn node: chọn màu viền, in đậm `B`, cỡ chữ, xoay và xóa.
   * **Bảng Chọn Emoji / GIF / Sticker & Dán Tùy Ý (`StickerEmojiPickerFlyout` & `StickerItem`):**
+    * Thanh công cụ `LeftCreationBar` gộp gọn mục Stickers, Emojis & GIFs thành 1 ô duy nhất (`stickers_and_emojis`).
     * Mở popover nổi bên trái gồm ô tìm kiếm `Search`, 4 tab lọc `All | Stickers | Emojis | GIFs`.
     * Khi click chọn: popover đóng, con trỏ chuột trên bàn học biến đổi thành hình ảnh của item đó kèm hướng dẫn click để dán.
-    * Click vào bất kỳ đâu trên bàn học để dán `StickerItem` hiển thị trong suốt độc lập, không bọc trong giấy ghi chú, hỗ trợ xoay và xóa.
+    * Click vào bất kỳ đâu trên bàn học để dán `StickerItem` hiển thị trong suốt độc lập, có `data-desk-item="true"`, tọa độ `transform: translate(x, y) rotate(deg)`.
+    * Kéo góc thu phóng (Corner Resize Handle): Khi `isSelected`, hiển thị núm tròn ở góc dưới bên phải (`cursor-nwse-resize`) để người dùng tự do kéo dãn/thu nhỏ kích thước emoji, sticker, gif theo tỷ lệ.
+  * **Bút Vẽ Thời Gian Thực & Lớp Mực Trong Tài Liệu (Zero-Delay Realtime Ink & In-Document Overlay):**
+    * Lớp nét vẽ đang thao tác (`currentStroke`) trong `DeskDrawingCanvas` luôn render ở lớp trên cùng (`z-[1000]`), bảo đảm nét mực tuôn ra tức thì ngay dưới ngòi chuột thời gian thực khi vẽ trên mặt bàn lẫn trên ruột sách hay tài liệu (triệt tiêu 100% hiện tượng trễ/delay chỉ hiện khi nhả chuột).
+    * `ItemDrawingOverlay` trên `BookSpread` được gắn trực tiếp ở container ngoài của sách (`width: 980, height: 640`), đồng bộ tọa độ gốc `(0, 0)` với `item.x, item.y`, triệt tiêu hoàn toàn độ lệch 42px/12px so với bìa da.
+  * **Chuẩn Hóa Phân Loại Nhận Diện Vẽ Thông Minh (Smart Shape Precision):**
+    * **Tam giác:** Bắt buộc `fillRatio <= 0.62` kèm 3 góc nhọn. Mọi hình có `fillRatio > 0.62` không bao giờ bị nhận diện nhầm thành tam giác.
+    * **Hình vuông / Chữ nhật:** Bắt buộc `fillRatio >= 0.63` và có ít nhất 2 góc vuông nhọn (`sharpCorners >= 2` hoặc `cornerCount === 4`). Tỷ lệ `aspectRatio in [0.70, 1.42]` ra hình vuông hoàn hảo, ngoài dải này ra hình chữ nhật.
+    * **Hình tròn / Elip:** Nét cong trơn mượt (`sharpCorners <= 1`). `aspectRatio in [0.65, 1.55]` ra hình tròn, còn lại ra elip. Ngăn chặn 100% việc vẽ hình vuông bị nhận diện nhầm thành hình tròn hoặc tam giác.
 
 ---
 

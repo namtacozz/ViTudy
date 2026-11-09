@@ -110,18 +110,22 @@ export const MindMapNodeItem = React.memo(function MindMapNodeItem({ item, isSel
 
   return (
     <div
+      data-desk-item="true"
       data-item-id={item.id}
       data-item-type="mind_map"
-      onPointerDown={(e) => {
-        handleMouseDown(e);
+      onClick={(e) => {
+        e.stopPropagation();
         selectItem(item.id);
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        selectItem(item.id);
+        handleMouseDown(e);
       }}
       style={{
         position: 'absolute',
-        left: item.x,
-        top: item.y,
-        transform: `rotate(${item.rotation}deg)`,
-        transformOrigin: 'center center',
+        transform: `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${item.rotation}deg)`,
+        transformOrigin: '0 0',
         zIndex: isSelected ? 50 : item.zIndex || 15,
         width: nodeWidth,
         height: nodeHeight

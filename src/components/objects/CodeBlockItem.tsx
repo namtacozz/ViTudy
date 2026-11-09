@@ -86,42 +86,47 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
 
   return (
     <div
+      data-desk-item="true"
       data-item-id={item.id}
       data-item-type="code_block"
-      onPointerDown={(e) => {
-        handleMouseDown(e);
+      onClick={(e) => {
+        e.stopPropagation();
         selectItem(item.id);
       }}
       style={{
-        position: 'absolute',
-        left: item.x,
-        top: item.y,
-        transform: `rotate(${item.rotation}deg)`,
-        transformOrigin: 'center center',
+        transform: `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${item.rotation}deg)`,
+        transformOrigin: '0 0',
         zIndex: isSelected ? 50 : item.zIndex || 10,
         width: item.width || 480
       }}
-      className={`group select-none transition-shadow ${
+      className={`absolute select-none transition-shadow ${
         isDragging ? 'cursor-grabbing' : 'cursor-default'
       }`}
     >
-      {/* Title Label: Matches Image 3 exactly ("Code block") */}
-      <div className="flex items-center justify-between px-1 mb-1.5 select-none">
-        <span className="text-slate-600 font-medium text-sm tracking-tight cursor-grab active:cursor-grabbing">
+      {/* Title Label: Drag handle matching StickyNoteItem behavior */}
+      <div 
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          selectItem(item.id);
+          handleMouseDown(e);
+        }}
+        className="flex items-center justify-between px-1 mb-1.5 select-none cursor-grab active:cursor-grabbing"
+      >
+        <span className="text-slate-600 font-medium text-sm tracking-tight">
           Code block
         </span>
 
         {/* Action icons appear cleanly on hover */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onMouseDown={(e) => e.stopPropagation()}>
           <button
             onClick={handleCopy}
             title="Sao chép mã"
-            className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 shadow-xs transition-colors"
+            className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 shadow-xs transition-colors cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.4]" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
           <button
-            onPointerDown={handleRotateMouseDown}
+            onMouseDown={handleRotateMouseDown}
             onDoubleClick={handleRotateDoubleClick}
             title="Xoay (Kéo để xoay, nhấp đúp về 0°)"
             className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-amber-700 hover:bg-slate-50 shadow-xs transition-colors cursor-grab"
@@ -131,7 +136,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
           <button
             onClick={handleDelete}
             title="Xoá khối mã nguồn"
-            className="p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 shadow-xs transition-colors"
+            className="p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 shadow-xs transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -162,6 +167,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               spellCheck={false}
               autoCapitalize="off"
               autoComplete="off"
