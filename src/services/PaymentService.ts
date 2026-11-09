@@ -37,19 +37,55 @@ export interface VietQrParams {
 
 // Cấu hình tài khoản nhận tiền mặc định (Công khai - hiển thị trên QR)
 export const DEFAULT_BANK_CONFIG = {
-  bankId: process.env.NEXT_PUBLIC_SEPAY_BANK_ID || 'MBBank',
+  bankId: process.env.NEXT_PUBLIC_SEPAY_BANK_ID || 'MB',
   accountNo: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NO || '0372483582',
   accountName: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NAME || 'VITUDY EDUCATION',
 };
 
-export function buildVietQrUrl(params: VietQrParams): string {
-  const bankId = encodeURIComponent(params.bankId);
-  const accountNo = encodeURIComponent(params.accountNo);
-  const amount = encodeURIComponent(params.amount.toString());
-  const addInfo = encodeURIComponent(params.addInfo);
-  const accountName = params.accountName ? encodeURIComponent(params.accountName) : '';
+export interface BankConfig {
+  bankId: string;
+  accountNo: string;
+  accountName: string;
+}
 
-  return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}${accountName ? `&accountName=${accountName}` : ''}`;
+export function getEffectiveBankConfig(): BankConfig {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('vitudy_custom_bank_config');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.bankId && parsed.accountNo) {
+          return {
+            bankId: parsed.bankId,
+            accountNo: parsed.accountNo,
+            accountName: parsed.accountName || DEFAULT_BANK_CONFIG.accountName
+          };
+        }
+      }
+    } catch {}
+  }
+  return DEFAULT_BANK_CONFIG;
+}
+
+export function saveEffectiveBankConfig(config: BankConfig): void {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('vitudy_custom_bank_config', JSON.stringify(config));
+    } catch {}
+  }
+}
+
+export function buildVietQrUrl(params: VietQrParams): string {
+  let bankId = (params.bankId || 'MB').trim();
+  if (bankId.toLowerCase() === 'mbbank') bankId = 'MB';
+
+  const bankParam = encodeURIComponent(bankId);
+  const accountNo = encodeURIComponent(params.accountNo.trim());
+  const amount = encodeURIComponent(params.amount.toString());
+  const addInfo = encodeURIComponent(params.addInfo.trim());
+  const accountName = params.accountName ? encodeURIComponent(params.accountName.trim()) : '';
+
+  return `https://img.vietqr.io/image/${bankParam}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}${accountName ? `&accountName=${accountName}` : ''}`;
 }
 
 const FALLBACK_PACKAGES: PaymentPackage[] = [
@@ -100,11 +136,13 @@ export class PaymentService {
 
     // Nếu Supabase chưa cấu hình hoặc người dùng đang là khách (chưa đăng nhập):
     // Tạo mã QR VietQR mẫu có thông tin chuyển khoản chuẩn để trải nghiệm mượt mà
+    const activeBank = getEffectiveBankConfig();
+
     if (!supabase || !session) {
       const mockCode = `VT${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
       const pkg = FALLBACK_PACKAGES.find(p => p.id === packageId) || FALLBACK_PACKAGES[0];
       const qrUrl = buildVietQrUrl({
-        ...DEFAULT_BANK_CONFIG,
+        ...activeBank,
         amount: pkg.priceVnd,
         addInfo: mockCode,
       });
@@ -139,7 +177,7 @@ export class PaymentService {
             code: mockCode,
             amountVnd: pkg.priceVnd,
             tokenAmount: pkg.tokenAmount,
-            qrUrl: buildVietQrUrl({ ...DEFAULT_BANK_CONFIG, amount: pkg.priceVnd, addInfo: mockCode }),
+            qrUrl: buildVietQrUrl({ ...activeBank, amount: pkg.priceVnd, addInfo: mockCode }),
             expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
           };
         }
@@ -148,7 +186,7 @@ export class PaymentService {
 
       const row = data[0];
       const qrUrl = buildVietQrUrl({
-        ...DEFAULT_BANK_CONFIG,
+        ...activeBank,
         amount: row.amount_vnd,
         addInfo: row.code,
       });

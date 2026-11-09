@@ -1,7 +1,12 @@
 /**
  * Smart Shape Recognition for ViTudy Canvas
- * Converts hand-drawn messy sketches into perfect geometric shapes
- * (Circle, Ellipse, Square, Rectangle, Triangle, Straight Line)
+ * Accurately recognizes and beautifies messy hand-drawn sketches into:
+ * - Straight Line (with 8-degree horizontal/vertical snapping)
+ * - Triangle (equilateral / arbitrary triangles)
+ * - Square (aspect ratio ~1.0)
+ * - Rectangle (elongated quadrilaterals)
+ * - Circle (smooth curvature, aspect ratio ~1.0)
+ * - Ellipse (smooth curvature, elongated)
  */
 
 export interface Point {
@@ -10,7 +15,7 @@ export interface Point {
 }
 
 export function recognizeSmartShape(points: Point[]): Point[] {
-  if (points.length < 5) return points;
+  if (!points || points.length < 5) return points;
 
   const n = points.length;
   const p0 = points[0];
@@ -36,37 +41,35 @@ export function recognizeSmartShape(points: Point[]): Point[] {
 
   const w = maxX - minX;
   const h = maxY - minY;
-  if (w < 10 && h < 10) return points;
+  if (w < 8 && h < 8) return points;
 
   const cx = minX + w / 2;
   const cy = minY + h / 2;
   const endsDist = Math.hypot(pN.x - p0.x, pN.y - p0.y);
   const maxDim = Math.max(w, h);
 
-  // 1. Check if OPEN STROKE -> Straight Line
-  const isClosed = endsDist / maxDim < 0.35 || endsDist < 35;
+  // 1. OPEN STROKE -> Check if Straight Line
+  const isClosed = endsDist / (maxDim || 1) < 0.38 || endsDist < 38;
 
   if (!isClosed) {
-    // If start-to-end direct distance is > 85% of total path length, it's a straight line
-    if (endsDist > totalPathLength * 0.82) {
-      // Check for horizontal or vertical snap within 8 degrees
+    if (endsDist > totalPathLength * 0.78) {
       const angle = Math.atan2(pN.y - p0.y, pN.x - p0.x);
       const absAngle = Math.abs(angle);
-      const snapThreshold = 0.14; // ~8 deg
+      const snapThreshold = 0.16; // ~9.2 degrees
 
-      let snappedP0 = { ...p0 };
-      let snappedPN = { ...pN };
+      const snappedP0 = { ...p0 };
+      const snappedPN = { ...pN };
 
       if (absAngle < snapThreshold || Math.abs(absAngle - Math.PI) < snapThreshold) {
-        // Horizontal line
+        // Horizontal line snap
         const midY = (p0.y + pN.y) / 2;
-        snappedP0.y = midY;
-        snappedPN.y = midY;
+        snappedP0.y = Math.round(midY);
+        snappedPN.y = Math.round(midY);
       } else if (Math.abs(absAngle - Math.PI / 2) < snapThreshold) {
-        // Vertical line
+        // Vertical line snap
         const midX = (p0.x + pN.x) / 2;
-        snappedP0.x = midX;
-        snappedPN.x = midX;
+        snappedP0.x = Math.round(midX);
+        snappedPN.x = Math.round(midX);
       }
 
       return [snappedP0, snappedPN];
@@ -74,31 +77,75 @@ export function recognizeSmartShape(points: Point[]): Point[] {
     return points;
   }
 
-  // 2. CLOSED SHAPES ANALYSIS
-  const aspectRatio = w / h;
+  // 2. CLOSED STROKE ANALYSIS
+  const aspectRatio = w / (h || 1);
+  const boxArea = (w * h) || 1;
+  const area = calculateShoelaceArea(points);
+  const fillRatio = area / boxArea;
 
-  // Calculate distance from center for all points
-  const rads: number[] = [];
+  // Ramer-Douglas-Peucker polygon simplification to find corners
+  const simplified = ramerDouglasPeucker(points, maxDim * 0.07);
+  const cornerCount = Math.max(2, simplified.length - 1);
+
+  // Measure radius variation from center for curve smoothness check
   let sumR = 0;
-  for (const p of points) {
-    const r = Math.hypot(p.x - cx, p.y - cy);
-    rads.push(r);
-    sumR += r;
+  for (let i = 0; i < n; i++) {
+    sumR += Math.hypot(points[i].x - cx, points[i].y - cy);
   }
   const meanR = sumR / n;
-
   let sumVarR = 0;
-  for (const r of rads) {
-    sumVarR += (r - meanR) * (r - meanR);
+  for (let i = 0; i < n; i++) {
+    const r = Math.hypot(points[i].x - cx, points[i].y - cy);
+    sumVarR += (r - meanR) ** 2;
   }
-  const stdR = Math.sqrt(sumVarR / n);
-  const cvR = stdR / (meanR || 1); // Coefficient of variation of radius
+  const cvR = Math.sqrt(sumVarR / n) / (meanR || 1);
 
-  // 2A. CIRCLE: Low radius variance & aspect ratio near 1
-  if (cvR < 0.22 && aspectRatio >= 0.78 && aspectRatio <= 1.28) {
+  // 2A. TRIANGLE
+  // Hand-drawn triangles typically have fillRatio ~ 0.35 - 0.65 and 3 or 4 corners
+  if ((fillRatio < 0.68 && cornerCount <= 4) || cornerCount === 3) {
+    const triangleCorners = findBestTriangleCorners(simplified.length >= 3 ? simplified : points);
+    if (triangleCorners && triangleCorners.length === 4) {
+      return triangleCorners;
+    }
+  }
+
+  // 2B. SQUARE / RECTANGLE
+  // Quadrilaterals typically have fillRatio >= 0.72 and 4 to 6 corners
+  // Or high fill ratio > 0.82
+  const isQuadrilateral = (cornerCount === 4) || 
+    (fillRatio >= 0.72 && cornerCount <= 6 && cvR > 0.10) ||
+    (fillRatio >= 0.83);
+
+  if (isQuadrilateral) {
+    // If aspect ratio is close to 1, snap to a neat Square
+    if (aspectRatio >= 0.78 && aspectRatio <= 1.28) {
+      const side = (w + h) / 2;
+      const half = side / 2;
+      return [
+        { x: Math.round(cx - half), y: Math.round(cy - half) },
+        { x: Math.round(cx + half), y: Math.round(cy - half) },
+        { x: Math.round(cx + half), y: Math.round(cy + half) },
+        { x: Math.round(cx - half), y: Math.round(cy + half) },
+        { x: Math.round(cx - half), y: Math.round(cy - half) }
+      ];
+    }
+
+    // Standard neat Rectangle
+    return [
+      { x: Math.round(minX), y: Math.round(minY) },
+      { x: Math.round(maxX), y: Math.round(minY) },
+      { x: Math.round(maxX), y: Math.round(maxY) },
+      { x: Math.round(minX), y: Math.round(maxY) },
+      { x: Math.round(minX), y: Math.round(minY) }
+    ];
+  }
+
+  // 2C. CIRCLE
+  // Smooth radius variation and aspect ratio ~1
+  if (aspectRatio >= 0.78 && aspectRatio <= 1.28) {
     const radius = (w + h) / 4;
     const circlePoints: Point[] = [];
-    const steps = 36;
+    const steps = 40;
     for (let i = 0; i <= steps; i++) {
       const theta = (i / steps) * 2 * Math.PI;
       circlePoints.push({
@@ -109,73 +156,64 @@ export function recognizeSmartShape(points: Point[]): Point[] {
     return circlePoints;
   }
 
-  // 2B. ELLIPSE: Low ellipse-normalized variance
+  // 2D. ELLIPSE
   const rx = w / 2;
   const ry = h / 2;
-  let sumNormDev = 0;
-  for (const p of points) {
-    const normDist = Math.hypot((p.x - cx) / (rx || 1), (p.y - cy) / (ry || 1));
-    sumNormDev += Math.abs(normDist - 1);
+  const ellipsePoints: Point[] = [];
+  const steps = 40;
+  for (let i = 0; i <= steps; i++) {
+    const theta = (i / steps) * 2 * Math.PI;
+    ellipsePoints.push({
+      x: Math.round(cx + rx * Math.cos(theta)),
+      y: Math.round(cy + ry * Math.sin(theta))
+    });
   }
-  const meanNormDev = sumNormDev / n;
+  return ellipsePoints;
+}
 
-  if (meanNormDev < 0.22) {
-    const ellipsePoints: Point[] = [];
-    const steps = 36;
-    for (let i = 0; i <= steps; i++) {
-      const theta = (i / steps) * 2 * Math.PI;
-      ellipsePoints.push({
-        x: Math.round(cx + rx * Math.cos(theta)),
-        y: Math.round(cy + ry * Math.sin(theta))
-      });
-    }
-    return ellipsePoints;
+function calculateShoelaceArea(pts: Point[]): number {
+  let area = 0;
+  const n = pts.length;
+  for (let i = 0; i < n - 1; i++) {
+    area += pts[i].x * pts[i + 1].y - pts[i + 1].x * pts[i].y;
+  }
+  return Math.abs(area) / 2;
+}
+
+function findBestTriangleCorners(pts: Point[]): Point[] {
+  const uniquePts: Point[] = [];
+  for (const p of pts) {
+    const isDup = uniquePts.some(u => Math.hypot(u.x - p.x, u.y - p.y) < 5);
+    if (!isDup) uniquePts.push(p);
   }
 
-  // 2C. POLYGON SIMPLIFICATION (Ramer-Douglas-Peucker)
-  const simplified = ramerDouglasPeucker(points, maxDim * 0.08);
+  if (uniquePts.length < 3) return [];
 
-  // If simplified has ~3 main corners (plus closure) -> Triangle
-  if (simplified.length >= 3 && simplified.length <= 5) {
-    // Find 3 most prominent extrema
-    const top = points.reduce((prev, curr) => (curr.y < prev.y ? curr : prev), points[0]);
-    const bottomBase = points.filter(p => p.y > cy);
-    if (bottomBase.length > 0) {
-      const leftBase = bottomBase.reduce((prev, curr) => (curr.x < prev.x ? curr : prev), bottomBase[0]);
-      const rightBase = bottomBase.reduce((prev, curr) => (curr.x > prev.x ? curr : prev), bottomBase[0]);
-      if (Math.abs(leftBase.x - rightBase.x) > w * 0.45) {
-        return [
-          { x: top.x, y: minY },
-          { x: minX, y: maxY },
-          { x: maxX, y: maxY },
-          { x: top.x, y: minY }
-        ];
+  if (uniquePts.length === 3) {
+    return [uniquePts[0], uniquePts[1], uniquePts[2], uniquePts[0]];
+  }
+
+  // Find 3 vertices that maximize triangle area
+  let maxArea = -1;
+  let bestTriangle: Point[] = [];
+  const len = uniquePts.length;
+
+  for (let i = 0; i < len; i++) {
+    for (let j = i + 1; j < len; j++) {
+      for (let k = j + 1; k < len; k++) {
+        const p1 = uniquePts[i];
+        const p2 = uniquePts[j];
+        const p3 = uniquePts[k];
+        const area = Math.abs(p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) / 2;
+        if (area > maxArea) {
+          maxArea = area;
+          bestTriangle = [p1, p2, p3, p1];
+        }
       }
     }
   }
 
-  // 2D. SQUARE OR RECTANGLE
-  // If aspect ratio is close to 1, make it a perfect square
-  if (aspectRatio >= 0.82 && aspectRatio <= 1.22) {
-    const side = (w + h) / 2;
-    const half = side / 2;
-    return [
-      { x: Math.round(cx - half), y: Math.round(cy - half) },
-      { x: Math.round(cx + half), y: Math.round(cy - half) },
-      { x: Math.round(cx + half), y: Math.round(cy + half) },
-      { x: Math.round(cx - half), y: Math.round(cy + half) },
-      { x: Math.round(cx - half), y: Math.round(cy - half) }
-    ];
-  }
-
-  // Standard Rectangle
-  return [
-    { x: Math.round(minX), y: Math.round(minY) },
-    { x: Math.round(maxX), y: Math.round(minY) },
-    { x: Math.round(maxX), y: Math.round(maxY) },
-    { x: Math.round(minX), y: Math.round(maxY) },
-    { x: Math.round(minX), y: Math.round(minY) }
-  ];
+  return bestTriangle;
 }
 
 function ramerDouglasPeucker(points: Point[], epsilon: number): Point[] {

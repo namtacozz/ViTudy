@@ -7,7 +7,26 @@ import { useViToken } from '@/context/ViTokenContext';
 import { askAi } from '@/lib/aiClient';
 import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
 import { normalizeNFC } from '@/utils/textNormalization';
-import { Trash2, Lightbulb, X, Send, Sparkles, Check, AlignLeft, AlignCenter, AlignRight, Copy } from 'lucide-react';
+import { 
+  Trash2, 
+  Lightbulb, 
+  X, 
+  Send, 
+  Sparkles, 
+  Check, 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight, 
+  Copy, 
+  Code2, 
+  Table as TableIcon, 
+  Network, 
+  BookmarkCheck, 
+  Trophy, 
+  CheckCircle2, 
+  Edit3, 
+  Eye 
+} from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
 
@@ -37,6 +56,8 @@ export function StickyNoteItemComponent({ item, isSelected }: StickyNoteItemProp
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(item.title || 'Note');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   useEffect(() => {
     setTitleInput(item.title || 'Note');
@@ -104,8 +125,8 @@ export function StickyNoteItemComponent({ item, isSelected }: StickyNoteItemProp
     itemX: item.x,
     itemY: item.y,
     rotation: item.rotation,
-    width: 220,
-    height: 200,
+    width: item.width || 220,
+    height: item.height || 200,
   });
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -219,6 +240,264 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
     return { size, leading };
   })();
 
+  // Rich format detectors
+  const trimmedText = text.trim();
+  const isCodeBlock = trimmedText.startsWith('```') && trimmedText.endsWith('```');
+  const isTable = trimmedText.includes('|') && trimmedText.split('\n').filter(l => l.trim().startsWith('|')).length >= 2;
+  const isMindMap = trimmedText.includes('[SƠ ĐỒ TƯ DUY]') || trimmedText.includes('├──') || trimmedText.includes('└──');
+  const isSticker = trimmedText.includes('[STICKER');
+  const isIllustration = trimmedText.includes('[MINH HỌA');
+  const hasRichView = isCodeBlock || isTable || isMindMap || isSticker || isIllustration;
+
+  const handleCopyCode = async (codeStr: string) => {
+    try {
+      await navigator.clipboard.writeText(codeStr);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {}
+  };
+
+  const renderCodeBlock = () => {
+    const rawLines = text.trim().split('\n');
+    let lang = 'CODE';
+    let codeLines = rawLines;
+    if (rawLines[0].startsWith('```')) {
+      lang = rawLines[0].replace(/```/, '').trim().toUpperCase() || 'PYTHON';
+      codeLines = rawLines.slice(1, rawLines[rawLines.length - 1].startsWith('```') ? -1 : undefined);
+    }
+    const codeString = codeLines.join('\n');
+
+    return (
+      <div 
+        onDoubleClick={() => setIsEditingContent(true)}
+        className="w-full h-full flex flex-col bg-slate-950 text-slate-100 rounded p-2.5 font-mono text-[11px] overflow-hidden select-text relative z-10 border border-slate-800 shadow-inner"
+      >
+        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 mb-1.5 text-[10px] text-slate-400 select-none">
+          <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-400">
+            <Code2 className="w-3.5 h-3.5" />
+            <span>{lang}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopyCode(codeString);
+              }}
+              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1 cursor-pointer transition-colors active:scale-95 text-[10px] font-semibold"
+            >
+              {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+              <span>{copiedCode ? 'Đã sao chép' : 'Sao chép'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingContent(true);
+              }}
+              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors text-[10px] font-semibold"
+            >
+              Sửa
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto space-y-0.5 font-mono leading-relaxed text-emerald-300/90 no-scrollbar">
+          {codeLines.map((line, idx) => (
+            <div key={idx} className="flex items-start gap-2">
+              <span className="text-slate-600 select-none text-[10px] w-4 text-right flex-shrink-0">{idx + 1}</span>
+              <span className="whitespace-pre-wrap break-all">{line}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderTable = () => {
+    const rawLines = text.trim().split('\n').filter(l => l.trim().startsWith('|'));
+    const cleanCells = (l: string) => l.split('|').slice(1, -1).map(c => c.trim());
+    const headers = cleanCells(rawLines[0]);
+    const dataLines = rawLines.slice(1).filter(l => !/^\|[\s\-:|]+\|$/.test(l.trim()));
+    const rows = dataLines.map(cleanCells);
+
+    return (
+      <div 
+        onDoubleClick={() => setIsEditingContent(true)}
+        className="w-full h-full flex flex-col bg-white/95 rounded p-2 text-xs overflow-hidden select-text relative z-10 border border-slate-200 shadow-xs"
+      >
+        <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-slate-200 text-[10px] text-slate-500 select-none">
+          <div className="flex items-center gap-1.5 font-bold text-slate-800">
+            <TableIcon className="w-3.5 h-3.5 text-[#E0562D]" />
+            <span>BẢNG DỮ LIỆU</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingContent(true);
+            }}
+            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer text-[10px]"
+          >
+            Sửa bảng
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto no-scrollbar">
+          <table className="w-full text-left border-collapse text-[11px]">
+            <thead>
+              <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                {headers.map((h, i) => (
+                  <th key={i} className="p-1.5 border border-slate-200">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rIdx) => (
+                <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} className="p-1.5 border border-slate-200 text-slate-800">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMindMap = () => {
+    const rawLines = text.trim().split('\n').filter(l => l.trim().length > 0);
+    let root = 'Chủ đề tư duy';
+    const branches: string[] = [];
+    for (const l of rawLines) {
+      if (l.includes('[SƠ ĐỒ TƯ DUY]')) continue;
+      if (l.startsWith('•') || l.startsWith('*') || l.startsWith('#')) {
+        root = l.replace(/^[•*#\s]+/, '').trim();
+      } else if (l.includes('├──') || l.includes('└──') || l.startsWith('-')) {
+        branches.push(l.replace(/^[├──└──\-\s]+/, '').trim());
+      } else if (branches.length === 0) {
+        root = l.trim();
+      } else {
+        branches.push(l.trim());
+      }
+    }
+
+    return (
+      <div 
+        onDoubleClick={() => setIsEditingContent(true)}
+        className="w-full h-full flex flex-col bg-sky-50/95 rounded p-2.5 text-xs overflow-hidden select-text relative z-10 border border-sky-200 shadow-xs"
+      >
+        <div className="flex items-center justify-between pb-1.5 border-b border-sky-200 mb-2 text-[10px] select-none">
+          <div className="flex items-center gap-1.5 font-bold text-sky-900">
+            <Network className="w-3.5 h-3.5 text-sky-600" />
+            <span>SƠ ĐỒ TƯ DUY</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingContent(true);
+            }}
+            className="px-2 py-0.5 rounded bg-sky-100 hover:bg-sky-200 text-sky-800 font-semibold cursor-pointer text-[10px]"
+          >
+            Sửa sơ đồ
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto space-y-2 text-[11.5px] no-scrollbar">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-600 text-white font-bold text-xs shadow-xs">
+            <span>{root}</span>
+          </div>
+          <div className="pl-3 border-l-2 border-sky-300 space-y-1.5 mt-1">
+            {branches.map((b, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sky-950 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>
+                <span className="bg-white/90 px-2 py-1 rounded-md border border-sky-200/80 shadow-2xs text-[11px] leading-tight">
+                  {b}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSticker = () => {
+    const rawLines = text.trim().split('\n').filter(l => l.trim().length > 0);
+    const title = rawLines[0].replace(/\[|\]/g, '').replace(/^STICKER\s*-\s*/i, '').trim();
+    const bullets = rawLines.slice(1).map(l => l.replace(/^[•*-\s]+/, '').trim()).filter(Boolean);
+
+    return (
+      <div 
+        onDoubleClick={() => setIsEditingContent(true)}
+        className="w-full h-full flex flex-col bg-amber-50/95 rounded p-2.5 text-xs overflow-hidden select-text relative z-10 border-2 border-amber-300 shadow-xs"
+      >
+        <div className="flex items-center justify-between pb-1.5 border-b border-amber-200 mb-2 select-none">
+          <div className="flex items-center gap-1.5 font-bold text-amber-900 text-[11px] tracking-wide">
+            <BookmarkCheck className="w-4 h-4 text-amber-600" />
+            <span>{title || 'ĐIỂM QUAN TRỌNG'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingContent(true);
+            }}
+            className="px-2 py-0.5 rounded bg-amber-200/80 hover:bg-amber-200 text-amber-900 font-semibold cursor-pointer text-[10px]"
+          >
+            Sửa
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto text-[11.5px] leading-relaxed text-amber-950 font-medium space-y-1.5 no-scrollbar">
+          {bullets.map((b, idx) => (
+            <div key={idx} className="flex items-start gap-1.5">
+              <span className="text-amber-600 font-bold">•</span>
+              <span>{b}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderIllustration = () => {
+    const rawLines = text.trim().split('\n').filter(l => l.trim().length > 0);
+    const title = rawLines[0].replace(/\[|\]/g, '').trim();
+    const bullets = rawLines.slice(1).map(l => l.replace(/^[•*-\s]+/, '').trim()).filter(Boolean);
+
+    return (
+      <div 
+        onDoubleClick={() => setIsEditingContent(true)}
+        className="w-full h-full flex flex-col bg-pink-50/95 rounded p-2.5 text-xs overflow-hidden select-text relative z-10 border-2 border-pink-300 shadow-xs"
+      >
+        <div className="flex items-center justify-between pb-1.5 border-b border-pink-200 mb-2 select-none">
+          <div className="flex items-center gap-1.5 font-bold text-pink-900 text-[11px] tracking-wide">
+            <Trophy className="w-4 h-4 text-pink-600" />
+            <span>{title || 'MINH HỌA HỌC TẬP'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingContent(true);
+            }}
+            className="px-2 py-0.5 rounded bg-pink-200/80 hover:bg-pink-200 text-pink-900 font-semibold cursor-pointer text-[10px]"
+          >
+            Sửa
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto text-[11.5px] leading-relaxed text-pink-950 font-medium space-y-1.5 no-scrollbar">
+          {bullets.map((b, idx) => (
+            <div key={idx} className="flex items-start gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-pink-500 flex-shrink-0 mt-0.5" />
+              <span>{b}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
       ref={noteRef}
@@ -258,27 +537,35 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         {/* In-Document Drawing Layer (strokes permanently attached to this note) */}
         <ItemDrawingOverlay itemId={item.id} />
 
-        <textarea
-          value={text}
-          onChange={handleTextChange}
-          onMouseUp={handleTextMouseUp}
-          placeholder="Ghi chú..."
-          spellCheck={false}
-          style={{ 
-            textRendering: 'geometricPrecision', 
-            WebkitFontSmoothing: 'antialiased',
-            fontSize: `${dynamicFont.size}px`,
-            fontWeight: isBold ? 800 : 500,
-            WebkitTextStroke: isBold ? '0.35px currentColor' : '0px transparent',
-            textAlign: textAlign,
-          }}
-          className={`w-full h-full bg-transparent resize-none outline-none ${
-            isBold ? 'font-bold' : 'font-medium'
-          } ${
-            textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'
-          } text-stone-950 placeholder:text-stone-400 placeholder:italic font-sans selection:bg-amber-300 selection:text-stone-950 no-scrollbar cursor-text overflow-hidden relative z-10 ${dynamicFont.leading}`}
-          onMouseDown={(e) => e.stopPropagation()}
-        />
+        {hasRichView && !isEditingContent ? (
+          isCodeBlock ? renderCodeBlock() :
+          isTable ? renderTable() :
+          isMindMap ? renderMindMap() :
+          isSticker ? renderSticker() :
+          renderIllustration()
+        ) : (
+          <textarea
+            value={text}
+            onChange={handleTextChange}
+            onMouseUp={handleTextMouseUp}
+            placeholder="Ghi chú..."
+            spellCheck={false}
+            style={{ 
+              textRendering: 'geometricPrecision', 
+              WebkitFontSmoothing: 'antialiased',
+              fontSize: `${dynamicFont.size}px`,
+              fontWeight: isBold ? 800 : 500,
+              WebkitTextStroke: isBold ? '0.35px currentColor' : '0px transparent',
+              textAlign: textAlign,
+            }}
+            className={`w-full h-full bg-transparent resize-none outline-none ${
+              isBold ? 'font-bold' : 'font-medium'
+            } ${
+              textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'
+            } text-stone-950 placeholder:text-stone-400 placeholder:italic font-sans selection:bg-amber-300 selection:text-stone-950 no-scrollbar cursor-text overflow-hidden relative z-10 ${dynamicFont.leading}`}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+        )}
 
         {/* Footer (Drag handle: Editable Note name, Expand Toggle & Character count) */}
         <div 
@@ -317,6 +604,29 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
           )}
 
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {hasRichView && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingContent(!isEditingContent);
+                }}
+                title={isEditingContent ? 'Xem dạng trực quan' : 'Chỉnh sửa văn bản'}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/5 hover:bg-black/10 text-stone-800 font-bold text-[10px] cursor-pointer transition-colors"
+              >
+                {isEditingContent ? (
+                  <>
+                    <Eye className="w-3 h-3 text-slate-700" />
+                    <span>Xem</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="w-3 h-3 text-slate-700" />
+                    <span>Sửa</span>
+                  </>
+                )}
+              </button>
+            )}
             <button
               type="button"
               onClick={(e) => {

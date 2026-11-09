@@ -11,7 +11,7 @@ describe('PaymentService', () => {
       accountName: 'NGUYEN VAN A',
     });
 
-    expect(url).toContain('https://img.vietqr.io/image/MBBank-0987654321-compact2.png');
+    expect(url).toContain('https://img.vietqr.io/image/MB-0987654321-compact2.png');
     expect(url).toContain('amount=10000');
     expect(url).toContain('addInfo=VT7K2M9QXA');
     expect(url).toContain('accountName=NGUYEN%20VAN%20A');

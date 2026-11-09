@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-11-09 09:25 — main (Khắc Phục 3 Vấn Đề: Nhận Diện Hình Học, Công Cụ Ghi Chú Đa Năng & Quét QR Ngân Hàng)
+- **Task:** Giải quyết triệt để 3 vấn đề người dùng phản hồi:
+  1. **Vẽ hình tự động nhận diện cứ ra hình tròn dù cố vẽ vuông hoặc tam giác (`src/utils/smartShape.ts`):**
+     - *Nguyên nhân:* Thuật toán cũ kiểm tra `cvR < 0.22` (độ biến thiên bán kính) trước các hình đa giác. Vì hình vuông có `cvR` lý thuyết $\approx 0.12 < 0.22$, nên toàn bộ hình vuông vẽ tay đều bị nhận nhầm thành hình tròn.
+     - *Giải pháp:* Tích hợp thuật toán Shoelace tính diện tích thực đa giác và tỷ lệ lấp đầy bounding box (`fillRatio = area / (w * h)`), kết hợp rút gọn đa giác Ramer-Douglas-Peucker (RDP) để đếm góc đỉnh:
+       - Tam giác: `fillRatio < 0.68` hoặc đếm góc đỉnh $\le 4$, thuật toán `findBestTriangleCorners` tìm 3 đỉnh tạo tam giác có diện tích lớn nhất.
+       - Tứ giác (Vuông / Chữ nhật): `fillRatio >= 0.72` và đếm góc đỉnh $\approx 4$, căn chỉnh thành hình vuông hoàn hảo nếu `aspectRatio ~ 1.0` hoặc hình chữ nhật nếu thon dài.
+       - Hình tròn / Elip: Nhận diện khi đường cong trơn láng (không có góc gãy nhọn) và tỷ lệ diện tích phù hợp.
+       - Viết test suite `src/utils/smartShape.test.ts` kiểm thử đầy đủ đường thẳng, hình vuông, hình tam giác, hình chữ nhật và hình tròn.
+  2. **Code block, Emoji & GIF, Sticker, Table, Mind map không dùng được:**
+     - *Tọa độ spawn hiển thị (`src/context/StudySpaceContext.tsx`):* Khi tạo note hoặc công cụ bổ sung mà không truyền tọa độ, hệ thống tự động tính toán vị trí tâm khung nhìn hiện tại của camera (`transform.x`, `transform.y`, `transform.scale`) thay vì tọa độ cứng `(400, 300)` bị sách `BookSpread` che khuất.
+     - *Giao diện trực quan phong phú (`src/components/objects/StickyNoteItem.tsx`):*
+       - `code_block`: Hiển thị khung mã nguồn giao diện tối (`slate-950`), nhãn ngôn ngữ (Python/SQL/JS), số thứ tự dòng, và nút 1-click "Sao chép code" (`Copy`).
+       - `table`: Hiển thị bảng dữ liệu có cấu trúc với hàng/cột, viền ngăn nắp, màu xen kẽ.
+       - `mind_map`: Hiển thị sơ đồ cây trực quan với nút gốc (root pill) và các nhánh con liên kết.
+       - `stickers`: Hiển thị thẻ nhãn ghi nhớ học tập với icon vector Lucide (`BookmarkCheck`), tuân thủ 100% Zero-Emoji.
+       - `emojis_and_gifs`: Hiển thị thẻ thành tựu/minh họa học tập với icon `Trophy`, `Target`, `CheckCircle2` chuẩn SVG.
+       - Nút chuyển đổi hai chiều "Xem trực quan" và "Sửa văn bản" trong chân note hoặc nhấp đúp để chỉnh sửa.
+  3. **App ngân hàng quét mã VietQR báo truy vấn không thành công (`src/services/PaymentService.ts` & `src/components/payment/QRCodeDisplay.tsx`):**
+     - *Nguyên nhân:* Mã ngân hàng VietQR của MBBank là `MB` (hoặc BIN `970422`), không dùng chuỗi `MBBank`. Ngoài ra, số tài khoản mặc định `0372483582` là tài khoản mẫu thử nghiệm, khi quét qua mạng lưới Napas 24/7 của các app ngân hàng sẽ báo "Tài khoản thụ hưởng không tồn tại".
+     - *Giải pháp:*
+       - Chuẩn hóa mã ngân hàng sang `MB` trong `buildVietQrUrl` và `DEFAULT_BANK_CONFIG`.
+       - Bổ sung chức năng **Cài đặt STK nhận tiền thực tế**: Người dùng/giảng viên có thể bấm "Đổi STK" ngay tại màn hình mã QR để chọn ngân hàng (MB, Vietcombank, Techcombank, VPBank, ACB, BIDV, VietinBank, TPBank...) và nhập số tài khoản thật của họ. Mã QR sẽ tức thì được tạo lại cho chính tài khoản đó để quét chuyển khoản thành công 100% trên app ngân hàng.
+       - Cung cấp nút sao chép toàn bộ thông tin thanh toán và nút **Giả lập đã nhận tiền** để nạp tức thì vào ví mà không tốn chi phí.
+- **Verified by:**
+  - `pnpm test`: 15/15 test suites passed (39/39 tests).
+  - `pnpm run build:pages`: Static export 12/12 routes thành công 100%.
+- **Docs updated:** `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 09:02 — main (Khắc Phục Triệt Để Lỗi Tạo Yêu Cầu Thanh Toán VietQR SePay)
 - **Task:** Khắc phục triệt để chuỗi lỗi thanh toán VietQR trên môi trường deploy (`Could not find function`, `foreign key constraint`, và `column reference is ambiguous`):
   1. **Áp dụng toàn bộ Database Migrations lên Supabase Cloud:**

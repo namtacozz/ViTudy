@@ -125,23 +125,23 @@ export function LeftCreationBar() {
       return;
     }
     if (toolId === 'code_block') {
-      addStickyNote('```python\n# ViTudy Code Block\ndef calculate_gradient(w, x, b):\n    return w * x + b\n```', undefined, undefined, '#f1f5f9', 260, 220);
+      addStickyNote('```python\n# ViTudy Code Block\ndef calculate_gradient(w, x, b):\n    return w * x + b\n```', undefined, undefined, '#1e293b', 320, 240);
       return;
     }
     if (toolId === 'table') {
-      addStickyNote('| Mục tiêu | Trọng số | Tiến độ |\n|----------|----------|---------|\n| Giải tích | 40%      | Đang ôn |\n| Đại số    | 30%      | Đã xong |', undefined, undefined, '#f1f5f9', 280, 220);
+      addStickyNote('| Mục tiêu | Trọng số | Tiến độ |\n|----------|----------|---------|\n| Giải tích | 40%      | Đang ôn |\n| Đại số    | 30%      | Đã xong |', undefined, undefined, '#f8fafc', 340, 220);
       return;
     }
     if (toolId === 'mind_map') {
-      addStickyNote('[SƠ ĐỒ TƯ DUY]\n• Chủ đề cốt lõi\n  ├── Nhánh 1: Cơ sở lý thuyết\n  ├── Nhánh 2: Công thức chính\n  └── Nhánh 3: Bài tập áp dụng', undefined, undefined, '#bae6fd', 260, 220);
+      addStickyNote('[SƠ ĐỒ TƯ DUY]\n• Giải tích 1\n  ├── Giới hạn & Đạo hàm\n  ├── Tích phân suy rộng\n  └── Chuỗi số & Chuỗi hàm', undefined, undefined, '#f0f9ff', 340, 260);
       return;
     }
     if (toolId === 'stickers') {
-      addStickyNote('⭐ [STICKER - ĐIỂM QUAN TRỌNG]\nCần lưu ý công thức này trước kỳ thi giữa kỳ!', undefined, undefined, '#fef08a', 220, 180);
+      addStickyNote('[STICKER - ĐIỂM QUAN TRỌNG]\n• Công thức trọng tâm thi giữa kỳ\n• Xem lại chương 2 trước ngày thi\n• Đã hoàn thành bài tập nhóm', undefined, undefined, '#fef9c3', 280, 220);
       return;
     }
     if (toolId === 'emojis_and_gifs') {
-      addStickyNote('✨ [MINH HỌA HỌC TẬP]\n(っ•ᴗ•)っ Tuyệt vời! Bạn đã hoàn thành 100% mục tiêu hôm nay.', undefined, undefined, '#fbcfe8', 220, 180);
+      addStickyNote('[MINH HỌA HỌC TẬP]\n• Hoàn thành mục tiêu học tập hôm nay!\n• Đã giải xong 5 bài tập đạo hàm\n• Tiếp tục duy trì chuỗi học tập', undefined, undefined, '#fdf2f8', 280, 220);
       return;
     }
   };

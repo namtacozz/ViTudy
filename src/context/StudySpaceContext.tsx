@@ -904,14 +904,32 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     );
   };
 
-  const addStickyNote = (text = '', x = 400, y = 300, color = '#fef08a', width?: number, height?: number): string => {
+  const addStickyNote = (text = '', x?: number, y?: number, color = '#fef08a', width?: number, height?: number): string => {
     const noteId = `sticky-${Date.now()}`;
+    const w = width || 220;
+    const h = height || 200;
+
+    let targetX = x;
+    let targetY = y;
+
+    if (targetX === undefined || targetY === undefined) {
+      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const curScale = transform.scale || 1;
+      const centerX = (-transform.x + (viewW / 2)) / curScale - (w / 2);
+      const centerY = (-transform.y + (viewH / 2)) / curScale - (h / 2);
+      const jitterX = Math.round(Math.random() * 40 - 20);
+      const jitterY = Math.round(Math.random() * 40 - 20);
+      targetX = Math.round(centerX + jitterX);
+      targetY = Math.round(centerY + jitterY);
+    }
+
     const newNote: DeskItem = {
       id: noteId,
       type: 'sticky_note',
       title: 'Ghi chú',
-      x,
-      y,
+      x: targetX,
+      y: targetY,
       rotation: 0,
       scale: 1,
       zIndex: maxZIndex + 1,
@@ -920,8 +938,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       stickyColor: color,
       stickyText: normalizeNFC(text),
       pages: [],
-      width: width || 220,
-      height: height || 200
+      width: w,
+      height: h
     };
 
     setSpaces(sList =>
