@@ -4,7 +4,41 @@
 
 ---
 
-## 2026-11-09 11:35 — main (Khắc Phục 6 Vấn Đề: Bút Vẽ Realtime Trong Tài Liệu, Kéo Vật Thể Không Lệch View, Smart Shape Chính Xác, Đưa MultiplayerBar Xuống Dưới & Resize Sticker)
+## 2026-11-09 11:50 — main (Khắc Phục Mờ Chữ/GIF Khi Zoom, Tích Hợp Live GIPHY API, Kho Emoji & Sticker Chuẩn Miro, Tích Hợp Ghi Hình Màn Hình Vào Menu Dấu Cộng)
+- **Task:** Giải quyết triệt để 4 yêu cầu của người dùng:
+  1. **Triệt tiêu hoàn toàn mờ chữ & mờ ảnh GIF ở mọi mức zoom cho các vật thể dấu `+` (`CodeBlockItem`, `MindMapNodeItem`, `StickerItem`):**
+     - *Nguyên nhân:* Trong container bàn học có CSS `transform: scale(...)`, việc các phần tử con có `transition: all`, `transition: shadow`, hoặc CSS filter `drop-shadow(...)` kết hợp `overflow: hidden` khiến Chromium cô lập thành một raster bitmap 1x; khi zoom lên 200% - 400%, trình duyệt chỉ upscale bitmap thay vì re-rasterize vector glyphs, làm chữ bị mờ hạt và vỡ nét.
+     - *Khắc phục:*
+       - Loại bỏ toàn bộ `transition-all`, `transition-shadow`, `drop-shadow` trên `CodeBlockItem`, `MindMapNodeItem`, `StickerItem`.
+       - Thêm thuộc tính `textRendering: 'geometricPrecision'`, `WebkitFontSmoothing: 'antialiased'`, `MozOsxFontSmoothing: 'grayscale'` trên cả container và textarea/input.
+       - Với Sticker SVG: Sử dụng class `[&>svg]:w-full [&>svg]:h-full` đảm bảo vector render 100% sắc nét ở mọi kích thước. Với Emoji: cỡ chữ tính trực tiếp theo bounding box `Math.round(min(w, h) * 0.72)px`.
+  2. **Kết nối trực tiếp GIPHY Trực Tuyến Thời Gian Thực (`GiphyService`):**
+     - Xây dựng `src/services/GiphyService.ts` kết nối trực tiếp API tìm kiếm và trending của GIPHY với debounce 350ms.
+     - Tự động lấy ảnh động `original.url` chất lượng cao, giữ chuẩn tỷ lệ khung hình thật (`aspectRatio`) và đặt kích thước mặc định 260px khi dán lên bàn học.
+     - Tạo `src/services/GiphyService.test.ts` kiểm thử toàn diện việc ánh xạ dữ liệu và xử lý lỗi mạng.
+  3. **Mở rộng kho Emoji & Sticker chuẩn phong cách Miro:**
+     - Xây dựng `src/data/stickersAndEmojis.ts` với đầy đủ 8 danh mục Miro Emoji (`people`, `nature`, `food`, `activities`, `travel`, `objects`, `symbols`, `flags`), thanh category icon (`🕒`, `😀`, `🌿`, `🍔`, `⚽`, `🚌`, `💡`, `💖`, `🚩`) và hơn 200 emoji.
+     - Bổ sung bộ sưu tập Sticker vector Funky Lines (Apple with worm, Retro boombox, Ladybug, Cap, Cat in box, Pixel laptop, Crystal ball, Dumpster fire, House, Popsicle, Secret lock, Happy pencil, v.v.), Học tập & Công việc, Biểu cảm năng lượng chuẩn phong cách Miro.
+  4. **Tích hợp tính năng Ghi Hình Màn Hình vào menu Dấu Cộng (`LeftCreationBar`):**
+     - Thêm công cụ `screen_record` ("Record screen") vào danh sách `extraTools` trong menu `+`.
+     - Nhấp chọn sẽ kích hoạt ngay modal ghi hình bài giảng/học tập (`vitudy:open-record-modal`).
+- **Files Modified/Created:**
+  - `src/data/stickersAndEmojis.ts`: Danh mục Miro Emoji & Sticker phong phú.
+  - `src/services/GiphyService.ts` & `src/services/GiphyService.test.ts`: Live Giphy API client & unit tests.
+  - `src/components/hud/StickerEmojiPickerFlyout.tsx`: Nâng cấp giao diện tìm kiếm Live Giphy & danh mục Miro.
+  - `src/components/objects/CodeBlockItem.tsx`: Loại bỏ layer compositing mờ, thêm geometricPrecision.
+  - `src/components/objects/MindMapNodeItem.tsx`: Loại bỏ transition-all, thêm crisp vector rendering.
+  - `src/components/objects/StickerItem.tsx`: Loại bỏ drop-shadow filter, tối ưu vector SVG scaling.
+  - `src/context/StudySpaceContext.tsx` & `src/components/canvas/DeskDrawingInteractionLayer.tsx`: Hỗ trợ kích thước tùy biến khi dán sticker/gif.
+  - `src/components/hud/LeftCreationBar.tsx` & `src/components/hud/BottomLeftKnowledge.tsx`: Tích hợp `screen_record`.
+  - `AGENTS.md`: Cập nhật quy chuẩn kỹ thuật.
+- **Verified by:**
+  - `pnpm test`: 16/16 test suites passed (44/44 tests pass 100%).
+  - `pnpm run docs:index ; pnpm run docs:check`: Pass.
+  - `pnpm run build:pages`: Export static Next.js 15 thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+
 - **Task:** Giải quyết triệt để 6 yêu cầu kỹ thuật & UX từ người dùng:
   1. **Bút vẽ trong tài liệu bị delay & lệch tọa độ:**
      - *Nguyên nhân delay:* `currentStroke` chỉ nằm ở `DeskDrawingCanvas` (`z-25`) trong container bàn học, nên khi vẽ trên sách hay tài liệu (có nền trắng và z-index cao hơn), nét vẽ bị che khuất trong suốt quá trình kéo chuột; chỉ khi nhả chuột (`finishStroke`) nét mới được chuyển sang `ItemDrawingOverlay` khiến nét vẽ bị giật delay.

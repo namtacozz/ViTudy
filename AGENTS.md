@@ -131,6 +131,19 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Tam giác:** Bắt buộc `fillRatio <= 0.62` kèm 3 góc nhọn. Mọi hình có `fillRatio > 0.62` không bao giờ bị nhận diện nhầm thành tam giác.
     * **Hình vuông / Chữ nhật:** Bắt buộc `fillRatio >= 0.63` và có ít nhất 2 góc vuông nhọn (`sharpCorners >= 2` hoặc `cornerCount === 4`). Tỷ lệ `aspectRatio in [0.70, 1.42]` ra hình vuông hoàn hảo, ngoài dải này ra hình chữ nhật.
     * **Hình tròn / Elip:** Nét cong trơn mượt (`sharpCorners <= 1`). `aspectRatio in [0.65, 1.55]` ra hình tròn, còn lại ra elip. Ngăn chặn 100% việc vẽ hình vuông bị nhận diện nhầm thành hình tròn hoặc tam giác.
+  * **Triệt Tiêu Mờ Chữ & Ảnh GIF Khi Phóng To Bàn Học (Crisp Typography & High-Def Media at All Zooms):**
+    * **Nguyên nhân gốc rễ:** Trong container có `transform: scale(...)`, việc sử dụng `transition: all`, `transition: shadow`, hoặc CSS filter `drop-shadow(...)` khiến Chromium cô lập phần tử thành một composited bitmap layer cố định ở tỷ lệ 1x, khi phóng to lên 200% - 400% trình duyệt chỉ kéo dãn ảnh bitmap thay vì re-rasterize vector glyphs, dẫn đến mờ chữ và nhòe hình.
+    * **Giải pháp dứt điểm:**
+      * Loại bỏ triệt để `transition-all`, `transition-shadow`, và `drop-shadow` trên `CodeBlockItem`, `MindMapNodeItem`, `StickerItem`.
+      * Bổ sung `textRendering: 'geometricPrecision'`, `WebkitFontSmoothing: 'antialiased'` và `MozOsxFontSmoothing: 'grayscale'` trên toàn bộ container, input và textarea.
+      * Sticker SVG luôn render ở độ phân giải gốc 100% (`[&>svg]:w-full [&>svg]:h-full`), Emojis tính toán cỡ chữ trực tiếp theo bounding box `Math.round(min(w, h) * 0.72)px`.
+      * Tích hợp tìm kiếm **GIPHY Trực Tuyến Thời Gian Thực** (`GiphyService`), kéo ảnh động `original.url` chất lượng cao với tỷ lệ chuẩn và kích thước mặc định 260px, loại bỏ nhòe ảnh GIF.
+  * **Kho Emoji & Sticker Đa Dạng Chuẩn Miro (`StickerEmojiPickerFlyout`):**
+    * **Emoji Miro:** Bảng điều khiển phân loại 8 danh mục (`people`, `nature`, `food`, `activities`, `travel`, `objects`, `symbols`, `flags`) với thanh icon chọn danh mục chuẩn Miro (`🕒`, `😀`, `🌿`, `🍔`, `⚽`, `🚌`, `💡`, `💖`, `🚩`) cùng hơn 200 emoji phổ biến.
+    * **Sticker Miro:** Tích hợp bộ sưu tập sticker vector Funky Lines (Quả táo sâu ngộ nghĩnh, Boombox retro, Bọ rùa, Mũ lưỡi trai, Mèo trong hộp, Laptop pixel, Quả cầu pha lê, v.v.), Học tập & Công việc, Biểu cảm năng lượng chuẩn phong cách Miro.
+  * **Tích Hợp Ghi Màn Hình Vào Menu Dấu Cộng (`LeftCreationBar`):**
+    * Đưa tính năng Ghi hình màn hình (`screen_record`) trực tiếp vào menu mở rộng `extraTools` của nút dấu cộng `+`.
+    * Khi click chọn, hệ thống dispatch sự kiện `vitudy:open-record-modal`, mở ngay modal ghi hình bài giảng/học tập mà không cần thao tác qua menu phức tạp khác.
 
 ---
 

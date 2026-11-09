@@ -238,7 +238,7 @@ export function DeskDrawingInteractionLayer() {
         } else if (template?.itemType === 'mind_map') {
           addMindMapNode(template.text || '', finalX, finalY, undefined, template.mindMapColor || '#a855f7');
         } else if (template?.itemType === 'sticker' && template.stickerData) {
-          addSticker(template.stickerData, finalX, finalY);
+          addSticker(template.stickerData, finalX, finalY, finalW, finalH);
         } else {
           addStickyNote(noteText, finalX, finalY, noteColor, finalW, finalH);
         }

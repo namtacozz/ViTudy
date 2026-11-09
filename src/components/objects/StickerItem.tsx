@@ -120,28 +120,37 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
 
       {/* Visual outline on hover/select */}
       <div
-        className={`w-full h-full flex items-center justify-center p-1 rounded-2xl transition-all ${
+        className={`w-full h-full flex items-center justify-center p-1 rounded-2xl ${
           isSelected
             ? 'border-2 border-dashed border-indigo-500 bg-indigo-50/15'
             : 'group-hover:border group-hover:border-dashed group-hover:border-slate-300'
         }`}
       >
-        {/* Render Emoji SVG / Image URL / Text Content */}
+        {/* Render High-Res Image / Animated GIF / Vector SVG / Unicode Emoji */}
         {sticker?.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={sticker.url}
             alt={sticker.name || 'sticker'}
-            className="w-full h-full object-contain pointer-events-none drop-shadow-sm select-none"
+            className="w-full h-full object-contain pointer-events-none select-none"
+            style={{ imageRendering: 'auto' }}
             draggable={false}
           />
         ) : sticker?.isSvg ? (
           <div
-            className="w-full h-full flex items-center justify-center drop-shadow-sm pointer-events-none select-none"
+            className="w-full h-full flex items-center justify-center pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
             dangerouslySetInnerHTML={{ __html: sticker.content }}
           />
         ) : (
-          <div className="text-5xl select-none filter drop-shadow-sm">
+          <div 
+            style={{ 
+              fontSize: `${Math.round(Math.min(width, height) * 0.72)}px`,
+              lineHeight: 1,
+              textRendering: 'geometricPrecision',
+              WebkitFontSmoothing: 'antialiased'
+            }}
+            className="select-none flex items-center justify-center"
+          >
             {sticker?.content || '⭐'}
           </div>
         )}

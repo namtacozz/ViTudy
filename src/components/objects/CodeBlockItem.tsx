@@ -97,9 +97,12 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
         transform: `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${item.rotation}deg)`,
         transformOrigin: '0 0',
         zIndex: isSelected ? 50 : item.zIndex || 10,
-        width: item.width || 480
+        width: item.width || 480,
+        textRendering: 'geometricPrecision',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale'
       }}
-      className={`absolute select-none transition-shadow ${
+      className={`absolute select-none ${
         isDragging ? 'cursor-grabbing' : 'cursor-default'
       }`}
     >
@@ -112,7 +115,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
         }}
         className="flex items-center justify-between px-1 mb-1.5 select-none cursor-grab active:cursor-grabbing"
       >
-        <span className="text-slate-600 font-medium text-sm tracking-tight">
+        <span className="text-slate-600 font-semibold text-sm tracking-tight" style={{ textRendering: 'geometricPrecision' }}>
           Code block
         </span>
 
@@ -143,15 +146,22 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
         </div>
       </div>
 
-      {/* Code Editor Container: Deep Navy/Black Background matching Image 3 */}
+      {/* Code Editor Container: Deep Navy/Black Background matching Image 3 (Crisp vector rendering without layer blur) */}
       <div
-        className={`relative rounded-xl overflow-hidden shadow-lg border transition-all ${
-          isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-800/80 hover:border-slate-700'
+        style={{
+          textRendering: 'geometricPrecision',
+          WebkitFontSmoothing: 'antialiased'
+        }}
+        className={`relative rounded-xl border ${
+          isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-slate-800/90 hover:border-slate-700'
         } bg-[#060b1c]`}
       >
         <div className="flex py-3.5 px-3">
           {/* Line Numbers Column */}
-          <div className="flex flex-col select-none text-right pr-3.5 border-r border-slate-800/70 text-slate-500 font-mono text-xs md:text-sm leading-6">
+          <div 
+            style={{ textRendering: 'geometricPrecision' }}
+            className="flex flex-col select-none text-right pr-3.5 border-r border-slate-800/70 text-slate-500 font-mono text-xs md:text-sm leading-6"
+          >
             {lineNumbers.map((num) => (
               <span key={num} className="block select-none opacity-60">
                 {num}
@@ -173,7 +183,14 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
               autoComplete="off"
               autoCorrect="off"
               placeholder="Nhập mã nguồn..."
-              className="w-full bg-transparent text-slate-100 font-mono text-xs md:text-sm leading-6 outline-none resize-none overflow-hidden placeholder-slate-600 cursor-text"
+              style={{
+                textRendering: 'geometricPrecision',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                fontSize: '13.5px',
+                lineHeight: '24px'
+              }}
+              className="w-full bg-transparent text-slate-100 font-mono outline-none resize-none overflow-hidden placeholder-slate-600 cursor-text"
               rows={lineCount}
             />
           </div>

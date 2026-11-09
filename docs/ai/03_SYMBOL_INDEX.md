@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `ae60feb`  
+> **Commit Hash:** `8818d30`  
 > **Cập nhật lần cuối:** `2026-11-09`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -30,13 +30,13 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `BOOK_COVER_PRESETS` | `component` | [src/components/objects/BookSpread.tsx:L39-L80](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `BookSpread` | `component` | [src/components/objects/BookSpread.tsx:L1067-L1067](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Mô phỏng cuốn sách mở 2.5D, phân trang động DOM, bìa cứng, gờ gáy và popover Inteline |
 | `BookSpreadComponent` | `component` | [src/components/objects/BookSpread.tsx:L82-L1065](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `CodeBlockItem` | `component` | [src/components/objects/CodeBlockItem.tsx:L15-L184](file:///F:/AppMaking/ViTudy/src/components/objects/CodeBlockItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `CodeBlockItem` | `component` | [src/components/objects/CodeBlockItem.tsx:L15-L201](file:///F:/AppMaking/ViTudy/src/components/objects/CodeBlockItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `ExamQuizCard` | `component` | [src/components/objects/ExamQuizCard.tsx:L750-L750](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `ExamQuizCardComponent` | `component` | [src/components/objects/ExamQuizCard.tsx:L46-L748](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `MindMapNodeItem` | `component` | [src/components/objects/MindMapNodeItem.tsx:L24-L290](file:///F:/AppMaking/ViTudy/src/components/objects/MindMapNodeItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `MindMapNodeItem` | `component` | [src/components/objects/MindMapNodeItem.tsx:L24-L302](file:///F:/AppMaking/ViTudy/src/components/objects/MindMapNodeItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `PaperSheet` | `component` | [src/components/objects/PaperSheet.tsx:L749-L749](file:///F:/AppMaking/ViTudy/src/components/objects/PaperSheet.tsx) | Mô phỏng tờ giấy A4/ghi chép đơn lẻ 2.5D với độ xoay tự do và texture giấy |
 | `PaperSheetComponent` | `component` | [src/components/objects/PaperSheet.tsx:L41-L747](file:///F:/AppMaking/ViTudy/src/components/objects/PaperSheet.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `StickerItem` | `component` | [src/components/objects/StickerItem.tsx:L15-L160](file:///F:/AppMaking/ViTudy/src/components/objects/StickerItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `StickerItem` | `component` | [src/components/objects/StickerItem.tsx:L15-L169](file:///F:/AppMaking/ViTudy/src/components/objects/StickerItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `StickyNoteItem` | `component` | [src/components/objects/StickyNoteItem.tsx:L906-L906](file:///F:/AppMaking/ViTudy/src/components/objects/StickyNoteItem.tsx) | Giấy ghi chú dán bàn học (Patrick Hand font, NFC normalized, xoay 360°) |
 | `StickyNoteItemComponent` | `component` | [src/components/objects/StickyNoteItem.tsx:L38-L904](file:///F:/AppMaking/ViTudy/src/components/objects/StickyNoteItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 
@@ -44,16 +44,12 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
-| `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L36-L784](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
+| `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L36-L790](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
 | `BottomRightToolkit` | `component` | [src/components/hud/BottomRightToolkit.tsx:L17-L202](file:///F:/AppMaking/ViTudy/src/components/hud/BottomRightToolkit.tsx) | HUD góc dưới-phải: công cụ bút dạ quang, tạo note, khoá góc nhìn, zoom 100% |
-| `EMOJI_ITEMS` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L16-L108](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `GIF_ITEMS` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L150-L179](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `InviteModal` | `component` | [src/components/hud/InviteModal.tsx:L13-L125](file:///F:/AppMaking/ViTudy/src/components/hud/InviteModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L29-L531](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
+| `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L30-L544](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L22-L359](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
-| `STICKER_ITEMS` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L111-L147](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L187-L319](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `StickerPickerItem` | `type` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L6-L13](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
+| `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L20-L358](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L25-L352](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
 | `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L59-L826](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
 | `VrFrameOverlay` | `component` | [src/components/hud/VrFrameOverlay.tsx:L5-L15](file:///F:/AppMaking/ViTudy/src/components/hud/VrFrameOverlay.tsx) | Khung viền 4 góc và nhãn chế độ "Không gian học 2.5D" phong cách VR HUD |
@@ -84,10 +80,10 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `AuthResult` | `type` | [src/context/AuthContext.tsx:L18-L21](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `AuthStatus` | `type` | [src/context/AuthContext.tsx:L8-L8](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `CreationPlacementTemplate` | `type` | [src/context/StudySpaceContext.tsx:L11-L30](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L136-L1501](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
+| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L142-L1509](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
 | `useAuth` | `hook` | [src/context/AuthContext.tsx:L279-L285](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `UserProfile` | `type` | [src/context/AuthContext.tsx:L10-L16](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L1503-L1509](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
+| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L1511-L1517](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
 | `useViToken` | `hook` | [src/context/ViTokenContext.tsx:L283-L289](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Hook quản lý ví ViToken, chi tiêu token, điểm danh streak và cấu hình AI |
 | `ViTokenProvider` | `context` | [src/context/ViTokenContext.tsx:L46-L281](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Provider lưu trữ và đồng bộ ví ViToken, lịch sử giao dịch vào localStorage |
 
@@ -158,6 +154,8 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `DeskItem` | `type` | [src/types/studyspace.ts:L37-L73](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `deskItemToRow` | `fn` | [src/services/StudySpaceService.ts:L8-L44](file:///F:/AppMaking/ViTudy/src/services/StudySpaceService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `DrawingStroke` | `type` | [src/types/studyspace.ts:L107-L114](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `EMOJI_CATEGORIES` | `component` | [src/data/stickersAndEmojis.ts:L30-L290](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `EmojiCategory` | `type` | [src/data/stickersAndEmojis.ts:L13-L18](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamAttemptPayload` | `type` | [src/services/ActivityService.ts:L3-L8](file:///F:/AppMaking/ViTudy/src/services/ActivityService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamQuestion` | `type` | [src/types/studyspace.ts:L17-L24](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamSheetData` | `type` | [src/types/studyspace.ts:L26-L35](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -204,6 +202,9 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `rowToDeskItem` | `fn` | [src/services/StudySpaceService.ts:L46-L77](file:///F:/AppMaking/ViTudy/src/services/StudySpaceService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `saveEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L55-L57](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `SiteFooter` | `component` | [src/components/common/SiteFooter.tsx:L7-L56](file:///F:/AppMaking/ViTudy/src/components/common/SiteFooter.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `STICKER_CATEGORIES` | `component` | [src/data/stickersAndEmojis.ts:L295-L488](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StickerCategory` | `type` | [src/data/stickersAndEmojis.ts:L20-L25](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StickerPickerItem` | `type` | [src/data/stickersAndEmojis.ts:L1-L11](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `StreakCalendar` | `component` | [src/components/dashboard/StreakCalendar.tsx:L10-L76](file:///F:/AppMaking/ViTudy/src/components/dashboard/StreakCalendar.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudySpace` | `type` | [src/types/studyspace.ts:L87-L96](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudySpacePage` | `component` | [src/app/page.tsx:L18-L103](file:///F:/AppMaking/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |

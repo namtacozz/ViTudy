@@ -87,7 +87,13 @@ interface StudySpaceContextType {
   setStickyCreationTemplate: (template: CreationPlacementTemplate | null) => void;
   addCodeBlock: (snippet?: string, x?: number, y?: number, language?: string) => string;
   addMindMapNode: (text?: string, x?: number, y?: number, parentId?: string, color?: string) => string;
-  addSticker: (sticker: { type: 'emoji' | 'sticker' | 'gif'; name: string; content: string; url?: string; isSvg?: boolean }, x?: number, y?: number) => string;
+  addSticker: (
+    sticker: { type: 'emoji' | 'sticker' | 'gif'; name: string; content: string; url?: string; isSvg?: boolean; width?: number; height?: number },
+    x?: number,
+    y?: number,
+    customWidth?: number,
+    customHeight?: number
+  ) => string;
   updateCodeBlock: (id: string, snippet: string, language?: string) => void;
   updateMindMapNode: (id: string, text: string, color?: string, shape?: 'pill' | 'rectangle' | 'cloud') => void;
   strokes: import('@/types/studyspace').DrawingStroke[];
@@ -1084,13 +1090,15 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const addSticker = (
-    sticker: { type: 'emoji' | 'sticker' | 'gif'; name: string; content: string; url?: string; isSvg?: boolean },
+    sticker: { type: 'emoji' | 'sticker' | 'gif'; name: string; content: string; url?: string; isSvg?: boolean; width?: number; height?: number },
     x?: number,
-    y?: number
+    y?: number,
+    customWidth?: number,
+    customHeight?: number
   ): string => {
     const stickerId = `sticker-${Date.now()}`;
-    const w = sticker.type === 'gif' ? 160 : 100;
-    const h = sticker.type === 'gif' ? 130 : 100;
+    const w = customWidth || sticker.width || (sticker.type === 'gif' ? 260 : sticker.type === 'sticker' ? 140 : 100);
+    const h = customHeight || sticker.height || (sticker.type === 'gif' ? 200 : sticker.type === 'sticker' ? 140 : 100);
 
     let targetX = x;
     let targetY = y;

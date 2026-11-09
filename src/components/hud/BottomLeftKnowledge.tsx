@@ -125,10 +125,16 @@ export function BottomLeftKnowledge() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Clean up timer on unmount
+  // Clean up timer on unmount and listen for external record triggers (e.g. from LeftCreationBar)
   useEffect(() => {
+    const handleOpenRecord = () => {
+      setIsSetupModalOpen(true);
+    };
+    window.addEventListener('vitudy:open-record-modal', handleOpenRecord);
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      window.removeEventListener('vitudy:open-record-modal', handleOpenRecord);
     };
   }, []);
 

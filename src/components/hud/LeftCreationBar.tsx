@@ -22,6 +22,7 @@ import {
   Code2,
   Table,
   Network,
+  Video,
   X
 } from 'lucide-react';
 import { StickerEmojiPickerFlyout, StickerPickerItem } from '@/components/hud/StickerEmojiPickerFlyout';
@@ -102,6 +103,12 @@ export function LeftCreationBar() {
       title: 'Mind map',
       desc: 'Sơ đồ tư duy liên kết ý tưởng học tập',
       icon: <Network className="w-5 h-5 text-slate-800 stroke-[2.2]" />
+    },
+    {
+      id: 'screen_record',
+      title: 'Record screen',
+      desc: 'Ghi hình bài giảng & màn hình học tập',
+      icon: <Video className="w-5 h-5 text-rose-600 stroke-[2.2]" />
     }
   ];
 
@@ -118,18 +125,24 @@ export function LeftCreationBar() {
 
   const handleSelectStickerItem = (item: StickerPickerItem) => {
     setIsStickerPickerOpen(false);
+    const targetW = item.width || (item.type === 'gif' ? 260 : item.type === 'sticker' ? 140 : 100);
+    const targetH = item.height || (item.type === 'gif' ? 200 : item.type === 'sticker' ? 140 : 100);
     setStickyCreationTemplate?.({
       itemType: 'sticker',
       stickerData: item,
-      width: item.type === 'gif' ? 160 : 100,
-      height: item.type === 'gif' ? 130 : 100,
-      typeLabel: `Hình dán (${item.name})`
+      width: targetW,
+      height: targetH,
+      typeLabel: `${item.type === 'gif' ? 'GIF động' : item.type === 'sticker' ? 'Hình dán' : 'Biểu tượng'}: ${item.name}`
     });
     setActiveTool('create_note');
   };
 
   const handleSelectExtraTool = (toolId: string) => {
     setIsMoreToolsOpen(false);
+    if (toolId === 'screen_record') {
+      window.dispatchEvent(new CustomEvent('vitudy:open-record-modal'));
+      return;
+    }
     if (toolId === 'shapes_and_lines') {
       setActiveTool('smart_shape');
       return;
