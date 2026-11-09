@@ -45,6 +45,7 @@ interface StudySpaceContextType {
   triggerFocusNotice: () => void;
   switchSpace: (spaceId: string) => void;
   createSpace: (name: string, subject: string) => void;
+  createSpaceFromTemplate?: (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string) => string;
   setTransform: React.Dispatch<React.SetStateAction<CanvasTransform>>;
   panBy: (dx: number, dy: number) => void;
   zoomBy: (factor: number, originX?: number, originY?: number) => void;
@@ -465,6 +466,191 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     }
     setSpaces(prev => [...prev, newSpace]);
     setActiveSpaceId(newSpace.id);
+  };
+
+  const createSpaceFromTemplate = (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string): string => {
+    const newSpaceId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`;
+    let name = customName || 'Bàn học mới';
+    let subject = 'Học tập';
+    let items: DeskItem[] = [];
+
+    if (templateType === 'blank') {
+      name = customName || 'Bàn học trống';
+      subject = 'Tự do';
+      items = [];
+    } else if (templateType === 'midterm') {
+      name = customName || 'Ôn thi giữa kỳ';
+      subject = 'Ôn tập';
+      items = [
+        {
+          id: `book-${Date.now()}`,
+          type: 'book',
+          title: 'Giáo trình Ôn Thi Giữa Kỳ',
+          x: 160,
+          y: 80,
+          rotation: 0,
+          scale: 1,
+          zIndex: 10,
+          pageCount: 4,
+          currentPageIndex: 0,
+          colorTheme: '#5c3920',
+          isBinder: false,
+          pages: [
+            {
+              id: 'p-mid-1',
+              pageNumber: 1,
+              title: 'Chương 1: Trọng tâm lý thuyết',
+              text: 'Tổng hợp các định lý, công thức và bài toán điển hình trong đề thi giữa kỳ.\n\n• Định nghĩa và điều kiện áp dụng\n• Các bước biến đổi và ví dụ minh họa'
+            },
+            {
+              id: 'p-mid-2',
+              pageNumber: 2,
+              title: 'Chương 2: Dạng bài tập tính toán',
+              text: 'Phương pháp giải nhanh trắc nghiệm và tự luận các dạng bài thường gặp.'
+            }
+          ]
+        },
+        {
+          id: `note-${Date.now()}`,
+          type: 'sticky_note',
+          title: 'Ghi chú ôn thi',
+          x: 1120,
+          y: 100,
+          rotation: 0,
+          scale: 1,
+          zIndex: 15,
+          pageCount: 1,
+          currentPageIndex: 0,
+          stickyColor: '#fef08a',
+          stickyText: 'Lưu ý ôn kỹ: Nhớ giải lại các bài tập trắc nghiệm mẫu trước ngày thi!',
+          pages: []
+        }
+      ];
+    } else if (templateType === 'curriculum_exam') {
+      name = customName || 'Giáo trình + đề thi';
+      subject = 'Luyện đề';
+      items = [
+        {
+          id: `paper-theory-${Date.now()}`,
+          type: 'paper',
+          title: 'Tờ Tóm Tắt Giáo Trình',
+          x: 140,
+          y: 80,
+          rotation: 0,
+          scale: 1,
+          zIndex: 11,
+          pageCount: 1,
+          currentPageIndex: 0,
+          colorTheme: '#047857',
+          isBinder: false,
+          pages: [
+            {
+              id: 'p-theory-1',
+              pageNumber: 1,
+              title: 'Tóm Tắt Giáo Trình',
+              text: 'Các công thức cốt lõi và định nghĩa trọng tâm cần tra cứu nhanh khi giải đề.'
+            }
+          ]
+        },
+        {
+          id: `paper-exam-${Date.now()}`,
+          type: 'paper',
+          title: 'Đề Thi Thử Tốt Nghiệp & Học Phần',
+          x: 640,
+          y: 80,
+          rotation: 0,
+          scale: 1,
+          zIndex: 12,
+          pageCount: 1,
+          currentPageIndex: 0,
+          colorTheme: '#0284c7',
+          isBinder: false,
+          pages: [
+            {
+              id: 'p-exam-1',
+              pageNumber: 1,
+              title: 'Đề Thi Thử',
+              text: 'Câu 1: Cho hàm số f(x). Khẳng định nào sau đây đúng?\nA. Đạo hàm bằng 0 tại cực trị\nB. f(x) luôn đồng biến\nC. f(x) không liên tục'
+            }
+          ]
+        },
+        {
+          id: `note-${Date.now()}`,
+          type: 'sticky_note',
+          title: 'Nháp làm bài',
+          x: 1100,
+          y: 120,
+          rotation: 0,
+          scale: 1,
+          zIndex: 15,
+          pageCount: 1,
+          currentPageIndex: 0,
+          stickyColor: '#fef08a',
+          stickyText: 'Bấm nút STudy trên tờ đề thi để tự động chấm điểm và xem lời giải chi tiết!',
+          pages: []
+        }
+      ];
+    } else if (templateType === 'group_study') {
+      name = customName || 'Học nhóm';
+      subject = 'Học nhóm';
+      items = [
+        {
+          id: `book-group-${Date.now()}`,
+          type: 'book',
+          title: 'Tài Liệu Thảo Luận Nhóm',
+          x: 160,
+          y: 80,
+          rotation: 0,
+          scale: 1,
+          zIndex: 10,
+          pageCount: 4,
+          currentPageIndex: 0,
+          colorTheme: '#5c3920',
+          isBinder: false,
+          pages: [
+            {
+              id: 'p-group-1',
+              pageNumber: 1,
+              title: 'Chương 1: Đề tài nghiên cứu nhóm',
+              text: 'Phân công nhiệm vụ nhóm:\n• Bạn 1: Đọc và tóm tắt lý thuyết\n• Bạn 2: Thu thập dữ liệu và lập trình mô hình\n• Bạn 3: Thiết kế slide thuyết trình'
+            }
+          ]
+        },
+        {
+          id: `note-group-1-${Date.now()}`,
+          type: 'sticky_note',
+          title: 'Ý kiến bạn A',
+          x: 1120,
+          y: 100,
+          rotation: 0,
+          scale: 1,
+          zIndex: 15,
+          pageCount: 1,
+          currentPageIndex: 0,
+          stickyColor: '#fed7aa',
+          stickyText: 'Đã hoàn thành phần phân tích dữ liệu, mọi người xem lại nhé!',
+          pages: []
+        }
+      ];
+    }
+
+    const newSpace: StudySpace = {
+      id: newSpaceId,
+      name,
+      subject,
+      description: `Bàn học ${name}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      items
+    };
+
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.saveSpace(newSpace, user.id);
+    }
+    setSpaces(prev => [...prev, newSpace]);
+    setActiveSpaceId(newSpace.id);
+    resetView();
+    return newSpaceId;
   };
 
   const panBy = (dx: number, dy: number) => {
@@ -1436,6 +1622,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         triggerFocusNotice,
         switchSpace,
         createSpace,
+        createSpaceFromTemplate,
         setTransform,
         panBy,
         zoomBy,

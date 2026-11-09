@@ -19,6 +19,7 @@ import {
   LogIn,
   User as UserIcon,
   BarChart2,
+  Home,
   Info
 } from 'lucide-react';
 
@@ -249,11 +250,11 @@ export function TopLeftNav() {
         {/* Dashboard & User Account / Login Button */}
         <div className="pl-2 border-l border-slate-200 flex items-center gap-1.5">
           <Link
-            href="/?view=landing"
-            title="Trang giới thiệu & tính năng (Landing Page)"
+            href="/?view=home"
+            title="Trang chủ (Trang tổng quan)"
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
-            <Info className="w-4 h-4 stroke-[2.2]" />
+            <Home className="w-4 h-4 stroke-[2.2]" />
           </Link>
 
           <Link

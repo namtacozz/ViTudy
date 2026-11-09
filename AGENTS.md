@@ -531,8 +531,16 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
 * **Cơ chế Đóng Đơn Nhiệm trong HUD (Single-Active Modal Dispatcher):**
   * Khi người dùng nhấp mở bất kỳ modal nào trên HUD (`Streak`, `Chợ Tài Liệu`, `Lịch sử Ví`, `Nạp ViToken`, `Cài đặt AI`), hệ thống tự động gọi hàm dọn dẹp đóng tất cả các modal khác trước đó (`closeAllModals()`).
   * Tuyệt đối không cho phép nhiều modal/popup toàn màn hình mở chồng chéo lên nhau gây tắc nghẽn thao tác và xung đột thị giác.
-* **Quy Chuẩn Điều Hướng Landing Page & Bàn Học (Landing & Desk View Sync):**
-  * Trang chủ `/` hỗ trợ chuyển đổi mượt mà giữa chế độ giới thiệu (`?view=landing`) và không gian bàn học (`?view=desk`).
-  * Hệ thống tự động lắng nghe sự kiện `popstate` của trình duyệt và kiểm tra khóa `vitudy_has_visited_desk` trong `localStorage` để phân định luồng trải nghiệm sinh viên lần đầu truy cập và người dùng quay lại.
+* **Quy Chuẩn Điều Hướng Trang Chủ & Bàn Học (Home Dashboard & Desk View Sync):**
+  * Trang chủ `/` thay thế hoàn toàn landing page quảng cáo cũ bằng **Trang chủ học tập (Dashboard)** công thái học hiện đại:
+    * **Thanh bên (Sidebar):** Logo ViTudy, ô tìm kiếm ("Tìm bàn học, tài liệu..."), menu điều hướng (`Trang chủ`, `Bàn học của tôi`, `Đã gắn dấu sao`, `Chợ tài liệu`, `Nhật ký học`, `Hỏi đáp`, `Giới thiệu & Kỹ thuật`), ở đáy là thẻ Số dư ViToken kèm nút "Nạp ViToken" kích hoạt trực tiếp modal VietQR.
+    * **Lời chào định hướng:** "Ôn bài thôi, [Tên người dùng]" kiểu chữ Serif trang nhã, giúp người học xác định ngay hành động cần làm mà không bị phân tâm bởi câu từ quảng cáo.
+    * **Bắt đầu bàn học mới:** 4 mẫu trực quan (`Bàn học trống`, `Ôn thi giữa kỳ`, `Giáo trình + đề thi`, `Học nhóm`) với hình minh họa bằng chính sách da nâu và giấy note vàng đặc trưng của ViTudy. Nút `+ Tạo bàn học` đặt ngay cạnh tiêu đề.
+    * **Mở lại gần đây:** Bảng gọn gàng hiển thị danh sách bàn học (`Tên`, `Mở lần cuối`, `Chủ sở hữu`), nhấp vào bất kỳ dòng nào sẽ lập tức mở lại bàn học đó trên canvas 2.5D.
+    * **Chợ tài liệu:** Thu gọn thành dải thông tin nhỏ gọn ở đáy màn hình.
+    * **Xử lý phần Landing page cũ:**
+      * Bảng giá chuyển thành modal "Nạp ViToken qua VietQR" (`TopUpModal`).
+      * Chi tiết kỹ thuật (KaTeX, SM-2, 60 FPS) và trang giới thiệu rút gọn cho khách chưa đăng nhập ("Trải giáo trình, đề thi và vở nháp trên cùng một bàn học") chuyển sang trang `/about`.
+  * Hỗ trợ chuyển đổi mượt mà giữa Trang chủ (`/?view=home`) và Không gian bàn học (`/?view=desk`), lắng nghe sự kiện `popstate` của trình duyệt.
 
 

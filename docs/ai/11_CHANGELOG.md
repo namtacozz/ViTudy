@@ -4,7 +4,46 @@
 
 ---
 
-## 2026-11-09 11:50 — main (Khắc Phục Mờ Chữ/GIF Khi Zoom, Tích Hợp Live GIPHY API, Kho Emoji & Sticker Chuẩn Miro, Tích Hợp Ghi Hình Màn Hình Vào Menu Dấu Cộng)
+## 2026-11-09 12:05 — main (Thay Thế Landing Page Bằng Trang Chủ Dashboard Học Tập Chuẩn Công Thái Học & Tách Chi Tiết Kỹ Thuật Sang /about)
+- **Task:** Thay thế toàn bộ Landing page cũ bằng giao diện **Trang chủ (Dashboard)** học tập theo thiết kế chuẩn:
+  1. **Thanh bên (Sidebar):**
+     - Logo ViTudy, ô tìm kiếm bàn học và tài liệu (`Search`).
+     - Menu điều hướng: `Trang chủ`, `Bàn học của tôi`, `Đã gắn dấu sao`, `Chợ tài liệu`, `Nhật ký học`, `Hỏi đáp`, `Giới thiệu & Kỹ thuật`.
+     - Hộp "Số dư" ViToken ở đáy thanh bên với nút "Nạp ViToken" kích hoạt modal VietQR (`TopUpModal`).
+  2. **Lời chào định hướng hành động:**
+     - Thay thế tiêu đề quảng cáo cũ bằng lời chào: "Ôn bài thôi, namtacozz" (font Serif thanh nhã, tên người dùng nổi bật với màu Cam ViT).
+  3. **Bắt đầu bàn học mới (4 Templates):**
+     - Bốn mẫu bàn học có hình xem trước trực quan với sách nâu và giấy note vàng đặc trưng:
+       - `Bàn học trống` (khung nét đứt + icon dấu cộng)
+       - `Ôn thi giữa kỳ` (sách mở 2 trang viền nâu + sticky note vàng)
+       - `Giáo trình + đề thi` (2 tờ giấy trắng đứng cạnh nhau + sticky note vàng góc phải)
+       - `Học nhóm` (sách nâu + chấm tròn avatar bạn học cam & xanh lá)
+     - Nút `+ Tạo bàn học` đặt cạnh tiêu đề.
+     - Hàm `createSpaceFromTemplate` trong `StudySpaceContext` hỗ trợ khởi tạo nhanh không gian học tương ứng.
+  4. **Mở lại gần đây (Recent Spaces Table):**
+     - Dạng bảng gọn gàng: `Tên`, `Mở lần cuối`, `Chủ sở hữu`.
+     - Hiển thị các bàn học gần đây ("Toán cho Trí tuệ Nhân tạo", "Cơ sở Machine Learning & Deep Learning", v.v.), nhấp chuột vào bất kỳ dòng nào sẽ mở ngay bàn học trên canvas 2.5D.
+     - Nút "Xem tất cả" mở rộng danh sách.
+  5. **Chợ tài liệu:**
+     - Thu gọn thành một dải card nhỏ gọn ở cuối trang, đóng vai trò tính năng phụ với nút "Xem chợ tài liệu" dẫn đến `/market`.
+  6. **Xử lý các phần của Landing page cũ:**
+     - Bảng giá: Tích hợp trọn vẹn trong modal `TopUpModal` ("Nạp ViToken qua VietQR").
+     - Chi tiết kỹ thuật (KaTeX, SM-2, 60 FPS) & giới thiệu cho khách chưa đăng nhập: Tạo trang `/about` ("Trải giáo trình, đề thi và vở nháp trên cùng một bàn học") với bản demo mô phỏng bàn học chân thực.
+- **Files Modified/Created:**
+  - `src/components/home/HomePage.tsx`: Giao diện Trang chủ học tập hoàn chỉnh.
+  - `src/app/about/page.tsx`: Trang Giới thiệu & Chi tiết kỹ thuật (KaTeX, SM-2, 60fps).
+  - `src/app/page.tsx`: Chuyển đổi linh hoạt giữa Trang chủ (`HomePage`) và Bàn học (`StudySpaceDeskView`).
+  - `src/context/StudySpaceContext.tsx`: Bổ sung `createSpaceFromTemplate`.
+  - `src/data/mockSpaces.ts`: Bổ sung bàn học `space-ml-deep-learning` đồng bộ danh sách.
+  - `src/components/hud/TopLeftNav.tsx`: Nút Trang chủ với icon `Home` dẫn về `/?view=home`.
+  - `AGENTS.md`: Cập nhật quy chuẩn kiến trúc Trang chủ.
+- **Verified by:**
+  - `pnpm test`: 16/16 test suites passed (44/44 tests pass 100%).
+  - `pnpm run docs:index ; pnpm run docs:check`: Pass.
+  - `pnpm run build:pages`: Export static Next.js 15 thành công (13/13 routes static prerendered).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+
 - **Task:** Giải quyết triệt để 4 yêu cầu của người dùng:
   1. **Triệt tiêu hoàn toàn mờ chữ & mờ ảnh GIF ở mọi mức zoom cho các vật thể dấu `+` (`CodeBlockItem`, `MindMapNodeItem`, `StickerItem`):**
      - *Nguyên nhân:* Trong container bàn học có CSS `transform: scale(...)`, việc các phần tử con có `transition: all`, `transition: shadow`, hoặc CSS filter `drop-shadow(...)` kết hợp `overflow: hidden` khiến Chromium cô lập thành một raster bitmap 1x; khi zoom lên 200% - 400%, trình duyệt chỉ upscale bitmap thay vì re-rasterize vector glyphs, làm chữ bị mờ hạt và vỡ nét.

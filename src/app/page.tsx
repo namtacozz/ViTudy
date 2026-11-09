@@ -6,19 +6,17 @@ import { MobileCompanionView } from '@/components/mobile/MobileCompanionView';
 import { useAuth } from '@/hooks/useAuth';
 import { GuestBanner } from '@/components/auth/GuestBanner';
 import { MigrationDialog } from '@/components/auth/MigrationDialog';
-import { LandingPage } from '@/components/landing/LandingPage';
+import { HomePage } from '@/components/home/HomePage';
 
 const StudySpaceDeskView = dynamic(
   () => import('@/components/canvas/StudySpaceDeskView'),
   { ssr: false }
 );
 
-const HAS_VISITED_DESK_KEY = 'vitudy_has_visited_desk';
-
 export default function StudySpacePage() {
   const { user, status } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
-  const [viewMode, setViewMode] = useState<'desk' | 'landing'>('desk');
+  const [viewMode, setViewMode] = useState<'desk' | 'home'>('home');
 
   useEffect(() => {
     const checkMobile = () => {
@@ -29,7 +27,7 @@ export default function StudySpacePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Check URL query parameters and local storage for landing vs desk view
+  // Check URL query parameters for home vs desk view
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const checkView = () => {
@@ -37,21 +35,10 @@ export default function StudySpacePage() {
       const viewParam = searchParams.get('view');
       const roomParam = searchParams.get('room');
 
-      if (viewParam === 'landing') {
-        setViewMode('landing');
-        return;
-      }
-
-      if (roomParam) {
+      if (viewParam === 'desk' || roomParam) {
         setViewMode('desk');
-        return;
-      }
-
-      const hasVisited = localStorage.getItem(HAS_VISITED_DESK_KEY);
-      if (!hasVisited && status === 'guest') {
-        setViewMode('landing');
       } else {
-        setViewMode('desk');
+        setViewMode('home');
       }
     };
 
@@ -71,15 +58,17 @@ export default function StudySpacePage() {
     }
   }, [user?.id]);
 
-  const handleEnterDesk = () => {
+  const handleEnterDesk = (spaceId?: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(HAS_VISITED_DESK_KEY, 'true');
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'desk');
+      window.history.pushState({}, '', url.toString());
     }
     setViewMode('desk');
   };
 
-  if (viewMode === 'landing') {
-    return <LandingPage onEnterDesk={handleEnterDesk} />;
+  if (viewMode === 'home') {
+    return <HomePage onEnterDesk={handleEnterDesk} />;
   }
 
   // Mobile Companion Mode (<768px)

@@ -267,5 +267,66 @@ $$\\nabla f = \\left[ \\frac{\\partial f}{\\partial x_1}, \\frac{\\partial f}{\\
         createdAt: '2026-01-01T00:00:00.000Z'
       }
     ]
+  },
+  {
+    id: 'space-ml-deep-learning',
+    name: 'Cơ sở Machine Learning & Deep Learning',
+    subject: 'Khoa học Dữ liệu',
+    description: 'Giáo trình, ma trận nhầm lẫn',
+    createdAt: '2026-01-02T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+    items: [
+      {
+        id: 'doc-book-dl',
+        type: 'book',
+        title: 'Cơ sở Machine Learning & Deep Learning',
+        x: 160,
+        y: 80,
+        rotation: 0,
+        scale: 1,
+        zIndex: 10,
+        pageCount: 6,
+        currentPageIndex: 0,
+        colorTheme: '#5c3920',
+        isBinder: false,
+        pages: [
+          {
+            id: 'p-dl-1',
+            pageNumber: 1,
+            title: 'Chương 1: Mạng Nơ-ron Nhân tạo (ANN)',
+            text: `Mạng Nơ-ron Nhân tạo (Artificial Neural Network) được cấu thành từ các lớp perceptron liên kết với nhau qua các trọng số w và độ lệch bias b:
+$$z = \\sum_{i=1}^n w_i x_i + b$$
+Hàm kích hoạt (Activation Function) phi tuyến tính đưa tính phi tuyến vào mạng:
+• Sigmoid: $\\sigma(z) = \\frac{1}{1 + e^{-z}}$
+• ReLU: $f(z) = \\max(0, z)$`
+          },
+          {
+            id: 'p-dl-2',
+            pageNumber: 2,
+            title: 'Chương 2: Ma trận Nhầm lẫn & Đánh giá',
+            text: `Ma trận nhầm lẫn (Confusion Matrix) dùng để tính toán các chỉ số độ đo hiệu năng của mô hình:
+• Precision (Độ chuẩn xác): $\\frac{TP}{TP + FP}$
+• Recall (Độ thu hồi): $\\frac{TP}{TP + FN}$
+• F1-Score: $2 \\cdot \\frac{Precision \\cdot Recall}{Precision + Recall}$`
+          }
+        ]
+      },
+      {
+        id: 'doc-sticky-dl-1',
+        type: 'sticky_note',
+        title: 'Ghi chú ma trận nhầm lẫn',
+        x: 1120,
+        y: 100,
+        rotation: 0,
+        scale: 1,
+        zIndex: 15,
+        pageCount: 1,
+        currentPageIndex: 0,
+        stickyColor: '#fef08a',
+        stickyText: 'Nhớ phân biệt rõ: Type I Error (False Positive) và Type II Error (False Negative)! Thường xuyên ra trong đề thi trắc nghiệm.',
+        pages: []
+      }
+    ],
+    threads: []
   }
 ];
