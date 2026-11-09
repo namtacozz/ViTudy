@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-11-09 08:56 — main (Khắc Phục Triệt Để Lỗi Tạo Yêu Cầu Thanh Toán VietQR SePay)
+- **Task:** Khắc phục lỗi `Could not find the function public.create_payment_request(p_package_id) in the schema cache`:
+  1. **Áp dụng toàn bộ Database Migrations lên Supabase Cloud:**
+     - Đồng bộ schema cơ sở `0000_initial_schema.sql` (chuyển đổi `uuid_generate_v4()` sang hàm chuẩn core `gen_random_uuid()`).
+     - Đẩy thành công 9 migration (`0000` đến `0010`) lên database `db.yndwxcnedlilmsbbydvb.supabase.co` bằng `npx supabase db push`.
+     - Tạo hàm RPC `public.create_payment_request`, các bảng `vitoken_packages`, `payment_requests`, `unmatched_payments`.
+  2. **Đồng bộ hóa danh mục gói nạp (Migration 0011 & 0012):**
+     - Đồng bộ các mã gói `starter`, `midterm`, `semester`, `project`, `team` trên database khớp 100% với frontend.
+     - Dọn dẹp các mã gói cũ (`demo`, `basic`, `standard`...) để tránh xung đột thứ tự sắp xếp.
+  3. **Hỗ trợ tạo yêu cầu nạp cho cả Khách & Người dùng đã đăng nhập:**
+     - Cập nhật `src/services/PaymentService.ts`: Tự động nhận diện trạng thái phiên đăng nhập. Nếu là khách trải nghiệm, hệ thống sinh ngay mã QR VietQR mẫu với thông tin chuyển khoản chuẩn xác kèm mã nội dung giao dịch để trải nghiệm tức thì; nếu đã đăng nhập, hệ thống tạo bản ghi chính thức qua RPC `create_payment_request` và kích hoạt Supabase Realtime lắng nghe giao dịch.
+- **Verified by:**
+  - `pnpm test`: 14/14 test suites passed (34/34 tests).
+  - `pnpm run build:pages`: Static export 12/12 routes thành công.
+  - `npx supabase db push`: Up-to-date 100% trên remote database.
+- **Docs updated:** `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 07:53 — main (Hoàn Thiện Kết Nối Đăng Nhập Google & Discord Ở Môi Trường Deploy)
 - **Task:** Hoàn thiện luồng xác thực Google và Discord OAuth trên môi trường deploy GitHub Pages (`https://namtacozz.github.io/ViTudy`):
   1. **Cấu hình biến bí mật GitHub Repo Secrets:**

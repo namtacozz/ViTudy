@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- 3. Study Spaces (Bàn Học 2.5D)
 CREATE TABLE IF NOT EXISTS public.study_spaces (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     name TEXT NOT NULL DEFAULT 'Bàn Học Cá Nhân',
     subject TEXT NOT NULL DEFAULT 'Học tập',
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.study_spaces (
 
 -- 4. Desk Items (Sách, Tờ Giấy trên Bàn Học)
 CREATE TABLE IF NOT EXISTS public.desk_documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id UUID NOT NULL REFERENCES public.study_spaces(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     item_type TEXT NOT NULL CHECK (item_type IN ('paper', 'book', 'exam_sheet')),
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS public.desk_documents (
 
 -- 5. Document Pages with pgvector Embeddings (Inteline Hybrid RAG & Deduplication)
 CREATE TABLE IF NOT EXISTS public.document_pages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL REFERENCES public.desk_documents(id) ON DELETE CASCADE,
     page_number INT NOT NULL,
     title TEXT,
@@ -73,7 +73,7 @@ WITH (lists = 100);
 
 -- 6. Sticky Notes (Tờ Giấy Ghi Chú)
 CREATE TABLE IF NOT EXISTS public.desk_sticky_notes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id UUID NOT NULL REFERENCES public.study_spaces(id) ON DELETE CASCADE,
     content TEXT NOT NULL DEFAULT '',
     color TEXT NOT NULL DEFAULT '#fef08a',
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS public.desk_sticky_notes (
 
 -- 7. Freehand Drawing & Highlighter Strokes (Nét Vẽ Bút Dạ Quang)
 CREATE TABLE IF NOT EXISTS public.desk_drawings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id UUID NOT NULL REFERENCES public.study_spaces(id) ON DELETE CASCADE,
     author_id UUID REFERENCES public.profiles(id),
     color TEXT NOT NULL DEFAULT '#2563eb',
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.desk_drawings (
 
 -- 8. Inteline Visual Link Threads (Dây Nối Trực Quan)
 CREATE TABLE IF NOT EXISTS public.inteline_threads (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id UUID NOT NULL REFERENCES public.study_spaces(id) ON DELETE CASCADE,
     source_item_id UUID NOT NULL REFERENCES public.desk_documents(id) ON DELETE CASCADE,
     source_page_number INT NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS public.inteline_threads (
 
 -- 9. KnowInherit Marketplace (Chợ Kế Thừa Tri Thức 85/15)
 CREATE TABLE IF NOT EXISTS public.know_inherit_listings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     author_id UUID NOT NULL REFERENCES public.profiles(id),
     title TEXT NOT NULL,
     summary TEXT NOT NULL,
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS public.know_inherit_listings (
 
 -- Purchases log with 85/15 revenue split
 CREATE TABLE IF NOT EXISTS public.know_inherit_purchases (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     listing_id UUID NOT NULL REFERENCES public.know_inherit_listings(id),
     buyer_id UUID NOT NULL REFERENCES public.profiles(id),
     total_price INT NOT NULL,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS public.know_inherit_purchases (
 
 -- 10. ViToken Transaction Ledger
 CREATE TABLE IF NOT EXISTS public.vitoken_transactions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     amount INT NOT NULL, -- Dương: Nhận / Âm: Chi tiêu
     balance_after INT NOT NULL,
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS public.vitoken_transactions (
 
 -- 11. Study Space Members & Role Hierarchy (SRS 6.3 & SRS 8.1)
 CREATE TABLE IF NOT EXISTS public.space_members (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id UUID NOT NULL REFERENCES public.study_spaces(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('owner', 'editor', 'viewer')),
