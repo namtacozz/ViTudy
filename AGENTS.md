@@ -69,6 +69,23 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
 * **Thống Nhất Màu Sắc Icon HUD (Black & White Strict Icon Scheme):**
   * Toàn bộ biểu tượng icon trong HUD **chỉ sử dụng màu Đen (`text-slate-900`) trên nền trắng**, hoặc **Trắng (`text-white`) trên nền cam thương hiệu**. Tuyệt đối không phối màu đa dạng lung tung (xanh, đỏ, vàng...).
   * Khi người dùng nhấp chọn hoặc một công cụ/nút đang kích hoạt trên nền trắng: **phần nền chuyển sang xám đậm hơn (`bg-slate-200`)** để biểu thị trạng thái đang chọn.
+* **Quy Chuẩn Đồng Bộ Chợ Tài Liệu (Marketplace Standards — Trang Chợ & Modal Chợ):**
+  * **Thống nhất tên gọi & thương hiệu duy nhất:** Toàn bộ hệ thống (menu, sidebar, header, modal) gọi thống nhất là **"Chợ Tài Liệu"** (xóa bỏ hoàn toàn tên cũ "Chợ Tri Thức KnowInherit"). Phụ đề chuẩn: *"Kho tri thức mở ViTudy — Khám phá và trao đổi tài liệu học tập cùng cộng đồng."*
+  * **Thống nhất 3 loại tài liệu & icon:**
+    * **Sách (`book`):** Icon `BookOpen`, giá mặc định 50 ViToken.
+    * **Tờ tóm tắt (`paper`):** Icon `FileText`, giá mặc định 15 ViToken.
+    * **Đề thi (`exam`):** Icon `HelpCircle`, giá mặc định 30 ViToken.
+  * **Thống nhất tiền tệ & Logo ViToken:**
+    * Sử dụng đơn vị **ViToken** (ký hiệu viết tắt `V`, đi kèm chú thích rõ ràng `1 V = 1 ViToken`).
+    * Sử dụng icon đồng xu chính thức `/icons/vitoken.png` qua helper `getAssetPath('/icons/vitoken.png')` trong mọi khối số dư ví và giá tài liệu.
+  * **Quy chuẩn thẻ tài liệu & Chế độ xem:**
+    * **Chế độ xem mặc định:** Chế độ lưới thẻ (`grid`) là mặc định, cân xứng 3 cột (`max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5`), triệt tiêu khoảng hở lệch bên phải.
+    * **Bìa da nâu bên trái (Modal):** Thiết kế tối giản, sang trọng với viền dập da, logo ViTudy, icon loại tài liệu dập chìm và ngày chia sẻ. Tuyệt đối không nhồi nhét lặp lại tiêu đề 3 lần lên bìa sách.
+    * **Thông tin tin cậy bắt buộc:** Dấu xác thực tác giả (`CheckCircle2 text-sky-600`), số trang, lượt mua, ngày cập nhật, điểm AI có tiền tố `AI: [score]/100` kèm tooltip giải thích tiêu chí.
+    * **Triệt tiêu lặp giá:** Khối giá hiển thị 1 lần duy nhất bên trái footer thẻ, bên phải là nút hành động "Xem thử" và "Mua [X] V" (hoặc "Thêm vào bàn học" khi đã sở hữu).
+    * **Trạng thái Đã sở hữu:** Khi tài liệu đã được mua, hiển thị badge `Đã sở hữu` và nút `Thêm vào bàn học` (icon `ArrowRight` / `Plus`), nhấp vào sẽ tự động mount tài liệu lên bàn học đang mở và đóng modal.
+    * **Bộ lọc trực quan & Nút Đặt lại:** Bộ lọc loại tài liệu, môn học, điểm AI, mức giá dạng chip hoặc dropdown tinh gọn, luôn có nút `Đặt lại` (`RotateCcw`) khi có bất kỳ bộ lọc nào kích hoạt.
+    * **Tương phản WCAG AA:** Nhãn và chữ phụ dùng `text-stone-700` hoặc đậm hơn, bảo đảm tỷ lệ tương phản >= 4.5:1.
 
 ---
 

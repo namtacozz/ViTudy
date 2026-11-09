@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
+import { getAssetPath } from '@/lib/assets';
 import { 
   Store, 
   X, 
@@ -11,6 +12,7 @@ import {
   Search, 
   BookOpen, 
   FileText, 
+  HelpCircle,
   CheckCircle2, 
   Calendar,
   AlertCircle,
@@ -19,10 +21,10 @@ import {
   LayoutGrid,
   List,
   Check,
-  HelpCircle,
   Clock,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { KnowInheritPublishModal } from './KnowInheritPublishModal';
 import { INITIAL_MARKET_ITEMS, MarketItem } from '@/data/marketMockData';
@@ -48,6 +50,8 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
   const [minScore, setMinScore] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(0);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'score' | 'price_asc'>('newest');
+  
+  // Default viewMode is GRID
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Preview Modal state
@@ -88,7 +92,8 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     selectedType !== 'all' || 
     selectedCategory !== 'all' || 
     minScore > 0 || 
-    maxPrice > 0;
+    maxPrice > 0 ||
+    sortBy !== 'newest';
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -149,25 +154,30 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     });
   }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy]);
 
+  // Action: Add document to the current study desk
+  const handleAddToDesk = (item: MarketItem) => {
+    if (item.type === 'exam' && item.examQuestions && item.examQuestions.length > 0) {
+      addExamSheet(item.title, item.examQuestions, 20);
+    } else {
+      const rawPages = item.pages && item.pages.length > 0
+        ? item.pages
+        : [
+            {
+              title: item.title,
+              text: `${item.summary}\n\n${item.previewText}\n\n[Tài liệu đã mở từ tác giả ${item.author}]`
+            }
+          ];
+      addUploadedDocument(item.title, rawPages);
+    }
+    onClose();
+  };
+
   const handleBuyMarketItem = (item: MarketItem) => {
     setErrorMessage(null);
 
-    // If already purchased, just open it on the desk
+    // If already purchased, simply add to desk
     if (item.purchased) {
-      if (item.type === 'exam' && item.examQuestions && item.examQuestions.length > 0) {
-        addExamSheet(item.title, item.examQuestions, 20);
-      } else {
-        const rawPages = item.pages && item.pages.length > 0
-          ? item.pages
-          : [
-              {
-                title: item.title,
-                text: `${item.summary}\n\n${item.previewText}\n\n[Tài liệu đã mở từ tác giả ${item.author}]`
-              }
-            ];
-        addUploadedDocument(item.title, rawPages);
-      }
-      onClose();
+      handleAddToDesk(item);
       return;
     }
 
@@ -181,23 +191,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
       setMarketItems(items =>
         items.map(i => (i.id === item.id ? { ...i, purchased: true } : i))
       );
-
-      // Mount to desk depending on type
-      if (item.type === 'exam' && item.examQuestions && item.examQuestions.length > 0) {
-        addExamSheet(item.title, item.examQuestions, 20);
-      } else {
-        const rawPages = item.pages && item.pages.length > 0
-          ? item.pages
-          : [
-              {
-                title: item.title,
-                text: `${item.summary}\n\n${item.previewText}\n\n[Tài liệu đã mở khoá thành công từ tác giả ${item.author}]`
-              }
-            ];
-        addUploadedDocument(item.title, rawPages);
-      }
-
-      onClose();
+      handleAddToDesk(item);
     } else {
       setErrorMessage('Giao dịch không thành công. Vui lòng kiểm tra lại số dư ví.');
     }
@@ -222,11 +216,11 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     }
   };
 
-  const getDescriptionLabel = (type: 'book' | 'paper' | 'exam') => {
+  const getTypeIcon = (type: 'book' | 'paper' | 'exam') => {
     switch (type) {
-      case 'book': return 'MÔ TẢ SÁCH / GIÁO TRÌNH:';
-      case 'paper': return 'MÔ TẢ TÀI LIỆU TÓM TẮT:';
-      case 'exam': return 'MÔ TẢ BỘ ĐỀ TRẮC NGHIỆM:';
+      case 'book': return BookOpen;
+      case 'paper': return FileText;
+      case 'exam': return HelpCircle;
     }
   };
 
@@ -242,30 +236,30 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white border border-slate-300 rounded-3xl w-full max-w-5xl p-6 shadow-2xl relative max-h-[92vh] flex flex-col text-slate-900 animate-fade-in font-sans"
+        className="bg-white border border-stone-300 rounded-3xl w-full max-w-5xl p-6 shadow-2xl relative max-h-[92vh] flex flex-col text-stone-900 animate-fade-in font-sans"
       >
         
         {/* Header bar */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-stone-900 text-white flex items-center justify-center shadow-xs">
               <Store className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900 leading-tight">Chợ Tài Liệu</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-base font-black text-stone-900 leading-tight">Chợ Tài Liệu</h3>
+              <p className="text-xs text-stone-600">
                 Kho tri thức mở ViTudy — Học hỏi và trao đổi tài liệu học tập cùng cộng đồng.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => {
                 setSelectedDeskItemId(activeSpace.items[0]?.id || '');
                 setIsPublishOpen(true);
               }}
-              className="flex items-center gap-1.5 text-xs bg-slate-900 hover:bg-black text-white px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 text-xs bg-stone-900 hover:bg-black text-white px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Chia sẻ tài liệu</span>
@@ -274,26 +268,31 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               id="close-market-modal"
               onClick={onClose}
               aria-label="Đóng chợ tài liệu"
-              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* User Balance Banner & Unit Explanation */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5 text-xs">
+        {/* User Balance Banner */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-2.5 text-xs">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center shadow-xs">
-              V
-            </div>
-            <span className="text-slate-600 font-medium">
-              Số dư của bạn: <strong className="text-slate-900 font-mono font-black text-sm">{wallet.balance} ViToken</strong>
+            <img
+              src={getAssetPath('/icons/vitoken.png')}
+              alt="ViToken"
+              width={22}
+              height={22}
+              className="w-5.5 h-5.5 rounded-full object-contain shrink-0"
+              style={{ width: '22px', height: '22px', maxWidth: '22px', maxHeight: '22px' }}
+            />
+            <span className="text-stone-700 font-medium">
+              Số dư của bạn: <strong className="text-stone-900 font-mono font-black text-sm">{wallet.balance} ViToken</strong>
             </span>
-            <span className="text-slate-400 text-[11px] font-mono">• (1 V = 1 ViToken)</span>
+            <span className="text-stone-400 text-[11px] font-mono">• (1 V = 1 ViToken)</span>
           </div>
-          <div className="text-slate-500 text-[11.5px] flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
+          <div className="text-stone-600 text-[11.5px] flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-stone-400" />
             <span>Điểm danh hằng ngày hoặc chia sẻ tài liệu hữu ích để nhận thêm ViToken</span>
           </div>
         </div>
@@ -315,22 +314,22 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
         )}
 
         {/* Search & Filters Controls */}
-        <div className="py-3 space-y-2.5 border-b border-slate-100">
+        <div className="py-3 space-y-2.5 border-b border-stone-100">
           {/* Row 1: Search bar + Type pills + View Mode */}
           <div className="flex flex-col sm:flex-row items-center gap-2.5">
             <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Tìm theo tên tài liệu, tác giả, nội dung trọng tâm..."
-                className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition-all font-medium"
+                className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:bg-white transition-all font-medium"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -338,7 +337,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             </div>
 
             {/* Type selector tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-xl w-full sm:w-auto">
               {[
                 { id: 'all', label: 'Tất cả' },
                 { id: 'book', label: 'Sách' },
@@ -350,8 +349,8 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                   onClick={() => setSelectedType(t.id as any)}
                   className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     selectedType === t.id
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
                   }`}
                 >
                   {t.label}
@@ -360,12 +359,12 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             </div>
 
             {/* View Mode Toggle (Grid vs List) */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-xl">
               <button
                 onClick={() => setViewMode('grid')}
                 title="Dạng lưới thẻ"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  viewMode === 'grid' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-900'
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -374,7 +373,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                 onClick={() => setViewMode('list')}
                 title="Dạng danh sách gọn"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'list' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  viewMode === 'list' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-900'
                 }`}
               >
                 <List className="w-4 h-4" />
@@ -382,30 +381,38 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             </div>
           </div>
 
-          {/* Row 2: Category, Min Score, Max Price, Sort & Reset Button */}
+          {/* Row 2: Category Chips, Min Score, Max Price, Sort & Reset Button */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Category dropdown */}
-              <select
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 text-slate-800 py-1.5 px-2.5 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-              >
-                <option value="all">Tất cả môn học</option>
-                <option value="math">Toán học</option>
-                <option value="ai_ml">Trí tuệ nhân tạo (AI/ML)</option>
-                <option value="cs">Khoa học máy tính</option>
-                <option value="software">Kỹ thuật phần mềm</option>
-                <option value="data">Khoa học dữ liệu</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Category pills */}
+              {[
+                { id: 'all', label: 'Tất cả môn' },
+                { id: 'ai_ml', label: 'AI/ML' },
+                { id: 'math', label: 'Toán học' },
+                { id: 'cs', label: 'Khoa học máy tính' },
+                { id: 'data', label: 'Khoa học dữ liệu' },
+                { id: 'software', label: 'Kỹ thuật phần mềm' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id as any)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                    selectedCategory === cat.id
+                      ? 'bg-stone-900 text-white font-bold'
+                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
 
               {/* Min Score filter */}
               <select
                 value={minScore}
                 onChange={e => setMinScore(Number(e.target.value))}
-                className="bg-slate-50 border border-slate-200 text-slate-800 py-1.5 px-2.5 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                className="bg-stone-50 border border-stone-200 text-stone-700 py-1 px-2 rounded-lg text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer ml-1"
               >
-                <option value={0}>Tất cả điểm AI</option>
+                <option value={0}>Điểm AI: Tất cả</option>
                 <option value={80}>Điểm AI ≥ 80</option>
                 <option value={90}>Điểm AI ≥ 90 (Xuất sắc)</option>
               </select>
@@ -414,19 +421,19 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               <select
                 value={maxPrice}
                 onChange={e => setMaxPrice(Number(e.target.value))}
-                className="bg-slate-50 border border-slate-200 text-slate-800 py-1.5 px-2.5 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                className="bg-stone-50 border border-stone-200 text-stone-700 py-1 px-2 rounded-lg text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer"
               >
-                <option value={0}>Tất cả mức giá</option>
-                <option value={15}>≤ 15 ViToken</option>
-                <option value={30}>≤ 30 ViToken</option>
-                <option value={50}>≤ 50 ViToken</option>
+                <option value={0}>Giá: Tất cả</option>
+                <option value={15}>≤ 15 V</option>
+                <option value={30}>≤ 30 V</option>
+                <option value={50}>≤ 50 V</option>
               </select>
 
-              {/* Active Filter Chips & Reset Button */}
+              {/* Reset Button */}
               {hasActiveFilters && (
                 <button
                   onClick={handleResetFilters}
-                  className="flex items-center gap-1 text-[11.5px] font-bold text-[#E0562D] hover:text-[#c9451e] bg-orange-50 hover:bg-orange-100 border border-orange-200/70 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-[11.5px] font-bold text-[#E0562D] hover:text-[#c9451e] bg-orange-50 hover:bg-orange-100 border border-orange-200/70 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>Đặt lại</span>
@@ -436,12 +443,12 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
             <div className="flex items-center gap-3">
               {/* Sort by */}
-              <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <div className="flex items-center gap-1.5 text-stone-600 font-medium">
                 <span>Sắp xếp:</span>
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value as any)}
-                  className="bg-slate-50 border border-slate-200 text-slate-900 py-1.5 px-2.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-400 cursor-pointer"
+                  className="bg-stone-50 border border-stone-200 text-stone-900 py-1 px-2.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-stone-400 cursor-pointer"
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="oldest">Cũ nhất</option>
@@ -451,7 +458,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               </div>
 
               {/* Results count */}
-              <div className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+              <div className="text-[11px] font-bold text-stone-600 bg-stone-100 px-2.5 py-1 rounded-md">
                 {filteredItems.length} tài liệu
               </div>
             </div>
@@ -461,10 +468,10 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
         {/* Scrollable list of cards / list view */}
         <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 mt-3">
           {filteredItems.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
-              <Search className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm font-semibold text-slate-600">Không tìm thấy tài liệu phù hợp</p>
-              <p className="text-xs text-slate-400 mt-1">Hãy thử xóa bộ lọc hoặc đổi từ khóa tìm kiếm</p>
+            <div className="py-16 text-center text-stone-400">
+              <Search className="w-8 h-8 mx-auto mb-2 text-stone-300" />
+              <p className="text-sm font-semibold text-stone-700">Không tìm thấy tài liệu phù hợp</p>
+              <p className="text-xs text-stone-500 mt-1">Hãy thử xóa bộ lọc hoặc đổi từ khóa tìm kiếm</p>
               {hasActiveFilters && (
                 <button
                   onClick={handleResetFilters}
@@ -477,7 +484,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             </div>
           ) : viewMode === 'list' ? (
             /* COMPACT LIST VIEW */
-            <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+            <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
               {filteredItems.map(item => {
                 const pageCount = item.pageCount || (item.pages ? item.pages.length : (item.type === 'book' ? 48 : (item.type === 'exam' ? 4 : 1)));
                 const downloadsCount = item.downloadsCount || (item.aiScore * 3 + 12);
@@ -486,19 +493,19 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                 return (
                   <div 
                     key={item.id}
-                    className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                    className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50 transition-colors"
                   >
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-700">
                           {getTypeLabel(item.type)}
                         </span>
-                        <h4 className="text-xs font-black text-slate-900 truncate">
+                        <h4 className="text-xs font-black text-stone-900 truncate">
                           {item.title}
                         </h4>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
-                        <span className="flex items-center gap-1 font-medium text-slate-700">
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-600">
+                        <span className="flex items-center gap-1 font-medium text-stone-800">
                           {item.author}
                           <span title="Tác giả xác thực">
                             <CheckCircle2 className="w-3 h-3 text-sky-600" />
@@ -513,16 +520,16 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                         <span>•</span>
                         {/* Điểm AI with tooltip */}
                         <div className="relative group/score inline-flex items-center gap-1 cursor-help">
-                          <span className="font-semibold text-slate-700">Điểm AI:</span>
+                          <span className="font-semibold text-stone-700">Điểm AI:</span>
                           <span className="font-bold text-[#E0562D] font-mono">
                             {item.aiScore}/100
                           </span>
-                          <div className="absolute left-0 bottom-full mb-1 hidden group-hover/score:flex flex-col w-56 p-2 bg-slate-900 text-white text-[10px] rounded-lg shadow-xl z-50 pointer-events-none">
+                          <div className="absolute left-0 bottom-full mb-1 hidden group-hover/score:flex flex-col w-56 p-2 bg-stone-900 text-white text-[10px] rounded-lg shadow-xl z-50 pointer-events-none">
                             <span className="font-bold text-amber-300 mb-0.5">Tiêu chí chấm điểm tự động AI</span>
                             <span>• Độ chuẩn xác kiến thức: 40%</span>
                             <span>• Cấu trúc sư phạm: 35%</span>
                             <span>• Tính ứng dụng: 25%</span>
-                            <span className="text-slate-400 text-[9px] mt-1 pt-1 border-t border-slate-700">
+                            <span className="text-stone-400 text-[9px] mt-1 pt-1 border-t border-stone-700">
                               Dựa trên {item.aiReviewCount || 24} lượt đánh giá
                             </span>
                           </div>
@@ -532,31 +539,29 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
                     {/* Actions and Price side-by-side */}
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
-                      <div className="flex items-center gap-1 bg-slate-100 px-2.5 py-1.5 rounded-xl">
-                        <span className="text-xs font-black font-mono text-slate-900">{item.price}</span>
-                        <div className="w-4 h-4 rounded-full bg-slate-900 text-white font-black text-[9px] flex items-center justify-center">
-                          V
-                        </div>
+                      <div className="flex items-center gap-1.5 bg-stone-100 px-2.5 py-1.5 rounded-xl">
+                        <span className="text-xs font-black font-mono text-stone-900">{item.price}</span>
+                        <span className="text-[10px] font-bold text-stone-600">V</span>
                       </div>
                       <button
                         onClick={() => setPreviewItem(item)}
-                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                        className="px-2.5 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-700 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
                       >
-                        <Eye className="w-3.5 h-3.5 text-slate-600" />
+                        <Eye className="w-3.5 h-3.5 text-stone-600" />
                         <span>Xem thử</span>
                       </button>
                       <button
                         onClick={() => handleBuyMarketItem(item)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs ${
                           item.purchased
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
                             : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
                         }`}
                       >
                         {item.purchased ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Mở</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Thêm vào bàn học</span>
                           </>
                         ) : (
                           <span>Mua {item.price} V</span>
@@ -573,150 +578,147 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               const pageCount = item.pageCount || (item.pages ? item.pages.length : (item.type === 'book' ? 48 : (item.type === 'exam' ? 4 : 1)));
               const downloadsCount = item.downloadsCount || (item.aiScore * 3 + 12);
               const updatedDate = item.updatedDate || item.date;
+              const TypeIcon = getTypeIcon(item.type);
 
               return (
                 <div 
                   key={item.id}
-                  className="bg-white border border-slate-200 rounded-2xl p-4 transition-all hover:border-slate-300 hover:shadow-md flex flex-col sm:flex-row gap-4 relative"
+                  className="bg-white border border-stone-200 rounded-2xl p-4 transition-all hover:border-stone-300 hover:shadow-md flex flex-col sm:flex-row gap-4 relative"
                 >
-                  {/* Cột trái: Khung bìa cuốn sách màu nâu da sang trọng */}
-                  <div className="w-full sm:w-40 flex flex-col justify-between flex-shrink-0">
+                  {/* Cột trái: Khung bìa cuốn sách màu nâu da sang trọng (Thanh lịch, KHÔNG lặp lại tiêu đề 3 lần) */}
+                  <div className="w-full sm:w-36 flex flex-col justify-between flex-shrink-0">
                     <div 
-                      className="w-full h-44 rounded-xl p-3 flex flex-col justify-between shadow-md relative overflow-hidden select-none"
+                      className="w-full h-40 rounded-xl p-3 flex flex-col justify-between shadow-md relative overflow-hidden select-none"
                       style={{
-                        background: 'linear-gradient(145deg, #4a2c17 0%, #2e1a0e 100%)',
-                        borderLeft: '5px solid #6b3e20'
+                        background: 'linear-gradient(145deg, #422614 0%, #28150a 100%)',
+                        borderLeft: '4px solid #633618',
+                        boxShadow: 'inset 0 0 10px rgba(0,0,0,0.4), 0 4px 6px -1px rgba(0,0,0,0.1)'
                       }}
                     >
-                      {/* Header bìa */}
-                      <div className="flex items-center justify-between text-[9px] text-amber-200/80 font-mono tracking-wider uppercase border-b border-amber-900/60 pb-1">
+                      {/* Header bìa: ViTudy brand + Document type badge */}
+                      <div className="flex items-center justify-between text-[8.5px] text-amber-200/80 font-mono tracking-wider uppercase border-b border-amber-900/60 pb-1">
                         <span>ViTudy</span>
                         <span className="font-bold text-amber-300">{getTypeLabel(item.type)}</span>
                       </div>
 
-                      {/* Tên tài liệu trên bìa sách */}
-                      <div className="my-auto">
-                        <h5 className="text-xs font-black text-amber-50 leading-snug line-clamp-4 break-words">
-                          {item.title}
-                        </h5>
+                      {/* Giữa bìa: Biểu tượng dập chìm sang trọng, KHÔNG nhồi nhét tiêu đề dài */}
+                      <div className="my-auto flex flex-col items-center justify-center text-center py-2">
+                        <div className="w-10 h-10 rounded-full border border-amber-700/60 bg-amber-950/40 flex items-center justify-center text-amber-300/90 shadow-inner mb-1.5">
+                          <TypeIcon className="w-5 h-5" />
+                        </div>
+                        <span className="text-[9.5px] font-bold text-amber-200/90 tracking-wide uppercase">
+                          {getCategoryLabel(item.category)}
+                        </span>
                       </div>
 
-                      {/* Footer bìa sách: Hiển thị Ngày chia sẻ */}
-                      <div className="flex items-center gap-1 text-[9px] text-amber-200/70 pt-1 border-t border-amber-900/60 font-mono">
-                        <Calendar className="w-2.5 h-2.5 text-amber-300/80" />
-                        <span>{item.date}</span>
+                      {/* Footer bìa sách: Ngày chia sẻ */}
+                      <div className="flex items-center justify-between text-[8.5px] text-amber-200/70 pt-1 border-t border-amber-900/60 font-mono">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5 text-amber-300/80" />
+                          <span>{item.date}</span>
+                        </span>
+                        <span>{pageCount} trang</span>
                       </div>
-                    </div>
-
-                    <div className="mt-2 text-center text-[10.5px] text-slate-500 font-medium">
-                      {pageCount} trang • {getCategoryLabel(item.category)}
                     </div>
                   </div>
 
-                  {/* Cột bên phải: Tiêu đề prominent, Tác giả, Metadata, Điểm AI, Mô tả theo loại và Nút hành động */}
+                  {/* Cột bên phải: Tiêu đề prominent, Tác giả, Metadata, Điểm AI, Tóm tắt nội dung và Nút hành động */}
                   <div className="flex-1 flex flex-col justify-between overflow-hidden">
                     <div>
-                      {/* Tiêu đề tài liệu đưa ra khung nội dung */}
-                      <h4 className="text-sm font-black text-slate-900 leading-snug mb-1.5 hover:text-[#E0562D] transition-colors">
+                      {/* Tiêu đề tài liệu */}
+                      <h4 className="text-sm font-black text-stone-900 leading-snug mb-1.5 hover:text-[#E0562D] transition-colors">
                         {item.title}
                       </h4>
 
                       {/* Author + Verified Badge + Metadata */}
-                      <div className="flex flex-wrap items-center gap-2.5 text-xs mb-2.5">
-                        <div className="flex items-center gap-1 font-bold text-slate-800">
-                          <span>Tác giả:</span>
-                          <span className="font-semibold text-slate-700">{item.author}</span>
+                      <div className="flex flex-wrap items-center gap-2 text-xs mb-2 text-stone-600">
+                        <div className="flex items-center gap-1 font-bold text-stone-800">
+                          <span className="text-stone-500 font-normal">Tác giả:</span>
+                          <span className="font-semibold text-stone-800">{item.author}</span>
                           <span title="Tác giả xác thực">
                             <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 inline ml-0.5" />
                           </span>
                         </div>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-slate-500">{downloadsCount} lượt mua</span>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-slate-500">Cập nhật {updatedDate}</span>
-                        <span className="text-slate-300">•</span>
+                        <span className="text-stone-300">•</span>
+                        <span>{downloadsCount} lượt mua</span>
+                        <span className="text-stone-300">•</span>
+                        <span>Cập nhật {updatedDate}</span>
+                        <span className="text-stone-300">•</span>
                         
-                        {/* Điểm AI with tooltip giải thích tiêu chí */}
+                        {/* Điểm AI with tooltip */}
                         <div className="relative group/score inline-flex items-center gap-1 cursor-help">
-                          <span className="font-bold text-slate-800">Điểm AI:</span>
-                          <span className="font-bold text-[#E0562D] font-mono px-1.5 py-0.5 rounded bg-orange-50 border border-orange-200/60">
+                          <span className="font-bold text-stone-800">AI:</span>
+                          <span className="font-bold text-[#E0562D] font-mono px-1.5 py-0.2 rounded bg-orange-50 border border-orange-200/60">
                             {item.aiScore}/100
                           </span>
                           {/* Tooltip */}
-                          <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/score:flex flex-col w-60 p-2.5 bg-slate-900 text-white text-[10.5px] rounded-xl shadow-xl z-50 pointer-events-none">
-                            <div className="font-bold text-amber-300 mb-1 border-b border-slate-700 pb-1">
+                          <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/score:flex flex-col w-60 p-2.5 bg-stone-900 text-white text-[10.5px] rounded-xl shadow-xl z-50 pointer-events-none">
+                            <div className="font-bold text-amber-300 mb-1 border-b border-stone-700 pb-1">
                               Tiêu chí chấm điểm tự động AI
                             </div>
-                            <div className="space-y-0.5 text-slate-300">
+                            <div className="space-y-0.5 text-stone-300">
                               <div>• Độ chuẩn xác kiến thức: 40%</div>
                               <div>• Cấu trúc & tính mạch lạc: 35%</div>
                               <div>• Tính ứng dụng & thực tiễn: 25%</div>
                             </div>
-                            <div className="mt-1.5 pt-1 border-t border-slate-700 text-slate-400 text-[9.5px]">
+                            <div className="mt-1.5 pt-1 border-t border-stone-700 text-stone-400 text-[9.5px]">
                               Dựa trên {item.aiReviewCount || 24} lượt phản hồi từ người học
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Mô tả theo loại tài liệu */}
-                      <div className="text-xs text-slate-600 leading-relaxed">
-                        <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1">
-                          {getDescriptionLabel(item.type)}
-                        </div>
-                        <p className="line-clamp-2">
-                          {item.summary}
-                        </p>
-                      </div>
+                      {/* Tóm tắt nội dung (đã bỏ nhãn MÔ TẢ SÁCH/GIÁO TRÌNH dài dòng) */}
+                      <p className="text-xs text-stone-700 leading-relaxed line-clamp-2 mb-2 font-normal">
+                        {item.summary}
+                      </p>
 
-                      {/* Trích đoạn xem trước */}
-                      <div className="mt-2.5 bg-slate-50 rounded-xl p-2.5 text-[11px] text-slate-700 border border-slate-200">
-                        <div className="text-[10px] text-slate-400 font-mono font-bold mb-1">
-                          TRÍCH ĐOẠN XEM TRƯỚC:
+                      {/* Trích đoạn xem trước font sắc nét, tương phản cao */}
+                      <div className="bg-stone-50 rounded-xl p-2.5 text-[11px] text-stone-800 border border-stone-200">
+                        <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-0.5">
+                          Đoạn trích xem trước:
                         </div>
-                        <div className="whitespace-pre-line line-clamp-2 font-mono text-[10.5px] text-slate-600">
+                        <div className="whitespace-pre-line line-clamp-2 font-mono text-[10.5px] text-stone-700">
                           {item.previewText}
                         </div>
                       </div>
                     </div>
 
-                    {/* Hàng dưới cùng: Đặt giá và các nút hành động (Xem thử, Mua/Mở) cạnh nhau */}
-                    <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                      {/* Đơn vị giá V cạnh nút hành động */}
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
-                          <span className="text-sm font-black font-mono text-slate-900">{item.price}</span>
-                          <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-black text-[11px] flex items-center justify-center shadow-xs">
-                            V
-                          </div>
-                        </div>
-                        <span className="text-[11.5px] text-slate-500">
-                          {item.purchased ? 'Đã trong bộ sưu tập' : 'Giá sở hữu vĩnh viễn'}
-                        </span>
+                    {/* Hàng dưới cùng: Giá và nút hành động (KHÔNG lặp lại ô giá 2 lần) */}
+                    <div className="mt-3 pt-2.5 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3">
+                      {/* Khối giá duy nhất */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-stone-500 font-medium">Giá:</span>
+                        <span className="text-sm font-black font-mono text-[#E0562D]">{item.price} ViToken</span>
+                        {item.purchased && (
+                          <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-1">
+                            Đã sở hữu
+                          </span>
+                        )}
                       </div>
 
-                      {/* Nút hành động: Xem thử + Mua/Mở */}
+                      {/* Nút hành động: Xem thử + Mua/Thêm vào bàn học */}
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setPreviewItem(item)}
-                          className="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                          className="px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
                         >
-                          <Eye className="w-3.5 h-3.5 text-slate-600" />
+                          <Eye className="w-3.5 h-3.5 text-stone-600" />
                           <span>Xem thử</span>
                         </button>
 
                         <button
                           onClick={() => handleBuyMarketItem(item)}
-                          className={`py-2 px-4 rounded-xl text-xs font-bold transition-all text-center cursor-pointer shadow-xs flex items-center gap-1.5 ${
+                          className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all text-center cursor-pointer shadow-xs flex items-center gap-1.5 ${
                             item.purchased
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                               : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
                           }`}
                         >
                           {item.purchased ? (
                             <>
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Mở</span>
+                              <ArrowRight className="w-3.5 h-3.5 text-white" />
+                              <span>Thêm vào bàn học</span>
                             </>
                           ) : (
                             <span>Mua {item.price} V</span>
@@ -735,16 +737,16 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
       {/* MODAL: Xem thử trích đoạn chi tiết */}
       {previewItem && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-60 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-2xl p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-white border border-stone-300 rounded-3xl w-full max-w-2xl p-6 shadow-2xl relative text-stone-900 animate-fade-in font-sans flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <div className="flex items-center gap-2">
                 <Eye className="w-5 h-5 text-[#E0562D]" />
-                <h3 className="text-base font-black text-slate-900">Xem thử tài liệu</h3>
+                <h3 className="text-base font-black text-stone-900">Xem thử tài liệu</h3>
               </div>
               <button
                 onClick={() => setPreviewItem(null)}
                 aria-label="Đóng xem thử"
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -752,43 +754,43 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
             <div className="flex-1 overflow-y-auto py-4 space-y-3.5 pr-1">
               <div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-700 uppercase">
                   {getTypeLabel(previewItem.type)}
                 </span>
-                <h4 className="text-sm font-black text-slate-900 mt-1">
+                <h4 className="text-sm font-black text-stone-900 mt-1">
                   {previewItem.title}
                 </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Tác giả: {previewItem.author} • Điểm AI: <strong className="text-[#E0562D] font-mono">{previewItem.aiScore}/100</strong>
+                <p className="text-xs text-stone-600 mt-0.5">
+                  Tác giả: <strong className="text-stone-800">{previewItem.author}</strong> • Điểm AI: <strong className="text-[#E0562D] font-mono">{previewItem.aiScore}/100</strong>
                 </p>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed">
-                <div className="font-bold text-slate-800 text-[11px] mb-1 uppercase tracking-wide">
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs text-stone-700 leading-relaxed">
+                <div className="font-bold text-stone-800 text-[11px] mb-1 uppercase tracking-wide">
                   Tóm tắt nội dung:
                 </div>
                 <p>{previewItem.summary}</p>
               </div>
 
-              <div className="border border-slate-200 rounded-xl p-3.5 bg-white space-y-2">
-                <div className="font-bold text-slate-800 text-[11px] uppercase tracking-wide flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-slate-500" />
+              <div className="border border-stone-200 rounded-xl p-3.5 bg-white space-y-2">
+                <div className="font-bold text-stone-800 text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-stone-500" />
                   <span>Trích đoạn nội dung thực tế:</span>
                 </div>
-                <div className="whitespace-pre-line font-mono text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 leading-relaxed">
+                <div className="whitespace-pre-line font-mono text-xs text-stone-800 bg-stone-50 p-3 rounded-lg border border-stone-200 leading-relaxed">
                   {previewItem.previewText}
                 </div>
               </div>
 
               {previewItem.pages && previewItem.pages.length > 0 && (
-                <div className="border border-slate-200 rounded-xl p-3.5 bg-white space-y-2">
-                  <div className="font-bold text-slate-800 text-[11px] uppercase tracking-wide flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-slate-500" />
+                <div className="border border-stone-200 rounded-xl p-3.5 bg-white space-y-2">
+                  <div className="font-bold text-stone-800 text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-stone-500" />
                     <span>Mục lục các chương ({previewItem.pages.length} phần):</span>
                   </div>
-                  <ul className="space-y-1 text-xs text-slate-600 list-disc list-inside">
+                  <ul className="space-y-1 text-xs text-stone-700 list-disc list-inside">
                     {previewItem.pages.map((p, idx) => (
-                      <li key={idx} className="font-medium text-slate-700">
+                      <li key={idx} className="font-medium text-stone-800">
                         {p.title || `Trang ${idx + 1}`}
                       </li>
                     ))}
@@ -797,15 +799,15 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               )}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-500">Giá mở tài liệu:</span>
-                <span className="text-sm font-black font-mono text-slate-900">{previewItem.price} ViToken</span>
+                <span className="text-xs text-stone-500">Giá mở tài liệu:</span>
+                <span className="text-sm font-black font-mono text-[#E0562D]">{previewItem.price} ViToken</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPreviewItem(null)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-700 text-xs font-bold cursor-pointer"
                 >
                   Đóng xem thử
                 </button>
@@ -817,14 +819,14 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                   }}
                   className={`px-4 py-1.5 rounded-xl text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5 ${
                     previewItem.purchased
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                       : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
                   }`}
                 >
                   {previewItem.purchased ? (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Mở ngay</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-white" />
+                      <span>Thêm vào bàn học</span>
                     </>
                   ) : (
                     <span>Mua ngay ({previewItem.price} V)</span>

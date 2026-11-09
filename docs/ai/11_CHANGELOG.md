@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-11-09 20:05 — main (Đồng Bộ Hóa Toàn Diện Trải Nghiệm Chợ Tài Liệu: Thống Nhất Tên Gọi, 3 Loại Tài Liệu, Triệt Tiêu Lặp Giá & Lặp Tiêu Đề, Bổ Sung Nút Thêm Vào Bàn Học)
+- **Task:** Đồng bộ và nâng cấp toàn diện cả 2 giao diện Chợ: Trang Chợ (`src/app/market/page.tsx`) và Modal Chợ trên Bàn học (`src/components/modals/MarketModal.tsx`):
+  1. **Thống nhất tên gọi & thương hiệu:** Đổi tên duy nhất thành **"Chợ Tài Liệu"** (loại bỏ hoàn toàn tên cũ "Chợ Tri Thức KnowInherit"), đồng bộ phụ đề *"Kho tri thức mở ViTudy — Khám phá và trao đổi tài liệu học tập cùng cộng đồng."*.
+  2. **Thống nhất 3 loại tài liệu & tiền tệ ViToken:**
+     - 3 loại chuẩn: `Sách` (`book` - 50 V), `Tờ tóm tắt` (`paper` - 15 V), `Đề thi` (`exam` - 30 V).
+     - Đơn vị tiền tệ: Thống nhất gọi `ViToken` (hoặc `V` với quy đổi rõ ràng `1 V = 1 ViToken`), hiển thị icon đồng xu chính thức `/icons/vitoken.png` qua helper `getAssetPath`.
+  3. **Cải tiến Trang Chợ (`src/app/market/page.tsx`):**
+     - Căn lưới 3 cột cân xứng `max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5`, triệt tiêu hoàn toàn khoảng hở lệch bên phải.
+     - Thêm nút "Chia sẻ tài liệu" kèm modal tạo tài liệu đóng góp tri thức (+2 ViToken).
+     - Thêm đầy đủ bộ lọc: Tìm kiếm, Chip Loại tài liệu, Chip Môn học, Điểm AI, Mức giá, Sắp xếp, kèm nút "Đặt lại" (`RotateCcw`) và số lượng tài liệu.
+     - Mỗi thẻ có dấu xác thực tác giả (`CheckCircle2 text-sky-600`), số trang, số lượt mua, ngày cập nhật, điểm AI có tiền tố `AI: [score]/100`.
+     - Chân thẻ có cả nút "Xem thử" VÀ nút "Mua [X] V" (hoặc "Đã sở hữu" dẫn về bàn học).
+  4. **Cải tiến Modal Chợ (`src/components/modals/MarketModal.tsx`):**
+     - Đặt chế độ hiển thị lưới `grid` làm mặc định.
+     - Bìa da nâu bên trái: Tối giản sang trọng với icon dập chìm, nhãn loại và ngày chia sẻ, triệt tiêu hoàn toàn việc lặp lại tiêu đề 3 lần.
+     - Bỏ nhãn chữ hoa dài cồng kềnh `MÔ TẢ SÁCH / GIÁO TRÌNH:`.
+     - Triệt tiêu ô giá lặp thừa: Chỉ hiển thị giá một lần duy nhất tại chân thẻ.
+     - Bổ sung nút `Thêm vào bàn học` (`ArrowRight`) khi đã sở hữu (`item.purchased === true`), nhấp vào sẽ tự động mount tài liệu (`addUploadedDocument` hoặc `addExamSheet`) trực tiếp lên bàn học và đóng modal ngay lập tức.
+     - Chuyển các bộ lọc dropdown thành các hàng chip trực quan, có nút "Đặt lại".
+     - Nâng tương phản chữ phụ và trích đoạn xem trước đạt chuẩn WCAG AA (>= 4.5:1).
+  5. **Mở rộng `MarketService.getListings`:** Hỗ trợ lọc theo `type`, `minScore`, `maxPrice`, `search` và sắp xếp đa tiêu chí.
+- **Files Modified:**
+  - `src/app/market/page.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/services/MarketService.ts`
+  - `AGENTS.md`
+  - `docs/ai/03_SYMBOL_INDEX.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+  - `pnpm run docs:index ; pnpm run docs:check`: Passed (189 symbols).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 19:50 — main (Nâng Cấp Toàn Diện Giao Diện Trang Chủ: Lời Chào Tinh Gọn, 4 Mẫu Trực Quan, Bảng Gần Đây Chuẩn Thực Tế & WCAG AA)
 - **Task:** Giải quyết trọn bộ 7 điểm cải thiện giao diện Trang chủ (`src/components/home/HomePage.tsx`):
   1. **Lời chào tinh gọn & căn cùng trục:** Rút gọn tên thành tên ngắn (`shortName`: ví dụ "Thành"), giảm cỡ chữ xuống 36–40px (`text-3xl md:text-4xl`), căn trái cùng trục hoàn hảo với các khối bên dưới.

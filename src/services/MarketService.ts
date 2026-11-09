@@ -14,8 +14,11 @@ export interface ListingReview {
 export class MarketService {
   static async getListings(filters?: {
     category?: string;
+    type?: 'all' | 'book' | 'paper' | 'exam';
+    minScore?: number;
+    maxPrice?: number;
     search?: string;
-    sort?: 'newest' | 'score' | 'price_asc' | 'price_desc';
+    sort?: 'newest' | 'oldest' | 'score' | 'price_asc' | 'price_desc';
   }): Promise<MarketItem[]> {
     const supabase = getSupabase();
     let items: MarketItem[] = [...INITIAL_MARKET_ITEMS];
@@ -29,6 +32,10 @@ export class MarketService {
 
         if (filters?.category && filters.category !== 'all') {
           query = query.eq('tier', filters.category.toUpperCase());
+        }
+
+        if (filters?.type && filters.type !== 'all') {
+          query = query.eq('item_type', filters.type);
         }
 
         if (filters?.search) {
@@ -52,6 +59,8 @@ export class MarketService {
             previewText: d.preview_content || d.summary || '',
             pageCount: d.page_count || 1,
             downloadsCount: d.downloads_count || 0,
+            isAuthorVerified: true,
+            updatedDate: new Date(d.created_at).toLocaleDateString('vi-VN'),
           }));
           items = [...dbItems, ...INITIAL_MARKET_ITEMS];
         }
@@ -63,20 +72,52 @@ export class MarketService {
       items = items.filter((item) => item.category === filters.category);
     }
 
+    if (filters?.type && filters.type !== 'all') {
+      items = items.filter((item) => item.type === filters.type);
+    }
+
+    if (filters?.minScore && filters.minScore > 0) {
+      items = items.filter((item) => item.aiScore >= filters.minScore!);
+    }
+
+    if (filters?.maxPrice && filters.maxPrice > 0) {
+      items = items.filter((item) => item.price <= filters.maxPrice!);
+    }
+
     if (filters?.search) {
-      const q = filters.search.toLowerCase();
+      const q = filters.search.toLowerCase().trim();
       items = items.filter(
-        (item) => item.title.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q)
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.author.toLowerCase().includes(q) ||
+          item.summary.toLowerCase().includes(q)
       );
     }
 
     // Sort
     if (filters?.sort === 'score') {
       items.sort((a, b) => b.aiScore - a.aiScore);
+    } else if (filters?.sort === 'oldest') {
+      items.sort((a, b) => {
+        const partsA = a.date.split('/');
+        const partsB = b.date.split('/');
+        const timeA = partsA.length === 3 ? new Date(Number(partsA[2]), Number(partsA[1]) - 1, Number(partsA[0])).getTime() : 0;
+        const timeB = partsB.length === 3 ? new Date(Number(partsB[2]), Number(partsB[1]) - 1, Number(partsB[0])).getTime() : 0;
+        return timeA - timeB;
+      });
     } else if (filters?.sort === 'price_asc') {
       items.sort((a, b) => a.price - b.price);
     } else if (filters?.sort === 'price_desc') {
       items.sort((a, b) => b.price - a.price);
+    } else {
+      // Default: newest
+      items.sort((a, b) => {
+        const partsA = a.date.split('/');
+        const partsB = b.date.split('/');
+        const timeA = partsA.length === 3 ? new Date(Number(partsA[2]), Number(partsA[1]) - 1, Number(partsA[0])).getTime() : 0;
+        const timeB = partsB.length === 3 ? new Date(Number(partsB[2]), Number(partsB[1]) - 1, Number(partsB[0])).getTime() : 0;
+        return timeB - timeA;
+      });
     }
 
     return items;
