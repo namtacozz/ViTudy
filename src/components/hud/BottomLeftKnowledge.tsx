@@ -21,15 +21,17 @@ import {
   ExternalLink,
   ShieldCheck,
   Sparkles,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
+import { parsePdfFile } from '@/services/PdfParserService';
 
 interface PendingDocument {
   file: File;
   title: string;
   description: string;
-  pages: { title?: string; text: string }[];
+  pages: { title?: string; text: string; image?: string }[];
   fileSize: string;
   fileType: string;
 }
@@ -39,6 +41,7 @@ export function BottomLeftKnowledge() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
   const [pendingDoc, setPendingDoc] = useState<PendingDocument | null>(null);
+  const [isParsingDoc, setIsParsingDoc] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -280,41 +283,65 @@ export function BottomLeftKnowledge() {
     document.body.removeChild(a);
   };
 
-  // Handle native file input selection
+  // Handle native file input selection (Real PDF & document extraction)
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const rawName = file.name.replace(/\.[^/.]+$/, '');
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImage = file.type.startsWith('image/');
     const isText = file.type.includes('text') || file.name.endsWith('.md') || file.name.endsWith('.txt');
 
-    let parsedPages: { title?: string; text: string }[] = [];
+    let parsedPages: { title?: string; text: string; image?: string }[] = [];
+    setIsParsingDoc(true);
 
-    if (isText) {
-      const content = await file.text();
-      const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
-      parsedPages = paragraphs.length > 0
-        ? paragraphs.map((p, idx) => ({ title: `Trang ${idx + 1}`, text: p.trim() }))
-        : [{ title: rawName, text: content.trim() }];
-    } else {
-      const simulatedCount = file.size > 250000 ? 6 : 2;
-      parsedPages = Array.from({ length: simulatedCount }, (_, i) => ({
-        title: `Chương ${i + 1}: ${rawName}`,
-        text: `Nội dung trích xuất từ tệp "${file.name}" (${(file.size / 1024).toFixed(1)} KB).\n\nTrang ${i + 1} của tài liệu.\n\nSử dụng Inteline để hỏi nhanh hoặc STudy để tạo flashcard và đề thi ôn tập.`
-      }));
+    try {
+      if (isPdf) {
+        parsedPages = await parsePdfFile(file);
+      } else if (isImage) {
+        const reader = new FileReader();
+        const dataUrl = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        parsedPages = [{
+          title: rawName,
+          text: '',
+          image: dataUrl
+        }];
+      } else if (isText) {
+        const content = await file.text();
+        const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+        parsedPages = paragraphs.length > 0
+          ? paragraphs.map((p, idx) => ({ title: `Trang ${idx + 1}`, text: p.trim() }))
+          : [{ title: rawName, text: content.trim() }];
+      } else {
+        try {
+          const content = await file.text();
+          parsedPages = [{ title: rawName, text: content.trim() }];
+        } catch {
+          parsedPages = [{ title: rawName, text: `Tệp ${file.name}` }];
+        }
+      }
+
+      setPendingDoc({
+        file,
+        title: rawName,
+        description: '',
+        pages: parsedPages,
+        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+        fileType: file.name.split('.').pop()?.toUpperCase() || 'TỆP'
+      });
+
+      setIsConfirmModalOpen(true);
+    } catch (err) {
+      console.error('Lỗi nạp tệp:', err);
+      alert('Không thể trích xuất nội dung tệp. Vui lòng thử lại với file PDF hoặc hình ảnh khác.');
+    } finally {
+      setIsParsingDoc(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-
-    setPendingDoc({
-      file,
-      title: rawName,
-      description: '',
-      pages: parsedPages,
-      fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-      fileType: file.name.split('.').pop()?.toUpperCase() || 'TỆP'
-    });
-
-    setIsConfirmModalOpen(true);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleConfirmUpload = (e: React.FormEvent) => {
@@ -353,12 +380,26 @@ export function BottomLeftKnowledge() {
       {/* 1. Button: Tải lên tài liệu (Hài hòa với thanh dock) */}
       <button
         data-tour="upload-btn"
+        disabled={isParsingDoc}
         onClick={() => fileInputRef.current?.click()}
-        title="Tải lên tài liệu (PDF, Word, Text, Ảnh...)"
-        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+        title={isParsingDoc ? "Đang trích xuất tài liệu..." : "Tải lên tài liệu (PDF, Word, Text, Ảnh...)"}
+        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
       >
-        <Upload className="w-4.5 h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
+        {isParsingDoc ? (
+          <Loader2 className="w-4.5 h-4.5 text-[#E0562D] animate-spin" />
+        ) : (
+          <Upload className="w-4.5 h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
+        )}
       </button>
+
+      {/* Parsing PDF Indicator Toast */}
+      {isParsingDoc && mounted && createPortal(
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] bg-white text-slate-800 px-4 py-2.5 rounded-full shadow-xl border border-orange-200 flex items-center gap-2.5 font-sans text-xs font-semibold animate-pulse">
+          <Loader2 className="w-4 h-4 text-[#E0562D] animate-spin flex-shrink-0" />
+          <span>Đang trích xuất các trang tài liệu PDF...</span>
+        </div>,
+        document.body
+      )}
 
       {/* 2. Button: Ghi hình buổi học (Icon camera) */}
       {isRecording ? (
@@ -553,7 +594,12 @@ export function BottomLeftKnowledge() {
             {/* Selected File Info Pill */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-4 text-xs flex items-center justify-between text-slate-600">
               <span className="font-medium truncate mr-2">{pendingDoc.file.name}</span>
-              <span className="font-mono text-[11px] text-slate-400 flex-shrink-0">{pendingDoc.fileSize}</span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="bg-orange-50 text-[#E0562D] border border-orange-200 px-1.5 py-0.5 rounded font-bold text-[10px]">
+                  {pendingDoc.pages.length} trang
+                </span>
+                <span className="font-mono text-[11px] text-slate-400">{pendingDoc.fileSize}</span>
+              </div>
             </div>
 
             <form onSubmit={handleConfirmUpload} className="space-y-3.5">

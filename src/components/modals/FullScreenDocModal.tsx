@@ -303,17 +303,29 @@ export function FullScreenDocModal({
                         : 'border-slate-300 hover:border-slate-400 shadow-2xs hover:shadow-sm'
                     }`}
                   >
-                    <div>
-                      <div className="text-[9px] font-bold text-slate-900 line-clamp-1 border-b border-slate-100 pb-1 mb-1">
-                        {leaf.chapterTitle || `Trang ${leaf.pageNumber}`}
+                    {leaf.image ? (
+                      <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={leaf.image} 
+                          alt={`Trang ${leaf.pageNumber}`}
+                          className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                        />
                       </div>
-                      <div className="text-[7.5px] leading-tight text-slate-500 line-clamp-6 select-none pointer-events-none">
-                        {leaf.text}
-                      </div>
-                    </div>
-                    <div className="w-full text-right text-[8px] font-mono text-slate-400">
-                      {leaf.pageNumber}
-                    </div>
+                    ) : (
+                      <>
+                        <div>
+                          <div className="text-[9px] font-bold text-slate-900 line-clamp-1 border-b border-slate-100 pb-1 mb-1">
+                            {leaf.chapterTitle || `Trang ${leaf.pageNumber}`}
+                          </div>
+                          <div className="text-[7.5px] leading-tight text-slate-500 line-clamp-6 select-none pointer-events-none">
+                            {leaf.text}
+                          </div>
+                        </div>
+                        <div className="w-full text-right text-[8px] font-mono text-slate-400">
+                          {leaf.pageNumber}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Page Label */}
@@ -448,18 +460,31 @@ export function FullScreenDocModal({
                 {/* Left Page */}
                 <div className="flex-1 p-10 flex flex-col justify-between border-r border-slate-200 relative bg-[#fdfbf7]">
                   {leftLeaf ? (
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="pb-2 mb-4 border-b border-slate-200">
-                          <span className="text-xs font-bold text-slate-600">
+                    <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                      <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                          <span className="text-xs font-bold text-slate-600 truncate">
                             {leftLeaf.chapterTitle}
                           </span>
                         </div>
-                        <div className="text-[15.5px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100">
-                          <MathRenderer content={leftLeaf.text} />
-                        </div>
+                        {leftLeaf.image ? (
+                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                            <img
+                              src={leftLeaf.image}
+                              alt={`Trang ${leftLeaf.pageNumber}`}
+                              className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                            />
+                            <div className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-3 text-xs leading-relaxed overflow-y-auto cursor-text select-text">
+                              <MathRenderer content={leftLeaf.text} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-[15.5px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar">
+                            <MathRenderer content={leftLeaf.text} />
+                          </div>
+                        )}
                       </div>
-                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200">
+                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
                         {leftLeaf.pageNumber}
                       </div>
                     </div>
@@ -476,18 +501,31 @@ export function FullScreenDocModal({
                 {/* Right Page */}
                 <div className="flex-1 p-10 flex flex-col justify-between relative bg-[#fdfbf7]">
                   {rightLeaf ? (
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="pb-2 mb-4 border-b border-slate-200">
-                          <span className="text-xs font-bold text-slate-600">
+                    <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                      <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                          <span className="text-xs font-bold text-slate-600 truncate">
                             {rightLeaf.chapterTitle}
                           </span>
                         </div>
-                        <div className="text-[15.5px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100">
-                          <MathRenderer content={rightLeaf.text} />
-                        </div>
+                        {rightLeaf.image ? (
+                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                            <img
+                              src={rightLeaf.image}
+                              alt={`Trang ${rightLeaf.pageNumber}`}
+                              className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                            />
+                            <div className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-3 text-xs leading-relaxed overflow-y-auto cursor-text select-text">
+                              <MathRenderer content={rightLeaf.text} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-[15.5px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar">
+                            <MathRenderer content={rightLeaf.text} />
+                          </div>
+                        )}
                       </div>
-                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200">
+                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
                         {rightLeaf.pageNumber}
                       </div>
                     </div>
@@ -505,18 +543,31 @@ export function FullScreenDocModal({
                 className="rounded-sm shadow-2xl p-10 border border-slate-300 bg-white text-slate-900 flex flex-col justify-between"
               >
                 {leftLeaf ? (
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="pb-2 mb-4 border-b border-slate-200">
-                        <span className="text-xs font-bold text-slate-600">
+                  <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                        <span className="text-xs font-bold text-slate-600 truncate">
                           {leftLeaf.chapterTitle}
                         </span>
                       </div>
-                      <div className="text-[16px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100">
-                        <MathRenderer content={leftLeaf.text} />
-                      </div>
+                      {leftLeaf.image ? (
+                        <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                          <img
+                            src={leftLeaf.image}
+                            alt={`Trang ${leftLeaf.pageNumber}`}
+                            className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                          />
+                          <div className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-3 text-xs leading-relaxed overflow-y-auto cursor-text select-text">
+                            <MathRenderer content={leftLeaf.text} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[16px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar">
+                          <MathRenderer content={leftLeaf.text} />
+                        </div>
+                      )}
                     </div>
-                    <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200">
+                    <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
                       {leftLeaf.pageNumber}
                     </div>
                   </div>

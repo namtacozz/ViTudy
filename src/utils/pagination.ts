@@ -10,6 +10,7 @@ export interface PaginatedLeaf {
   chapterTitle: string;
   pageNumber: number; // 1-indexed overall book page
   text: string;
+  image?: string;
   isContinuation?: boolean;
 }
 
@@ -164,7 +165,7 @@ function createMeasurer(): { measure: (text: string) => number; cleanup: () => v
  * Takes a list of raw book pages/chapters and splits overflowing text across natural pages.
  */
 export function paginateDocument(
-  rawPages: { id?: string; title?: string; text: string }[]
+  rawPages: { id?: string; title?: string; text: string; image?: string }[]
 ): PaginatedLeaf[] {
   const leaves: PaginatedLeaf[] = [];
   const measurer = createMeasurer();
@@ -173,6 +174,20 @@ export function paginateDocument(
     for (const chapter of rawPages) {
       const chapterTitle = (chapter.title || `Chương ${leaves.length + 1}`).normalize('NFC');
       const rawText = (chapter.text || '').normalize('NFC').trim();
+
+      // If page already has a rendered image (from PDF or picture), keep it as a distinct full page
+      if (chapter.image) {
+        leaves.push({
+          id: `leaf-${leaves.length + 1}`,
+          sourceChapterId: chapter.id,
+          chapterTitle,
+          pageNumber: leaves.length + 1,
+          text: rawText,
+          image: chapter.image,
+          isContinuation: false
+        });
+        continue;
+      }
 
       if (!measurer) {
         const heuristicLeaves = paginateTextHeuristic(chapterTitle, rawText, leaves.length + 1);

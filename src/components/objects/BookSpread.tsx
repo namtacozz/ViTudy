@@ -593,13 +593,31 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                       </span>
                     </div>
 
-                    {/* Page Body Text with KaTeX Math Rendering */}
-                    <div 
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
-                    >
-                      <MathRenderer content={underneathLeftLeaf.text} />
-                    </div>
+                    {/* Page Body Text or PDF Rendered Page Image */}
+                    {underneathLeftLeaf.image ? (
+                      <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                        <img
+                          src={underneathLeftLeaf.image}
+                          alt={`Trang ${underneathLeftLeaf.pageNumber}`}
+                          className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                          draggable={false}
+                        />
+                        <div 
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-2 text-[13px] leading-relaxed overflow-y-auto no-scrollbar cursor-text select-text"
+                          title="Bôi đen văn bản để hỏi Inteline / STudy"
+                        >
+                          <MathRenderer content={underneathLeftLeaf.text} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
+                      >
+                        <MathRenderer content={underneathLeftLeaf.text} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Left Page Footer (Drag handle): Only Page Number in Bottom-Left Corner */}
@@ -650,13 +668,31 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                       </span>
                     </div>
 
-                    {/* Page Body Text with KaTeX Math Rendering */}
-                    <div 
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
-                    >
-                      <MathRenderer content={underneathRightLeaf.text} />
-                    </div>
+                    {/* Page Body Text or PDF Rendered Page Image */}
+                    {underneathRightLeaf.image ? (
+                      <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                        <img
+                          src={underneathRightLeaf.image}
+                          alt={`Trang ${underneathRightLeaf.pageNumber}`}
+                          className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                          draggable={false}
+                        />
+                        <div 
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-2 text-[13px] leading-relaxed overflow-y-auto no-scrollbar cursor-text select-text"
+                          title="Bôi đen văn bản để hỏi Inteline / STudy"
+                        >
+                          <MathRenderer content={underneathRightLeaf.text} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 flex-1 overflow-y-auto no-scrollbar cursor-text select-text"
+                      >
+                        <MathRenderer content={underneathRightLeaf.text} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Right Page Footer (Drag handle): Only Page Number in Bottom-Right Corner */}
@@ -720,15 +756,25 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                     >
                       {rightLeaf && (
                         <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                          <div>
-                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                          <div className="flex-1 flex flex-col overflow-hidden">
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800 flex-shrink-0">
                               {rightLeaf.chapterTitle}
                             </div>
-                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
-                              {rightLeaf.text}
-                            </p>
+                            {rightLeaf.image ? (
+                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={rightLeaf.image}
+                                  alt={`Trang ${rightLeaf.pageNumber}`}
+                                  className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                                {rightLeaf.text}
+                              </p>
+                            )}
                           </div>
-                          <div className="text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                          <div className="text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200 flex-shrink-0">
                             {rightLeaf.pageNumber}
                           </div>
                         </div>
@@ -753,15 +799,25 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                     >
                       {paginatedLeaves[rightPageIndex + 1] ? (
                         <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                          <div>
-                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                          <div className="flex-1 flex flex-col overflow-hidden">
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800 flex-shrink-0">
                               {paginatedLeaves[rightPageIndex + 1].chapterTitle}
                             </div>
-                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
-                              {paginatedLeaves[rightPageIndex + 1].text}
-                            </p>
+                            {paginatedLeaves[rightPageIndex + 1].image ? (
+                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={paginatedLeaves[rightPageIndex + 1].image}
+                                  alt={`Trang ${paginatedLeaves[rightPageIndex + 1].pageNumber}`}
+                                  className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                                {paginatedLeaves[rightPageIndex + 1].text}
+                              </p>
+                            )}
                           </div>
-                          <div className="text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                          <div className="text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200 flex-shrink-0">
                             {paginatedLeaves[rightPageIndex + 1].pageNumber}
                           </div>
                         </div>
@@ -805,15 +861,25 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                     >
                       {leftLeaf && (
                         <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                          <div>
-                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                          <div className="flex-1 flex flex-col overflow-hidden">
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800 flex-shrink-0">
                               {leftLeaf.chapterTitle}
                             </div>
-                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
-                              {leftLeaf.text}
-                            </p>
+                            {leftLeaf.image ? (
+                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={leftLeaf.image}
+                                  alt={`Trang ${leftLeaf.pageNumber}`}
+                                  className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                                {leftLeaf.text}
+                              </p>
+                            )}
                           </div>
-                          <div className="text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                          <div className="text-left text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200 flex-shrink-0">
                             {leftLeaf.pageNumber}
                           </div>
                         </div>
@@ -838,15 +904,25 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                     >
                       {paginatedLeaves[leftPageIndex - 1] && (
                         <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                          <div>
-                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800">
+                          <div className="flex-1 flex flex-col overflow-hidden">
+                            <div className="pb-2 mb-3 border-b border-stone-200/90 text-xs font-bold text-slate-800 flex-shrink-0">
                               {paginatedLeaves[leftPageIndex - 1].chapterTitle}
                             </div>
-                            <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
-                              {paginatedLeaves[leftPageIndex - 1].text}
-                            </p>
+                            {paginatedLeaves[leftPageIndex - 1].image ? (
+                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={paginatedLeaves[leftPageIndex - 1].image}
+                                  alt={`Trang ${paginatedLeaves[leftPageIndex - 1].pageNumber}`}
+                                  className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-[14.5px] leading-[1.72] text-slate-900 font-medium whitespace-pre-line line-clamp-12">
+                                {paginatedLeaves[leftPageIndex - 1].text}
+                              </p>
+                            )}
                           </div>
-                          <div className="text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200">
+                          <div className="text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200 flex-shrink-0">
                             {paginatedLeaves[leftPageIndex - 1].pageNumber}
                           </div>
                         </div>

@@ -71,7 +71,7 @@ interface StudySpaceContextType {
   updateStickyNoteTextAlign?: (id: string, align: 'left' | 'center' | 'right') => void;
   updateStickyNoteIsBold?: (id: string, isBold: boolean) => void;
   addStickyNote: (text?: string, x?: number, y?: number, color?: string, width?: number, height?: number) => string;
-  addUploadedDocument: (title: string, pages: { title?: string; text: string }[]) => void;
+  addUploadedDocument: (title: string, pages: { title?: string; text: string; image?: string }[]) => void;
   removeDeskItem: (id: string) => void;
   setSearchQuery: (query: string) => void;
   togglePanLock: () => void;
@@ -1418,15 +1418,16 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     return stickyId;
   };
 
-  const addUploadedDocument = (title: string, rawPages: { title?: string; text: string }[]) => {
+  const addUploadedDocument = (title: string, rawPages: { title?: string; text: string; image?: string }[]) => {
     const pageCount = rawPages.length;
-    const type: 'paper' | 'book' = pageCount < 5 ? 'paper' : 'book';
+    const type: 'paper' | 'book' = pageCount <= 1 ? 'paper' : 'book';
 
     const pages: PageContent[] = rawPages.map((p, idx) => ({
       id: `p-${Date.now()}-${idx}`,
       pageNumber: idx + 1,
       title: normalizeNFC(p.title || `Trang ${idx + 1}`),
-      text: normalizeNFC(p.text)
+      text: normalizeNFC(p.text),
+      image: p.image
     }));
 
     const newItem: DeskItem = {

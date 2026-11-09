@@ -4,6 +4,42 @@
 
 ---
 
+## 2026-11-09 20:25 — main (Trích Xuất & Hiển Thị Tài Liệu PDF Thực Tế Thay Vì Mock Text Trên Sách 2.5D)
+- **Task:** Khi người dùng tải file `.pdf` lên bàn học, cuốn sách được tạo ra phải chứa đúng nội dung thực tế (cả trang hình ảnh rendered gốc của PDF lẫn văn bản trích xuất), loại bỏ hoàn toàn văn bản giả lập định sẵn (`"Nội dung trích xuất từ tệp..."`):
+  1. **Tích hợp thư viện `pdfjs-dist@4.10.38`:**
+     - Thiết lập worker cục bộ tại `public/pdf.worker.min.mjs` có hỗ trợ `getAssetPath` cho GitHub Pages.
+     - Tạo service `src/services/PdfParserService.ts` trích xuất cả text qua `getTextContent()` và render ảnh từng trang PDF qua HTML5 Canvas (`scale: 1.5`, JPEG 88%) thành ảnh dataURL.
+  2. **Bảo toàn tỷ lệ phân trang 1:1:**
+     - Cập nhật `PaginatedLeaf` và `paginateDocument` trong `src/utils/pagination.ts` hỗ trợ trường `image?: string`.
+     - Khi trang có `image`, bảo toàn nguyên vẹn 1 trang PDF = 1 trang sách mà không bẻ gãy đoạn văn.
+  3. **Hiển thị hai lớp sắc nét trên Sách & Giấy rời:**
+     - Cập nhật `src/components/objects/BookSpread.tsx`: Hiển thị ảnh trang PDF sắc nét ở cả trang tĩnh (`underneathLeftLeaf`, `underneathRightLeaf`) lẫn trong hiệu ứng lật trang 3D (`dragFlip`). Đặt lớp text overlay trong suốt phía trên để người học có thể bôi đen chữ hỏi Inteline hoặc STudy.
+     - Cập nhật `src/components/objects/PaperSheet.tsx`: Hiển thị ảnh trang tài liệu thật khi có `activePage.image`.
+     - Cập nhật `src/components/modals/FullScreenDocModal.tsx`: Hiển thị hình ảnh trang PDF sắc nét ở chế độ 2 trang, 1 trang và thumbnail thu nhỏ bên thanh trái.
+  4. **Chỉ báo trạng thái trực quan:**
+     - Nút Tải lên tài liệu tại HUD có spinner `Loader2` và toast `"Đang trích xuất các trang tài liệu PDF..."` khi đang phân tích.
+     - Modal xác nhận hiển thị số lượng trang đã trích xuất thành công (`pendingDoc.pages.length`).
+- **Files Modified:**
+  - `package.json`
+  - `pnpm-lock.yaml`
+  - `public/pdf.worker.min.mjs`
+  - `src/services/PdfParserService.ts`
+  - `src/utils/pagination.ts`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/components/objects/BookSpread.tsx`
+  - `src/components/objects/PaperSheet.tsx`
+  - `src/components/modals/FullScreenDocModal.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 20:10 — main (Chuẩn Hóa Đúng Cặp Icon: Logo ViTudy logo.png & Coin ViToken vitoken.svg)
 - **Task:** Hiệu chỉnh chính xác 100% vai trò của hai biểu tượng theo đúng chỉ đạo của Ngài Vịt:
   1. **Logo đại diện Web ViTudy (Ảnh 1):**

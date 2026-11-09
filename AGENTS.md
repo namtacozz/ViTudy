@@ -191,6 +191,22 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
 
 ## 5. Quy Chuẩn Sách & Tài Liệu 2.5D (Book & Document Standards)
 
+* **Quy Chuẩn Nạp & Trích Xuất File PDF Thực Tế (Real In-Browser PDF Extraction & High-Res Rendering):**
+  * **Triệt Tiêu Hoàn Toàn Văn Bản Giả Lập / Mock Text (Zero Placeholder Text):**
+    * Khi người dùng tải tệp `.pdf` lên bàn học, hệ thống **tuyệt đối không sinh văn bản giả lập định sẵn** (như `"Nội dung trích xuất từ tệp 'TenFile.pdf'..."`).
+    * Trích xuất chính xác 100% nội dung thực tế của từng trang bằng thư viện chuẩn `pdfjs-dist` thông qua `PdfParserService`:
+      1. **Trích xuất văn bản thực tế:** Đọc từng chuỗi ký tự qua `getTextContent()`, làm sạch khoảng trắng để phục vụ tìm kiếm, tóm tắt và hỏi AI Inteline / STudy.
+      2. **Render trang hình ảnh chất lượng cao (High-Res Canvas Rendering):** Mỗi trang được render qua HTML5 Canvas với độ phân giải siêu nét (`scale: 1.5`, JPEG 88%) thành ảnh dataURL gắn vào trường `image` của từng trang (`PageContent`).
+  * **Hiển Thị Trang Sách PDF Sắc Nét & Tương Tác Hai Lớp (Crisp Dual-Layer PDF Display):**
+    * Trên **Sách mở đôi (`BookSpread`)**, **Tờ giấy đơn (`PaperSheet`)**, và **Chế độ xem toàn màn hình (`FullScreenDocModal`)**:
+      * Nếu trang có ảnh `leaf.image`: Render trực tiếp ảnh trang PDF thật ở độ phân giải cao (`max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs`).
+      * **Lớp Text Phủ Bán Trong Suốt Cho Phép Bôi Đen (Interactive Text Overlay):** Đặt một lớp text vô hình phía trên ảnh (`opacity-0 hover:opacity-10 cursor-text select-text`) chứa toàn bộ văn bản của trang, cho phép người dùng bôi đen đoạn chữ trên trang PDF để hỏi AI Inteline hoặc tạo câu hỏi flashcard qua STudy một cách tự nhiên.
+  * **Bảo Toàn Tỷ Lệ Phân Trang 1 Trang PDF = 1 Trang Sách:**
+    * Trong `src/utils/pagination.ts`, khi một trang tài liệu đã có ảnh `image`, thuật toán phân trang bảo toàn nguyên vẹn 1 trang PDF ứng với đúng 1 trang sách (`PaginatedLeaf`), không chia cắt vụn đoạn văn thành nhiều trang con.
+  * **Chỉ Báo Trạng Thái Trích Xuất (Extraction Loading Indicator):**
+    * Nút Tải lên tài liệu tại HUD chuyển thành icon `Loader2 animate-spin` và bị disable trong lúc phân tích.
+    * Hiển thị toast thông báo trạng thái tại đỉnh màn hình: `"Đang trích xuất các trang tài liệu PDF..."` và hiển thị số lượng trang đã trích xuất thành công trong modal xác nhận tải lên bàn học.
+
 * **Hiển Thị Công Thức Toán Học Chuẩn Mực Bằng KaTeX (`MathRenderer`):**
   * Toàn bộ tài liệu, sách học thuật, công thức toán (đạo hàm, gradient $\nabla f$, ma trận, phân số, vector) bắt buộc render qua `<MathRenderer />` sử dụng thư viện `KaTeX` với cú pháp LaTeX inline (`$...$`) và display block (`$$...$$`).
   * Danh sách liệt kê học thuật chuẩn hóa bằng dấu bullet `•` rõ ràng, tiêu đề in đậm cho các định lý và khái niệm cốt lõi.

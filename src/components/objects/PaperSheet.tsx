@@ -528,14 +528,32 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                 </h4>
               )}
 
-              {/* Reading Text Layer (Auto font-scaling & KaTeX Math Rendering) */}
-              <div 
-                onMouseDown={(e) => e.stopPropagation()}
-                style={{ textRendering: 'geometricPrecision', WebkitFontSmoothing: 'antialiased' }}
-                className={`${dynamicFontSize} text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 overflow-hidden flex-1 cursor-text select-text`}
-              >
-                <MathRenderer content={activePage.text} />
-              </div>
+              {/* Reading Text Layer (or PDF Rendered Page Image) */}
+              {activePage.image ? (
+                <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                  <img
+                    src={activePage.image}
+                    alt={activePage.title || 'Trang tài liệu'}
+                    className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                    draggable={false}
+                  />
+                  <div 
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-2 text-xs overflow-y-auto no-scrollbar cursor-text select-text"
+                    title="Bôi đen văn bản để hỏi Inteline / STudy"
+                  >
+                    <MathRenderer content={activePage.text} />
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{ textRendering: 'geometricPrecision', WebkitFontSmoothing: 'antialiased' }}
+                  className={`${dynamicFontSize} text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 overflow-hidden flex-1 cursor-text select-text`}
+                >
+                  <MathRenderer content={activePage.text} />
+                </div>
+              )}
             </div>
 
             {/* Paper Sheet Footer (Drag Handle & WCAG-compliant Contrast) */}
