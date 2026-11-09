@@ -27,16 +27,43 @@ import {
 } from 'lucide-react';
 import { MarketModal } from '../modals/MarketModal';
 import { TopUpModal } from '../payment/TopUpModal';
+import { testAiConnection } from '@/lib/aiClient';
 
-// Vector Coin SVG Icon
+// Vector Coin SVG Icon -> Logo ViToken chính thức từ logo.png
 function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="#E0562D" stroke="#c9451e" strokeWidth="1.5" />
-      <text x="12" y="16" textAnchor="middle" fill="white" fontWeight="900" fontSize="11" fontFamily="sans-serif">V</text>
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/icons/vitoken.png" alt="ViToken" className={`${className} object-contain inline-block flex-shrink-0`} />
   );
 }
+
+const PROVIDER_MODELS: Record<AiProvider, { id: string; name: string; tag: string }[]> = {
+  system: [
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Mặc định - Phản hồi nhanh & tiết kiệm ViToken' },
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', tag: 'Chuyên giải tích, công thức & tài liệu dài' },
+  ],
+  byok_gemini: [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', tag: 'Khuyên dùng - Nhanh, thông minh, đa năng' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', tag: 'Tư duy chuyên sâu, giải toán phức tạp' },
+    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', tag: 'Tốc độ phản hồi cực nhanh' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', tag: 'Ngữ cảnh cực lớn 2M tokens' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', tag: 'Mô hình tiêu chuẩn ổn định' },
+  ],
+  byok_openai: [
+    { id: 'gpt-4o', name: 'GPT-4o', tag: 'Flagship - Trả lời xuất sắc và chi tiết nhất' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Tốc độ cực nhanh, tiết kiệm chi phí' },
+    { id: 'o3-mini', name: 'o3-mini', tag: 'Mô hình lý luận toán học & lập trình sâu' },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', tag: 'Đa nhiệm nâng cao' },
+  ],
+  oauth_chatgpt: [
+    { id: 'gpt-4o', name: 'ChatGPT Plus GPT-4o', tag: 'Mô hình flagship tài khoản Plus' },
+    { id: 'gpt-4o-mini', name: 'ChatGPT Plus Fast', tag: 'Phản hồi nhanh' },
+    { id: 'o3-mini', name: 'ChatGPT Plus o3-mini', tag: 'Lý luận toán học chuyên sâu' },
+  ],
+  oauth_gemini: [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', tag: 'Tiêu chuẩn Google AI' },
+  ]
+};
 
 // Provider SVG Logos
 function OpenAILogo({ className = "w-4 h-4" }: { className?: string }) {
@@ -80,10 +107,12 @@ export function TopRightWallet() {
 
   // Form states for AI config
   const [selectedProvider, setSelectedProvider] = useState<AiProvider>(aiConfig.provider);
+  const [selectedModel, setSelectedModel] = useState<string>(aiConfig.model || 'gpt-4o-mini');
   const [apiKeyInput, setApiKeyInput] = useState((aiConfig as any).apiKey || '');
   const [showApiKey, setShowApiKey] = useState(false);
-  const [testConnectionStatus, setTestConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [chatGptCodeInput, setChatGptCodeInput] = useState('');
+  const [testConnectionStatus, setTestConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testResultMessage, setTestResultMessage] = useState<string | null>(null);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   const [dailyClaimResult, setDailyClaimResult] = useState<string | null>(null);
@@ -138,10 +167,11 @@ export function TopRightWallet() {
   // Check if AI config has changes
   const hasAiChanges = useMemo(() => {
     if (selectedProvider !== aiConfig.provider) return true;
+    if (selectedModel !== (aiConfig.model || 'gpt-4o-mini')) return true;
     if (selectedProvider.startsWith('byok') && apiKeyInput.trim() !== ((aiConfig as any).apiKey || '')) return true;
     if (selectedProvider === 'oauth_chatgpt' && chatGptCodeInput.trim() !== '') return true;
     return false;
-  }, [selectedProvider, apiKeyInput, chatGptCodeInput, aiConfig]);
+  }, [selectedProvider, selectedModel, apiKeyInput, chatGptCodeInput, aiConfig]);
 
   const handleClaim = () => {
     const res = claimDailyStreak();
@@ -152,36 +182,45 @@ export function TopRightWallet() {
     }
   };
 
-  const handleTestKey = () => {
-    if (!apiKeyInput.trim()) {
-      setTestConnectionStatus('error');
-      return;
+  const handleSelectProvider = (provider: AiProvider) => {
+    setSelectedProvider(provider);
+    setTestConnectionStatus('idle');
+    setTestResultMessage(null);
+    const models = PROVIDER_MODELS[provider] || [];
+    if (models.length > 0) {
+      setSelectedModel(models[0].id);
     }
+  };
+
+  const handleTestConnection = async () => {
     setTestConnectionStatus('testing');
-    setTimeout(() => {
-      // Mock validation logic: check key prefix
-      if (selectedProvider === 'byok_openai' && (apiKeyInput.startsWith('sk-') || apiKeyInput.length > 20)) {
+    setTestResultMessage(null);
+    try {
+      const result = await testAiConnection({
+        provider: selectedProvider,
+        model: selectedModel,
+        apiKey: apiKeyInput,
+        accessToken: chatGptCodeInput
+      });
+      if (result.success) {
         setTestConnectionStatus('success');
-      } else if (selectedProvider === 'byok_gemini' && (apiKeyInput.startsWith('AIza') || apiKeyInput.length > 20)) {
-        setTestConnectionStatus('success');
+        setTestResultMessage(result.message);
       } else {
-        setTestConnectionStatus('success');
+        setTestConnectionStatus('error');
+        setTestResultMessage(result.message);
       }
-    }, 800);
+    } catch (err: any) {
+      setTestConnectionStatus('error');
+      setTestResultMessage(err.message || 'Lỗi kiểm tra kết nối.');
+    }
   };
 
   const handleSaveAiConfig = (e: React.FormEvent) => {
     e.preventDefault();
     updateAiConfig({
       provider: selectedProvider,
-      apiKey: apiKeyInput.trim() || undefined,
-      model: selectedProvider === 'system' 
-        ? 'gpt-4o-mini' 
-        : selectedProvider === 'byok_openai' 
-        ? 'gpt-4o' 
-        : selectedProvider === 'oauth_chatgpt' 
-        ? 'gpt-4o' 
-        : 'gemini-1.5-flash'
+      apiKey: (selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') ? apiKeyInput.trim() : undefined,
+      model: selectedModel
     });
     setSaveSuccessMessage('Đã lưu cấu hình AI thành công.');
     setTimeout(() => {
@@ -594,212 +633,279 @@ export function TopRightWallet() {
               </div>
             </div>
 
-            <form onSubmit={handleSaveAiConfig} className="space-y-3">
-              {/* Provider Choices */}
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  {
-                    id: 'system',
-                    name: 'Hệ thống ViTudy',
-                    badge: 'Trừ ViToken',
-                    badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
-                    desc: 'Sử dụng mô hình GPT-4o-mini tiêu chuẩn qua máy chủ ViTudy.',
-                    model: 'GPT-4o-mini',
-                    icon: <Sparkles className="w-4 h-4 text-[#E0562D]" />
-                  },
-                  {
-                    id: 'byok_gemini',
-                    name: 'Google Gemini',
-                    badge: 'Miễn phí theo hạn mức',
-                    badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-                    desc: 'Dùng API Key cá nhân từ Google AI Studio, hoàn toàn miễn phí theo hạn mức.',
-                    model: 'Gemini 1.5 Flash',
-                    icon: <GeminiLogo className="w-4 h-4 text-sky-600" />
-                  },
-                  {
-                    id: 'byok_openai',
-                    name: 'OpenAI cá nhân (BYOK)',
-                    badge: 'Khóa cá nhân',
-                    badgeStyle: 'bg-sky-50 text-sky-800 border-sky-200',
-                    desc: 'Nhập API Key OpenAI cá nhân của bạn. Không trừ ViToken của hệ thống.',
-                    model: 'GPT-4o',
-                    icon: <OpenAILogo className="w-4 h-4 text-slate-900" />
-                  },
-                  {
-                    id: 'oauth_chatgpt',
-                    name: 'Đăng nhập bằng tài khoản ChatGPT',
-                    badge: 'Ủy quyền tài khoản',
-                    badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
-                    desc: 'Ủy quyền trực tiếp tài khoản ChatGPT Plus qua giao thức bảo mật PKCE.',
-                    model: 'GPT-4o Plus',
-                    icon: <OpenAILogo className="w-4 h-4 text-purple-700" />
-                  }
-                ].map(opt => {
-                  const isSelected = selectedProvider === opt.id;
-                  const isCurrentActive = aiConfig.provider === opt.id;
+            <form onSubmit={handleSaveAiConfig} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+              {/* 1. Chọn Nhà Cung Cấp (Provider) */}
+              <div>
+                <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                  1. Chọn Nhà cung cấp AI (Provider)
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    {
+                      id: 'system' as AiProvider,
+                      name: 'ViTudy (Hệ thống)',
+                      badge: 'Mặc định',
+                      badgeStyle: 'bg-orange-50 text-[#E0562D] border-orange-200',
+                      desc: 'Trừ ViToken, không cần API Key cá nhân.',
+                      icon: <Sparkles className="w-4 h-4 text-[#E0562D]" />
+                    },
+                    {
+                      id: 'byok_gemini' as AiProvider,
+                      name: 'Google Gemini',
+                      badge: 'Miễn phí hạn mức',
+                      badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                      desc: 'Dùng Gemini API Key cá nhân từ AI Studio.',
+                      icon: <GeminiLogo className="w-4 h-4 text-sky-600" />
+                    },
+                    {
+                      id: 'byok_openai' as AiProvider,
+                      name: 'OpenAI (BYOK)',
+                      badge: 'Khóa cá nhân',
+                      badgeStyle: 'bg-sky-50 text-sky-800 border-sky-200',
+                      desc: 'Dùng OpenAI API Key cá nhân (sk-proj-...).',
+                      icon: <OpenAILogo className="w-4 h-4 text-slate-900" />
+                    },
+                    {
+                      id: 'oauth_chatgpt' as AiProvider,
+                      name: 'OpenAI OAuth',
+                      badge: 'Tài khoản Plus',
+                      badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
+                      desc: 'Ủy quyền tài khoản ChatGPT Plus trực tiếp.',
+                      icon: <OpenAILogo className="w-4 h-4 text-purple-700" />
+                    }
+                  ].map(opt => {
+                    const isSelected = selectedProvider === opt.id;
+                    const isCurrentActive = aiConfig.provider === opt.id;
 
-                  return (
-                    <label
-                      key={opt.id}
-                      className={`p-3 rounded-2xl border text-xs cursor-pointer flex items-start justify-between gap-3 transition-all ${
-                        isSelected
-                          ? 'bg-slate-50/80 border-slate-900 ring-1 ring-slate-900'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <input
-                          type="radio"
-                          name="ai_provider"
-                          value={opt.id}
-                          checked={isSelected}
-                          onChange={() => {
-                            setSelectedProvider(opt.id as any);
-                            setTestConnectionStatus('idle');
-                          }}
-                          className="mt-1 accent-slate-900 cursor-pointer"
-                        />
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => handleSelectProvider(opt.id)}
+                        className={`p-3 rounded-2xl border text-xs cursor-pointer flex flex-col justify-between transition-all select-none ${
+                          isSelected
+                            ? 'bg-orange-50/40 border-[#E0562D] ring-1 ring-[#E0562D]'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1.5">
+                            {opt.icon}
                             <span className="font-bold text-slate-900">{opt.name}</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${opt.badgeStyle}`}>
-                              {opt.badge}
+                          </div>
+                          <input
+                            type="radio"
+                            name="ai_provider_radio"
+                            checked={isSelected}
+                            onChange={() => handleSelectProvider(opt.id)}
+                            className="accent-[#E0562D] cursor-pointer"
+                          />
+                        </div>
+
+                        <p className="text-[11px] text-slate-500 leading-relaxed mb-1.5">
+                          {opt.desc}
+                        </p>
+
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${opt.badgeStyle}`}>
+                            {opt.badge}
+                          </span>
+                          {isCurrentActive && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
+                              Đang dùng
                             </span>
-                            {isCurrentActive && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
-                                Đang dùng
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                            {opt.desc}
-                          </div>
-                          <div className="text-[10.5px] font-mono text-slate-400 mt-1">
-                            Mô hình: <span className="font-bold text-slate-700">{opt.model}</span>
-                          </div>
+                          )}
                         </div>
                       </div>
-
-                      <div className="flex-shrink-0 mt-0.5">
-                        {opt.icon}
-                      </div>
-                    </label>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* BYOK API Key Section */}
-              {selectedProvider.startsWith('byok') && (
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <label className="font-bold text-slate-800">
-                      Nhập API Key ({selectedProvider === 'byok_openai' ? 'OpenAI: sk-...' : 'Gemini: AIza...'})
-                    </label>
+              {/* 2. Khung nhập Thông tin xác thực (API Key / OAuth / ViToken) */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-bold text-slate-900">
+                    2. Thông tin xác thực kết nối
+                  </label>
+                  {selectedProvider === 'byok_gemini' && (
                     <a
-                      href={selectedProvider === 'byok_openai' ? 'https://platform.openai.com/api-keys' : 'https://aistudio.google.com/app/apikey'}
+                      href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#E0562D] hover:underline flex items-center gap-0.5 text-[11px] font-semibold"
+                      className="text-[#E0562D] hover:underline flex items-center gap-1 text-[11px] font-bold"
                     >
-                      <span>Lấy khóa API</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
+                      <span>Lấy Google Gemini API Key</span>
+                      <ExternalLink className="w-3 h-3" />
                     </a>
-                  </div>
-
-                  <div className="relative flex items-center">
-                    <input
-                      type={showApiKey ? 'text' : 'password'}
-                      placeholder={selectedProvider === 'byok_openai' ? 'sk-proj-...' : 'AIzaSy...'}
-                      value={apiKeyInput}
-                      onChange={(e) => {
-                        setApiKeyInput(e.target.value);
-                        setTestConnectionStatus('idle');
-                      }}
-                      className="w-full bg-white border border-slate-300 rounded-xl pl-3 pr-20 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono"
-                    />
-                    <div className="absolute right-1.5 flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        title={showApiKey ? 'Ẩn khóa' : 'Hiện khóa'}
-                        className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-                      >
-                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleTestKey}
-                        disabled={testConnectionStatus === 'testing' || !apiKeyInput.trim()}
-                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-[10.5px] font-bold text-slate-700 rounded-lg cursor-pointer transition-colors"
-                      >
-                        {testConnectionStatus === 'testing' ? 'Kiểm tra...' : 'Test'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Test Connection Result */}
-                  {testConnectionStatus === 'success' && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Kết nối API hợp lệ và sẵn sàng sử dụng.</span>
-                    </div>
                   )}
-                  {testConnectionStatus === 'error' && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-red-600 font-medium">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-600" />
-                      <span>Vui lòng nhập khóa API hợp lệ trước khi kiểm tra.</span>
-                    </div>
+                  {selectedProvider === 'byok_openai' && (
+                    <a
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#E0562D] hover:underline flex items-center gap-1 text-[11px] font-bold"
+                    >
+                      <span>Lấy OpenAI API Key</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   )}
-
-                  {/* Security Notice */}
-                  <div className="flex items-start gap-1.5 text-[10.5px] text-slate-500 pt-1 border-t border-slate-200">
-                    <ShieldCheck className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                    <span>Khóa API được lưu cục bộ an toàn trên trình duyệt của bạn, không gửi qua máy chủ trung gian.</span>
-                  </div>
-                </div>
-              )}
-
-              {/* OAuth ChatGPT Section */}
-              {selectedProvider === 'oauth_chatgpt' && (
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800">Đăng nhập tài khoản ChatGPT</span>
+                  {selectedProvider === 'oauth_chatgpt' && (
                     <a
                       href="https://chatgpt.com"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-slate-900 hover:underline flex items-center gap-0.5 text-[11px] font-bold"
+                      className="text-[#E0562D] hover:underline flex items-center gap-1 text-[11px] font-bold"
                     >
-                      <span>Mở ChatGPT Web</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
+                      <span>Mở ChatGPT Plus</span>
+                      <ExternalLink className="w-3 h-3" />
                     </a>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Ủy quyền tài khoản ChatGPT Plus để sử dụng trực tiếp hạn mức gói của bạn mà không tốn ViToken.
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Dán mã ủy quyền callback tại đây..."
-                    value={chatGptCodeInput}
-                    onChange={(e) => setChatGptCodeInput(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono"
-                  />
+                  )}
                 </div>
-              )}
+
+                {selectedProvider === 'system' && (
+                  <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200 flex items-start gap-2 leading-relaxed">
+                    <Sparkles className="w-4 h-4 text-[#E0562D] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span>Bạn đang sử dụng hệ thống AI tích hợp sẵn của ViTudy. </span>
+                      <strong className="text-slate-900">Không cần nhập API Key.</strong>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Mỗi lượt hỏi hoặc phân tích sẽ tự động trừ một lượng nhỏ ViToken từ số dư của bạn.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') && (
+                  <div>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showApiKey ? 'text' : 'password'}
+                        placeholder={selectedProvider === 'byok_gemini' ? 'AIzaSy... (Dán Google Gemini API Key vào đây)' : 'sk-proj-... (Dán OpenAI API Key vào đây)'}
+                        value={apiKeyInput}
+                        onChange={(e) => {
+                          setApiKeyInput(e.target.value);
+                          setTestConnectionStatus('idle');
+                          setTestResultMessage(null);
+                        }}
+                        className="w-full bg-white border border-slate-300 rounded-xl pl-3 pr-10 py-2.5 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono shadow-2xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        title={showApiKey ? 'Ẩn khóa' : 'Hiện khóa'}
+                        className="absolute right-2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                      >
+                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 mt-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span>Khóa API được lưu cục bộ an toàn trong trình duyệt (localStorage), không lưu trữ trên máy chủ.</span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedProvider === 'oauth_chatgpt' && (
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Dán mã ủy quyền callback hoặc Token ChatGPT Plus..."
+                      value={chatGptCodeInput}
+                      onChange={(e) => {
+                        setChatGptCodeInput(e.target.value);
+                        setTestConnectionStatus('idle');
+                        setTestResultMessage(null);
+                      }}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono shadow-2xs"
+                    />
+                    <div className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                      Đăng nhập tài khoản ChatGPT Plus để tận dụng hạn mức gói Pro/Plus của bạn.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Chọn Mô Hình AI (Model Selector) */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <label htmlFor="ai-model-select" className="font-bold text-slate-900">
+                    3. Chọn Mô hình AI (Model)
+                  </label>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    {PROVIDER_MODELS[selectedProvider]?.length || 0} mô hình khả dụng
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <select
+                    id="ai-model-select"
+                    value={selectedModel}
+                    onChange={(e) => {
+                      setSelectedModel(e.target.value);
+                      setTestConnectionStatus('idle');
+                      setTestResultMessage(null);
+                    }}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-medium outline-none focus:border-slate-800 cursor-pointer shadow-2xs"
+                  >
+                    {(PROVIDER_MODELS[selectedProvider] || []).map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} — {m.tag}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="text-[11px] text-slate-500">
+                  {PROVIDER_MODELS[selectedProvider]?.find(m => m.id === selectedModel)?.tag}
+                </div>
+              </div>
+
+              {/* 4. Nút Kiểm Tra Kết Nối (Test Connection Button & Status Card) */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={handleTestConnection}
+                    disabled={testConnectionStatus === 'testing'}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 disabled:opacity-50 text-xs font-bold transition-all border border-slate-300 flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-[#E0562D]" />
+                    <span>
+                      {testConnectionStatus === 'testing' 
+                        ? 'Đang kiểm tra phản hồi API...' 
+                        : 'Kiểm tra hoạt động (Test AI)'}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Kết quả kiểm tra */}
+                {testConnectionStatus === 'success' && testResultMessage && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs flex items-start gap-2.5 animate-fade-in font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{testResultMessage}</span>
+                  </div>
+                )}
+                {testConnectionStatus === 'error' && testResultMessage && (
+                  <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-900 text-xs flex items-start gap-2.5 animate-fade-in font-medium">
+                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{testResultMessage}</span>
+                  </div>
+                )}
+              </div>
 
               {saveSuccessMessage && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2 font-semibold">
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2 font-semibold animate-fade-in">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>{saveSuccessMessage}</span>
                 </div>
               )}
 
               {/* Footer Actions */}
-              <div className="flex justify-end gap-2 pt-2.5 border-t border-slate-200">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsAiModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors"
                 >
                   Đóng
                 </button>
@@ -808,7 +914,7 @@ export function TopRightWallet() {
                   disabled={!hasAiChanges}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-[#E0562D] hover:bg-[#c9451e] disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-xs cursor-pointer transition-all active:scale-95"
                 >
-                  Lưu
+                  Lưu cấu hình
                 </button>
               </div>
             </form>

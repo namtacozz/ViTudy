@@ -27,16 +27,28 @@ export default function StudySpacePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Check URL query parameters for home vs desk view
+  // Check URL query parameters and localStorage for home vs desk view
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const checkView = () => {
       const searchParams = new URLSearchParams(window.location.search);
       const viewParam = searchParams.get('view');
       const roomParam = searchParams.get('room');
+      let savedView = null;
+      try {
+        savedView = localStorage.getItem('vitudy_current_view');
+      } catch (e) {}
 
-      if (viewParam === 'desk' || roomParam) {
+      if (viewParam === 'desk' || roomParam || (!viewParam && savedView === 'desk')) {
         setViewMode('desk');
+        try {
+          localStorage.setItem('vitudy_current_view', 'desk');
+        } catch (e) {}
+        if (viewParam !== 'desk' && !roomParam) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', 'desk');
+          window.history.replaceState({}, '', url.toString());
+        }
       } else {
         setViewMode('home');
       }
@@ -60,6 +72,9 @@ export default function StudySpacePage() {
 
   const handleEnterDesk = (spaceId?: string) => {
     if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('vitudy_current_view', 'desk');
+      } catch (e) {}
       const url = new URL(window.location.href);
       url.searchParams.set('view', 'desk');
       window.history.pushState({}, '', url.toString());

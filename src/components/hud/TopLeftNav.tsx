@@ -112,15 +112,30 @@ export function TopLeftNav() {
     <div className="relative flex flex-col gap-2 pointer-events-auto">
       {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size, bold strokes) */}
       <div className="flex items-center gap-2.5 bg-white/95 border border-slate-300 rounded-2xl px-4 py-2.5 shadow-sm backdrop-blur-md text-slate-900">
-        {/* Brand Text ViTudy in Cam ViT (#E0562D), larger font matching the removed icon height */}
-        <div className="flex items-center pr-3 border-r border-slate-200">
-          <span 
-            onClick={() => resetDeskRotation?.()}
-            title={transform.rotation ? `Góc nhìn: ${transform.rotation}° • Nhấp để đặt lại 0°` : 'ViTudy - Không gian học thức'}
-            className="text-lg font-black tracking-tight text-[#E0562D] select-none cursor-pointer hover:opacity-90 transition-opacity leading-none"
+        {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.svg */}
+        <div className="flex items-center gap-1.5 pr-3 border-r border-slate-200">
+          <Link
+            href="/?view=home"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                try { localStorage.setItem('vitudy_current_view', 'home'); } catch (e) {}
+              }
+            }}
+            title="Trang chủ ViTudy"
+            className="flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition-opacity"
           >
-            ViTudy
-          </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/icons/vitudy.svg" 
+              alt="ViTudy" 
+              className="w-5.5 h-5.5 object-contain flex-shrink-0" 
+            />
+            <span 
+              className="text-lg font-black tracking-tight text-[#E0562D] select-none leading-none"
+            >
+              ViTudy
+            </span>
+          </Link>
         </div>
 
         {/* Space Dropdown Button */}
@@ -251,8 +266,13 @@ export function TopLeftNav() {
         <div className="pl-2 border-l border-slate-200 flex items-center gap-1.5">
           <Link
             href="/?view=home"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                try { localStorage.setItem('vitudy_current_view', 'home'); } catch (e) {}
+              }
+            }}
             title="Trang chủ (Trang tổng quan)"
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <Home className="w-4 h-4 stroke-[2.2]" />
           </Link>

@@ -19,9 +19,12 @@ export default function AboutPage() {
               <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
             </Link>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#E0562D] text-white flex items-center justify-center font-bold shadow-xs">
-                <BookOpen className="w-4 h-4 stroke-[2.4]" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/icons/vitudy.svg"
+                alt="ViTudy"
+                className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
+              />
               <span className="text-base font-bold tracking-tight text-stone-900">ViTudy</span>
             </div>
           </div>

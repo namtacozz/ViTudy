@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { 
   Upload, 
@@ -36,7 +37,12 @@ interface PendingDocument {
 export function BottomLeftKnowledge() {
   const { addUploadedDocument, activeSpace } = useStudySpace();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
   const [pendingDoc, setPendingDoc] = useState<PendingDocument | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -392,8 +398,8 @@ export function BottomLeftKnowledge() {
       </button>
 
       {/* MODAL 1: Cài đặt & Bắt đầu ghi hình */}
-      {isSetupModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      {isSetupModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-sm p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsSetupModalOpen(false)}
@@ -462,12 +468,13 @@ export function BottomLeftKnowledge() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 2: Xem lại & Tải video đã ghi về máy */}
-      {isFinishModalOpen && recordedBlobUrl && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      {isFinishModalOpen && recordedBlobUrl && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-lg p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsFinishModalOpen(false)}
@@ -520,12 +527,13 @@ export function BottomLeftKnowledge() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 3: Đặt tên và viết mô tả ngắn cho tệp vừa chọn */}
-      {isConfirmModalOpen && pendingDoc && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      {isConfirmModalOpen && pendingDoc && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => {
@@ -594,12 +602,13 @@ export function BottomLeftKnowledge() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 4: Phòng học nhóm, Chia sẻ & Cấu hình Supabase Realtime */}
-      {isShareModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      {isShareModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsShareModalOpen(false)}
@@ -783,7 +792,8 @@ export function BottomLeftKnowledge() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

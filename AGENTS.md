@@ -21,6 +21,25 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Tên chuẩn: **Cam ViT** — Mã màu chính thức: **`#E0562D`** (trạng thái hover: **`#c9451e`**).
     * Phạm vi áp dụng đồng bộ: Nút Tải lên, nút Mở bản đồ khi ẩn, nút "Nhận ViToken" điểm danh, nút "Mở tài liệu" ở Chợ, ngọn lửa chuỗi học tập khi có chuỗi, điểm tiến độ, nút nộp bài, các huy hiệu trạng thái chính.
     * Hệ sắc độ đệm: Nền mềm `--accent-soft: #FFF7ED`, viền `--accent-border: #FFEDD5`, chữ `--accent-text: #9A3412` (chuẩn WCAG AA).
+  * **Biểu Tượng Thương Hiệu ViTudy & Icon ViToken Chính Thức (Official Brand Logo & ViToken Coin):**
+    * **Biểu tượng thương hiệu ViTudy**: Sử dụng vector `assets/icon/vitoken.svg` (`/icons/vitudy.svg`) làm logo đại diện chính thức của ViTudy trên toàn bộ thanh điều hướng `TopLeftNav`, trang chủ `HomePage`, trang giới thiệu `AboutPage`, và favicon.
+    * **Biểu tượng ViToken**: Sử dụng hình ảnh `assets/icon/logo.png` (`/icons/vitoken.png`) làm đồng tiền ViToken chính thức trong toàn bộ số dư ví, danh sách giao dịch, bảng nạp VietQR, và các nơi hiển thị token.
+  * **Quy Chuẩn React Portal Cho Toàn Bộ Hộp Thoại / Modal (Strict React Portal Rule — 100% Modals):**
+    * Mọi hộp thoại (`Modal`, `Dialog`, `Overlay`) phải được bọc trong `createPortal(..., document.body)` với `z-[9990]..z-[9999]`.
+    * Nghiêm cấm render modal trực tiếp bên trong container HUD có CSS `transform` (như `TopRightWallet`, `BottomLeftKnowledge`, `MultiplayerBar`), vì các thuộc tính CSS transform khiến phần tử con `fixed inset-0` bị giới hạn trong khung chứa của cha, dẫn đến việc modal bị co dúm thành thanh dọc 40px mép màn hình.
+  * **Quy Chuẩn Thanh Học Nhóm Trực Tuyến (Multiplayer Presence Bar):**
+    * Khi người dùng học cá nhân một mình (không có tham số `?room=` trên URL và không có bạn học cùng), thanh presence dưới đáy **tuyệt đối không hiển thị**.
+    * Nút "Thoát" (`LogOut`) trên thanh sẽ ngắt kết nối kênh Realtime, dọn dẹp danh sách bạn bè, xóa tham số `room` khỏi URL và ẩn thanh ngay lập tức mà không cần tải lại trang.
+  * **Quy Chuẩn Cài Đặt AI & Kiểm Tra Kết Nối (AI Configuration & Live Test):**
+    * Giao diện cấu hình AI gồm 4 bước chuẩn mực:
+      1. Chọn nhà cung cấp: Hệ thống ViTudy (mặc định), Google Gemini (BYOK), OpenAI (BYOK), OpenAI OAuth (ChatGPT Plus).
+      2. Nhập thông tin xác thực tương ứng (Không cần với ViTudy; API Key kèm link lấy key cho Gemini/OpenAI; mã ủy quyền cho ChatGPT Plus).
+      3. Chọn mô hình AI: Dropdown đồng bộ theo nhà cung cấp, hiển thị rõ ràng tên mô hình và công năng.
+      4. Nút kiểm tra hoạt động (Test AI): Gửi truy vấn thực tế kiểm tra API và đo độ trễ mạng ms thời gian thực.
+  * **Quy Chuẩn Thanh Toán VietQR & MBBank (SePay VietQR Standards):**
+    * Sử dụng mã NAPAS BIN chính thức của MBBank: `970422` (hoặc `MB`) kèm template `compact2` để 100% ứng dụng ngân hàng và ví điện tử quét mã truy vấn thông tin thành công.
+    * Tài khoản thụ hưởng mặc định: `99924052005` - `LE VO THANH NAM`.
+    * Cơ chế dự phòng ngoại lệ: Khi hàm RPC Supabase chưa cập nhật trong schema cache, hệ thống tự động sinh mã VietQR hợp lệ trên client để trải nghiệm thanh toán luôn liền mạch.
   * **Khoảng Cách HUD Bám Sát Mép Tường Trình Duyệt (Snug HUD Wall Spacing — 4px Strict):**
     * Toàn bộ các khung, nút ở HUD được đưa sát vào tường trình duyệt: khoảng cách từ mép hướng ra ngoài của HUD đến rìa web chỉ còn **4px (`1/4` so với 16px mặc định cũ: `top-1`, `bottom-1`, `left-1`, `right-1`)**.
     * Áp dụng đồng bộ cho: `TopLeftNav` (`top-1 left-1`), `TopRightWallet` (`top-1 right-1`), `LeftCreationBar` (`left-1`), `BottomLeftKnowledge` (`bottom-1 left-1`), `BottomRightToolkit` (`bottom-1 right-1`), và `MultiplayerBar` (`bottom-1 left-1/2 -translate-x-1/2` căn giữa sát mép dưới).

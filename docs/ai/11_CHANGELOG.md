@@ -4,6 +4,52 @@
 
 ---
 
+## 2026-11-09 12:35 — main (Khắc Phục Toàn Diện 6 Yêu Cầu: Modal Bị Dúm, Thanh Multiplayer Cho Người Độc Học, Cài Đặt AI Mới & Test Kết Nối, VietQR MBBank, Lưu Trạng Thái Bàn Học, Đồng Bộ Icon/Logo Thương Hiệu)
+- **Task:** Giải quyết triệt để 6 yêu cầu kỹ thuật và công thái học của người dùng:
+  1. **Khắc phục lỗi Modal Mời Học / Chia sẻ bị co dúm thành thanh dọc 40px mép màn hình (`BottomLeftKnowledge` & `MultiplayerBar`):**
+     - *Nguyên nhân:* Các modal với `fixed inset-0` được render bên trong container HUD có CSS `transform: translate-y-0`, khiến trình duyệt cô lập ngữ cảnh định vị tuyệt đối trong phạm vi của container thay vì toàn bộ `document.body`.
+     - *Khắc phục:* Bọc toàn bộ các modal (`isSetupModalOpen`, `isFinishModalOpen`, `isConfirmModalOpen`, `isShareModalOpen`, `isDbConfigOpen`) bằng `mounted && createPortal(..., document.body)` với `z-[9990]..z-[9999]`. Modal luôn căn giữa màn hình với kích thước chuẩn xác.
+  2. **Thanh Multiplayer chỉ hiển thị khi có bạn bè thật & Nút Thoát hoạt động ngay lập tức:**
+     - *Nguyên nhân:* `useRealtimeMultiplayer` đăng ký kênh `room-${spaceId}` mặc định; khi Supabase kết nối, `hasPeers` luôn lấy `isConnected ? (peers.length > 0) : hasPeers`, bỏ qua nút "Thoát".
+     - *Khắc phục:* Chỉ đăng ký kênh khi URL có `?room=` hoặc người dùng chủ động kích hoạt. Thêm hàm `leaveRoom` ngắt kết nối channel, dọn dẹp peers, xóa `?room` khỏi URL, kết hợp cờ `isDismissed` trên `MultiplayerBar` để ẩn thanh ngay lập tức.
+  3. **Thiết kế lại toàn diện Cài đặt kết nối AI (`TopRightWallet.tsx` & `src/lib/aiClient.ts`):**
+     - Cấu trúc 4 bước rõ ràng:
+       - *Bước 1 - Chọn nhà cung cấp:* 4 thẻ trực quan: ViTudy (Hệ thống, trừ ViToken), Google Gemini (BYOK), OpenAI (BYOK), OpenAI OAuth (ChatGPT Plus).
+       - *Bước 2 - Thông tin xác thực:* Banner hướng dẫn ViToken cho ViTudy (không cần key); ô nhập API Key kèm nút ẩn/hiện và link trực tiếp lấy key cho Gemini AI Studio và OpenAI Platform; ô dán mã ủy quyền cho ChatGPT Plus.
+       - *Bước 3 - Chọn mô hình AI (Model):* Dropdown `<select>` đồng bộ 100% theo nhà cung cấp (`PROVIDER_MODELS`), hiển thị tên mô hình và công năng cụ thể (Gemini 2.5 Flash, 2.5 Pro, 2.0 Flash; GPT-4o, GPT-4o Mini, o3-mini, v.v.).
+       - *Bước 4 - Nút Kiểm tra hoạt động (Test AI):* Hàm `testAiConnection` thực hiện ping thực tế đo độ trễ mạng ms và hiển thị card thông báo kết quả (xanh lá nếu thành công, đỏ nếu lỗi).
+  4. **Giữ nguyên trạng thái Bàn học khi Refresh trang (`page.tsx` & `TopLeftNav.tsx`):**
+     - Lưu trữ `vitudy_current_view: 'desk'` trong `localStorage` và duy trì `?view=desk` qua `window.history.replaceState`. Khi F5/refresh, người dùng luôn ở lại bàn học hiện tại, không bị văng về Trang chủ. Nhấp logo/Trang chủ sẽ chuyển về `view=home`.
+  5. **Đồng bộ Biểu tượng chính thức của ViTudy & Icon ViToken trên toàn ứng dụng:**
+     - Biểu tượng chính thức ViTudy: Sử dụng `assets/icon/vitoken.svg` (`/icons/vitudy.svg`) tại `TopLeftNav`, `HomePage`, `AboutPage`, và `favicon`.
+     - Icon ViToken: Sử dụng `assets/icon/logo.png` (`/icons/vitoken.png`) làm đồng tiền ViToken trong toàn bộ số dư ví, bảng nạp VietQR, và lịch sử giao dịch.
+  6. **Khắc phục lỗi quét mã VietQR MBBank & Dự phòng lỗi RPC Cache (`PaymentService.ts`):**
+     - Thống nhất mã NAPAS BIN MBBank: `970422` (tương thích 100% ứng dụng ngân hàng khi quét VietQR, triệt tiêu lỗi "truy vấn không thành công").
+     - STK thụ hưởng cố định: `99924052005` - `LE VO THANH NAM`.
+     - Dự phòng RPC Schema Cache: Khi database Supabase chưa có hàm `create_payment_request`, hệ thống tự động sinh mã VietQR chuẩn trên client để người dùng nạp tiền tức thì.
+- **Files Modified:**
+  - `src/lib/aiClient.ts`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/components/hud/MultiplayerBar.tsx`
+  - `src/hooks/useRealtimeMultiplayer.ts`
+  - `src/app/page.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/app/about/page.tsx`
+  - `src/services/PaymentService.ts`
+  - `src/services/PaymentService.test.ts`
+  - `public/icons/vitoken.png`, `public/icons/vitudy.svg`
+  - `AGENTS.md`, `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests pass 100%).
+  - `pnpm run docs:index ; pnpm run docs:check`: Pass.
+  - `pnpm run build:pages`: Pass (13/13 static pages prerendered thành công).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 12:05 — main (Thay Thế Landing Page Bằng Trang Chủ Dashboard Học Tập Chuẩn Công Thái Học & Tách Chi Tiết Kỹ Thuật Sang /about)
 - **Task:** Thay thế toàn bộ Landing page cũ bằng giao diện **Trang chủ (Dashboard)** học tập theo thiết kế chuẩn:
   1. **Thanh bên (Sidebar):**

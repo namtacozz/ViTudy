@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useRealtimeMultiplayer, PeerUser } from '@/hooks/useRealtimeMultiplayer';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig } from '@/lib/supabase';
@@ -21,9 +22,11 @@ import {
 
 export function MultiplayerBar() {
   const { activeSpace, setTransform } = useStudySpace();
+  const [mounted, setMounted] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isDbConfigOpen, setIsDbConfigOpen] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   // Supabase input fields
   const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
@@ -38,8 +41,13 @@ export function MultiplayerBar() {
     setHasPeers,
     isFollowPresenter,
     setIsFollowPresenter,
-    toggleSimulation
+    toggleSimulation,
+    leaveRoom
   } = useRealtimeMultiplayer(activeSpace.id, 'Bạn (Chủ bàn)', true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const cfg = getSupabaseConfig();
@@ -88,7 +96,7 @@ export function MultiplayerBar() {
   return (
     <>
       {/* Bottom Center: Multiplayer Bar (Chỉ hiển thị khi có bạn bè trong phòng hoặc đang kết nối Realtime) */}
-      {hasPeers && (
+      {!isDismissed && hasPeers && peers.length > 0 && (
         <div className="fixed bottom-1 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
           <div className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-md animate-fade-in text-slate-900">
             {/* Host Tag & Live Status */}
@@ -142,8 +150,8 @@ export function MultiplayerBar() {
             <button
               title="Về chế độ học cá nhân"
               onClick={() => {
-                setHasPeers(false);
-                setIsFollowPresenter(false);
+                leaveRoom();
+                setIsDismissed(true);
               }}
               className="text-slate-400 hover:text-rose-600 p-1 rounded-full hover:bg-rose-50 transition-colors cursor-pointer"
             >
@@ -168,8 +176,8 @@ export function MultiplayerBar() {
       )}
 
       {/* MODAL 1: Mời bạn bè cùng học & Quản lý kết nối Supabase */}
-      {isShareModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      {isShareModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsShareModalOpen(false)}
@@ -255,12 +263,13 @@ export function MultiplayerBar() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 2: Cấu hình Supabase Database & Realtime */}
-      {isDbConfigOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      {isDbConfigOpen && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsDbConfigOpen(false)}
@@ -352,7 +361,8 @@ export function MultiplayerBar() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -77,9 +77,12 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         <div className="flex flex-col">
           {/* Logo Brand */}
           <div className="flex items-center gap-2.5 mb-5 select-none">
-            <div className="w-8 h-8 rounded-xl bg-[#E0562D] text-white flex items-center justify-center font-bold shadow-xs">
-              <BookOpen className="w-4 h-4 stroke-[2.4]" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icons/vitudy.svg"
+              alt="ViTudy"
+              className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
+            />
             <span className="text-base font-bold tracking-tight text-stone-900">ViTudy</span>
           </div>
 
@@ -169,8 +172,10 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         <div className="pt-4">
           <div className="bg-[#f4efe8] border border-[#e8e1d7] rounded-2xl p-4">
             <span className="text-[11px] font-semibold text-stone-500 block">Số dư</span>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-stone-900 tracking-tight">
+            <div className="mt-1 flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/vitoken.png" alt="ViToken" className="w-6 h-6 object-contain flex-shrink-0" />
+              <span className="text-2xl font-black text-stone-900 tracking-tight font-mono">
                 {typeof balance === 'number' ? balance : 50}
               </span>
               <span className="text-xs text-stone-500 font-medium">ViToken</span>

@@ -37,15 +37,27 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
 
   const userId = useRef<string>(`user-${Math.random().toString(36).substring(2, 9)}`).current;
 
-  // Initialize Realtime Channel
+  // Initialize Realtime Channel only when room query param is present or explicitly active
   useEffect(() => {
+    const hasRoomQuery = typeof window !== 'undefined' && window.location.search.includes('room=');
+    if (!hasRoomQuery && !hasPeers) {
+      // User is in solo mode, do not join room or track presence
+      setIsConnected(false);
+      setPeers([]);
+      return;
+    }
+
     const supabase = getSupabase();
     if (!supabase) {
       setIsConnected(false);
       return;
     }
 
-    const roomId = `room-${spaceId || 'default'}`;
+    const searchRoom = typeof window !== 'undefined' 
+      ? new URLSearchParams(window.location.search).get('room') 
+      : null;
+    const effectiveSpaceId = searchRoom || spaceId || 'default';
+    const roomId = `room-${effectiveSpaceId}`;
     const channel = supabase.channel(roomId, {
       config: {
         presence: { key: userId },
@@ -157,16 +169,43 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     });
   }, []);
 
+  // Explicitly leave the room and return to solo desk mode
+  const leaveRoom = useCallback(() => {
+    if (channelRef.current) {
+      try {
+        channelRef.current.untrack();
+        channelRef.current.unsubscribe();
+      } catch (e) {}
+      channelRef.current = null;
+    }
+    setPeers([]);
+    setHasPeers(false);
+    setIsConnected(false);
+    setIsFollowPresenter(false);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('room')) {
+        url.searchParams.delete('room');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, []);
+
+  const activePeers = isConnected ? peers : (hasPeers ? DEFAULT_MOCK_PEERS : []);
+  const isMultiplayerActive = activePeers.length > 0;
+
   return {
-    peers: isConnected ? peers : (hasPeers ? DEFAULT_MOCK_PEERS : []),
+    peers: activePeers,
     isConnected,
     isConfigured,
-    hasPeers: isConnected ? (peers.length > 0) : hasPeers,
+    hasPeers: isMultiplayerActive,
     setHasPeers,
     isFollowPresenter,
     setIsFollowPresenter,
     broadcastCursor,
     broadcastCamera,
-    toggleSimulation
+    toggleSimulation,
+    leaveRoom
   };
 }
