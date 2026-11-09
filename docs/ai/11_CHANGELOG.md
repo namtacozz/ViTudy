@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-11-09 09:35 — main (Chế Độ Đổi Con Trỏ Đặt Vật Thể Tuỳ Ý & Cố Định STK Thụ Hưởng MBBank SePay)
+- **Task:** Thực hiện 2 yêu cầu tinh chỉnh từ người dùng:
+  1. **Chuyển đổi sang chế độ đổi icon con trỏ chuột và đặt vật thể tùy ý trên mặt bàn học:**
+     - Khi người dùng chọn bất kỳ công cụ nào từ menu mở rộng trên thanh công cụ bên trái (`code_block`, `table`, `mind_map`, `stickers`, `emojis_and_gifs`), thay vì tự động đặt ngay giữa màn hình:
+       - Hệ thống kích hoạt template đặt tương ứng (`stickyCreationTemplate`), đặt trạng thái công cụ `activeTool = 'create_note'`.
+       - Con trỏ chuột lập tức biến đổi thành icon SVG chuyên biệt theo từng loại công cụ:
+         - Khối mã nguồn: Icon thẻ Code Dark mode `</>` viền ngọc bích.
+         - Bảng dữ liệu: Icon lưới ô Table hàng và cột màu cam ViT.
+         - Sơ đồ tư duy: Icon phân nhánh Mind map màu xanh lam.
+         - Hình dán: Icon nhãn ghi nhớ Bookmark màu vàng hổ phách.
+         - Minh họa học tập: Icon thành tựu Trophy màu hồng phấn.
+       - Xuất hiện thanh chỉ dẫn nổi ở đáy màn hình: *"Nhấp chuột vào bất kỳ vị trí nào trên bàn học để đặt: [Tên công cụ]"*.
+       - Người dùng tự do nhấp chuột (hoặc kéo thả kích thước) vào đúng vị trí mong muốn trên mặt bàn để sinh ra vật thể tại tọa độ đó.
+  2. **Cố định STK thụ hưởng chính thức theo ảnh cổng SePay MBBank:**
+     - Cập nhật vĩnh viễn cấu hình tài khoản thụ hưởng trong `src/services/PaymentService.ts`:
+       - Ngân hàng: `MB` (MBBank - Ngân hàng Quân Đội).
+       - Số tài khoản: `99924052005`.
+       - Tên chủ tài khoản: `LE VO THANH NAM`.
+     - Loại bỏ hoàn toàn mục cho phép người dùng tự đổi STK trên giao diện `QRCodeDisplay.tsx` để bảo đảm tính thống nhất và toàn vẹn của cổng nạp SePay API 24/7.
+     - Mã VietQR được sinh tự động chính xác 100%: `https://img.vietqr.io/image/MB-99924052005-compact2.png...`.
+- **Verified by:**
+  - `pnpm test`: 15/15 test suites passed (39/39 tests).
+  - `pnpm run build:pages`: Static export 12/12 routes thành công 100%.
+- **Docs updated:** `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 09:25 — main (Khắc Phục 3 Vấn Đề: Nhận Diện Hình Học, Công Cụ Ghi Chú Đa Năng & Quét QR Ngân Hàng)
 - **Task:** Giải quyết triệt để 3 vấn đề người dùng phản hồi:
   1. **Vẽ hình tự động nhận diện cứ ra hình tròn dù cố vẽ vuông hoặc tam giác (`src/utils/smartShape.ts`):**

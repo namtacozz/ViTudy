@@ -35,11 +35,11 @@ export interface VietQrParams {
   accountName?: string;
 }
 
-// Cấu hình tài khoản nhận tiền mặc định (Công khai - hiển thị trên QR)
+// Cấu hình tài khoản nhận tiền chính thức (Theo cổng SePay MBBank: 99924052005 - LE VO THANH NAM)
 export const DEFAULT_BANK_CONFIG = {
   bankId: process.env.NEXT_PUBLIC_SEPAY_BANK_ID || 'MB',
-  accountNo: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NO || '0372483582',
-  accountName: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NAME || 'VITUDY EDUCATION',
+  accountNo: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NO || '99924052005',
+  accountName: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NAME || 'LE VO THANH NAM',
 };
 
 export interface BankConfig {
@@ -49,30 +49,11 @@ export interface BankConfig {
 }
 
 export function getEffectiveBankConfig(): BankConfig {
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem('vitudy_custom_bank_config');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.bankId && parsed.accountNo) {
-          return {
-            bankId: parsed.bankId,
-            accountNo: parsed.accountNo,
-            accountName: parsed.accountName || DEFAULT_BANK_CONFIG.accountName
-          };
-        }
-      }
-    } catch {}
-  }
   return DEFAULT_BANK_CONFIG;
 }
 
-export function saveEffectiveBankConfig(config: BankConfig): void {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('vitudy_custom_bank_config', JSON.stringify(config));
-    } catch {}
-  }
+export function saveEffectiveBankConfig(_config: BankConfig): void {
+  // Cố định STK thụ hưởng chính thức theo yêu cầu hệ thống
 }
 
 export function buildVietQrUrl(params: VietQrParams): string {

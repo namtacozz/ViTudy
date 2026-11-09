@@ -61,6 +61,8 @@ interface StudySpaceContextType {
   setPenWidthLevel: (level: 'small' | 'medium' | 'large') => void;
   stickyCreationColor: string | null;
   setStickyCreationColor: (color: string | null) => void;
+  stickyCreationTemplate: { text: string; color: string; width: number; height: number; typeLabel: string } | null;
+  setStickyCreationTemplate: (template: { text: string; color: string; width: number; height: number; typeLabel: string } | null) => void;
   strokes: import('@/types/studyspace').DrawingStroke[];
   currentStroke: import('@/types/studyspace').DrawingStroke | null;
   startStroke: (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => void;
@@ -174,6 +176,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [penColor, setPenColor] = useState<string>('#2563eb');
   const [penWidthLevel, setPenWidthLevel] = useState<'small' | 'medium' | 'large'>('medium');
   const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
+  const [stickyCreationTemplate, setStickyCreationTemplate] = useState<{ text: string; color: string; width: number; height: number; typeLabel: string } | null>(null);
   const [strokes, setStrokes] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<import('@/types/studyspace').DrawingStroke | null>(null);
 
@@ -1254,6 +1257,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         setPenWidthLevel,
         stickyCreationColor,
         setStickyCreationColor,
+        stickyCreationTemplate,
+        setStickyCreationTemplate,
         strokes,
         currentStroke,
         startStroke,

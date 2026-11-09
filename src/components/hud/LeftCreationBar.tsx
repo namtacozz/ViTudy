@@ -34,6 +34,7 @@ export function LeftCreationBar() {
     penWidthLevel,
     setPenWidthLevel,
     setStickyCreationColor,
+    setStickyCreationTemplate,
     isPanLocked,
     togglePanLock,
     strokes,
@@ -111,6 +112,7 @@ export function LeftCreationBar() {
   const isDrawingActive = ['pen', 'highlighter', 'smart_shape', 'eraser', 'area_eraser'].includes(activeTool);
 
   const handleSelectNoteColor = (color: string) => {
+    setStickyCreationTemplate?.(null);
     setStickyCreationColor(color);
     setActiveTool('create_note');
     setIsNoteFlyoutOpen(false);
@@ -125,23 +127,63 @@ export function LeftCreationBar() {
       return;
     }
     if (toolId === 'code_block') {
-      addStickyNote('```python\n# ViTudy Code Block\ndef calculate_gradient(w, x, b):\n    return w * x + b\n```', undefined, undefined, '#1e293b', 320, 240);
+      setStickyCreationTemplate?.({
+        text: '```python\n# ViTudy Code Block\ndef calculate_gradient(w, x, b):\n    return w * x + b\n```',
+        color: '#1e293b',
+        width: 320,
+        height: 240,
+        typeLabel: 'Khối mã nguồn (Code block)'
+      });
+      setStickyCreationColor('#1e293b');
+      setActiveTool('create_note');
       return;
     }
     if (toolId === 'table') {
-      addStickyNote('| Mục tiêu | Trọng số | Tiến độ |\n|----------|----------|---------|\n| Giải tích | 40%      | Đang ôn |\n| Đại số    | 30%      | Đã xong |', undefined, undefined, '#f8fafc', 340, 220);
+      setStickyCreationTemplate?.({
+        text: '| Mục tiêu | Trọng số | Tiến độ |\n|----------|----------|---------|\n| Giải tích | 40%      | Đang ôn |\n| Đại số    | 30%      | Đã xong |',
+        color: '#f8fafc',
+        width: 340,
+        height: 220,
+        typeLabel: 'Bảng dữ liệu (Table)'
+      });
+      setStickyCreationColor('#f8fafc');
+      setActiveTool('create_note');
       return;
     }
     if (toolId === 'mind_map') {
-      addStickyNote('[SƠ ĐỒ TƯ DUY]\n• Giải tích 1\n  ├── Giới hạn & Đạo hàm\n  ├── Tích phân suy rộng\n  └── Chuỗi số & Chuỗi hàm', undefined, undefined, '#f0f9ff', 340, 260);
+      setStickyCreationTemplate?.({
+        text: '[SƠ ĐỒ TƯ DUY]\n• Giải tích 1\n  ├── Giới hạn & Đạo hàm\n  ├── Tích phân suy rộng\n  └── Chuỗi số & Chuỗi hàm',
+        color: '#f0f9ff',
+        width: 340,
+        height: 260,
+        typeLabel: 'Sơ đồ tư duy (Mind map)'
+      });
+      setStickyCreationColor('#f0f9ff');
+      setActiveTool('create_note');
       return;
     }
     if (toolId === 'stickers') {
-      addStickyNote('[STICKER - ĐIỂM QUAN TRỌNG]\n• Công thức trọng tâm thi giữa kỳ\n• Xem lại chương 2 trước ngày thi\n• Đã hoàn thành bài tập nhóm', undefined, undefined, '#fef9c3', 280, 220);
+      setStickyCreationTemplate?.({
+        text: '[STICKER - ĐIỂM QUAN TRỌNG]\n• Công thức trọng tâm thi giữa kỳ\n• Xem lại chương 2 trước ngày thi\n• Đã hoàn thành bài tập nhóm',
+        color: '#fef9c3',
+        width: 280,
+        height: 220,
+        typeLabel: 'Hình dán (Sticker)'
+      });
+      setStickyCreationColor('#fef9c3');
+      setActiveTool('create_note');
       return;
     }
     if (toolId === 'emojis_and_gifs') {
-      addStickyNote('[MINH HỌA HỌC TẬP]\n• Hoàn thành mục tiêu học tập hôm nay!\n• Đã giải xong 5 bài tập đạo hàm\n• Tiếp tục duy trì chuỗi học tập', undefined, undefined, '#fdf2f8', 280, 220);
+      setStickyCreationTemplate?.({
+        text: '[MINH HỌA HỌC TẬP]\n• Hoàn thành mục tiêu học tập hôm nay!\n• Đã giải xong 5 bài tập đạo hàm\n• Tiếp tục duy trì chuỗi học tập',
+        color: '#fdf2f8',
+        width: 280,
+        height: 220,
+        typeLabel: 'Minh họa học tập (Illustration)'
+      });
+      setStickyCreationColor('#fdf2f8');
+      setActiveTool('create_note');
       return;
     }
   };

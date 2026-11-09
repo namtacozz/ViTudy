@@ -1,14 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   PaymentRequestResult, 
   PaymentService, 
-  DEFAULT_BANK_CONFIG, 
-  BankConfig, 
-  getEffectiveBankConfig, 
-  saveEffectiveBankConfig, 
-  buildVietQrUrl 
+  DEFAULT_BANK_CONFIG 
 } from '@/services/PaymentService';
 import { 
   Copy, 
@@ -20,9 +16,7 @@ import {
   Hash, 
   PlayCircle,
   QrCode,
-  Settings2,
-  Info,
-  RotateCcw
+  Zap
 } from 'lucide-react';
 
 interface QRCodeDisplayProps {
@@ -30,18 +24,6 @@ interface QRCodeDisplayProps {
   secondsLeft: number;
   onSimulateSuccess?: () => void;
 }
-
-const POPULAR_BANKS = [
-  { id: 'MB', name: 'MBBank (Quân Đội)' },
-  { id: 'VCB', name: 'Vietcombank' },
-  { id: 'TCB', name: 'Techcombank' },
-  { id: 'BIDV', name: 'BIDV' },
-  { id: 'ICB', name: 'VietinBank' },
-  { id: 'ACB', name: 'ACB' },
-  { id: 'VPB', name: 'VPBank' },
-  { id: 'TPB', name: 'TPBank' },
-  { id: 'VBA', name: 'Agribank' },
-];
 
 export function QRCodeDisplay({
   request,
@@ -52,60 +34,6 @@ export function QRCodeDisplay({
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulateError, setSimulateError] = useState<string | null>(null);
-
-  // Bank Configuration State (allowing user to input their real receiving bank account)
-  const [bankConfig, setBankConfig] = useState<BankConfig>(() => getEffectiveBankConfig());
-  const [isConfiguringBank, setIsConfiguringBank] = useState(false);
-  const [customBankId, setCustomBankId] = useState(bankConfig.bankId);
-  const [customAccountNo, setCustomAccountNo] = useState(bankConfig.accountNo);
-  const [customAccountName, setCustomAccountName] = useState(bankConfig.accountName);
-  const [activeQrUrl, setActiveQrUrl] = useState(request.qrUrl);
-
-  useEffect(() => {
-    const cfg = getEffectiveBankConfig();
-    setBankConfig(cfg);
-    setCustomBankId(cfg.bankId);
-    setCustomAccountNo(cfg.accountNo);
-    setCustomAccountName(cfg.accountName);
-    const newQr = buildVietQrUrl({
-      ...cfg,
-      amount: request.amountVnd,
-      addInfo: request.code,
-    });
-    setActiveQrUrl(newQr);
-  }, [request]);
-
-  const handleSaveBankConfig = () => {
-    const updated: BankConfig = {
-      bankId: customBankId.trim() || 'MB',
-      accountNo: customAccountNo.trim() || '0372483582',
-      accountName: customAccountName.trim().toUpperCase() || 'VITUDY EDUCATION',
-    };
-    saveEffectiveBankConfig(updated);
-    setBankConfig(updated);
-    const newQr = buildVietQrUrl({
-      ...updated,
-      amount: request.amountVnd,
-      addInfo: request.code,
-    });
-    setActiveQrUrl(newQr);
-    setIsConfiguringBank(false);
-  };
-
-  const handleResetDefaultBank = () => {
-    saveEffectiveBankConfig(DEFAULT_BANK_CONFIG);
-    setBankConfig(DEFAULT_BANK_CONFIG);
-    setCustomBankId(DEFAULT_BANK_CONFIG.bankId);
-    setCustomAccountNo(DEFAULT_BANK_CONFIG.accountNo);
-    setCustomAccountName(DEFAULT_BANK_CONFIG.accountName);
-    const newQr = buildVietQrUrl({
-      ...DEFAULT_BANK_CONFIG,
-      amount: request.amountVnd,
-      addInfo: request.code,
-    });
-    setActiveQrUrl(newQr);
-    setIsConfiguringBank(false);
-  };
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -123,7 +51,7 @@ export function QRCodeDisplay({
 
   const handleCopyAccount = async () => {
     try {
-      await navigator.clipboard.writeText(bankConfig.accountNo);
+      await navigator.clipboard.writeText(DEFAULT_BANK_CONFIG.accountNo);
       setCopiedAccount(true);
       setTimeout(() => setCopiedAccount(false), 2000);
     } catch {}
@@ -170,14 +98,14 @@ export function QRCodeDisplay({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
         {/* QR Code Column */}
         <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-3xl shadow-xs">
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={activeQrUrl}
-              alt="VietQR Transfer"
+              src={request.qrUrl}
+              alt="VietQR MBBank"
               className="w-full h-full object-contain"
             />
             {isExpired && (
@@ -192,10 +120,10 @@ export function QRCodeDisplay({
             <QrCode className="w-3.5 h-3.5 text-slate-400" />
             <span>Quét bằng App Ngân hàng hoặc Ví điện tử</span>
           </div>
-          
-          <div className="mt-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 text-[10.5px] text-slate-600 leading-snug flex items-start gap-1.5">
-            <Info className="w-3.5 h-3.5 text-[#E0562D] flex-shrink-0 mt-0.5" />
-            <span>Nếu app ngân hàng báo &quot;Tài khoản thụ hưởng không tồn tại&quot;, bấm <b>Đổi STK</b> bên phải để nhập STK của bạn hoặc dùng nút <b>Giả lập đã nhận tiền</b>.</span>
+
+          <div className="mt-2 flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold">
+            <Zap className="w-3 h-3 text-emerald-600" />
+            <span>Đã kết nối API SePay 24/7</span>
           </div>
         </div>
 
@@ -238,77 +166,8 @@ export function QRCodeDisplay({
                 <Building2 className="w-3.5 h-3.5 text-slate-400" />
                 <span>Ngân hàng:</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-slate-800 font-mono">{bankConfig.bankId}</span>
-                <button
-                  type="button"
-                  onClick={() => setIsConfiguringBank(!isConfiguringBank)}
-                  className="px-1.5 py-0.5 rounded bg-slate-200/80 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-                  title="Thay đổi ngân hàng và số tài khoản nhận tiền"
-                >
-                  <Settings2 className="w-3 h-3 text-slate-600" />
-                  <span>{isConfiguringBank ? 'Đóng' : 'Đổi STK'}</span>
-                </button>
-              </div>
+              <span className="font-bold text-slate-800 font-mono">MBBank (Quân Đội)</span>
             </div>
-
-            {/* Custom Bank Config Collapsible */}
-            {isConfiguringBank && (
-              <div className="p-2.5 bg-white rounded-xl border border-slate-300 space-y-2 mt-1">
-                <div className="text-[10.5px] font-bold text-slate-700">Cấu hình tài khoản nhận tiền thực tế:</div>
-                <div className="space-y-1.5">
-                  <div>
-                    <label className="text-[10px] text-slate-500 block mb-0.5">Chọn ngân hàng:</label>
-                    <select
-                      value={customBankId}
-                      onChange={(e) => setCustomBankId(e.target.value)}
-                      className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white text-slate-800 outline-none"
-                    >
-                      {POPULAR_BANKS.map((b) => (
-                        <option key={b.id} value={b.id}>{b.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-500 block mb-0.5">Số tài khoản:</label>
-                    <input
-                      type="text"
-                      value={customAccountNo}
-                      onChange={(e) => setCustomAccountNo(e.target.value)}
-                      placeholder="Nhập số tài khoản"
-                      className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white text-slate-800 outline-none font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-500 block mb-0.5">Tên chủ tài khoản:</label>
-                    <input
-                      type="text"
-                      value={customAccountName}
-                      onChange={(e) => setCustomAccountName(e.target.value)}
-                      placeholder="Nhập tên người thụ hưởng"
-                      className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white text-slate-800 outline-none uppercase font-mono"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={handleSaveBankConfig}
-                      className="flex-1 py-1 rounded bg-[#E0562D] hover:bg-[#c9451e] text-white font-bold text-[10.5px] cursor-pointer transition-colors shadow-2xs"
-                    >
-                      Cập nhật mã QR
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleResetDefaultBank}
-                      title="Khôi phục mặc định"
-                      className="p-1 rounded border border-slate-300 hover:bg-slate-100 text-slate-600 cursor-pointer"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
@@ -316,7 +175,7 @@ export function QRCodeDisplay({
                 <span>Số tài khoản:</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-slate-900 font-mono">{bankConfig.accountNo}</span>
+                <span className="font-black text-slate-900 font-mono text-sm">{DEFAULT_BANK_CONFIG.accountNo}</span>
                 <button
                   type="button"
                   onClick={handleCopyAccount}
@@ -333,8 +192,8 @@ export function QRCodeDisplay({
                 <User className="w-3.5 h-3.5 text-slate-400" />
                 <span>Người thụ hưởng:</span>
               </div>
-              <span className="font-bold text-slate-800 uppercase text-[11px] truncate max-w-[140px] text-right">
-                {bankConfig.accountName}
+              <span className="font-bold text-slate-800 uppercase text-[11px] font-mono">
+                {DEFAULT_BANK_CONFIG.accountName}
               </span>
             </div>
 
