@@ -22,7 +22,7 @@ export default function AboutPage() {
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={getAssetPath('/icons/vitudy.svg')}
+                src={getAssetPath('/icons/vitudy.png')}
                 alt="ViTudy"
                 width={32}
                 height={32}

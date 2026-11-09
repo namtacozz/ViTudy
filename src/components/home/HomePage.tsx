@@ -139,7 +139,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           <div className="flex items-center gap-2.5 mb-5 select-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={getAssetPath('/icons/vitudy.svg')}
+              src={getAssetPath('/icons/vitudy.png')}
               alt="ViTudy"
               width={32}
               height={32}
@@ -256,7 +256,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <div className="mt-1 flex items-center gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
-                src={getAssetPath('/icons/vitoken.png')} 
+                src={getAssetPath('/icons/vitoken.svg')} 
                 alt="ViToken" 
                 width={24}
                 height={24}

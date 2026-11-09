@@ -30,15 +30,17 @@ import { TopUpModal } from '../payment/TopUpModal';
 import { testAiConnection } from '@/lib/aiClient';
 import { getAssetPath } from '@/lib/assets';
 
-// Vector Coin SVG Icon -> Logo ViToken chính thức từ logo.png
+// Vector Coin SVG Icon -> Logo ViToken chính thức từ vitoken.svg
 function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img 
-      src={getAssetPath('/icons/vitoken.png')} 
+      src={getAssetPath('/icons/vitoken.svg')} 
       alt="ViToken" 
+      width={16}
+      height={16}
       className={`${className} object-contain inline-block flex-shrink-0`}
-      style={{ maxWidth: '100%', maxHeight: '100%' }}
+      style={{ width: '16px', height: '16px', maxWidth: '16px', maxHeight: '16px' }}
     />
   );
 }
@@ -316,9 +318,15 @@ export function TopRightWallet() {
             }`}
             title="Xem lịch sử số dư ViToken (1 V = 1 ViToken)"
           >
-            <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-[10px] shadow-xs">
-              V
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={getAssetPath('/icons/vitoken.svg')} 
+              alt="ViToken" 
+              width={20}
+              height={20}
+              className="w-5 h-5 rounded-full object-contain shrink-0" 
+              style={{ width: '20px', height: '20px', maxWidth: '20px', maxHeight: '20px' }}
+            />
             <span className="text-xs font-black font-mono text-slate-900">
               {wallet.balance}
             </span>

@@ -207,7 +207,7 @@ export default function MarketPage() {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 rounded-xl shadow-xs">
               {/* Official ViToken coin icon */}
               <img
-                src={getAssetPath('/icons/vitoken.png')}
+                src={getAssetPath('/icons/vitoken.svg')}
                 alt="ViToken"
                 width={20}
                 height={20}
@@ -421,6 +421,14 @@ export default function MarketPage() {
                   {/* Footer: Price & Actions */}
                   <div className="pt-3.5 border-t border-stone-100 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 font-mono font-black text-[#E0562D]">
+                      <img 
+                        src={getAssetPath('/icons/vitoken.svg')} 
+                        alt="ViToken" 
+                        width={18} 
+                        height={18} 
+                        className="w-4.5 h-4.5 rounded-full object-contain shrink-0" 
+                        style={{ width: '18px', height: '18px', maxWidth: '18px', maxHeight: '18px' }}
+                      />
                       <span className="text-base">{item.price}</span>
                       <span className="text-xs">ViToken</span>
                     </div>
@@ -540,6 +548,14 @@ export default function MarketPage() {
             ) : (
               <div className="flex items-center justify-between pt-3 border-t border-stone-200">
                 <div className="flex items-center gap-1.5 font-mono font-black text-base text-[#E0562D]">
+                  <img 
+                    src={getAssetPath('/icons/vitoken.svg')} 
+                    alt="ViToken" 
+                    width={20} 
+                    height={20} 
+                    className="w-5 h-5 rounded-full object-contain shrink-0" 
+                    style={{ width: '20px', height: '20px', maxWidth: '20px', maxHeight: '20px' }}
+                  />
                   <span>{previewItem.price}</span>
                   <span className="text-xs">ViToken</span>
                 </div>

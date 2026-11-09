@@ -279,7 +279,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-2.5 text-xs">
           <div className="flex items-center gap-2.5">
             <img
-              src={getAssetPath('/icons/vitoken.png')}
+              src={getAssetPath('/icons/vitoken.svg')}
               alt="ViToken"
               width={22}
               height={22}
@@ -539,9 +539,16 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
                     {/* Actions and Price side-by-side */}
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
-                      <div className="flex items-center gap-1.5 bg-stone-100 px-2.5 py-1.5 rounded-xl">
+                      <div className="flex items-center gap-1 bg-stone-100 px-2.5 py-1.5 rounded-xl">
                         <span className="text-xs font-black font-mono text-stone-900">{item.price}</span>
-                        <span className="text-[10px] font-bold text-stone-600">V</span>
+                        <img 
+                          src={getAssetPath('/icons/vitoken.svg')} 
+                          alt="V" 
+                          width={14} 
+                          height={14} 
+                          className="w-3.5 h-3.5 rounded-full object-contain shrink-0" 
+                          style={{ width: '14px', height: '14px', maxWidth: '14px', maxHeight: '14px' }}
+                        />
                       </div>
                       <button
                         onClick={() => setPreviewItem(item)}
@@ -689,6 +696,14 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                       {/* Khối giá duy nhất */}
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-stone-500 font-medium">Giá:</span>
+                        <img 
+                          src={getAssetPath('/icons/vitoken.svg')} 
+                          alt="ViToken" 
+                          width={16} 
+                          height={16} 
+                          className="w-4 h-4 rounded-full object-contain shrink-0" 
+                          style={{ width: '16px', height: '16px', maxWidth: '16px', maxHeight: '16px' }}
+                        />
                         <span className="text-sm font-black font-mono text-[#E0562D]">{item.price} ViToken</span>
                         {item.purchased && (
                           <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-1">

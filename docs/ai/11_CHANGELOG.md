@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-11-09 20:10 — main (Chuẩn Hóa Đúng Cặp Icon: Logo ViTudy logo.png & Coin ViToken vitoken.svg)
+- **Task:** Hiệu chỉnh chính xác 100% vai trò của hai biểu tượng theo đúng chỉ đạo của Ngài Vịt:
+  1. **Logo đại diện Web ViTudy (Ảnh 1):**
+     - Sử dụng hình ảnh `assets/icon/logo.png` (đồng xu tròn cam viền cam, chữ V vàng ở giữa) làm logo đại diện chính thức cạnh chữ ViTudy ở thanh điều hướng `TopLeftNav`, thanh bên trang chủ `HomePage`, và trang giới thiệu `AboutPage` (`/icons/vitudy.png`).
+     - Khống chế kích thước tối đa 24-32px (`width={...} height={...}`, class `w-6 h-6` / `w-8 h-8`, style `width, height, maxWidth, maxHeight`).
+  2. **Icon ViToken (Coin / Credit / Chợ - Ảnh 2):**
+     - Sử dụng vector `assets/icon/vitoken.svg` (hình tròn đen có chữ v trắng) làm biểu tượng chính thức của đồng tiền ViToken ở ô credit số dư trên HUD `TopRightWallet`, thẻ số dư tại `HomePage`, các mức giá và số dư tại `MarketModal` và trang Chợ `market/page.tsx` (`/icons/vitoken.svg`).
+     - Định cỡ chuẩn mực 16-24px, chống bung to hay tràn màn hình.
+- **Files Modified:**
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/app/about/page.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/app/market/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+  - `pnpm run docs:index ; pnpm run docs:check`: Passed.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 20:05 — main (Đồng Bộ Hóa Toàn Diện Trải Nghiệm Chợ Tài Liệu: Thống Nhất Tên Gọi, 3 Loại Tài Liệu, Triệt Tiêu Lặp Giá & Lặp Tiêu Đề, Bổ Sung Nút Thêm Vào Bàn Học)
 - **Task:** Đồng bộ và nâng cấp toàn diện cả 2 giao diện Chợ: Trang Chợ (`src/app/market/page.tsx`) và Modal Chợ trên Bàn học (`src/components/modals/MarketModal.tsx`):
   1. **Thống nhất tên gọi & thương hiệu:** Đổi tên duy nhất thành **"Chợ Tài Liệu"** (loại bỏ hoàn toàn tên cũ "Chợ Tri Thức KnowInherit"), đồng bộ phụ đề *"Kho tri thức mở ViTudy — Khám phá và trao đổi tài liệu học tập cùng cộng đồng."*.

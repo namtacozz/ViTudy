@@ -127,7 +127,7 @@ export function TopLeftNav() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
-              src={getAssetPath('/icons/vitudy.svg')} 
+              src={getAssetPath('/icons/vitudy.png')} 
               alt="ViTudy" 
               width={24}
               height={24}
