@@ -24,6 +24,7 @@ import {
   Network,
   X
 } from 'lucide-react';
+import { StickerEmojiPickerFlyout, StickerPickerItem } from '@/components/hud/StickerEmojiPickerFlyout';
 
 export function LeftCreationBar() {
   const {
@@ -49,6 +50,7 @@ export function LeftCreationBar() {
   const [isPenFlyoutOpen, setIsPenFlyoutOpen] = useState(false);
   const [isPenColorPickerOpen, setIsPenColorPickerOpen] = useState(false);
   const [isMoreToolsOpen, setIsMoreToolsOpen] = useState(false);
+  const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
 
   // Note pastel colors
   const stickyColors = [
@@ -120,6 +122,18 @@ export function LeftCreationBar() {
     setIsMoreToolsOpen(false);
   };
 
+  const handleSelectStickerItem = (item: StickerPickerItem) => {
+    setIsStickerPickerOpen(false);
+    setStickyCreationTemplate?.({
+      itemType: 'sticker',
+      stickerData: item,
+      width: item.type === 'gif' ? 160 : 100,
+      height: item.type === 'gif' ? 130 : 100,
+      typeLabel: `Hình dán (${item.name})`
+    });
+    setActiveTool('create_note');
+  };
+
   const handleSelectExtraTool = (toolId: string) => {
     setIsMoreToolsOpen(false);
     if (toolId === 'shapes_and_lines') {
@@ -128,13 +142,13 @@ export function LeftCreationBar() {
     }
     if (toolId === 'code_block') {
       setStickyCreationTemplate?.({
-        text: '```python\n# ViTudy Code Block\ndef calculate_gradient(w, x, b):\n    return w * x + b\n```',
-        color: '#1e293b',
-        width: 320,
-        height: 240,
+        itemType: 'code_block',
+        codeSnippet: 'print screen\nhello;',
+        codeLanguage: 'javascript',
+        width: 480,
+        height: 180,
         typeLabel: 'Khối mã nguồn (Code block)'
       });
-      setStickyCreationColor('#1e293b');
       setActiveTool('create_note');
       return;
     }
@@ -152,38 +166,18 @@ export function LeftCreationBar() {
     }
     if (toolId === 'mind_map') {
       setStickyCreationTemplate?.({
-        text: '[SƠ ĐỒ TƯ DUY]\n• Giải tích 1\n  ├── Giới hạn & Đạo hàm\n  ├── Tích phân suy rộng\n  └── Chuỗi số & Chuỗi hàm',
-        color: '#f0f9ff',
-        width: 340,
-        height: 260,
+        itemType: 'mind_map',
+        text: '',
+        mindMapColor: '#a855f7',
+        width: 240,
+        height: 64,
         typeLabel: 'Sơ đồ tư duy (Mind map)'
       });
-      setStickyCreationColor('#f0f9ff');
       setActiveTool('create_note');
       return;
     }
-    if (toolId === 'stickers') {
-      setStickyCreationTemplate?.({
-        text: '[STICKER - ĐIỂM QUAN TRỌNG]\n• Công thức trọng tâm thi giữa kỳ\n• Xem lại chương 2 trước ngày thi\n• Đã hoàn thành bài tập nhóm',
-        color: '#fef9c3',
-        width: 280,
-        height: 220,
-        typeLabel: 'Hình dán (Sticker)'
-      });
-      setStickyCreationColor('#fef9c3');
-      setActiveTool('create_note');
-      return;
-    }
-    if (toolId === 'emojis_and_gifs') {
-      setStickyCreationTemplate?.({
-        text: '[MINH HỌA HỌC TẬP]\n• Hoàn thành mục tiêu học tập hôm nay!\n• Đã giải xong 5 bài tập đạo hàm\n• Tiếp tục duy trì chuỗi học tập',
-        color: '#fdf2f8',
-        width: 280,
-        height: 220,
-        typeLabel: 'Minh họa học tập (Illustration)'
-      });
-      setStickyCreationColor('#fdf2f8');
-      setActiveTool('create_note');
+    if (toolId === 'stickers' || toolId === 'emojis_and_gifs') {
+      setIsStickerPickerOpen(true);
       return;
     }
   };
@@ -488,6 +482,13 @@ export function LeftCreationBar() {
             </div>
           </div>
         )}
+
+        {/* Sticker, Emoji & GIF Picker Flyout (Matches Image 1) */}
+        <StickerEmojiPickerFlyout
+          isOpen={isStickerPickerOpen}
+          onClose={() => setIsStickerPickerOpen(false)}
+          onSelect={handleSelectStickerItem}
+        />
       </div>
 
       {/* Grouped Undo & Redo Column Pill below toolbar (Width and button sizes matching the main toolbar above) */}

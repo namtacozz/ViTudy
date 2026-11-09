@@ -102,6 +102,25 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Lớp hiển thị mực cục bộ `<ItemDrawingOverlay />` được render trực tiếp bên trong container của tài liệu.
     * Khi người dùng kéo di chuyển hoặc xoay tài liệu ở bất kỳ góc độ nào, các nét vẽ trên đó **luôn bám chặt và di chuyển/xoay chuẩn xác 100% cùng tài liệu** mà không bị lệch hay trôi nét.
     * Khi tài liệu bị xóa khỏi bàn học, toàn bộ nét mực gắn với tài liệu đó tự động được dọn dẹp sạch sẽ.
+* **Quy Chuẩn Nhận Diện Vẽ Thông Minh (Smart Shape Recognition Standards):**
+  * **Triệt tiêu hoàn toàn lỗi Giọt Nước (Zero Teardrop Defect):** Các hình đa giác khép kín (`points.length <= 8` như tam giác 4 điểm `[p0, p1, p2, p0]`, hình vuông / chữ nhật 5 điểm `[p0, p1, p2, p3, p0]`) bắt buộc render bằng các đoạn thẳng `L` và góc nhọn sắc nét đóng bằng `Z` (`M p0 L p1 L p2 ... Z`). Nghiêm cấm dùng đường cong Bezier bậc 2 (`Q`) qua trung điểm trên các đỉnh đa giác, vì sẽ bo tròn các đỉnh giữa và biến hình vuông/tam giác thành hình giọt nước có một đỉnh nhọn duy nhất.
+  * **Nhận Diện Hình Tròn Vẽ Tay Tự Nhiên (Natural Hand-Drawn Circles):** Người dùng vẽ bằng chuột/trackpad thường có xu hướng dẹt nhẹ theo cổ tay. Mở rộng dải tỷ lệ `aspectRatio` nhận diện Hình Tròn hoàn hảo từ `0.65` đến `1.55` khi nét vẽ có độ cong trơn tru. Tuyệt đối không ép nét vẽ hình tròn tự do thành Elip dẹt nằm ngang. Chỉ nhận diện **Elip** khi người dùng chủ động vẽ hình bầu dục thon dài rõ rệt (`aspectRatio < 0.65` hoặc `> 1.55`).
+  * **Phân Biệt Chuẩn Xác Đa Giác vs Đường Cong:** Sử dụng thuật toán đếm góc ngoặt gấp (`countSharpCorners`) và độ biến thiên bán kính `cvR`. Hình tròn/elip trơn tru hầu như không có góc gãy nhọn ($\ge 50^\circ$), trong khi hình vuông/chữ nhật/tam giác có từ 3 đến 4 góc ngoặt gấp rõ rệt, ngăn chặn 100% tình trạng nhận diện nhầm hình tròn thành hình vuông.
+* **Quy Chuẩn Đối Tượng Mở Rộng Trên Bàn Học (Code Block, Mind Map & Sticker/Emoji):**
+  * **Khối Mã Nguồn Tối Giản (`CodeBlockItem`):**
+    * Đúng theo chuẩn Whiteboard hiện đại: Chỉ gồm tiêu đề `Code block` màu xám trung tính phía trên và khung code bo góc lớn `rounded-xl` màu nền xanh navy đen tối `#060b1c`.
+    * Cột số dòng bên trái (`1, 2, 3...` màu xám mờ) tự động tăng giảm theo nội dung code.
+    * Vùng nhập code `textarea` font `font-mono text-xs md:text-sm text-slate-100` thuần túy, hỗ trợ thụt lề Tab 2 spaces, tự động co dãn chiều cao.
+    * Tuyệt đối không nhét thông tin thừa, không dùng khung dán giấy ghi chú Sticky note vàng cồng kềnh.
+  * **Sơ Đồ Tư Duy Chuẩn Viên Thuốc (`MindMapNodeItem` & `MindMapConnectors`):**
+    * Node hình viên thuốc (Pill shape): bo tròn `rounded-full`, viền dày màu sắc nét `border-2 border-purple-500 bg-white`, ô nhập `Type something` ở tâm.
+    * 4 nút tròn dấu cộng `+` ở 4 hướng (Trên, Dưới, Trái, Phải): nhấp chuột tự động sinh node con ở hướng tương ứng và liên kết nhánh.
+    * Đường nối nhánh mềm mại (`MindMapConnectors`): sử dụng đường cong Bezier cubic nối từ mép node cha sang mép node con với màu viền tương ứng.
+    * Floating toolbar phía trên khi chọn node: chọn màu viền, in đậm `B`, cỡ chữ, xoay và xóa.
+  * **Bảng Chọn Emoji / GIF / Sticker & Dán Tùy Ý (`StickerEmojiPickerFlyout` & `StickerItem`):**
+    * Mở popover nổi bên trái gồm ô tìm kiếm `Search`, 4 tab lọc `All | Stickers | Emojis | GIFs`.
+    * Khi click chọn: popover đóng, con trỏ chuột trên bàn học biến đổi thành hình ảnh của item đó kèm hướng dẫn click để dán.
+    * Click vào bất kỳ đâu trên bàn học để dán `StickerItem` hiển thị trong suốt độc lập, không bọc trong giấy ghi chú, hỗ trợ xoay và xóa.
 
 ---
 

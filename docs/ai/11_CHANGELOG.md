@@ -4,6 +4,78 @@
 
 ---
 
+## 2026-11-09 10:55 — main (Khắc Phục 3 Vấn Đề UI Whiteboard: Code Block Tối Giản, Sơ Đồ Tư Duy Viên Thuốc & Popover Emoji/Sticker/GIF)
+- **Task:** Hiện thực hóa giao diện chuẩn mực theo 3 ảnh người dùng cung cấp:
+  1. **Ảnh 3 (Code block tối giản):**
+     - Tạo mới component `CodeBlockItem.tsx`:
+       - Tiêu đề `Code block` màu xám trung tính phía trên.
+       - Khung code nền xanh navy đậm đen `#060b1c`, bo góc lớn `rounded-xl`, viền mảnh `border border-slate-800`.
+       - Cột số dòng bên trái (`1, 2, 3...`) tự động co dãn theo số dòng code thực tế.
+       - Ô nhập `textarea` font `font-mono text-xs md:text-sm text-slate-100` thuần túy, thụt lề 2 spaces khi gõ phím `Tab`.
+       - Nút Copy code nhanh và nút Xóa tinh tế khi hover. Triệt tiêu hoàn toàn khung dán băng dính vàng Sticky note thừa thãi.
+  2. **Ảnh 2 (Sơ đồ tư duy Mind map viên thuốc):**
+     - Tạo mới component `MindMapNodeItem.tsx` & `MindMapConnectors.tsx`:
+       - Node trung tâm hình viên thuốc (Pill shape): bo góc `rounded-full`, viền dày màu tím nổi bật `border-2 border-purple-500 bg-white shadow-sm`.
+       - Placeholder ở tâm: `Type something` với con trỏ nhấp nháy ở giữa.
+       - 4 nút tròn dấu cộng `+` ở 4 hướng (Trên, Dưới, Trái, Phải): nhấp chuột tự động sinh node con ở hướng đó và liên kết nhánh.
+       - Floating toolbar phía trên khi focus: đổi màu viền, in đậm `B`, cỡ chữ, xoay và xóa.
+       - Đường nối nhánh mềm mại (`MindMapConnectors`): vẽ đường cong Bezier cubic từ mép node cha sang mép node con với màu viền tương ứng.
+  3. **Ảnh 1 (Popover Emoji / Sticker / GIF & Dán lên bàn học):**
+     - Tạo mới component `StickerEmojiPickerFlyout.tsx` & `StickerItem.tsx`:
+       - Mở popover nổi bên trái: ô tìm kiếm `Search`, 4 tab `All | Stickers | Emojis | GIFs`.
+       - Section Emojis: icon vector SVG sắc nét (Like, Check, Star, Cross, Question, Smiley, Heart, Cool...).
+       - Section Stickers: sticker đồ họa học tập (100 điểm, Não thông minh, Mũ, Tai thỏ, Lửa...).
+       - Section GIFs: ảnh gif phản ứng vui nhộn.
+       - Khi chọn item: popover đóng, con trỏ chuột trên bàn học biến đổi thành hình của sticker đó kèm hướng dẫn click để dán.
+       - Nhấp chuột vào bất kỳ đâu trên bàn học để dán `StickerItem` trong suốt độc lập, không bọc trong giấy ghi chú, hỗ trợ xoay và xóa.
+- **Files Created/Modified:**
+  - `src/types/studyspace.ts`: Mở rộng `ItemType` ('code_block', 'mind_map', 'sticker') và các trường tương ứng trong `DeskItem`.
+  - `src/components/objects/CodeBlockItem.tsx`: Component khối code tối giản.
+  - `src/components/objects/MindMapNodeItem.tsx`: Component node mind map hình viên thuốc kèm 4 nút `+` và floating toolbar.
+  - `src/components/canvas/MindMapConnectors.tsx`: SVG đường nối nhánh Bezier giữa các node mind map.
+  - `src/components/hud/StickerEmojiPickerFlyout.tsx`: Bảng chọn Emoji/Sticker/GIF chuẩn Ảnh 1.
+  - `src/components/objects/StickerItem.tsx`: Component hiển thị sticker/emoji/gif trên bàn học.
+  - `src/components/canvas/InfiniteDesk.tsx`: Tích hợp render các component mới và connectors.
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`: Hỗ trợ click đặt `code_block`, `mind_map`, `sticker` và dynamic cursor.
+  - `src/components/hud/LeftCreationBar.tsx`: Mở bảng chọn sticker/emoji và đặt template khối code / mind map.
+  - `src/context/StudySpaceContext.tsx`: Bổ sung các phương thức `addCodeBlock`, `addMindMapNode`, `addSticker`, `updateCodeBlock`, `updateMindMapNode`.
+  - `src/components/canvas/Minimap.tsx`: Hiển thị màu sắc và kích thước chính xác cho các item mới.
+  - `AGENTS.md`: Bổ sung quy chuẩn kỹ thuật cho Code block, Mind map và Sticker.
+- **Verified by:**
+  - `pnpm test`: 15/15 test suites passed (41/41 tests pass 100%).
+  - `pnpm run docs:check`: Pass.
+- **Docs updated:** `AGENTS.md`, `03_SYMBOL_INDEX.md`, `11_CHANGELOG.md`.
+
+---
+
+## 2026-11-09 09:55 — main (Khắc Phục Triệt Để Lỗi Vẽ Thông Minh: Hình Vuông/Tam Giác Ra Giọt Nước, Hình Tròn Ra Elip)
+- **Task:** Giải quyết triệt để phản hồi của người dùng kèm ảnh bằng chứng: Vẽ hình vuông ra hình giọt nước, tam giác ra hình giọt nước, tròn ra hình elip.
+- **Root Cause & Technical Breakdown:**
+  1. **Lỗi Giọt Nước ở Hình Vuông & Tam Giác (`pointsToSvgPath`):**
+     - Khi `recognizeSmartShape` nhận diện đúng đa giác và trả về mảng 4 điểm (tam giác) hoặc 5 điểm (hình vuông/chữ nhật), hàm `pointsToSvgPath` cũ dùng đường cong bậc 2 `Q` qua trung điểm (`midpoint quadratic Bezier curve`) cho các điểm ở giữa.
+     - Điểm đầu đến điểm cuối lại được nối bằng đoạn thẳng `L` $\rightarrow$ Đỉnh xuất phát `points[0]` trở thành góc nhọn gãy duy nhất, trong khi 3 đỉnh còn lại của hình vuông bị bo tròn thành đáy bầu dục trơn tuột $\rightarrow$ Tạo ra chính xác hình quả giọt nước (`💧`).
+     - *Khắc phục:* Phân biệt đa giác khép kín (`isClosedPolygon = points.length <= 8 && Math.hypot(first - last) < 10`). Toàn bộ đa giác được vẽ bằng các đoạn thẳng sắc nét `M p0 L p1 L p2 ... Z`, triệt tiêu hoàn toàn đường cong `Q` trên đa giác.
+  2. **Lỗi Hình Tròn Ra Elip / Bị Ép Nhầm Thành Vuông (`src/utils/smartShape.ts`):**
+     - *Ngưỡng `aspectRatio` cũ quá khắt khe:* Chỉ chấp nhận `aspectRatio` từ `0.78` đến `1.28`. Khi người dùng dùng chuột/trackpad vẽ tự do, chuyển động cổ tay tự nhiên thường dẹt nhẹ sang hai bên ($w/h \approx 1.30 - 1.45$), vượt quá `1.28` $\rightarrow$ Bị đẩy sang nhánh fallback vẽ thành Elip dẹt nằm ngang.
+     - *Điều kiện `isQuadrilateral` cũ bắt nhầm hình tròn:* Do diện tích hình tròn có `fillRatio = \pi / 4 \approx 0.785 \ge 0.72` và tay run có `cvR > 0.10`, thuật toán cũ phân loại nhầm hình tròn thành tứ giác $\rightarrow$ Trả về hình vuông $\rightarrow$ Bị `pointsToSvgPath` cũ biến thành giọt nước!
+     - *Khắc phục:*
+       - Bổ sung hàm phát hiện góc ngoặt gấp `countSharpCorners(points)` đo góc đổi hướng tiếp tuyến $\in [48^\circ, 145^\circ]$. Hình tròn cong trơn hầu như có 0 góc nhọn, trong khi hình vuông/chữ nhật có 3-4 góc nhọn.
+       - Mở rộng dải tỷ lệ nhận diện Hình Tròn hoàn hảo từ `0.65` đến `1.55` cho nét vẽ tay tự do.
+       - Chỉ nhận diện là Elip khi người dùng cố ý vẽ hình bầu dục thon dài rõ rệt (`aspectRatio < 0.65` hoặc `> 1.55`).
+       - Dải nhận diện Hình Vuông mở rộng từ `0.70` đến `1.42`.
+- **Files Modified:**
+  - `src/components/canvas/DeskDrawingCanvas.tsx`: Render đa giác thẳng góc bằng lệnh `L ... Z`.
+  - `src/components/canvas/ItemDrawingOverlay.tsx`: Render đa giác trên tài liệu thẳng góc bằng lệnh `L ... Z`.
+  - `src/utils/smartShape.ts`: Nâng cấp bộ phân loại hình dạng với `countSharpCorners`, dải `aspectRatio` mở rộng `0.65 - 1.55` cho hình tròn và `0.70 - 1.42` cho hình vuông.
+  - `src/utils/smartShape.test.ts`: Bổ sung test case kiểm thử hình tròn vẽ tay dẹt `aspectRatio = 1.36` nhận diện thành Hình tròn chuẩn, elip dẹt `2.2` nhận diện thành Elip.
+  - `AGENTS.md`: Bổ sung quy chuẩn kỹ thuật `Smart Shape Recognition Standards`.
+- **Verified by:**
+  - `pnpm test`: 15/15 test suites passed (41/41 tests pass 100%).
+  - `pnpm run docs:check`: Pass.
+- **Docs updated:** `AGENTS.md`, `03_SYMBOL_INDEX.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 09:35 — main (Chế Độ Đổi Con Trỏ Đặt Vật Thể Tuỳ Ý & Cố Định STK Thụ Hưởng MBBank SePay)
 - **Task:** Thực hiện 2 yêu cầu tinh chỉnh từ người dùng:
   1. **Chuyển đổi sang chế độ đổi icon con trỏ chuột và đặt vật thể tùy ý trên mặt bàn học:**

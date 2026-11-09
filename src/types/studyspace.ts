@@ -1,4 +1,4 @@
-export type ItemType = 'paper' | 'book' | 'sticky_note' | 'roadmap' | 'exam_sheet';
+export type ItemType = 'paper' | 'book' | 'sticky_note' | 'roadmap' | 'exam_sheet' | 'code_block' | 'mind_map' | 'sticker';
 
 export interface PageContent {
   id: string;
@@ -58,6 +58,18 @@ export interface DeskItem {
   examData?: ExamSheetData;
   width?: number;
   height?: number;
+  codeLanguage?: string;
+  codeSnippet?: string;
+  mindMapParentId?: string;
+  mindMapColor?: string;
+  mindMapShape?: 'pill' | 'rectangle' | 'cloud';
+  stickerData?: {
+    type: 'emoji' | 'sticker' | 'gif';
+    name: string;
+    content: string;
+    url?: string;
+    isSvg?: boolean;
+  };
 }
 
 export interface IntelineThread {

@@ -90,7 +90,7 @@ export interface Database {
           id: string
           space_id: string
           title: string
-          item_type: 'paper' | 'book' | 'exam_sheet' | 'sticky_note' | 'roadmap'
+          item_type: 'paper' | 'book' | 'exam_sheet' | 'sticky_note' | 'roadmap' | 'code_block' | 'mind_map' | 'sticker'
           x: number
           y: number
           rotation: number
@@ -118,7 +118,7 @@ export interface Database {
           id?: string
           space_id: string
           title: string
-          item_type: 'paper' | 'book' | 'exam_sheet' | 'sticky_note' | 'roadmap'
+          item_type: 'paper' | 'book' | 'exam_sheet' | 'sticky_note' | 'roadmap' | 'code_block' | 'mind_map' | 'sticker'
           x?: number
           y?: number
           rotation?: number
@@ -146,7 +146,7 @@ export interface Database {
           id?: string
           space_id?: string
           title?: string
-          item_type?: 'paper' | 'book' | 'exam_sheet' | 'sticky_note' | 'roadmap'
+          item_type?: 'paper' | 'book' | 'exam_sheet' | 'sticky_note' | 'roadmap' | 'code_block' | 'mind_map' | 'sticker'
           x?: number
           y?: number
           rotation?: number

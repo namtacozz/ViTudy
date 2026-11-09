@@ -6,13 +6,30 @@ import { useStudySpace } from '@/context/StudySpaceContext';
 export const DeskDrawingCanvas = React.memo(function DeskDrawingCanvas() {
   const { strokes, currentStroke } = useStudySpace();
 
-  // Helper to convert points to smooth SVG Path data using midpoint quadratic curves
+  // Helper to convert points to SVG Path data
+  // For geometric polygons (triangle, square, rectangle <= 8 points): renders crisp straight lines L and sharp corners
+  // For freehand drawing & circles (many points): renders smooth midpoint quadratic curves Q
   const pointsToSvgPath = (points: { x: number; y: number }[]) => {
     if (points.length < 2) return '';
     if (points.length === 2) {
       return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
     }
 
+    const first = points[0];
+    const last = points[points.length - 1];
+    const isClosedPolygon = points.length <= 8 && Math.hypot(first.x - last.x, first.y - last.y) < 10;
+
+    // Polygons: straight lines between vertices (triangles, squares, rectangles)
+    if (isClosedPolygon) {
+      let d = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        d += ` L ${points[i].x} ${points[i].y}`;
+      }
+      d += ' Z';
+      return d;
+    }
+
+    // Freehand strokes & smooth circles: midpoint quadratic bezier curves
     let d = `M ${points[0].x} ${points[0].y}`;
     for (let i = 1; i < points.length - 1; i++) {
       const p1 = points[i];
@@ -21,8 +38,11 @@ export const DeskDrawingCanvas = React.memo(function DeskDrawingCanvas() {
       const midY = (p1.y + p2.y) / 2;
       d += ` Q ${p1.x} ${p1.y}, ${midX} ${midY}`;
     }
-    const last = points[points.length - 1];
-    d += ` L ${last.x} ${last.y}`;
+    const lastPt = points[points.length - 1];
+    d += ` L ${lastPt.x} ${lastPt.y}`;
+    if (Math.hypot(first.x - lastPt.x, first.y - lastPt.y) < 10) {
+      d += ' Z';
+    }
     return d;
   };
 

@@ -84,8 +84,9 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   const fillRatio = area / boxArea;
 
   // Ramer-Douglas-Peucker polygon simplification to find corners
-  const simplified = ramerDouglasPeucker(points, maxDim * 0.07);
+  const simplified = ramerDouglasPeucker(points, maxDim * 0.08);
   const cornerCount = Math.max(2, simplified.length - 1);
+  const sharpCorners = countSharpCorners(points, maxDim);
 
   // Measure radius variation from center for curve smoothness check
   let sumR = 0;
@@ -101,8 +102,8 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   const cvR = Math.sqrt(sumVarR / n) / (meanR || 1);
 
   // 2A. TRIANGLE
-  // Hand-drawn triangles typically have fillRatio ~ 0.35 - 0.65 and 3 or 4 corners
-  if ((fillRatio < 0.68 && cornerCount <= 4) || cornerCount === 3) {
+  // Hand-drawn triangles typically have fillRatio < 0.68 and 3 sharp corners
+  if ((fillRatio < 0.68 && (cornerCount <= 4 || sharpCorners <= 3)) || cornerCount === 3 || (fillRatio < 0.65 && sharpCorners === 3)) {
     const triangleCorners = findBestTriangleCorners(simplified.length >= 3 ? simplified : points);
     if (triangleCorners && triangleCorners.length === 4) {
       return triangleCorners;
@@ -110,15 +111,16 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   }
 
   // 2B. SQUARE / RECTANGLE
-  // Quadrilaterals typically have fillRatio >= 0.72 and 4 to 6 corners
-  // Or high fill ratio > 0.82
-  const isQuadrilateral = (cornerCount === 4) || 
-    (fillRatio >= 0.72 && cornerCount <= 6 && cvR > 0.10) ||
-    (fillRatio >= 0.83);
+  // Quadrilaterals have 3-4 distinct sharp corners or high fillRatio with high radius variation
+  const hasSharpCorners = sharpCorners >= 3;
+  const isCollinearOrBoxy = fillRatio >= 0.74 && (cvR > 0.135 || hasSharpCorners);
+  const isQuadrilateral = (cornerCount === 4 && fillRatio >= 0.68) || 
+    (hasSharpCorners && fillRatio >= 0.70) ||
+    (isCollinearOrBoxy && fillRatio >= 0.80);
 
   if (isQuadrilateral) {
-    // If aspect ratio is close to 1, snap to a neat Square
-    if (aspectRatio >= 0.78 && aspectRatio <= 1.28) {
+    // If aspect ratio is close to 1, snap to a neat Square (generous 0.70 - 1.42 for freehand mouse drawing)
+    if (aspectRatio >= 0.70 && aspectRatio <= 1.42) {
       const side = (w + h) / 2;
       const half = side / 2;
       return [
@@ -141,8 +143,8 @@ export function recognizeSmartShape(points: Point[]): Point[] {
   }
 
   // 2C. CIRCLE
-  // Smooth radius variation and aspect ratio ~1
-  if (aspectRatio >= 0.78 && aspectRatio <= 1.28) {
+  // Hand-drawn circles naturally have smooth curvature and aspect ratio ~1 (0.65 - 1.55)
+  if (aspectRatio >= 0.65 && aspectRatio <= 1.55) {
     const radius = (w + h) / 4;
     const circlePoints: Point[] = [];
     const steps = 40;
@@ -156,7 +158,7 @@ export function recognizeSmartShape(points: Point[]): Point[] {
     return circlePoints;
   }
 
-  // 2D. ELLIPSE
+  // 2D. ELLIPSE (Elongated oval: aspect ratio < 0.65 or > 1.55)
   const rx = w / 2;
   const ry = h / 2;
   const ellipsePoints: Point[] = [];
@@ -249,4 +251,35 @@ function perpendicularDistance(p: Point, p1: Point, p2: Point): number {
   const numerator = Math.abs(dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x);
   const denominator = Math.hypot(dx, dy);
   return numerator / denominator;
+}
+
+function countSharpCorners(points: Point[], maxDim: number): number {
+  if (points.length < 5) return 0;
+  const simplified = ramerDouglasPeucker(points, Math.max(6, maxDim * 0.05));
+  if (simplified.length < 3) return 0;
+
+  let sharpCount = 0;
+  const m = simplified.length;
+  for (let i = 1; i < m - 1; i++) {
+    const prev = simplified[i - 1];
+    const curr = simplified[i];
+    const next = simplified[i + 1];
+
+    const d1 = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    const d2 = Math.hypot(next.x - curr.x, next.y - curr.y);
+    if (d1 < 6 || d2 < 6) continue;
+
+    const v1x = curr.x - prev.x;
+    const v1y = curr.y - prev.y;
+    const v2x = next.x - curr.x;
+    const v2y = next.y - curr.y;
+
+    const dot = v1x * v2x + v1y * v2y;
+    const cosAngle = dot / (d1 * d2);
+    const turnAngleDeg = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
+    if (turnAngleDeg >= 48 && turnAngleDeg <= 145) {
+      sharpCount++;
+    }
+  }
+  return sharpCount;
 }

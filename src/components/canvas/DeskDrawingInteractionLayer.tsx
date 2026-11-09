@@ -16,6 +16,9 @@ export function DeskDrawingInteractionLayer() {
     stickyCreationTemplate,
     setStickyCreationTemplate,
     addStickyNote,
+    addCodeBlock,
+    addMindMapNode,
+    addSticker,
     startStroke, 
     appendPoint, 
     finishStroke,
@@ -230,7 +233,16 @@ export function DeskDrawingInteractionLayer() {
         const noteText = template?.text || '';
         const noteColor = template?.color || stickyCreationColor || '#fef08a';
 
-        addStickyNote(noteText, finalX, finalY, noteColor, finalW, finalH);
+        if (template?.itemType === 'code_block') {
+          addCodeBlock(template.codeSnippet || '', finalX, finalY, template.codeLanguage || 'javascript');
+        } else if (template?.itemType === 'mind_map') {
+          addMindMapNode(template.text || '', finalX, finalY, undefined, template.mindMapColor || '#a855f7');
+        } else if (template?.itemType === 'sticker' && template.stickerData) {
+          addSticker(template.stickerData, finalX, finalY);
+        } else {
+          addStickyNote(noteText, finalX, finalY, noteColor, finalW, finalH);
+        }
+
         setDragBox(null);
         setActiveTool('cursor');
         setStickyCreationColor(null);
@@ -265,18 +277,18 @@ export function DeskDrawingInteractionLayer() {
       return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="${encodedColor}" stroke="%23b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/><path d="M15 3v6h6"/></svg>`;
     }
 
-    const { typeLabel } = stickyCreationTemplate;
-    if (typeLabel.includes('Code')) {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="%230f172a" stroke="%2334d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3" fill="%230f172a"/><polyline points="8 10 5 12 8 14"/><polyline points="16 10 19 12 16 14"/><line x1="13" x2="11" y1="8" y2="16"/></svg>`;
+    const { typeLabel, itemType } = stickyCreationTemplate;
+    if (itemType === 'code_block' || typeLabel.includes('Code')) {
+      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="%23060b1c" stroke="%2338bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3" fill="%23060b1c"/><polyline points="8 10 5 12 8 14"/><polyline points="16 10 19 12 16 14"/><line x1="13" x2="11" y1="8" y2="16"/></svg>`;
     }
     if (typeLabel.includes('Table')) {
       return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="%23f8fafc" stroke="%23E0562D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3" fill="%23f8fafc"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>`;
     }
-    if (typeLabel.includes('Mind')) {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="%23e0f2fe" stroke="%230284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>`;
+    if (itemType === 'mind_map' || typeLabel.includes('Mind')) {
+      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%23faf5ff" stroke="%23a855f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="5" fill="%23faf5ff"/><circle cx="12" cy="12" r="1.5" fill="%23a855f7"/></svg>`;
     }
-    if (typeLabel.includes('Sticker')) {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="%23fef9c3" stroke="%23d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+    if (itemType === 'sticker' || typeLabel.includes('Hình dán')) {
+      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%23fef9c3" stroke="%23eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8.5 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 8.5" fill="%23fef08a"/></svg>`;
     }
     return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="%23fdf2f8" stroke="%23db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
   };

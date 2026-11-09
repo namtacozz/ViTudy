@@ -6,6 +6,16 @@ type DeskDocumentRow = Database['public']['Tables']['desk_documents']['Row'];
 type DeskDocumentInsert = Database['public']['Tables']['desk_documents']['Insert'];
 
 export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInsert {
+  let sourceDocsJson: Json | null = (item.sourceDocuments as unknown as Json) || null;
+  if (item.type === 'mind_map' && item.mindMapParentId) {
+    sourceDocsJson = { parentId: item.mindMapParentId } as unknown as Json;
+  }
+
+  let extraDataJson: Json | null = (item.examData as unknown as Json) || null;
+  if (item.type === 'sticker' && item.stickerData) {
+    extraDataJson = item.stickerData as unknown as Json;
+  }
+
   return {
     id: item.id,
     space_id: spaceId,
@@ -19,15 +29,15 @@ export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInse
     page_count: item.pageCount,
     current_page_index: item.currentPageIndex,
     is_binder: item.isBinder ?? false,
-    color_theme: item.colorTheme || null,
+    color_theme: item.codeLanguage || item.colorTheme || null,
     cover_color: item.coverColor || null,
-    sticky_text: item.stickyText || null,
-    sticky_color: item.stickyColor || null,
+    sticky_text: item.codeSnippet || item.stickyText || null,
+    sticky_color: item.mindMapColor || item.stickyColor || null,
     text_align: item.textAlign || null,
     is_bold: item.isBold ?? false,
     is_exam_sheet: item.isExamSheet ?? false,
-    exam_data: (item.examData as unknown as Json) || null,
-    source_documents: (item.sourceDocuments as unknown as Json) || null,
+    exam_data: extraDataJson,
+    source_documents: sourceDocsJson,
     width: item.width || null,
     height: item.height || null,
   };
@@ -54,10 +64,15 @@ export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): 
     textAlign: row.text_align || undefined,
     isBold: row.is_bold,
     isExamSheet: row.is_exam_sheet,
-    examData: row.exam_data ? (row.exam_data as any) : undefined,
-    sourceDocuments: row.source_documents ? (row.source_documents as any) : undefined,
+    examData: row.item_type === 'exam_sheet' && row.exam_data ? (row.exam_data as any) : undefined,
+    sourceDocuments: row.item_type !== 'mind_map' && row.source_documents ? (row.source_documents as any) : undefined,
     width: row.width || undefined,
     height: row.height || undefined,
+    codeSnippet: row.item_type === 'code_block' ? (row.sticky_text || undefined) : undefined,
+    codeLanguage: row.item_type === 'code_block' ? (row.color_theme || 'javascript') : undefined,
+    mindMapColor: row.item_type === 'mind_map' ? (row.sticky_color || undefined) : undefined,
+    mindMapParentId: row.item_type === 'mind_map' && row.source_documents ? (row.source_documents as any)?.parentId : undefined,
+    stickerData: row.item_type === 'sticker' && row.exam_data ? (row.exam_data as any) : undefined,
   };
 }
 

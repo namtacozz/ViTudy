@@ -80,4 +80,58 @@ describe('recognizeSmartShape', () => {
     expect(res.length).toBeGreaterThanOrEqual(30);
     expect(res[0]).toEqual(res[res.length - 1]);
   });
+
+  it('recognizes hand-drawn imperfect circle with aspect ratio 1.35 as Circle (not Ellipse or Square)', () => {
+    const imperfectCircle: Point[] = [];
+    const steps = 40;
+    // rx = 68, ry = 50 -> aspectRatio = 1.36 (common hand-drawn mouse oval)
+    for (let i = 0; i <= steps; i++) {
+      const th = (i / steps) * 2 * Math.PI;
+      // Add small hand tremor
+      const wobble = ((i % 3) - 1) * 1.5;
+      imperfectCircle.push({
+        x: Math.round(150 + (68 + wobble) * Math.cos(th)),
+        y: Math.round(150 + (50 + wobble) * Math.sin(th))
+      });
+    }
+
+    const res = recognizeSmartShape(imperfectCircle);
+    expect(res.length).toBeGreaterThanOrEqual(30); // Interpolated circle
+    // Bounding box of the output circle should be perfectly square (width == height)
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of res) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    const outW = maxX - minX;
+    const outH = maxY - minY;
+    expect(Math.abs(outW - outH)).toBeLessThanOrEqual(2); // Perfectly round!
+  });
+
+  it('recognizes deliberate elongated oval (aspect ratio 2.2) as Ellipse', () => {
+    const deliberateEllipse: Point[] = [];
+    const steps = 40;
+    for (let i = 0; i <= steps; i++) {
+      const th = (i / steps) * 2 * Math.PI;
+      deliberateEllipse.push({
+        x: Math.round(200 + 110 * Math.cos(th)),
+        y: Math.round(200 + 50 * Math.sin(th))
+      });
+    }
+
+    const res = recognizeSmartShape(deliberateEllipse);
+    expect(res.length).toBeGreaterThanOrEqual(30);
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of res) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    const outW = maxX - minX;
+    const outH = maxY - minY;
+    expect(outW).toBeGreaterThan(outH * 1.8); // Retains deliberate elliptical ratio
+  });
 });

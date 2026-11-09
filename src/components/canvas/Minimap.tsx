@@ -175,10 +175,21 @@ export const Minimap = React.memo(function Minimap({ isVisible = true, onClose }
 
       {/* Desk Items on Minimap */}
       {activeSpace.items.map(item => {
-        const itemW = (item.type === 'book' ? 940 : item.type === 'paper' ? 360 : 220) * scale;
-        const itemH = (item.type === 'book' ? 630 : item.type === 'paper' ? 440 : 200) * scale;
+        const itemRawW = item.width || (item.type === 'book' ? 980 : item.type === 'paper' ? 380 : item.type === 'code_block' ? 480 : item.type === 'mind_map' ? 240 : 200);
+        const itemRawH = item.height || (item.type === 'book' ? 640 : item.type === 'paper' ? 490 : item.type === 'code_block' ? 200 : item.type === 'mind_map' ? 64 : 180);
+        const itemW = itemRawW * scale;
+        const itemH = itemRawH * scale;
         const itemX = toMiniX(item.x);
         const itemY = toMiniY(item.y);
+
+        const getBgClass = () => {
+          if (item.type === 'book') return 'bg-slate-800 border border-slate-600';
+          if (item.type === 'paper') return 'bg-emerald-500/90 border border-emerald-600';
+          if (item.type === 'code_block') return 'bg-[#060b1c] border border-cyan-500/80';
+          if (item.type === 'mind_map') return 'bg-purple-500 border border-purple-400 rounded-full';
+          if (item.type === 'sticker') return 'bg-amber-400 border border-amber-300';
+          return 'bg-amber-400 border border-amber-500';
+        };
 
         return (
           <div
@@ -186,16 +197,10 @@ export const Minimap = React.memo(function Minimap({ isVisible = true, onClose }
             style={{
               left: itemX,
               top: itemY,
-              width: Math.max(8, itemW),
-              height: Math.max(6, itemH)
+              width: Math.max(6, itemW),
+              height: Math.max(4, itemH)
             }}
-            className={`absolute rounded-[2px] shadow-xs pointer-events-none transition-all flex items-center justify-center ${
-              item.type === 'book'
-                ? 'bg-slate-800 border border-slate-600'
-                : item.type === 'paper'
-                ? 'bg-emerald-500/90 border border-emerald-600'
-                : 'bg-amber-400 border border-amber-500'
-            }`}
+            className={`absolute rounded-[2px] shadow-xs pointer-events-none transition-all flex items-center justify-center ${getBgClass()}`}
           >
             {item.type === 'book' && (
               <div className="w-[1px] h-full bg-slate-500 opacity-60" />

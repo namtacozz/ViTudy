@@ -8,6 +8,27 @@ import { useAuth } from '@/hooks/useAuth';
 import { StudySpaceService } from '@/services/StudySpaceService';
 import { OfflineQueue } from '@/services/OfflineQueue';
 
+export interface CreationPlacementTemplate {
+  itemType?: import('@/types/studyspace').ItemType;
+  text?: string;
+  color?: string;
+  width?: number;
+  height?: number;
+  typeLabel: string;
+  codeSnippet?: string;
+  codeLanguage?: string;
+  mindMapColor?: string;
+  mindMapParentId?: string;
+  mindMapShape?: 'pill' | 'rectangle' | 'cloud';
+  stickerData?: {
+    type: 'emoji' | 'sticker' | 'gif';
+    name: string;
+    content: string;
+    url?: string;
+    isSvg?: boolean;
+  };
+}
+
 interface StudySpaceContextType {
   spaces: StudySpace[];
   activeSpaceId: string;
@@ -61,8 +82,13 @@ interface StudySpaceContextType {
   setPenWidthLevel: (level: 'small' | 'medium' | 'large') => void;
   stickyCreationColor: string | null;
   setStickyCreationColor: (color: string | null) => void;
-  stickyCreationTemplate: { text: string; color: string; width: number; height: number; typeLabel: string } | null;
-  setStickyCreationTemplate: (template: { text: string; color: string; width: number; height: number; typeLabel: string } | null) => void;
+  stickyCreationTemplate: CreationPlacementTemplate | null;
+  setStickyCreationTemplate: (template: CreationPlacementTemplate | null) => void;
+  addCodeBlock: (snippet?: string, x?: number, y?: number, language?: string) => string;
+  addMindMapNode: (text?: string, x?: number, y?: number, parentId?: string, color?: string) => string;
+  addSticker: (sticker: { type: 'emoji' | 'sticker' | 'gif'; name: string; content: string; url?: string; isSvg?: boolean }, x?: number, y?: number) => string;
+  updateCodeBlock: (id: string, snippet: string, language?: string) => void;
+  updateMindMapNode: (id: string, text: string, color?: string, shape?: 'pill' | 'rectangle' | 'cloud') => void;
   strokes: import('@/types/studyspace').DrawingStroke[];
   currentStroke: import('@/types/studyspace').DrawingStroke | null;
   startStroke: (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => void;
@@ -176,7 +202,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [penColor, setPenColor] = useState<string>('#2563eb');
   const [penWidthLevel, setPenWidthLevel] = useState<'small' | 'medium' | 'large'>('medium');
   const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
-  const [stickyCreationTemplate, setStickyCreationTemplate] = useState<{ text: string; color: string; width: number; height: number; typeLabel: string } | null>(null);
+  const [stickyCreationTemplate, setStickyCreationTemplate] = useState<CreationPlacementTemplate | null>(null);
   const [strokes, setStrokes] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<import('@/types/studyspace').DrawingStroke | null>(null);
 
@@ -955,6 +981,178 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     return noteId;
   };
 
+  const addCodeBlock = (snippet = '', x?: number, y?: number, language = 'javascript'): string => {
+    const codeId = `code-${Date.now()}`;
+    const w = 480;
+    const h = 200;
+
+    let targetX = x;
+    let targetY = y;
+    if (targetX === undefined || targetY === undefined) {
+      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const curScale = transform.scale || 1;
+      targetX = Math.round((-transform.x + (viewW / 2)) / curScale - (w / 2));
+      targetY = Math.round((-transform.y + (viewH / 2)) / curScale - (h / 2));
+    }
+
+    const defaultCode = snippet || 'print screen\nhello;';
+    const newCodeItem: DeskItem = {
+      id: codeId,
+      type: 'code_block',
+      title: 'Code block',
+      x: targetX,
+      y: targetY,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: 1,
+      currentPageIndex: 0,
+      pages: [],
+      codeSnippet: defaultCode,
+      codeLanguage: language,
+      width: w,
+      height: h
+    };
+
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, items: [...s.items, newCodeItem] };
+      })
+    );
+    setSelectedItemId(codeId);
+    return codeId;
+  };
+
+  const addMindMapNode = (text = '', x?: number, y?: number, parentId?: string, color = '#a855f7'): string => {
+    const mindId = `mind-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const w = 240;
+    const h = 64;
+
+    let targetX = x;
+    let targetY = y;
+    if (targetX === undefined || targetY === undefined) {
+      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const curScale = transform.scale || 1;
+      targetX = Math.round((-transform.x + (viewW / 2)) / curScale - (w / 2));
+      targetY = Math.round((-transform.y + (viewH / 2)) / curScale - (h / 2));
+    }
+
+    const newNode: DeskItem = {
+      id: mindId,
+      type: 'mind_map',
+      title: 'Ý tưởng',
+      x: targetX,
+      y: targetY,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: 1,
+      currentPageIndex: 0,
+      pages: [],
+      stickyText: normalizeNFC(text),
+      mindMapParentId: parentId,
+      mindMapColor: color,
+      mindMapShape: 'pill',
+      width: w,
+      height: h
+    };
+
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, items: [...s.items, newNode] };
+      })
+    );
+    setSelectedItemId(mindId);
+    return mindId;
+  };
+
+  const addSticker = (
+    sticker: { type: 'emoji' | 'sticker' | 'gif'; name: string; content: string; url?: string; isSvg?: boolean },
+    x?: number,
+    y?: number
+  ): string => {
+    const stickerId = `sticker-${Date.now()}`;
+    const w = sticker.type === 'gif' ? 160 : 100;
+    const h = sticker.type === 'gif' ? 130 : 100;
+
+    let targetX = x;
+    let targetY = y;
+    if (targetX === undefined || targetY === undefined) {
+      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const curScale = transform.scale || 1;
+      targetX = Math.round((-transform.x + (viewW / 2)) / curScale - (w / 2));
+      targetY = Math.round((-transform.y + (viewH / 2)) / curScale - (h / 2));
+    }
+
+    const newSticker: DeskItem = {
+      id: stickerId,
+      type: 'sticker',
+      title: sticker.name,
+      x: targetX,
+      y: targetY,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: 1,
+      currentPageIndex: 0,
+      pages: [],
+      stickerData: sticker,
+      width: w,
+      height: h
+    };
+
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, items: [...s.items, newSticker] };
+      })
+    );
+    setSelectedItemId(stickerId);
+    return stickerId;
+  };
+
+  const updateCodeBlock = (id: string, snippet: string, language?: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id
+              ? { ...item, codeSnippet: snippet, codeLanguage: language ?? item.codeLanguage }
+              : item
+          )
+        };
+      })
+    );
+  };
+
+  const updateMindMapNode = (id: string, text: string, color?: string, shape?: 'pill' | 'rectangle' | 'cloud') => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item =>
+            item.id === id
+              ? {
+                  ...item,
+                  stickyText: normalizeNFC(text),
+                  mindMapColor: color ?? item.mindMapColor,
+                  mindMapShape: shape ?? item.mindMapShape
+                }
+              : item
+          )
+        };
+      })
+    );
+  };
+
   const addIntelineThread = (params: {
     sourceItemId: string;
     sourcePageNumber: number;
@@ -1241,6 +1439,11 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         tidyUpDesk,
         fitAllToScreen,
         addStickyNote,
+        addCodeBlock,
+        addMindMapNode,
+        addSticker,
+        updateCodeBlock,
+        updateMindMapNode,
         addUploadedDocument,
         addExamSheet,
         updateExamAnswer,

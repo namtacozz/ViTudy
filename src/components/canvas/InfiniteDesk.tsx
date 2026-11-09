@@ -7,6 +7,10 @@ import { DeskGrid } from './DeskGrid';
 import { PaperSheet } from '../objects/PaperSheet';
 import { BookSpread } from '../objects/BookSpread';
 import { StickyNoteItem } from '../objects/StickyNoteItem';
+import { CodeBlockItem } from '../objects/CodeBlockItem';
+import { MindMapNodeItem } from '../objects/MindMapNodeItem';
+import { StickerItem } from '../objects/StickerItem';
+import { MindMapConnectors } from './MindMapConnectors';
 import { VisualLinkThreads } from './VisualLinkThreads';
 import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
@@ -435,8 +439,20 @@ export function InfiniteDesk() {
           if (item.type === 'sticky_note') {
             return <StickyNoteItem key={item.id} item={item} isSelected={isSelected} />;
           }
+          if (item.type === 'code_block') {
+            return <CodeBlockItem key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'mind_map') {
+            return <MindMapNodeItem key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'sticker') {
+            return <StickerItem key={item.id} item={item} isSelected={isSelected} />;
+          }
           return null;
         })}
+
+        {/* Dynamic Branch Lines Connecting Mind Map Parent and Child Nodes */}
+        <MindMapConnectors />
 
         {/* Freehand Drawing & Highlighter Strokes Layer */}
         <DeskDrawingCanvas />
