@@ -13,9 +13,28 @@ export default function AuthCallbackPage() {
     let isMounted = true;
 
     async function handleAuthCallback() {
+      const getBasePath = () => {
+        if (typeof window === 'undefined') return '';
+        if (process.env.NEXT_PUBLIC_BASE_PATH) return process.env.NEXT_PUBLIC_BASE_PATH;
+        return window.location.pathname.startsWith('/ViTudy') ? '/ViTudy' : '';
+      };
+
+      const navigateToDesk = () => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vitudy_has_visited_desk', 'true');
+          window.location.href = `${window.location.origin}${getBasePath()}/`;
+        }
+      };
+
+      const navigateToAuth = (errCode: string) => {
+        if (typeof window !== 'undefined') {
+          window.location.href = `${window.location.origin}${getBasePath()}/auth?error=${errCode}`;
+        }
+      };
+
       const supabase = getSupabase();
       if (!supabase) {
-        if (isMounted) router.replace('/auth?error=supabase_not_configured');
+        if (isMounted) navigateToAuth('supabase_not_configured');
         return;
       }
 
@@ -23,7 +42,7 @@ export default function AuthCallbackPage() {
         // 1. Kiểm tra xem session đã được tự động xử lý bởi detectSessionInUrl chưa
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          if (isMounted) router.replace('/');
+          if (isMounted) navigateToDesk();
           return;
         }
 
@@ -36,20 +55,20 @@ export default function AuthCallbackPage() {
           if (error) {
             if (isMounted) {
               setErrorMsg('Xác thực thất bại hoặc mã phiên đã hết hạn.');
-              setTimeout(() => router.replace('/auth?error=exchange_failed'), 1500);
+              setTimeout(() => navigateToAuth('exchange_failed'), 1500);
             }
             return;
           }
-          if (isMounted) router.replace('/');
+          if (isMounted) navigateToDesk();
           return;
         }
 
         // 3. Không có code và không có session
-        if (isMounted) router.replace('/auth');
+        if (isMounted) navigateToAuth('no_session');
       } catch (err: any) {
         if (isMounted) {
           setErrorMsg(err.message || 'Lỗi trong quá trình hoàn tất xác thực.');
-          setTimeout(() => router.replace('/auth?error=unknown'), 1500);
+          setTimeout(() => navigateToAuth('unknown'), 1500);
         }
       }
     }

@@ -29,7 +29,7 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signUp: (email: string, password: string, displayName?: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
-  signInWithOAuth: (provider: 'google' | 'discord') => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'discord') => Promise<AuthResult>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -204,19 +204,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('guest');
   };
 
-  const signInWithOAuth = async (provider: 'google' | 'discord'): Promise<void> => {
+  const signInWithOAuth = async (provider: 'google' | 'discord'): Promise<AuthResult> => {
     const supabase = getSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+      return { success: false, error: 'Chưa thể kết nối tới máy chủ xác thực.' };
+    }
 
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-    const redirectUrl = `${window.location.origin}${basePath}/auth/callback`;
+    try {
+      setIsLoading(true);
+      let basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+      if (!basePath && typeof window !== 'undefined' && window.location.pathname.startsWith('/ViTudy')) {
+        basePath = '/ViTudy';
+      }
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl = `${origin}${basePath}/auth/callback`;
 
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: redirectUrl,
-      },
-    });
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
+        },
+      });
+
+      if (error) {
+        setIsLoading(false);
+        const msg = error.message.toLowerCase();
+        if (msg.includes('not enabled') || msg.includes('unsupported provider')) {
+          return {
+            success: false,
+            error: `Đăng nhập qua ${provider === 'google' ? 'Google' : 'Discord'} chưa được kích hoạt trên hệ thống máy chủ. Bạn có thể đăng ký và đăng nhập nhanh bằng Email bên dưới.`,
+          };
+        }
+        return { success: false, error: error.message };
+      }
+
+      if (data?.url && typeof window !== 'undefined') {
+        window.location.href = data.url;
+        return { success: true };
+      }
+
+      setIsLoading(false);
+      return { success: true };
+    } catch (err: any) {
+      setIsLoading(false);
+      return { success: false, error: err?.message || 'Lỗi trong quá trình khởi tạo đăng nhập.' };
+    }
   };
 
   return (

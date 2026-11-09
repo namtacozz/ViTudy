@@ -12,6 +12,7 @@ export default function AuthPage() {
   const router = useRouter();
   const { user, status, signIn, signUp, signInWithOAuth, isLoading } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated' && user) {
@@ -19,7 +20,16 @@ export default function AuthPage() {
     }
   }, [status, user, router]);
 
+  const handleOAuth = async (provider: 'google' | 'discord') => {
+    setOauthError(null);
+    const res = await signInWithOAuth(provider);
+    if (!res.success && res.error) {
+      setOauthError(res.error);
+    }
+  };
+
   const handleSignIn = async (email: string, pass: string) => {
+    setOauthError(null);
     const res = await signIn(email, pass);
     if (res.success) {
       router.replace('/');
@@ -28,6 +38,7 @@ export default function AuthPage() {
   };
 
   const handleSignUp = async (email: string, pass: string, name?: string) => {
+    setOauthError(null);
     const res = await signUp(email, pass, name);
     if (res.success) {
       router.replace('/');
@@ -53,8 +64,15 @@ export default function AuthPage() {
           </p>
         </div>
 
+        {/* OAuth Notification/Error Banner */}
+        {oauthError && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs leading-relaxed animate-fade-in">
+            {oauthError}
+          </div>
+        )}
+
         {/* OAuth Providers */}
-        <OAuthButtons onOAuth={signInWithOAuth} disabled={isLoading} />
+        <OAuthButtons onOAuth={handleOAuth} disabled={isLoading} />
 
         {/* Divider */}
         <div className="relative my-5">

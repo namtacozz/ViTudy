@@ -4,14 +4,36 @@ import { applyDiscordUrlMappings } from './discord/urlMappings';
 const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+const DEFAULT_SUPABASE_URL = 'https://yndwxcnedlilmsbbydvb.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZHd4Y25lZGxpbG1zYmJ5ZHZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMDE3MjQsImV4cCI6MjEwMjg3NzcyNH0.9uTO5Vfg-eQvCIkiUcXFgH9vYsjnglicr4KbYnnl-E8';
+
 export function getSupabaseConfig(): { url: string; anonKey: string; isConfigured: boolean } {
+  let url = envUrl;
+  let anonKey = envKey;
+
+  // Đọc từ localStorage nếu người dùng đã cấu hình riêng
+  if (typeof window !== 'undefined') {
+    const localUrl = localStorage.getItem('vitudy_supabase_url');
+    const localKey = localStorage.getItem('vitudy_supabase_anon_key');
+    if (localUrl && localKey) {
+      url = localUrl;
+      anonKey = localKey;
+    }
+  }
+
+  // Sử dụng cấu hình mặc định của ViTudy nếu biến môi trường chưa có
+  if (!url || !anonKey || !url.startsWith('https://') || url.includes('placeholder')) {
+    url = DEFAULT_SUPABASE_URL;
+    anonKey = DEFAULT_SUPABASE_ANON_KEY;
+  }
+
   const isConfigured = Boolean(
-    envUrl && 
-    envKey && 
-    envUrl.startsWith('https://') && 
-    !envUrl.includes('placeholder')
+    url && 
+    anonKey && 
+    url.startsWith('https://') && 
+    !url.includes('placeholder')
   );
-  return { url: envUrl, anonKey: envKey, isConfigured };
+  return { url, anonKey, isConfigured };
 }
 
 let cachedClient: SupabaseClient | null = null;

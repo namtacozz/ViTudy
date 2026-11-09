@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-11-09 07:53 — main (Hoàn Thiện Kết Nối Đăng Nhập Google & Discord Ở Môi Trường Deploy)
+- **Task:** Hoàn thiện luồng xác thực Google và Discord OAuth trên môi trường deploy GitHub Pages (`https://namtacozz.github.io/ViTudy`):
+  1. **Cấu hình biến bí mật GitHub Repo Secrets:**
+     - Thiết lập `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` vào GitHub Secrets của repo `namtacozz/ViTudy` qua GitHub CLI (`gh secret set`).
+  2. **Đồng bộ hóa cấu hình Supabase Cloud (`yndwxcnedlilmsbbydvb`):**
+     - Cập nhật `site_url`: `https://namtacozz.github.io/ViTudy`.
+     - Bổ sung `additional_redirect_urls`: `https://namtacozz.github.io/ViTudy/auth/callback`, `https://namtacozz.github.io/ViTudy/**`, `http://localhost:3000/auth/callback`, `http://localhost:3000/**`, `http://127.0.0.1:3000/auth/callback`.
+     - Đẩy cấu hình trực tiếp lên Supabase Cloud bằng `npx supabase config push --remote=yndwxcnedlilmsbbydvb --yes`.
+  3. **Tối ưu hóa mã nguồn Client:**
+     - `src/lib/supabase.ts`: Thiết lập fallback mặc định chuẩn xác tới project `yndwxcnedlilmsbbydvb` và hỗ trợ nạp cấu hình từ `localStorage`.
+     - `src/context/AuthContext.tsx`: Nâng cấp `signInWithOAuth` tự động nhận biết subpath `/ViTudy` trên GitHub Pages để tạo `redirectUrl` chuẩn xác; bắt lỗi chi tiết từ máy chủ khi provider chưa được bật.
+     - `src/components/auth/OAuthButtons.tsx`: Bổ sung trạng thái loading trực quan ("Đang kết nối..."), chống click đúp khi khởi tạo OAuth.
+     - `src/app/auth/page.tsx`: Hiển thị cảnh báo trực quan nếu nhà cung cấp chưa được kích hoạt, hướng dẫn người học đăng nhập nhanh bằng Email.
+     - `src/app/auth/callback/page.tsx`: Xử lý cả luồng PKCE `code` lẫn Token Session; tự động điều hướng về `${window.location.origin}${basePath}/` và lưu cờ đã vào bàn học.
+- **Verified by:**
+  - `pnpm test`: 14/14 test suites passed (34/34 tests).
+  - `pnpm run build:pages`: Static export 12/12 routes thành công.
+  - `npx supabase config diff`: 0 diff sau khi push.
+- **Docs updated:** `supabase/config.toml`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-08 22:02 — main (Triển Khai Thành Công Lên GitHub Pages & Biên Soạn README.md)
 - **Task:** Triển khai sản phẩm hoàn chỉnh lên GitHub Pages và bổ sung tài liệu hướng dẫn `README.md`:
   1. **Triển khai tự động lên GitHub Pages:**
