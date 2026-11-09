@@ -24,9 +24,15 @@ const lora = Lora({
   display: 'swap',
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
   title: 'ViTudy — Bàn Học Tương Tác',
   description: 'Bàn học tương tác, tài liệu học tập và hỗ trợ ôn thi thông minh.',
+  icons: {
+    icon: `${basePath}/icon.svg`,
+  },
+  manifest: `${basePath}/manifest.json`,
 };
 
 export default function RootLayout({
@@ -37,8 +43,8 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${openSans.variable} ${patrickHand.variable} ${lora.variable}`} suppressHydrationWarning spellCheck={false}>
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="manifest" href={`${basePath}/manifest.json`} />
+        <link rel="icon" href={`${basePath}/icon.svg`} type="image/svg+xml" />
         <meta name="theme-color" content="#E0562D" />
       </head>
       <body 

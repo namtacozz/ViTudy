@@ -123,7 +123,7 @@ export default function AuthPage() {
       {/* Back to Guest Desk */}
       <div className="mt-4">
         <Link
-          href="/"
+          href="/?view=desk"
           className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors font-medium"
         >
           <ArrowLeft className="w-3.5 h-3.5" />

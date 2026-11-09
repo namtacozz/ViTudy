@@ -77,7 +77,7 @@ export default function MarketPage() {
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
           <Link
-            href="/"
+            href="/?view=desk"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" />

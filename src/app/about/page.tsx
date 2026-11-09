@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Cpu, Sparkles, Zap, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import { SiteFooter } from '@/components/common/SiteFooter';
+import { getAssetPath } from '@/lib/assets';
 
 export default function AboutPage() {
   return (
@@ -21,7 +22,7 @@ export default function AboutPage() {
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/icons/vitudy.svg"
+                src={getAssetPath('/icons/vitudy.svg')}
                 alt="ViTudy"
                 className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
               />

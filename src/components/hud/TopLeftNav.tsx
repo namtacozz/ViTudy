@@ -22,6 +22,7 @@ import {
   Home,
   Info
 } from 'lucide-react';
+import { getAssetPath } from '@/lib/assets';
 
 export function TopLeftNav() {
   const { 
@@ -126,7 +127,7 @@ export function TopLeftNav() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
-              src="/icons/vitudy.svg" 
+              src={getAssetPath('/icons/vitudy.svg')} 
               alt="ViTudy" 
               className="w-5.5 h-5.5 object-contain flex-shrink-0" 
             />

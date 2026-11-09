@@ -28,12 +28,13 @@ import {
 import { MarketModal } from '../modals/MarketModal';
 import { TopUpModal } from '../payment/TopUpModal';
 import { testAiConnection } from '@/lib/aiClient';
+import { getAssetPath } from '@/lib/assets';
 
 // Vector Coin SVG Icon -> Logo ViToken chính thức từ logo.png
 function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src="/icons/vitoken.png" alt="ViToken" className={`${className} object-contain inline-block flex-shrink-0`} />
+    <img src={getAssetPath('/icons/vitoken.png')} alt="ViToken" className={`${className} object-contain inline-block flex-shrink-0`} />
   );
 }
 

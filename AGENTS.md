@@ -24,6 +24,9 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Biểu Tượng Thương Hiệu ViTudy & Icon ViToken Chính Thức (Official Brand Logo & ViToken Coin):**
     * **Biểu tượng thương hiệu ViTudy**: Sử dụng vector `assets/icon/vitoken.svg` (`/icons/vitudy.svg`) làm logo đại diện chính thức của ViTudy trên toàn bộ thanh điều hướng `TopLeftNav`, trang chủ `HomePage`, trang giới thiệu `AboutPage`, và favicon.
     * **Biểu tượng ViToken**: Sử dụng hình ảnh `assets/icon/logo.png` (`/icons/vitoken.png`) làm đồng tiền ViToken chính thức trong toàn bộ số dư ví, danh sách giao dịch, bảng nạp VietQR, và các nơi hiển thị token.
+    * **Tương Thích Đường Dẫn Tài Nguyên Tĩnh (Static Asset Base Path Helper — `getAssetPath`):**
+      * Khi triển khai trên môi trường có subpath như GitHub Pages (`basePath: "/ViTudy"`), toàn bộ thẻ `<img>` và đường dẫn file tĩnh trong `public/` (ví dụ `/icons/vitudy.svg`, `/icons/vitoken.png`, `/icon.svg`, `/manifest.json`) **BẮT BUỘC** được bọc qua hàm `getAssetPath(path)` (`@/lib/assets`).
+      * Hàm `getAssetPath` tự động phát hiện `basePath` từ runtime (`window.location.pathname.startsWith('/ViTudy')`) hoặc biến môi trường `process.env.NEXT_PUBLIC_BASE_PATH`, ngăn chặn hoàn toàn lỗi ảnh 404 (broken image icon) trên GitHub Pages.
   * **Quy Chuẩn React Portal Cho Toàn Bộ Hộp Thoại / Modal (Strict React Portal Rule — 100% Modals):**
     * Mọi hộp thoại (`Modal`, `Dialog`, `Overlay`) phải được bọc trong `createPortal(..., document.body)` với `z-[9990]..z-[9999]`.
     * Nghiêm cấm render modal trực tiếp bên trong container HUD có CSS `transform` (như `TopRightWallet`, `BottomLeftKnowledge`, `MultiplayerBar`), vì các thuộc tính CSS transform khiến phần tử con `fixed inset-0` bị giới hạn trong khung chứa của cha, dẫn đến việc modal bị co dúm thành thanh dọc 40px mép màn hình.
@@ -561,5 +564,13 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       * Bảng giá chuyển thành modal "Nạp ViToken qua VietQR" (`TopUpModal`).
       * Chi tiết kỹ thuật (KaTeX, SM-2, 60 FPS) và trang giới thiệu rút gọn cho khách chưa đăng nhập ("Trải giáo trình, đề thi và vở nháp trên cùng một bàn học") chuyển sang trang `/about`.
   * Hỗ trợ chuyển đổi mượt mà giữa Trang chủ (`/?view=home`) và Không gian bàn học (`/?view=desk`), lắng nghe sự kiện `popstate` của trình duyệt.
+  * **Nguyên Tắc Điều Hướng URL Gốc & Trở Về Bàn Học (Root URL Home Priority & Desk Return Navigation):**
+    * Khi người dùng truy cập link gốc `https://namtacozz.github.io/ViTudy/` hoặc `http://localhost:3000/` không kèm tham số truy vấn (`query param`), hệ thống **BẮT BUỘC** hiển thị **Trang chủ (HomePage)**. Tuyệt đối không tự động đọc `localStorage` để ép chuyển vào Bàn học khi người dùng chủ động vào link gốc.
+    * Bàn học chỉ được mở khi:
+      1. URL có tham số `?view=desk`.
+      2. URL có tham số phòng học nhóm `?room=...`.
+      3. Người dùng chủ động bấm vào mẫu bàn học hoặc danh sách bàn học gần đây trên Trang chủ.
+    * Khi đang ở trên Bàn học và nhấn F5 (Refresh trang): Do URL vẫn giữ `?view=desk`, hệ thống bảo lưu phiên làm việc trên bàn học bình thường.
+    * Tại các trang con phụ (`/profile`, `/dashboard`, `/market`, `/auth`), nút quay lại ("Về Bàn Học" / "Quay lại Bàn Học") **BẮT BUỘC** trỏ về `href="/?view=desk"` thay vì `href="/"`, đảm bảo người dùng đang học chuyển qua xem hồ sơ/thống kê rồi bấm quay lại thì quay thẳng về Bàn học mà không bị văng ra Trang chủ.
 
 

@@ -18,6 +18,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useViToken } from '@/context/ViTokenContext';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { TopUpModal } from '@/components/payment/TopUpModal';
+import { getAssetPath } from '@/lib/assets';
 
 interface HomePageProps {
   onEnterDesk: (spaceId?: string) => void;
@@ -79,7 +80,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           <div className="flex items-center gap-2.5 mb-5 select-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/icons/vitudy.svg"
+              src={getAssetPath('/icons/vitudy.svg')}
               alt="ViTudy"
               className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
             />
@@ -174,7 +175,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <span className="text-[11px] font-semibold text-stone-500 block">Số dư</span>
             <div className="mt-1 flex items-center gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/vitoken.png" alt="ViToken" className="w-6 h-6 object-contain flex-shrink-0" />
+              <img src={getAssetPath('/icons/vitoken.png')} alt="ViToken" className="w-6 h-6 object-contain flex-shrink-0" />
               <span className="text-2xl font-black text-stone-900 tracking-tight font-mono">
                 {typeof balance === 'number' ? balance : 50}
               </span>

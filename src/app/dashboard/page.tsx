@@ -70,7 +70,7 @@ export default function DashboardPage() {
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
           <Link
-            href="/"
+            href="/?view=desk"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />

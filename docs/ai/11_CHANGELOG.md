@@ -4,6 +4,40 @@
 
 ---
 
+## 2026-11-09 18:30 — main (Khắc Phục 3 Vấn Đề: Lỗi Broken Icon Trên GitHub Pages, Điều Hướng Profile Về Desk & Ưu Tiên Trang Chủ Cho URL Gốc)
+- **Task:** Giải quyết triệt để 3 vấn đề người dùng phản hồi:
+  1. **Lỗi hình ảnh icon (Broken image icons trên GitHub Pages):**
+     - *Nguyên nhân:* GitHub Pages deploy dưới subpath `basePath: '/ViTudy'`, trong khi các thẻ `<img>` hardcode `src="/icons/..."` nên trình duyệt tìm kiếm tại root domain `namtacozz.github.io/icons/...` (404) thay vì `namtacozz.github.io/ViTudy/icons/...`.
+     - *Khắc phục:* Tạo helper `getAssetPath(path)` trong `src/lib/assets.ts` tự động phát hiện subpath `/ViTudy` từ runtime `window.location.pathname` hoặc `process.env.NEXT_PUBLIC_BASE_PATH`. Bọc toàn bộ các thẻ ảnh logo ViTudy, icon ViToken, manifest và favicon bằng `getAssetPath()`.
+  2. **Bấm vào tài khoản khi ở Desk rồi ấn về Desk bị nhảy ra Trang chủ:**
+     - *Nguyên nhân:* Nút "Về Bàn Học" tại trang `/profile` (cũng như `/dashboard`, `/market`, `/auth`) sử dụng `href="/"`, trỏ về Trang chủ thay vì Bàn học.
+     - *Khắc phục:* Đổi toàn bộ các nút quay lại từ các trang con phụ thành `href="/?view=desk"`. Khi người dùng từ bàn học vào hồ sơ, bấm quay lại sẽ trở về thẳng Bàn học với đầy đủ tài liệu đang mở.
+  3. **Mở link gốc không thêm đuôi bị tự động vào Bàn học thay vì Trang chủ:**
+     - *Nguyên nhân:* `src/app/page.tsx` có đoạn code kiểm tra `localStorage.getItem('vitudy_current_view') === 'desk'` và tự động chuyển hướng sang `?view=desk` ngay cả khi người dùng truy cập link gốc sạch không tham số.
+     - *Khắc phục:* Loại bỏ cơ chế tự động redirect từ `localStorage` khi vào link gốc. Truy cập `https://namtacozz.github.io/ViTudy/` hoặc `http://localhost:3000/` không tham số luôn hiển thị Trang chủ (`HomePage`). Bàn học chỉ mở khi có `?view=desk` hoặc `?room=...`. Khi người dùng đang ở bàn học và nhấn F5 (Refresh), URL vẫn có `?view=desk` nên phiên làm việc bàn học được giữ nguyên vẹn.
+- **Files Modified / Created:**
+  - `src/lib/assets.ts` (mới tạo)
+  - `src/app/page.tsx`
+  - `src/app/profile/page.tsx`
+  - `src/app/dashboard/page.tsx`
+  - `src/app/market/page.tsx`
+  - `src/app/auth/page.tsx`
+  - `src/app/layout.tsx`
+  - `src/app/about/page.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests pass).
+  - `pnpm run build:pages`: Static export pass, thẻ `<img>` và link icons tạo thành công với prefix `/ViTudy`.
+  - `pnpm run docs:index ; pnpm run docs:check`: Pass.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 12:35 — main (Khắc Phục Toàn Diện 6 Yêu Cầu: Modal Bị Dúm, Thanh Multiplayer Cho Người Độc Học, Cài Đặt AI Mới & Test Kết Nối, VietQR MBBank, Lưu Trạng Thái Bàn Học, Đồng Bộ Icon/Logo Thương Hiệu)
 - **Task:** Giải quyết triệt để 6 yêu cầu kỹ thuật và công thái học của người dùng:
   1. **Khắc phục lỗi Modal Mời Học / Chia sẻ bị co dúm thành thanh dọc 40px mép màn hình (`BottomLeftKnowledge` & `MultiplayerBar`):**
