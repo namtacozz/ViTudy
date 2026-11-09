@@ -558,10 +558,23 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * Tuyệt đối không cho phép nhiều modal/popup toàn màn hình mở chồng chéo lên nhau gây tắc nghẽn thao tác và xung đột thị giác.
 * **Quy Chuẩn Điều Hướng Trang Chủ & Bàn Học (Home Dashboard & Desk View Sync):**
   * Trang chủ `/` thay thế hoàn toàn landing page quảng cáo cũ bằng **Trang chủ học tập (Dashboard)** công thái học hiện đại:
-    * **Thanh bên (Sidebar):** Logo ViTudy, ô tìm kiếm ("Tìm bàn học, tài liệu..."), menu điều hướng (`Trang chủ`, `Bàn học của tôi`, `Đã gắn dấu sao`, `Chợ tài liệu`, `Nhật ký học`, `Hỏi đáp`, `Giới thiệu & Kỹ thuật`), ở đáy là thẻ Số dư ViToken kèm nút "Nạp ViToken" kích hoạt trực tiếp modal VietQR.
-    * **Lời chào định hướng:** "Ôn bài thôi, [Tên người dùng]" kiểu chữ Serif trang nhã, giúp người học xác định ngay hành động cần làm mà không bị phân tâm bởi câu từ quảng cáo.
-    * **Bắt đầu bàn học mới:** 4 mẫu trực quan (`Bàn học trống`, `Ôn thi giữa kỳ`, `Giáo trình + đề thi`, `Học nhóm`) với hình minh họa bằng chính sách da nâu và giấy note vàng đặc trưng của ViTudy. Nút `+ Tạo bàn học` đặt ngay cạnh tiêu đề.
-    * **Mở lại gần đây:** Bảng gọn gàng hiển thị danh sách bàn học (`Tên`, `Mở lần cuối`, `Chủ sở hữu`), nhấp vào bất kỳ dòng nào sẽ lập tức mở lại bàn học đó trên canvas 2.5D.
+    * **Thanh bên (Sidebar):** Logo ViTudy, ô tìm kiếm ("Tìm bàn học, tài liệu..."), menu điều hướng (`Trang chủ`, `Bàn học của tôi`, `Đã gắn dấu sao`, `Chợ tài liệu`, `Nhật ký học`, `Hỏi đáp`, `Giới thiệu & Kỹ thuật`), widget "Mục tiêu hôm nay" (tiến độ Pomodoro 25 phút), ở đáy là thẻ Số dư ViToken font sans sắc nét kèm nút "Nạp ViToken" kích hoạt trực tiếp modal VietQR.
+    * **Thanh trên cùng (Sticky Top Bar):** Cố định khi cuộn, khoảng đệm an toàn không bị cắt mép, gồm breadcrumb vị trí, nút điểm danh có phân biệt trạng thái rõ ràng (chưa điểm danh có chấm cam nhấp nháy, đã điểm danh có icon tích xanh ngọc), và nút avatar tròn đại diện người dùng bên phải trỏ về `/profile`.
+    * **Lời chào định hướng tinh gọn:** "Ôn bài thôi, [Tên ngắn]" (ví dụ: "Thành") cỡ 36–40px kiểu chữ Serif trang nhã, màu cam `#B8431A` đạt chuẩn tương phản WCAG AA, căn trái cùng trục hoàn hảo với các khối nội dung bên dưới.
+    * **Bắt đầu bàn học mới (4 Mẫu Trực Quan):**
+      * Hình xem trước lớn, nổi bật:
+        - `Bàn học trống`: Khung nét đứt lớn, icon Plus kèm dòng chữ thả tài liệu.
+        - `Ôn thi giữa kỳ`: Cuốn sách nâu lớn rõ chi tiết 2 trang và tờ note vàng.
+        - `Giáo trình + đề thi`: 2 tờ tài liệu A4 song song đính note góc.
+        - `Học nhóm`: Bìa sổ chung và 2 con trỏ chuột SVG sống động kèm tên ("Thành" cam và "Bạn học" tím).
+      * Cả 4 thẻ đều có dòng mô tả ngắn phân biệt công năng.
+      * Trạng thái viền: Mặc định viền trung tính `border-stone-200/90`, chỉ hiện viền cam và đổ bóng khi hover hoặc focus. Bấm vào là tạo/mở bàn học ngay.
+    * **Mở lại gần đây (Giá trị thực tế & Công thái học):**
+      * Mỗi hàng có ảnh thu nhỏ bàn học 56×40px.
+      * Tên bàn học đặt tự động theo nội dung/môn học thực tế.
+      * Thay thế cột "Chủ sở hữu" bằng cột "Tài liệu & Ghi chú" hữu ích (ví dụ: "1 giáo trình · 3 ghi chú").
+      * Cột thời gian hiển thị mốc cụ thể ("14:20 hôm nay", "2 giờ trước", "Hôm qua 21:15").
+      * Tiêu đề bảng màu `text-stone-700` chữ hoa đậm nét, nút "Xem tất cả" màu cam `#B8431A` đạt độ tương phản WCAG AA >= 4.5:1.
     * **Chợ tài liệu:** Thu gọn thành dải thông tin nhỏ gọn ở đáy màn hình.
     * **Xử lý phần Landing page cũ:**
       * Bảng giá chuyển thành modal "Nạp ViToken qua VietQR" (`TopUpModal`).

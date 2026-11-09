@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-11-09 19:50 — main (Nâng Cấp Toàn Diện Giao Diện Trang Chủ: Lời Chào Tinh Gọn, 4 Mẫu Trực Quan, Bảng Gần Đây Chuẩn Thực Tế & WCAG AA)
+- **Task:** Giải quyết trọn bộ 7 điểm cải thiện giao diện Trang chủ (`src/components/home/HomePage.tsx`):
+  1. **Lời chào tinh gọn & căn cùng trục:** Rút gọn tên thành tên ngắn (`shortName`: ví dụ "Thành"), giảm cỡ chữ xuống 36–40px (`text-3xl md:text-4xl`), căn trái cùng trục hoàn hảo với các khối bên dưới.
+  2. **Hình xem trước mẫu phóng to & vẽ lại mẫu "Học nhóm":** Phóng to hình minh họa trong cả 4 thẻ mẫu. Riêng mẫu "Học nhóm" vẽ lại trực quan với 2 con trỏ chuột SVG sống động kèm tên ("Thành" màu cam và "Bạn học" màu tím). Bổ sung dòng mô tả ngắn dưới mỗi thẻ.
+  3. **Trạng thái chọn của thẻ mẫu:** Loại bỏ viền cam mặc định ở "Bàn học trống", 4 thẻ đều có viền trung tính, chỉ hiện viền cam và đổ bóng khi hover hoặc focus. Bấm vào là mở/tạo bàn học ngay.
+  4. **Danh sách "Mở lại gần đây" có giá trị thực tế:** Thêm ảnh thu nhỏ bàn học 56×40px cho mỗi hàng, tên bàn học theo nội dung thực, hiển thị mốc thời gian cụ thể ("14:20 hôm nay", "2 giờ trước"), thay cột "Chủ sở hữu" bằng cột "Tài liệu & Ghi chú" hữu ích (ví dụ: "1 giáo trình · 3 ghi chú").
+  5. **Thanh trên cùng cố định (Sticky Top Bar):** Cố định khi cuộn với padding an toàn không bị cắt mép, thay nút tên dài thành avatar tròn đại diện người dùng, nút điểm danh phân biệt rõ 2 trạng thái: chưa nhận (chấm cam nhấp nháy + icon lửa) và đã nhận (icon tích xanh + chữ "Đã điểm danh").
+  6. **Đạt chuẩn tương phản WCAG AA >= 4.5:1:** Đổi chữ cam nhỏ trên nền kem sang sắc cam đậm `#B8431A` (đạt tương phản 5.2:1), tiêu đề cột thành `text-stone-700` chữ hoa đậm nét, placeholder ô tìm kiếm thành `text-stone-500`.
+  7. **Thống nhất chi tiết nhỏ:** Đổi số dư ViToken sang font sans đồng bộ, thêm widget "Mục tiêu hôm nay" (tiến độ Pomodoro 25 phút) ở thanh bên.
+- **Files Modified:**
+  - `src/components/home/HomePage.tsx`
+  - `AGENTS.md`
+  - `docs/ai/03_SYMBOL_INDEX.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+  - `pnpm run docs:index ; pnpm run docs:check`: Passed.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 19:40 — main (Khắc Phục Lỗi Icon ViTudy Phóng To Chiếm Toàn Bộ Màn Hình)
 - **Task:** Xử lý triệt để lỗi logo ViTudy (`vitudy.svg`) bị bung kích thước 2000px chiếm trọn nửa màn hình trên Bàn học:
   - *Nguyên nhân:* 
