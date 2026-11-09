@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStudySpace } from '@/context/StudySpaceContext';
@@ -46,6 +47,11 @@ export function TopLeftNav() {
   const [isNewSpaceModalOpen, setIsNewSpaceModalOpen] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
   const [newSpaceSubject, setNewSpaceSubject] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Slide-out search & 3-item dropdown state
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -320,8 +326,8 @@ export function TopLeftNav() {
       </div>
 
       {/* Modal: Tạo Bàn Học Mới */}
-      {isNewSpaceModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      {isNewSpaceModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[9995] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-slate-900 animate-fade-in">
             <h3 className="text-sm font-bold text-slate-900 mb-1">Tạo bàn học mới</h3>
             <p className="text-xs text-slate-500 mb-4">
@@ -370,7 +376,8 @@ export function TopLeftNav() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

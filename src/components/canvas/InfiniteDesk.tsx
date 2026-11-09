@@ -15,6 +15,7 @@ import { VisualLinkThreads } from './VisualLinkThreads';
 import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
 import { isItemVisible } from '@/lib/viewportCulling';
+import { parsePdfFile } from '@/services/PdfParserService';
 
 export function InfiniteDesk() {
   const { 
@@ -331,25 +332,49 @@ export function InfiniteDesk() {
 
     for (const file of files) {
       const fileName = file.name;
+      const rawName = fileName.replace(/\.[^/.]+$/, '');
+      const isPdf = file.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+      const isImage = file.type.startsWith('image/');
       const isText = file.type.includes('text') || fileName.endsWith('.md') || fileName.endsWith('.txt');
 
-      if (isText) {
-        const text = await file.text();
-        // Break text by paragraph or arbitrary page count
-        const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
-        const pages = paragraphs.length > 0 
-          ? paragraphs.map((para, i) => ({ title: `Trang ${i + 1}`, text: para }))
-          : [{ title: fileName, text }];
-        addUploadedDocument(fileName, pages);
-      } else {
-        // Fallback demo for PDF / DOCX / Image
-        // If file size > 300KB simulate a multi-page book, otherwise paper
-        const simulatedPageCount = file.size > 300000 ? 6 : 2;
-        const simulatedPages = Array.from({ length: simulatedPageCount }, (_, i) => ({
-          title: `Chương ${i + 1}: ${fileName.replace(/\.[^/.]+$/, '')}`,
-          text: `Nội dung trích xuất từ file "${fileName}".\n\nĐây là trang số ${i + 1} của tài liệu vừa được ném vào bàn học.\n\nSử dụng công cụ Inteline để bôi đen dòng chữ hoặc dùng STudy để tạo bộ flashcard và đề thi trắc nghiệm ôn tập.`
-        }));
-        addUploadedDocument(fileName, simulatedPages);
+      try {
+        if (isPdf) {
+          const parsedPages = await parsePdfFile(file);
+          if (parsedPages.length > 0) {
+            addUploadedDocument(rawName, parsedPages);
+            continue;
+          }
+        } else if (isImage) {
+          const reader = new FileReader();
+          const dataUrl = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          addUploadedDocument(rawName, [{
+            title: rawName,
+            text: '',
+            image: dataUrl,
+          }]);
+          continue;
+        } else if (isText) {
+          const text = await file.text();
+          const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
+          const pages = paragraphs.length > 0 
+            ? paragraphs.map((para, i) => ({ title: `Trang ${i + 1}`, text: para }))
+            : [{ title: fileName, text }];
+          addUploadedDocument(fileName, pages);
+          continue;
+        }
+
+        // Fallback: try reading as text
+        try {
+          const text = await file.text();
+          addUploadedDocument(fileName, [{ title: fileName, text }]);
+        } catch {
+          addUploadedDocument(fileName, [{ title: fileName, text: `Tệp ${fileName}` }]);
+        }
+      } catch (err) {
+        console.error('Lỗi nạp tệp kéo thả vào bàn học:', err);
       }
     }
   };

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { DeskItem } from '@/types/studyspace';
 import { useViToken } from '@/context/ViTokenContext';
 import { useAuth } from '@/context/AuthContext';
@@ -53,6 +54,11 @@ export function KnowInheritPublishModal({
   const [description, setDescription] = useState('');
   const [previewExcerpt, setPreviewExcerpt] = useState(item.pages[0]?.text?.slice(0, 220) || '');
   const [hasCopyrightConsent, setHasCopyrightConsent] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<{
@@ -69,7 +75,7 @@ export function KnowInheritPublishModal({
     }
   }, [defaultAuthor]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleToggleAnonymous = (checked: boolean) => {
     setIsAnonymous(checked);
@@ -131,7 +137,7 @@ export function KnowInheritPublishModal({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
       <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans max-h-[90vh] flex flex-col">
         {/* Close Button */}
@@ -387,6 +393,7 @@ export function KnowInheritPublishModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

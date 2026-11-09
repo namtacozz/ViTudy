@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { TourStep, TourStepConfig } from './TourStep';
 import { useAuth } from '@/context/AuthContext';
 import { getSupabase } from '@/lib/supabase';
@@ -110,8 +111,10 @@ export function OnboardingTour() {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-100 pointer-events-none select-none">
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] pointer-events-none select-none">
       {/* Dimmed background overlay */}
       <div 
         onClick={finishTour}
@@ -141,6 +144,7 @@ export function OnboardingTour() {
           onSkip={finishTour}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

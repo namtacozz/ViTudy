@@ -178,86 +178,101 @@ export function MultiplayerBar() {
       {/* MODAL 1: Mời bạn bè cùng học & Quản lý kết nối Supabase */}
       {isShareModalOpen && mounted && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsShareModalOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+              aria-label="Đóng"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
-                <Users className="w-4 h-4 stroke-[2.4]" />
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
+                <Users className="w-4.5 h-4.5 stroke-[2.4]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Phòng Học Nhóm & Cộng Tác Trực Tuyến</h3>
+              <h3 className="text-base font-bold text-slate-900">Mời bạn cùng học</h3>
             </div>
-            <p className="text-xs text-slate-500 mb-4">
-              Chia sẻ liên kết để bạn bè cùng tham gia học nhóm, đồng bộ camera và tương tác thời gian thực trên bàn học 2.5D.
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Chia sẻ liên kết để bạn bè cùng tham gia học nhóm, đồng bộ camera và tương tác thời gian thực trên bàn học.
             </p>
 
             {/* Room Link Input Box */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-3">
-              <input
-                type="text"
-                readOnly
-                value={typeof window !== 'undefined' ? window.location.href : 'https://namtacozz.github.io/ViTudy/'}
-                className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono"
-              />
-              <button
-                onClick={handleCopyShareLink}
-                className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
-              >
-                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? 'Đã chép' : 'Sao chép'}</span>
-              </button>
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Liên kết phòng học
+              </label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl p-2 focus-within:border-[#E0562D] focus-within:bg-white transition-colors">
+                <input
+                  type="text"
+                  readOnly
+                  value={typeof window !== 'undefined' ? window.location.href : 'https://namtacozz.github.io/ViTudy/'}
+                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyShareLink}
+                  className="px-3 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedLink ? 'Đã sao chép' : 'Sao chép'}</span>
+                </button>
+              </div>
             </div>
 
-            {/* Supabase Status Banner */}
-            <div className={`p-3 rounded-xl border mb-4 flex items-center justify-between text-xs ${
-              isConnected 
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-                : isConfigured 
-                ? 'bg-blue-50 border-blue-200 text-blue-800'
-                : 'bg-amber-50 border-amber-200 text-amber-800'
-            }`}>
-              <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 flex-shrink-0" />
-                <div>
-                  <div className="font-bold flex items-center gap-1.5">
-                    <span>Cơ sở dữ liệu Supabase:</span>
-                    <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white/80 border border-current">
-                      {isConnected ? 'Đang kết nối Realtime' : isConfigured ? 'Đã cấu hình' : 'Chưa kết nối'}
-                    </span>
-                  </div>
-                  <div className="text-[11px] opacity-80">
-                    {isConnected 
-                      ? `${peers.length} thành viên đang kết nối trực tiếp trong phòng` 
-                      : 'Hỗ trợ đồng bộ đa người dùng qua Supabase Realtime Channels.'}
-                  </div>
-                </div>
+            {/* Members in Room */}
+            <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="font-bold text-slate-800">Bạn học trong phòng</span>
+                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                  {peers.length + 1} đang kết nối
+                </span>
               </div>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="font-medium">Bạn (Chủ bàn học)</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">Trực tuyến</span>
+                </div>
+                {peers.map((peer) => (
+                  <div key={peer.id} className="flex items-center justify-between text-slate-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: peer.avatarColor || '#3b82f6' }} />
+                      <span className="font-medium">{peer.name}</span>
+                    </div>
+                    <span className="text-[11px] text-emerald-600 font-medium">Đang học cùng</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
+            {/* Advanced Settings Link */}
+            <div className="pt-2 border-t border-slate-100 mb-3">
               <button
+                type="button"
                 onClick={() => setIsDbConfigOpen(true)}
-                className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-[11px] font-bold text-slate-800 shadow-2xs transition-colors cursor-pointer flex-shrink-0 ml-2"
+                className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
-                Cấu hình
+                + Cài đặt kết nối máy chủ nâng cao
               </button>
             </div>
 
             {/* Footer Buttons */}
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
               <button
+                type="button"
                 onClick={toggleSimulation}
-                className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline cursor-pointer"
+                className="text-xs text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
               >
-                {!hasPeers ? 'Bật mô phỏng bạn bè' : 'Tắt hiển thị bạn bè'}
+                {!hasPeers ? 'Mô phỏng bạn học demo' : 'Tắt mô phỏng'}
               </button>
 
               <button
+                type="button"
                 onClick={() => setIsShareModalOpen(false)}
-                className="px-4 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold transition-colors cursor-pointer"
               >
                 Đóng
               </button>

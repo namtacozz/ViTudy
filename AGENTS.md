@@ -100,6 +100,32 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Trạng thái Đã sở hữu:** Khi tài liệu đã được mua, hiển thị badge `Đã sở hữu` và nút `Thêm vào bàn học` (icon `ArrowRight` / `Plus`), nhấp vào sẽ tự động mount tài liệu lên bàn học đang mở và đóng modal.
     * **Bộ lọc trực quan & Nút Đặt lại:** Bộ lọc loại tài liệu, môn học, điểm AI, mức giá dạng chip hoặc dropdown tinh gọn, luôn có nút `Đặt lại` (`RotateCcw`) khi có bất kỳ bộ lọc nào kích hoạt.
     * **Tương phản WCAG AA:** Nhãn và chữ phụ dùng `text-stone-700` hoặc đậm hơn, bảo đảm tỷ lệ tương phản >= 4.5:1.
+  * **Quy Chuẩn Trang Tài Khoản (`/profile`) & Quản Lý ViToken Chuẩn Mực:**
+    * **Tỷ lệ quy đổi chuẩn duy nhất:** **1.000 VNĐ = 1 ViToken** (2.000 đ = 2 V; 10.000 đ = 10 V; 27.000 đ = 30 V gồm 3 V tặng kèm; 85.000 đ = 100 V gồm 15 V tặng; 255.000 đ = 300 V gồm 45 V tặng). Tuyệt đối cấm hiển thị tỷ lệ cũ 1đ = 1 ViToken gây phóng đại lố bịch (+30.000 V).
+    * **Định dạng số tiếng Việt thống nhất:** Dấu chấm ngăn cách hàng nghìn (`27.000 đ`, `+30 ViToken`), triệt tiêu hoàn toàn sự lẫn lộn giữa dấu phẩy và dấu chấm.
+    * **Quản lý vòng đời giao dịch nạp tiền:** Giao dịch VietQR ở trạng thái chờ thanh toán sau 15 phút phải tự động chuyển thành `expired` ("Đã hết hạn"). Giao dịch đang chờ trong hạn hiển thị nút `Tiếp tục thanh toán`, giao dịch hết hạn hiển thị `Tạo mã mới`.
+    * **Bộ lọc trạng thái & Phân trang không cuộn lồng:** Cung cấp 4 bộ lọc trạng thái (Tất cả, Thành công, Chờ thanh toán, Đã hết hạn). Danh sách giao dịch hiển thị trên cùng mặt phẳng trang, sử dụng nút "Xem thêm" phân trang thay vì khung cuộn lồng gây kẹt thao tác cuộn.
+    * **Đồng bộ Tên gọi (Nickname) với Trang Chủ:** Thêm trường "Tên gọi" (nickname ngắn) trong thông tin cá nhân, tự động đồng bộ thời gian thực với lời chào ở trang chủ (`Ôn bài thôi, [Tên gọi]`). Nút "Lưu thay đổi" bị vô hiệu hóa khi chưa chỉnh sửa và hiển thị phản hồi "Đã lưu".
+    * **Khóa AI của riêng bạn (Personal AI Key):** Đổi tên chuẩn từ "BYOK" thành "Khóa AI của riêng bạn", che dấu ký tự nhập dạng mật khẩu kèm nút bật/tắt hiển thị (`Eye`/`EyeOff`), nút "Kiểm tra" kết nối trực tiếp đến mô hình và "Xóa khóa", kèm liên kết nhanh dẫn vào modal "Cài đặt kết nối AI".
+    * **Quy trình xóa tài khoản 2 bước an toàn (Account Deletion & Data Portability):** Yêu cầu gõ lại chính xác email để xác nhận; cung cấp nút "Tải dữ liệu của tôi về máy (JSON)"; nêu rõ điều khoản từ bỏ số dư ViToken, tài liệu đã chia sẻ lên chợ cộng đồng sẽ được ẩn danh lưu trữ, kèm chính sách ân hạn khôi phục trong vòng 3 ngày qua email hỗ trợ.
+  * **Quy Chuẩn Bộ Chọn Biểu Tượng & Hình Dán Học Thuật (`StickerEmojiPickerFlyout`):**
+    * **100% Việt hóa:** Toàn bộ thanh phân loại tab ("Biểu tượng", "Hình dán", "Ảnh GIF", "Tất cả") và các chip danh mục phụ được dịch sang tiếng Việt trong sáng, tự nhiên.
+    * **Thống nhất màu thương hiệu Cam ViT (`#E0562D`):** Triệt tiêu hoàn toàn các gam màu tím/xanh (`indigo-600`, `blue-100`) lạc quẻ; sử dụng Cam ViT cho trạng thái chọn và Slate-900 cho độ tương phản sắc sảo.
+    * **Phân loại hình dán vector học thuật chuẩn:** Chia thành 4 nhóm thiết thực cho việc học tập trên bàn học: "Đã hiểu" (`da_hieu`), "Cần ôn" (`can_on`), "Quan trọng" (`quan_trong`), và "Công thức & Dụng cụ" (`cong_thuc`).
+    * **Mặt nạ mờ dần 2 mép (Gradient Edge Fade Mask):** Triệt tiêu thanh cuộn thô dày ở danh mục chip ngang bằng mặt nạ gradient CSS mềm mại hai bên mép.
+    * **Kích thước chạm chuẩn công thái học (44×44px):** Mỗi nút emoji đảm bảo kích thước tối thiểu `min-w-[44px] min-h-[44px] w-11 h-11`, có thuộc tính trợ năng `aria-label` và `title` hiển thị tên tiếng Việt.
+  * **Quy Chuẩn Modal Mời Bạn Cùng Học (`InviteModal` & `BottomLeftKnowledge`):**
+    * Tiêu đề thống nhất: **"Mời bạn cùng học"**.
+    * Thu gọn các thông số kỹ thuật nội bộ (Supabase) vào mục mở rộng nâng cao riêng biệt cho lập trình viên.
+    * Hiển thị đường dẫn phòng học gọn gàng, nút "Sao chép" có phản hồi thị giác tức thì ("Đã sao chép"), bổ sung tùy chọn phân quyền ("Cùng chỉnh sửa" / "Chỉ xem") và danh sách thành viên đang có mặt trong phòng kèm đèn tín hiệu xanh.
+  * **Quy Chuẩn Nhật Ký Học Tập (`/dashboard`):**
+    * Tiêu đề trang căn trái đồng trục với nút quay lại.
+    * Biểu đồ nhịp điệu học tuần hiển thị rõ số phút khi rê chuột kèm đường mục tiêu đứt nét chuẩn (30 phút/ngày).
+    * Lịch học 28 ngày bắt đầu chuẩn từ Thứ Hai (**T2, T3, T4, T5, T6, T7, CN**), hiển thị nhãn chuyển tháng (`01 Th11`) và vòng tròn viền cam `ring-2 ring-[#E0562D]` độc lập cho ngày hôm nay.
+    * Nút hành động "Làm bài thi thử ngay" khi số bài thi bằng 0, widget tiến độ mục tiêu học ngày và widget thẻ ghi nhớ SM-2 cần ôn.
+  * **Quy Chuẩn Nạp & Kéo Thả Tệp Thực Tế Lên Bàn Học (Zero-Simulated Text Policy):**
+    * Khi người dùng kéo thả hoặc tải tệp `.pdf`, hình ảnh hoặc văn bản lên mặt bàn học, hệ thống **tuyệt đối không sinh văn bản giả lập định sẵn** (như `"Nội dung trích xuất từ tệp 'TenFile.pdf'..."`).
+    * Bắt buộc sử dụng `parsePdfFile` trích xuất đầy đủ văn bản thực tế của từng trang tài liệu và đồng thời render canvas hình ảnh độ phân giải cao của trang gốc vào từng trang sách/tài liệu (`leaf.image`), đảm bảo trải nghiệm đọc tài liệu trung thực 100%.
 
 ---
 

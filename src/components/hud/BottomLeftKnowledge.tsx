@@ -350,7 +350,7 @@ export function BottomLeftKnowledge() {
 
     const pages = pendingDoc.pages.map(p => ({
       ...p,
-      title: pendingDoc.title
+      title: p.title || pendingDoc.title
     }));
 
     addUploadedDocument(pendingDoc.title, pages);
@@ -647,184 +647,178 @@ export function BottomLeftKnowledge() {
       {/* MODAL 4: Phòng học nhóm, Chia sẻ & Cấu hình Supabase Realtime */}
       {isShareModalOpen && mounted && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-md p-5 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
             <button
               onClick={() => setIsShareModalOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+              aria-label="Đóng"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
-                <Users className="w-4 h-4 stroke-[2.4]" />
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
+                <Users className="w-4.5 h-4.5 stroke-[2.4]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Phòng Học Nhóm & Cơ Sở Dữ Liệu</h3>
+              <h3 className="text-base font-bold text-slate-900">Mời bạn cùng học</h3>
             </div>
-            <p className="text-xs text-slate-500 mb-3.5">
-              Chia sẻ liên kết bàn học và kết nối cơ sở dữ liệu Supabase để đồng bộ đa người dùng theo thời gian thực.
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Mời bạn bè cùng vào bàn học để thảo luận, giải đề thi và đối chiếu tài liệu trực tiếp theo thời gian thực.
             </p>
 
             {/* 1. Share Room Link Box */}
-            <label className="text-[11px] font-bold text-slate-700 block mb-1">Liên kết mời bạn cùng bàn học (?room={activeSpace.id.slice(0, 8)}...):</label>
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-3.5">
-              <input
-                type="text"
-                readOnly
-                value={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${activeSpace.id}` : 'https://vitudy.edu.vn/'}
-                className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono"
-              />
-              <button
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    const url = `${window.location.origin}${window.location.pathname}?room=${activeSpace.id}`;
-                    navigator.clipboard.writeText(url);
-                    setCopiedLink(true);
-                    setTimeout(() => setCopiedLink(false), 2000);
-                  }
-                }}
-                className="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
-              >
-                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? 'Đã chép' : 'Sao chép'}</span>
-              </button>
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Liên kết phòng học
+              </label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl p-2 focus-within:border-[#E0562D] focus-within:bg-white transition-colors">
+                <input
+                  type="text"
+                  readOnly
+                  value={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${activeSpace.id}` : 'https://vitudy.edu.vn/'}
+                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      const url = `${window.location.origin}${window.location.pathname}?room=${activeSpace.id}`;
+                      navigator.clipboard.writeText(url);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedLink ? 'Đã sao chép' : 'Sao chép'}</span>
+                </button>
+              </div>
             </div>
 
-            {/* 2. Supabase Database Status Card */}
-            <div className={`p-3 rounded-xl border mb-3 text-xs transition-colors ${
-              supabaseConfigState.isConfigured
-                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                : 'bg-amber-50/70 border-amber-200 text-amber-900'
-            }`}>
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2 font-bold text-[12px]">
-                  <Database className="w-4 h-4 text-current flex-shrink-0" />
-                  <span>Cơ sở dữ liệu Supabase</span>
-                </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                  supabaseConfigState.isConfigured 
-                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800' 
-                    : 'bg-amber-100 border-amber-300 text-amber-800'
-                }`}>
-                  {supabaseConfigState.isConfigured ? 'Đã cấu hình' : 'Chưa cấu hình'}
+            {/* 2. Room Permissions */}
+            <div className="mb-4">
+              <span className="text-xs font-semibold text-slate-700 block mb-1.5">
+                Quyền của bạn học tham gia
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  className="p-2.5 rounded-xl border border-[#E0562D] bg-orange-50/60 text-slate-900 font-bold text-left flex items-center justify-between shadow-2xs cursor-pointer"
+                >
+                  <div>
+                    <div>Cùng chỉnh sửa</div>
+                    <div className="text-[10px] text-slate-500 font-normal mt-0.5">Viết note, giải đề, vẽ bút</div>
+                  </div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#E0562D] text-white flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white text-slate-700 text-left cursor-pointer"
+                >
+                  <div>
+                    <div className="font-semibold">Chỉ xem</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Chỉ xem bàn học và con trỏ</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* 3. People in Room */}
+            <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="font-bold text-slate-800">Người trong phòng</span>
+                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                  1 đang online
                 </span>
               </div>
-              <p className="text-[11px] opacity-80 leading-relaxed">
-                {supabaseConfigState.isConfigured
-                  ? 'Đã sẵn sàng đồng bộ con trỏ chuột, góc nhìn và trạng thái phòng học thời gian thực.'
-                  : 'Cung cấp URL & Anon Key của dự án Supabase để kích hoạt tính năng Multiplayer thời gian thực.'}
-              </p>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="font-medium">Bạn (Chủ phòng)</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">Trực tuyến</span>
+                </div>
+                <div className="text-[11px] text-slate-400 italic pt-1">
+                  Đang đợi bạn học truy cập liên kết...
+                </div>
+              </div>
             </div>
 
-            {/* 3. Inline / Expandable Supabase Config Form */}
-            {!isDbConfigOpen ? (
-              <div className="flex items-center justify-between py-2 border-t border-slate-100 mb-2">
+            {/* 4. Advanced / Developer Supabase Settings (Tucked away) */}
+            <div className="pt-2 border-t border-slate-100 mb-3">
+              {!isDbConfigOpen ? (
                 <button
                   type="button"
                   onClick={() => setIsDbConfigOpen(true)}
-                  className="text-xs font-semibold text-[#E0562D] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 >
-                  <Database className="w-3.5 h-3.5" />
-                  <span>{supabaseConfigState.isConfigured ? 'Chỉnh sửa cấu hình Supabase' : 'Nhập URL & Anon Key Supabase'}</span>
+                  + Cài đặt kết nối máy chủ nâng cao
                 </button>
-                {supabaseConfigState.isConfigured && (
-                  <button
-                    type="button"
-                    onClick={handleTestDatabase}
-                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-2.5 py-1 rounded-lg border border-slate-300 transition-colors cursor-pointer"
-                  >
-                    Kiểm tra kết nối
-                  </button>
-                )}
-              </div>
-            ) : (
-              <form onSubmit={handleSaveDb} className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3 space-y-2.5 text-xs animate-fade-in">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                    Supabase Project URL (https://*.supabase.co)
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://xyzcompany.supabase.co"
-                    value={supabaseUrlInput}
-                    onChange={(e) => setSupabaseUrlInput(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 outline-none focus:border-[#E0562D]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                    Supabase Anon Public Key
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-                    value={supabaseKeyInput}
-                    onChange={(e) => setSupabaseKeyInput(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 outline-none focus:border-[#E0562D]"
-                  />
-                </div>
-
-                {dbSavedNotice && (
-                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-2 rounded-lg text-[11px] font-semibold flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Đã lưu cấu hình! Đang tải lại kết nối...</span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    type="button"
-                    onClick={handleTestDatabase}
-                    disabled={dbTestResult.status === 'testing'}
-                    className="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-slate-700 font-semibold cursor-pointer transition-colors"
-                  >
-                    {dbTestResult.status === 'testing' ? 'Đang thử...' : 'Thử kết nối'}
-                  </button>
-
-                  <div className="flex items-center gap-2">
+              ) : (
+                <form onSubmit={handleSaveDb} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 text-xs animate-fade-in mt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800">Cấu hình máy chủ Realtime</span>
                     <button
                       type="button"
                       onClick={() => setIsDbConfigOpen(false)}
-                      className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                      className="text-slate-400 hover:text-slate-600 text-xs"
                     >
-                      Hủy
+                      Ẩn
+                    </button>
+                  </div>
+                  <div>
+                    <label className="text-[10.5px] font-semibold text-slate-600 block mb-0.5">Project URL</label>
+                    <input
+                      type="url"
+                      required
+                      value={supabaseUrlInput}
+                      onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                      className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10.5px] font-semibold text-slate-600 block mb-0.5">Anon Key</label>
+                    <input
+                      type="text"
+                      required
+                      value={supabaseKeyInput}
+                      onChange={(e) => setSupabaseKeyInput(e.target.value)}
+                      className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      type="button"
+                      onClick={handleTestDatabase}
+                      className="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded-lg text-slate-700"
+                    >
+                      Thử kết nối
                     </button>
                     <button
                       type="submit"
-                      className="px-3 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                      className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold"
                     >
-                      Lưu & Kết nối
+                      Lưu
                     </button>
                   </div>
-                </div>
-              </form>
-            )}
-
-            {/* Test result feedback banner */}
-            {dbTestResult.status === 'success' && (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-2 rounded-xl text-xs flex items-center gap-2 mb-3 animate-fade-in">
-                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span className="font-semibold">{dbTestResult.message}</span>
-              </div>
-            )}
-            {dbTestResult.status === 'error' && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-800 px-3 py-2 rounded-xl text-xs flex items-center gap-2 mb-3 animate-fade-in">
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                <span>{dbTestResult.message}</span>
-              </div>
-            )}
+                </form>
+              )}
+            </div>
 
             {/* Modal Footer */}
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
               <div className="text-[11px] text-slate-500">
-                Chế độ bàn học cộng tác 2.5D
+                Bạn bè có thể cùng xem và ghi chú trực tiếp
               </div>
               <button
+                type="button"
                 onClick={() => setIsShareModalOpen(false)}
-                className="px-3.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold transition-colors cursor-pointer"
               >
                 Đóng
               </button>

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Copy, Check, Share2, Users, ShieldCheck } from 'lucide-react';
 
 interface InviteModalProps {
@@ -12,8 +13,13 @@ interface InviteModalProps {
 
 export function InviteModal({ isOpen, onClose, spaceId, spaceName }: InviteModalProps) {
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const inviteUrl = typeof window !== 'undefined'
     ? `${window.location.origin}${window.location.pathname}?room=${spaceId}`
@@ -41,8 +47,8 @@ export function InviteModal({ isOpen, onClose, spaceId, spaceName }: InviteModal
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9995] flex items-center justify-center p-4">
       <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
         <button
           onClick={onClose}
@@ -120,6 +126,7 @@ export function InviteModal({ isOpen, onClose, spaceId, spaceName }: InviteModal
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -16,7 +16,13 @@ export default function DashboardPage() {
 
   const [weeklyData, setWeeklyData] = useState<DayStudyTime[]>([]);
   const [examStats, setExamStats] = useState<ExamStats>({ averageScore: 0, totalExams: 0 });
-  const [activityGrid, setActivityGrid] = useState<{ date: string; minutes: number }[]>([]);
+  const [activityGrid, setActivityGrid] = useState<{ 
+    date: string; 
+    minutes: number; 
+    isToday?: boolean; 
+    isMonthStart?: boolean; 
+    monthLabel?: string;
+  }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [returnDestination, setReturnDestination] = useState<'desk' | 'home'>('desk');
 
@@ -44,26 +50,59 @@ export default function DashboardPage() {
         setIsLoading(false);
       });
     } else {
-      // Chế độ khách (Guest Mode): Hiển thị dữ liệu cục bộ hoặc mặc định của phiên làm việc
+      // Chế độ khách (Guest Mode): Hiển thị dữ liệu cục bộ học thuật chuẩn
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const getPastDateStr = (daysAgo: number) => {
-        const d = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-        return d.toISOString().split('T')[0];
-      };
-      setWeeklyData([
-        { date: getPastDateStr(6), day: 'T2', minutes: 25 },
-        { date: getPastDateStr(5), day: 'T3', minutes: 40 },
-        { date: getPastDateStr(4), day: 'T4', minutes: 15 },
-        { date: getPastDateStr(3), day: 'T5', minutes: 50 },
-        { date: getPastDateStr(2), day: 'T6', minutes: 30 },
-        { date: getPastDateStr(1), day: 'T7', minutes: 45 },
-        { date: getPastDateStr(0), day: 'CN', minutes: 20 },
-      ]);
+      const daysLabel = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      const weekly: DayStudyTime[] = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dayLabel = daysLabel[d.getDay()];
+        const mins = i === 0 ? 27 : (i % 2 === 0 ? 35 : 15);
+        weekly.push({
+          day: dayLabel,
+          date: d.toISOString().split('T')[0],
+          minutes: mins,
+        });
+      }
+
+      setWeeklyData(weekly);
       setExamStats({ averageScore: 8.5, totalExams: 3 });
-      setActivityGrid([
-        { date: today, minutes: 45 },
-      ]);
+
+      // Lưới 28 ngày chuẩn tuần (T2 -> CN)
+      const dayOfWeek = now.getDay();
+      const distanceToMonday = (dayOfWeek + 6) % 7;
+      const currentMonday = new Date(now);
+      currentMonday.setDate(now.getDate() - distanceToMonday);
+
+      const startMonday = new Date(currentMonday);
+      startMonday.setDate(currentMonday.getDate() - 21);
+
+      const grid = [];
+      const todayStr = now.toISOString().split('T')[0];
+
+      for (let i = 0; i < 28; i++) {
+        const d = new Date(startMonday);
+        d.setDate(startMonday.getDate() + i);
+        const dStr = d.toISOString().split('T')[0];
+        const isToday = dStr === todayStr;
+        let mins = 0;
+        if (isToday) mins = 27;
+        else if (i % 5 === 0) mins = 45;
+        else if (i % 3 === 0) mins = 25;
+        else if (i % 2 === 0) mins = 10;
+
+        grid.push({
+          date: dStr,
+          minutes: mins,
+          isToday,
+          isMonthStart: d.getDate() === 1 || i === 0,
+          monthLabel: d.getDate() === 1 ? `Th${d.getMonth() + 1}` : undefined,
+        });
+      }
+
+      setActivityGrid(grid);
       setIsLoading(false);
     }
   }, [user?.id, status]);
@@ -76,30 +115,39 @@ export default function DashboardPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-100 py-8 px-4 sm:px-6 font-sans">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between">
-          <Link
-            href={returnDestination === 'home' ? '/?view=home' : '/?view=desk'}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>{returnDestination === 'home' ? 'Về trang chủ' : 'Về bàn học'}</span>
-          </Link>
+  const returnHref = returnDestination === 'home' ? '/?view=home' : '/?view=desk';
+  const returnLabel = returnDestination === 'home' ? 'Về Trang Chủ' : 'Về Bàn Học';
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
-              <BarChart2 className="w-4 h-4" />
+  return (
+    <div className="min-h-screen bg-slate-100 py-8 px-4 sm:px-6 font-sans text-slate-800">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Navigation Bar & Header — Căn trái cùng trục đọc */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div className="flex items-center gap-3">
+            <Link
+              href={returnHref}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs hover:bg-slate-50 cursor-pointer active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+              <span>{returnLabel}</span>
+            </Link>
+
+            <div className="h-4 w-px bg-slate-300 hidden sm:block" />
+
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
+                <BarChart2 className="w-4 h-4 stroke-[2.4]" />
+              </div>
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                Nhật ký học tập
+              </h1>
             </div>
-            <h1 className="text-sm font-bold text-slate-900">Nhật ký học tập</h1>
           </div>
         </div>
 
         {/* Banner dành cho người dùng khách */}
         {status === 'guest' && (
-          <div className="p-4 bg-white border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="p-4 bg-white border border-amber-200 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
             <div className="text-xs text-slate-700 space-y-0.5">
               <span className="font-bold text-amber-800">Chế độ trải nghiệm khách:</span>
               <p className="text-slate-500">
@@ -108,7 +156,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/auth"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold shadow-2xs transition-all flex-shrink-0 self-start sm:self-center"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold shadow-2xs transition-all flex-shrink-0 self-start sm:self-center cursor-pointer active:scale-95"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Đăng nhập ngay</span>

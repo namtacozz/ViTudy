@@ -51,8 +51,12 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   // Username display: profile display name -> user email prefix -> 'namtacozz'
   const userName = profile?.display_name || user?.email?.split('@')[0] || 'namtacozz';
 
-  // Lấy tên gọi ngắn gọn cho lời chào (Ví dụ "Thành Nam Lê Võ" -> "Thành")
+  // Lấy tên gọi ngắn gọn cho lời chào (Ví dụ "Thành Nam Lê Võ" -> "Thành", hoặc ưu tiên nickname đã lưu)
   const getShortGreetingName = (fullName: string) => {
+    if (typeof window !== 'undefined') {
+      const storedNick = localStorage.getItem('vitudy_user_nickname');
+      if (storedNick && storedNick.trim()) return storedNick.trim();
+    }
     if (!fullName) return 'Bạn';
     const trimmed = fullName.trim();
     if (trimmed.includes('@')) return trimmed.split('@')[0];

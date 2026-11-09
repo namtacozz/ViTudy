@@ -20,6 +20,6 @@ describe('PaymentService', () => {
   it('listPackages returns fallback packages when Supabase is not configured', async () => {
     const packages = await PaymentService.listPackages();
     expect(packages.length).toBeGreaterThan(0);
-    expect(packages[0].tokenAmount).toBe(2000);
+    expect(packages[0].tokenAmount).toBe(2);
   });
 });

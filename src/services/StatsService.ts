@@ -81,18 +81,37 @@ export class StatsService {
     }
   }
 
-  static async getMonthlyActivityGrid(userId: string): Promise<{ date: string; minutes: number }[]> {
+  static async getMonthlyActivityGrid(userId: string): Promise<{ date: string; minutes: number; isToday?: boolean; isMonthStart?: boolean; monthLabel?: string }[]> {
     const supabase = getSupabase();
-    const grid: { date: string; minutes: number }[] = [];
+    const grid: { date: string; minutes: number; isToday?: boolean; isMonthStart?: boolean; monthLabel?: string }[] = [];
     const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
 
-    // 28 days
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
+    // Căn chuẩn lưới 28 ngày (4 tuần đầy đủ từ T2 đến CN):
+    // JS getDay(): 0 = CN, 1 = T2, 2 = T3, ..., 6 = T7
+    const dayOfWeek = today.getDay();
+    const distanceToMonday = (dayOfWeek + 6) % 7; // Số ngày từ Thứ Hai tuần này
+    const currentMonday = new Date(today);
+    currentMonday.setDate(today.getDate() - distanceToMonday);
+
+    // Lùi thêm 3 tuần (21 ngày) để có đúng 4 tuần tròn (28 ngày)
+    const startMonday = new Date(currentMonday);
+    startMonday.setDate(currentMonday.getDate() - 21);
+
+    for (let i = 0; i < 28; i++) {
+      const d = new Date(startMonday);
+      d.setDate(startMonday.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const isToday = dateStr === todayStr;
+      const isMonthStart = d.getDate() === 1 || i === 0;
+      const monthLabel = isMonthStart ? `Th${d.getMonth() + 1}` : undefined;
+
       grid.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         minutes: 0,
+        isToday,
+        isMonthStart,
+        monthLabel,
       });
     }
 
@@ -108,9 +127,9 @@ export class StatsService {
 
       if (!error && data) {
         data.forEach((row) => {
-          const item = grid.find((g) => g.date === row.day);
-          if (item) {
-            item.minutes = Math.round(row.seconds / 60);
+          const matched = grid.find((r) => r.date === row.day);
+          if (matched) {
+            matched.minutes = Math.round(row.seconds / 60);
           }
         });
       }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { SyncService } from '@/services/SyncService';
 import { useStudySpace } from '@/context/StudySpaceContext';
@@ -48,8 +49,8 @@ export function MigrationDialog() {
     setIsOpen(false);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9995] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
         <button
           type="button"
@@ -103,6 +104,7 @@ export function MigrationDialog() {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

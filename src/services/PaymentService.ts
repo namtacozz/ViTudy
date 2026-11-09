@@ -93,13 +93,20 @@ export class PaymentService {
 
       if (error || !data || data.length === 0) return FALLBACK_PACKAGES;
 
-      return data.map(p => ({
-        id: p.id,
-        label: p.label,
-        tokenAmount: p.token_amount,
-        priceVnd: p.price_vnd,
-        sort: p.sort,
-      }));
+      return data.map(p => {
+        let tokenAmount = p.token_amount;
+        // Chuẩn hóa dữ liệu cũ nếu token_amount bị nhân 1.000 so với giá tiền (1.000đ = 1 ViToken)
+        if (tokenAmount >= 1000 && p.price_vnd < 1000000 && tokenAmount >= p.price_vnd * 0.5) {
+          tokenAmount = Math.round(tokenAmount / 1000);
+        }
+        return {
+          id: p.id,
+          label: p.label,
+          tokenAmount,
+          priceVnd: p.price_vnd,
+          sort: p.sort,
+        };
+      });
     } catch {
       return FALLBACK_PACKAGES;
     }
@@ -175,6 +182,11 @@ export class PaymentService {
       }
 
       const row = data[0];
+      let tokenAmount = row.token_amount;
+      if (tokenAmount >= 1000 && row.amount_vnd < 1000000 && tokenAmount >= row.amount_vnd * 0.5) {
+        tokenAmount = Math.round(tokenAmount / 1000);
+      }
+
       const qrUrl = buildVietQrUrl({
         ...activeBank,
         amount: row.amount_vnd,
@@ -185,7 +197,7 @@ export class PaymentService {
         id: row.id,
         code: row.code,
         amountVnd: row.amount_vnd,
-        tokenAmount: row.token_amount,
+        tokenAmount,
         qrUrl,
         expiresAt: row.expires_at,
       };
@@ -215,7 +227,7 @@ export class PaymentService {
     }
   }
 
-  static async listMyPayments(limit = 20): Promise<PaymentHistoryItem[]> {
+  static async listMyPayments(limit = 50): Promise<PaymentHistoryItem[]> {
     const supabase = getSupabase();
     if (!supabase) return [];
 
@@ -228,15 +240,35 @@ export class PaymentService {
 
       if (error || !data) return [];
 
-      return data.map(item => ({
-        id: item.id,
-        code: item.code,
-        amountVnd: item.amount_vnd,
-        tokenAmount: item.token_amount,
-        status: item.status as PaymentHistoryItem['status'],
-        createdAt: item.created_at,
-        completedAt: item.completed_at,
-      }));
+      const now = Date.now();
+
+      return data.map(item => {
+        let tokenAmount = item.token_amount;
+        // Chuẩn hóa dữ liệu cũ nếu token_amount bị nhân 1.000 so với amount_vnd
+        if (tokenAmount >= 1000 && item.amount_vnd < 1000000 && tokenAmount >= item.amount_vnd * 0.5) {
+          tokenAmount = Math.round(tokenAmount / 1000);
+        }
+
+        let status = item.status as PaymentHistoryItem['status'];
+        // Tự động chuyển các giao dịch pending đã quá 15 phút thành expired
+        if (status === 'pending') {
+          const createdAtTime = new Date(item.created_at).getTime();
+          const expiresAtTime = item.expires_at ? new Date(item.expires_at).getTime() : createdAtTime + 15 * 60 * 1000;
+          if (now > expiresAtTime) {
+            status = 'expired';
+          }
+        }
+
+        return {
+          id: item.id,
+          code: item.code,
+          amountVnd: item.amount_vnd,
+          tokenAmount,
+          status,
+          createdAt: item.created_at,
+          completedAt: item.completed_at,
+        };
+      });
     } catch {
       return [];
     }

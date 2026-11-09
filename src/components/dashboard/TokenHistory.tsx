@@ -18,20 +18,22 @@ export function TokenHistory({ transactions, balance }: TokenHistoryProps) {
             <History className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-slate-900">Biến động số dư ViToken</h3>
-            <p className="text-xs text-slate-500">Lịch sử thu chi và nhận thưởng</p>
+            <h3 className="text-sm font-bold text-slate-900">Biến động số dư ViToken</h3>
+            <p className="text-xs text-slate-500">Lịch sử thu chi, điểm danh và nạp tiền (Quy đổi: 1.000đ = 1 ViToken)</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-xl">
           <span className="text-xs text-slate-600 font-medium">Hiện có:</span>
-          <span className="font-mono font-black text-sm text-[#E0562D]">{balance} V</span>
+          <span className="font-mono font-black text-sm text-[#E0562D]">
+            {balance.toLocaleString('vi-VN')} ViToken
+          </span>
         </div>
       </div>
 
       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
         {transactions.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">
+          <div className="py-8 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
             Chưa có giao dịch ViToken nào được ghi nhận.
           </div>
         ) : (
@@ -41,7 +43,7 @@ export function TokenHistory({ transactions, balance }: TokenHistoryProps) {
             return (
               <div
                 key={tx.id}
-                className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+                className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs transition-colors hover:bg-slate-100/70"
               >
                 <div className="flex items-center gap-2.5">
                   <div
@@ -59,7 +61,7 @@ export function TokenHistory({ transactions, balance }: TokenHistoryProps) {
                   </div>
                   <div>
                     <div className="font-bold text-slate-800">{tx.description}</div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    <div className="text-[10.5px] text-slate-400 font-mono mt-0.5">
                       {new Date(tx.timestamp).toLocaleString('vi-VN')}
                     </div>
                   </div>
@@ -70,7 +72,7 @@ export function TokenHistory({ transactions, balance }: TokenHistoryProps) {
                     isPositive ? 'text-emerald-700' : 'text-slate-700'
                   }`}
                 >
-                  {isPositive ? `+${tx.amount}` : tx.amount} V
+                  {isPositive ? `+${tx.amount.toLocaleString('vi-VN')}` : tx.amount.toLocaleString('vi-VN')} ViToken
                 </div>
               </div>
             );

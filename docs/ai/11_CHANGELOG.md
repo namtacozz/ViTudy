@@ -4,6 +4,67 @@
 
 ---
 
+## 2026-11-09 21:55 — main (Đại Tu Toàn Diện: Trang Tài Khoản, Bộ Chọn Emoji & Sticker, Mời Bạn Cùng Học, Nhật Ký Học Tập & Kéo Thả PDF Thực Tế)
+- **Task:** Triển khai triệt để toàn bộ 4 khu vực đánh giá chuyên sâu và khắc phục các vấn đề nạp PDF, 100% modal portal:
+  1. **Trang Tài Khoản (`/profile`) & Quản lý ViToken:**
+     - *Chuẩn hóa tỷ lệ quy đổi 1:1.000:* Sửa lỗi phóng đại 1.000x trong lịch sử nạp (`27.000 đ` hiển thị đúng `+30 ViToken` thay vì `+30,000 V`). Sử dụng dấu chấm tiếng Việt phân cách hàng nghìn đồng bộ.
+     - *Tự động hết hạn giao dịch sau 15 phút:* Các giao dịch chờ thanh toán quá 15 phút tự động chuyển thành `'expired'` ("Đã hết hạn"). Giao dịch đang chờ có nút "Tiếp tục thanh toán", giao dịch hết hạn có nút "Tạo mã mới".
+     - *Bộ lọc trạng thái & Phân trang:* 4 bộ lọc (Tất cả, Thành công, Chờ thanh toán, Đã hết hạn), thay thế cuộn lồng bằng nút "Xem thêm" phân trang.
+     - *Đồng bộ Tên gọi (Nickname):* Thêm trường "Tên gọi" trong thông tin cá nhân, tự động đồng bộ thời gian thực với lời chào ở trang chủ (`Ôn bài thôi, [Tên gọi]`). Nút "Lưu thay đổi" bị vô hiệu khi chưa sửa và hiển thị "Đã lưu".
+     - *Khóa AI cá nhân:* Đổi tên thành "Khóa AI của riêng bạn", che dấu ký tự kèm toggle `Eye`/`EyeOff`, nút "Kiểm tra" kết nối và "Xóa khóa", kèm link mở modal cấu hình AI.
+     - *Xóa tài khoản 2 bước an toàn:* Yêu cầu nhập đúng email để xác nhận, bổ sung nút "Tải dữ liệu của tôi về máy (JSON)", nêu rõ điều khoản từ bỏ ViToken, bảo lưu tài liệu cộng đồng và ân hạn 3 ngày.
+  2. **Bộ Chọn Biểu Tượng & Hình Dán Học Thuật (`StickerEmojiPickerFlyout`):**
+     - 100% Việt hóa các tab ("Biểu tượng", "Hình dán", "Ảnh GIF", "Tất cả") và 9 danh mục biểu tượng chuẩn Miro.
+     - Đồng bộ màu nhận diện Cam ViT (`#E0562D`) và Slate-900, loại bỏ hoàn toàn màu tím/xanh lệch chuẩn.
+     - Phân loại hình dán vector học thuật 4 nhóm: "Đã hiểu" (`da_hieu`), "Cần ôn" (`can_on`), "Quan trọng" (`quan_trong`), "Công thức & Dụng cụ" (`cong_thuc`).
+     - Mặt nạ mờ dần 2 mép cuộn ngang (fade mask) và kích thước chạm tối thiểu 44×44px cho emoji.
+  3. **Mời Bạn Cùng Học (`InviteModal` & `BottomLeftKnowledge`):**
+     - Tiêu đề thống nhất "Mời bạn cùng học", thu gọn thiết lập Supabase vào mục nâng cao.
+     - Rút gọn link phòng học, phản hồi "Đã sao chép", thêm tùy chọn phân quyền cộng tác và danh sách thành viên trực tuyến.
+  4. **Nhật Ký Học Tập (`/dashboard`):**
+     - Tiêu đề căn trái đồng trục với nút quay lại.
+     - Biểu đồ nhịp điệu học tuần với số phút rõ ràng và đường mục tiêu đứt nét (30 phút/ngày).
+     - Lịch học 28 ngày bắt đầu chuẩn từ Thứ Hai (**T2, T3, T4, T5, T6, T7, CN**), hiển thị nhãn chuyển tháng (`01 Th11`) và viền cam `ring-2 ring-[#E0562D]` độc lập cho ngày hôm nay.
+     - Widget tiến độ mục tiêu 30 phút/ngày và widget thẻ ghi nhớ SM-2 cần ôn; nút "Làm bài thi thử ngay" khi số đề thi bằng 0.
+  5. **Xử Lý Nạp & Kéo Thả File PDF Thực Tế Lên Bàn Học (`InfiniteDesk`):**
+     - Sửa triệt để lỗi sinh văn bản giả lập định sẵn (`"Nội dung trích xuất từ file..."`) khi kéo thả file PDF lên bàn học.
+     - Tích hợp trực tiếp `parsePdfFile` vào `handleDrop` của `InfiniteDesk`, đảm bảo mọi file PDF khi kéo thả trực tiếp lên bàn học đều được trích xuất text thật và render ảnh canvas độ phân giải cao vào từng trang sách.
+  6. **Quy Chuẩn 100% Modals Bọc React Portal (`createPortal`):**
+     - Đã bọc `createPortal(..., document.body)` với z-index cao cho: `DeleteAccount`, `InviteModal`, `IntelineModal`, `MigrationDialog`, `OnboardingTour`, `TopLeftNav new space modal`, `KnowInheritPublishModal`.
+- **Files Modified:**
+  - `src/app/dashboard/page.tsx`
+  - `src/components/auth/MigrationDialog.tsx`
+  - `src/components/canvas/InfiniteDesk.tsx`
+  - `src/components/dashboard/StreakCalendar.tsx`
+  - `src/components/dashboard/StudyStats.tsx`
+  - `src/components/dashboard/TokenHistory.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/components/hud/InviteModal.tsx`
+  - `src/components/hud/MultiplayerBar.tsx`
+  - `src/components/hud/StickerEmojiPickerFlyout.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/modals/IntelineModal.tsx`
+  - `src/components/modals/KnowInheritPublishModal.tsx`
+  - `src/components/onboarding/OnboardingTour.tsx`
+  - `src/components/payment/PaymentHistory.tsx`
+  - `src/components/payment/PricingTiers.tsx`
+  - `src/components/profile/AccountSettings.tsx`
+  - `src/components/profile/DeleteAccount.tsx`
+  - `src/data/stickersAndEmojis.ts`
+  - `src/services/PaymentService.test.ts`
+  - `src/services/PaymentService.ts`
+  - `src/services/StatsService.ts`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run docs:index ; pnpm run docs:check`.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 21:22 — main (Nâng Cấp Toàn Diện Trang Hỏi Đáp: Thuật Toán SM-2, Nạp Điểm VietQR, Bản Quyền & Kênh Hỗ Trợ Đích Thực)
 - **Task:** Tái thiết kế toàn diện trang Hỏi Đáp (`/faq`) theo phản hồi đánh giá chi tiết:
   1. **Nút cuối trang dẫn đúng kênh hỗ trợ & thống nhất trục căn lề:**

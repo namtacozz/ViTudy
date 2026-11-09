@@ -12,9 +12,9 @@ interface PricingTiersProps {
 }
 
 const BONUS_MAP: Record<string, string> = {
-  semester: 'Tặng 3',
-  project: 'Tặng 15',
-  team: 'Tặng 45',
+  semester: 'Tặng +3 ViToken',
+  project: 'Tặng +15 ViToken',
+  team: 'Tặng +45 ViToken',
 };
 
 export function PricingTiers({

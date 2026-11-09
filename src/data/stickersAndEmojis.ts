@@ -65,7 +65,7 @@ function makeEmoji(id: string, name: string, char: string, category: string): St
 export const EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     id: 'people',
-    label: 'Smileys & People',
+    label: 'Biểu cảm & Con người',
     icon: 'smile',
     items: [
       makeEmoji('grinning', 'Grinning Face', '😀', 'people'),
@@ -155,7 +155,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'nature',
-    label: 'Animals & Nature',
+    label: 'Động vật & Tự nhiên',
     icon: 'leaf',
     items: [
       makeEmoji('dog', 'Dog Puppy', '🐶', 'nature'),
@@ -204,7 +204,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'food',
-    label: 'Food & Drink',
+    label: 'Đồ ăn & Thức uống',
     icon: 'burger',
     items: [
       makeEmoji('apple', 'Red Apple Study', '🍎', 'food'),
@@ -246,7 +246,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'activities',
-    label: 'Activities & Sports',
+    label: 'Hoạt động & Thể thao',
     icon: 'football',
     items: [
       makeEmoji('soccer', 'Soccer Ball Football', '⚽', 'activities'),
@@ -277,7 +277,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'travel',
-    label: 'Travel & Places',
+    label: 'Du lịch & Địa điểm',
     icon: 'bus',
     items: [
       makeEmoji('rocket', 'Rocket Ship Launch Blastoff', '🚀', 'travel'),
@@ -305,7 +305,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'objects',
-    label: 'Objects & Tools',
+    label: 'Đồ vật & Dụng cụ',
     icon: 'lightbulb',
     items: [
       makeEmoji('lightbulb', 'Light Bulb Idea Eureka Insight', '💡', 'objects'),
@@ -348,7 +348,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'symbols',
-    label: 'Symbols & Badges',
+    label: 'Ký hiệu & Biểu trưng',
     icon: 'heart-spark',
     items: [
       makeEmoji('heart-red', 'Red Heart Love Favorite', '❤️', 'symbols'),
@@ -383,7 +383,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'flags',
-    label: 'Flags',
+    label: 'Cờ các quốc gia',
     icon: 'flag',
     items: [
       makeEmoji('flag-vn', 'Vietnam Flag VN Quốc kỳ Việt Nam', '🇻🇳', 'flags'),
@@ -412,132 +412,26 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
 ];
 
 // =========================================================================
-// 2. MIRO-STYLE VECTOR STICKERS (Comprehensive categories)
+// 2. STICKER CHUYÊN BIỆT CHO MÔI TRƯỜNG HỌC TẬP (100% SVG Vector Sắc Nét)
 // =========================================================================
 export const STICKER_CATEGORIES: StickerCategory[] = [
   {
-    id: 'funky_lines',
-    label: 'Funky Lines',
-    icon: '❤️',
+    id: 'da_hieu',
+    label: 'Đã hiểu',
+    icon: '✅',
     items: [
       {
-        id: 'st-funky-apple',
-        name: 'Táo sâu chăm chỉ (Apple with Worm)',
-        type: 'sticker',
-        isSvg: true,
-        width: 140,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 24 C36 12 16 20 18 44 C20 68 40 82 50 84 C60 82 80 68 82 44 C84 20 64 12 50 24 Z" fill="#ff4d6d" stroke="#000" stroke-width="2.5"/><path d="M50 24 C50 14 56 10 60 8" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/><path d="M30 60 Q20 54 24 44 Q28 34 36 38 Q42 42 36 50" fill="#a7f3d0" stroke="#000" stroke-width="2.5"/><circle cx="28" cy="40" r="2" fill="#000"/><circle cx="38" cy="50" r="3" fill="#000"/><circle cx="62" cy="50" r="3" fill="#000"/><path d="M46 62 Q50 68 54 62" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/><path d="M38 82 L38 90 L32 92" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/><path d="M62 82 L62 90 L68 92" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-funky-boombox',
-        name: 'Đài Cassette Retro (Boombox)',
-        type: 'sticker',
-        isSvg: true,
-        width: 160,
-        height: 120,
-        content: `<svg viewBox="0 0 100 80" width="100%" height="100%"><rect x="10" y="20" width="80" height="50" rx="8" fill="#a855f7" stroke="#000" stroke-width="2.5"/><path d="M30 20 L30 10 L70 10 L70 20" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="10" x2="90" y2="2" stroke="#000" stroke-width="2.5" stroke-linecap="round"/><rect x="42" y="32" width="38" height="28" rx="4" fill="#22c55e" stroke="#000" stroke-width="2.5"/><circle cx="26" cy="46" r="10" fill="#3b82f6" stroke="#000" stroke-width="2.5"/><circle cx="26" cy="46" r="4" fill="#000"/><circle cx="54" cy="46" r="2.5" fill="#000"/><circle cx="68" cy="46" r="2.5" fill="#000"/><path d="M58 54 Q61 58 64 54" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-funky-ladybug',
-        name: 'Bọ rùa mắt to (Ladybug)',
+        id: 'st-badge-approved',
+        name: 'Huy hiệu Đã Hiểu (Đã Duyệt)',
         type: 'sticker',
         isSvg: true,
         width: 150,
-        height: 120,
-        content: `<svg viewBox="0 0 100 80" width="100%" height="100%"><ellipse cx="50" cy="44" rx="36" ry="24" fill="#f43f5e" stroke="#000" stroke-width="2.5"/><circle cx="76" cy="44" r="14" fill="#fef08a" stroke="#000" stroke-width="2.5"/><circle cx="78" cy="42" r="2.5" fill="#000"/><path d="M74 50 Q78 54 82 50" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="38" r="5" fill="#38bdf8" stroke="#000" stroke-width="2"/><circle cx="48" cy="34" r="4" fill="#38bdf8" stroke="#000" stroke-width="2"/><circle cx="40" cy="52" r="5" fill="#38bdf8" stroke="#000" stroke-width="2"/><path d="M26 68 L24 76" stroke="#000" stroke-width="3" stroke-linecap="round"/><path d="M46 68 L46 76" stroke="#000" stroke-width="3" stroke-linecap="round"/><path d="M66 68 L68 76" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg>`
+        height: 60,
+        content: `<svg viewBox="0 0 140 50" width="100%" height="100%"><rect x="4" y="4" width="132" height="42" rx="21" fill="#ecfdf5" stroke="#10b981" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#10b981"/><path d="M21 25 L25 29 L31 21" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="44" y="31" font-size="14" font-weight="800" fill="#065f46" font-family="sans-serif">ĐÃ HIỂU</text></svg>`
       },
-      {
-        id: 'st-funky-cap',
-        name: 'Mũ lưỡi trai cá tính (Green Cap)',
-        type: 'sticker',
-        isSvg: true,
-        width: 140,
-        height: 130,
-        content: `<svg viewBox="0 0 100 90" width="100%" height="100%"><path d="M22 65 C18 35 45 15 75 25 C85 45 80 65 75 65 Z" fill="#4ade80" stroke="#000" stroke-width="2.5"/><path d="M22 65 Q50 82 85 65 Q70 55 22 65 Z" fill="#3b82f6" stroke="#000" stroke-width="2.5"/><circle cx="40" cy="36" r="3" fill="#a855f7"/><circle cx="56" cy="30" r="3" fill="#a855f7"/><circle cx="68" cy="42" r="3" fill="#a855f7"/><ellipse cx="50" cy="52" rx="10" ry="7" fill="#f472b6" stroke="#000" stroke-width="1.8"/><circle cx="47" cy="50" r="1.5" fill="#000"/><circle cx="53" cy="50" r="1.5" fill="#000"/><path d="M48 54 Q50 56 52 54" fill="none" stroke="#000" stroke-width="1.5"/></svg>`
-      },
-      {
-        id: 'st-funky-cat-box',
-        name: 'Mèo chui hộp (Cat in Box)',
-        type: 'sticker',
-        isSvg: true,
-        width: 140,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="20" y="52" width="60" height="36" rx="4" fill="#fb7185" stroke="#000" stroke-width="2.5"/><ellipse cx="50" cy="46" rx="28" ry="22" fill="#818cf8" stroke="#000" stroke-width="2.5"/><polygon points="28 32 38 42 26 44" fill="#818cf8" stroke="#000" stroke-width="2"/><polygon points="72 32 62 42 74 44" fill="#818cf8" stroke="#000" stroke-width="2"/><circle cx="42" cy="46" r="2.5" fill="#000"/><circle cx="58" cy="46" r="2.5" fill="#000"/><path d="M48 50 Q50 54 52 50" fill="none" stroke="#000" stroke-width="2"/><path d="M30 88 L26 96" stroke="#000" stroke-width="3" stroke-linecap="round"/><path d="M70 88 L74 96" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-funky-laptop',
-        name: 'Laptop pixel vui nhộn (Happy Laptop)',
-        type: 'sticker',
-        isSvg: true,
-        width: 140,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="25" y="22" width="50" height="40" rx="4" fill="#38bdf8" stroke="#000" stroke-width="2.5"/><rect x="32" y="28" width="36" height="28" rx="2" fill="#fff" stroke="#000" stroke-width="2"/><rect x="40" y="36" width="3" height="3" fill="#000"/><rect x="56" y="36" width="3" height="3" fill="#000"/><path d="M42 46 h16" stroke="#000" stroke-width="2.5"/><polygon points="15 68 85 68 75 62 25 62" fill="#facc15" stroke="#000" stroke-width="2.5"/><path d="M35 68 L25 86 L35 88" fill="none" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/><path d="M65 68 L75 86 L85 88" fill="none" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-funky-crystal-ball',
-        name: 'Quả cầu pha lê (Crystal Ball)',
-        type: 'sticker',
-        isSvg: true,
-        width: 130,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="46" r="32" fill="#a7f3d0" stroke="#000" stroke-width="2.5"/><path d="M34 46 Q50 30 66 46 Q50 62 34 46 Z" fill="#fff" stroke="#000" stroke-width="2"/><circle cx="50" cy="46" r="5" fill="#a855f7"/><rect x="32" y="76" width="36" height="12" rx="4" fill="#818cf8" stroke="#000" stroke-width="2.5"/></svg>`
-      },
-      {
-        id: 'st-funky-dumpster-fire',
-        name: 'Thùng rác bốc lửa (Dumpster Fire)',
-        type: 'sticker',
-        isSvg: true,
-        width: 150,
-        height: 130,
-        content: `<svg viewBox="0 0 100 90" width="100%" height="100%"><polygon points="30 40 40 18 50 32 60 12 70 38 80 24 75 42" fill="#f97316" stroke="#000" stroke-width="2.5"/><polygon points="38 40 45 26 52 35 58 22 68 40" fill="#facc15"/><rect x="20" y="40" width="60" height="38" rx="4" fill="#4ade80" stroke="#000" stroke-width="2.5"/><polygon points="12 40 22 28 80 40" fill="#22c55e" stroke="#000" stroke-width="2.5"/><circle cx="42" cy="56" r="3" fill="#000"/><circle cx="62" cy="56" r="3" fill="#000"/><ellipse cx="52" cy="66" rx="4" ry="5" fill="#000"/><circle cx="28" cy="82" r="4" fill="#000"/><circle cx="72" cy="82" r="4" fill="#000"/></svg>`
-      },
-      {
-        id: 'st-funky-house',
-        name: 'Ngôi nhà hoạt hình (Cartoon Cottage)',
-        type: 'sticker',
-        isSvg: true,
-        width: 130,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="50 14 84 40 16 40" fill="#818cf8" stroke="#000" stroke-width="2.5"/><rect x="22" y="40" width="56" height="48" fill="#f472b6" stroke="#000" stroke-width="2.5"/><rect x="42" y="58" width="18" height="30" fill="#fde047" stroke="#000" stroke-width="2"/><circle cx="46" cy="72" r="1.5" fill="#000"/><rect x="28" y="48" width="10" height="10" fill="#38bdf8" stroke="#000" stroke-width="2"/></svg>`
-      },
-      {
-        id: 'st-funky-popsicle',
-        name: 'Que kem siêu ngầu (Cool Popsicle)',
-        type: 'sticker',
-        isSvg: true,
-        width: 120,
-        height: 150,
-        content: `<svg viewBox="0 0 100 110" width="100%" height="100%"><rect x="30" y="16" width="40" height="58" rx="20" fill="#4ade80" stroke="#000" stroke-width="2.5"/><rect x="44" y="74" width="12" height="26" rx="4" fill="#fed7aa" stroke="#000" stroke-width="2.5"/><ellipse cx="42" cy="40" rx="7" ry="5" fill="#c084fc" stroke="#000" stroke-width="2"/><ellipse cx="58" cy="40" rx="7" ry="5" fill="#c084fc" stroke="#000" stroke-width="2"/><line x1="49" y1="40" x2="51" y2="40" stroke="#000" stroke-width="2"/><path d="M46 54 Q50 58 54 54" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-funky-pencil',
-        name: 'Bút chì hạnh phúc (Happy Pencil)',
-        type: 'sticker',
-        isSvg: true,
-        width: 130,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%" transform="rotate(25 50 50)"><rect x="38" y="24" width="24" height="48" fill="#4ade80" stroke="#000" stroke-width="2.5"/><polygon points="38 72 62 72 50 92" fill="#fed7aa" stroke="#000" stroke-width="2.5"/><polygon points="46 86 54 86 50 92" fill="#000"/><rect x="38" y="10" width="24" height="14" rx="4" fill="#fb7185" stroke="#000" stroke-width="2.5"/><circle cx="45" cy="42" r="2.5" fill="#000"/><circle cx="55" cy="42" r="2.5" fill="#000"/><path d="M46 50 Q50 54 54 50" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-funky-padlock',
-        name: 'Ổ khóa bí mật (Secret Padlock)',
-        type: 'sticker',
-        isSvg: true,
-        width: 140,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M35 44 V30 A15 15 0 0 1 65 30 V44" fill="none" stroke="#facc15" stroke-width="5" stroke-linecap="round"/><rect x="25" y="44" width="50" height="42" rx="8" fill="#c084fc" stroke="#000" stroke-width="2.5"/><circle cx="50" cy="62" r="8" fill="#4ade80" stroke="#000" stroke-width="2"/><polygon points="48 66 52 66 54 74 46 74" fill="#000"/><path d="M25 60 Q12 55 16 70" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/><path d="M75 60 Q88 55 84 70" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/></svg>`
-      }
-    ]
-  },
-  {
-    id: 'work_study',
-    label: 'Work & Study',
-    icon: '🎒',
-    items: [
       {
         id: 'st-study-target',
-        name: 'Mục tiêu 100% (Target 100)',
+        name: 'Mục tiêu hoàn thành 100%',
         type: 'sticker',
         isSvg: true,
         width: 130,
@@ -545,26 +439,17 @@ export const STICKER_CATEGORIES: StickerCategory[] = [
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="42" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/><circle cx="50" cy="50" r="28" fill="#fff" stroke="#ef4444" stroke-width="3"/><circle cx="50" cy="50" r="14" fill="#ef4444"/><polygon points="50 12 56 34 78 36 60 50 66 72 50 58 34 72 40 50 22 36 44 34" fill="#fbbf24" stroke="#000" stroke-width="1.5"/></svg>`
       },
       {
-        id: 'st-study-idea',
-        name: 'Ý tưởng sáng tạo (Idea Bulb)',
-        type: 'sticker',
-        isSvg: true,
-        width: 130,
-        height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 18 A24 24 0 0 0 32 54 L36 66 L64 66 L68 54 A24 24 0 0 0 50 18 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/><line x1="40" y1="72" x2="60" y2="72" stroke="#ca8a04" stroke-width="3" stroke-linecap="round"/><line x1="44" y1="78" x2="56" y2="78" stroke="#ca8a04" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="6" x2="50" y2="12" stroke="#eab308" stroke-width="3" stroke-linecap="round"/><line x1="22" y1="20" x2="28" y2="24" stroke="#eab308" stroke-width="3" stroke-linecap="round"/><line x1="78" y1="20" x2="72" y2="24" stroke="#eab308" stroke-width="3" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'st-study-books',
-        name: 'Chồng sách tri thức (Book Stack)',
+        id: 'st-mood-100',
+        name: 'Điểm 100 tuyệt đối',
         type: 'sticker',
         isSvg: true,
         width: 140,
-        height: 130,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="18" y="64" width="64" height="18" rx="4" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2.5"/><rect x="22" y="44" width="56" height="18" rx="4" fill="#10b981" stroke="#047857" stroke-width="2.5"/><rect x="26" y="24" width="48" height="18" rx="4" fill="#f97316" stroke="#c2410c" stroke-width="2.5"/><polygon points="70 28 80 28 75 38" fill="#fef08a"/></svg>`
+        height: 100,
+        content: `<svg viewBox="0 0 120 80" width="100%" height="100%"><text x="60" y="52" font-size="52" font-weight="900" fill="#dc2626" text-anchor="middle" font-family="Arial, sans-serif">100</text><line x1="20" y1="64" x2="100" y2="64" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/><line x1="24" y1="72" x2="96" y2="72" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/></svg>`
       },
       {
         id: 'st-study-medal',
-        name: 'Huy chương vàng (Gold Medal)',
+        name: 'Huy chương vàng xuất sắc',
         type: 'sticker',
         isSvg: true,
         width: 130,
@@ -573,41 +458,75 @@ export const STICKER_CATEGORIES: StickerCategory[] = [
       },
       {
         id: 'st-study-grad-cap',
-        name: 'Mũ tốt nghiệp (Graduation Cap)',
+        name: 'Mũ tốt nghiệp vinh danh',
         type: 'sticker',
         isSvg: true,
         width: 140,
         height: 120,
         content: `<svg viewBox="0 0 100 80" width="100%" height="100%"><polygon points="50 14 92 34 50 54 8 34" fill="#1e293b" stroke="#0f172a" stroke-width="2.5"/><path d="M26 44 V60 C26 70 74 70 74 60 V44" fill="#334155" stroke="#0f172a" stroke-width="2.5"/><line x1="84" y1="38" x2="84" y2="64" stroke="#eab308" stroke-width="2.5" stroke-linecap="round"/><circle cx="84" cy="66" r="3" fill="#eab308"/></svg>`
+      }
+    ]
+  },
+  {
+    id: 'can_on',
+    label: 'Cần ôn',
+    icon: '⏳',
+    items: [
+      {
+        id: 'st-study-books',
+        name: 'Chồng sách giáo trình cần ôn',
+        type: 'sticker',
+        isSvg: true,
+        width: 140,
+        height: 130,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="18" y="64" width="64" height="18" rx="4" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2.5"/><rect x="22" y="44" width="56" height="18" rx="4" fill="#10b981" stroke="#047857" stroke-width="2.5"/><rect x="26" y="24" width="48" height="18" rx="4" fill="#f97316" stroke="#c2410c" stroke-width="2.5"/><polygon points="70 28 80 28 75 38" fill="#fef08a"/></svg>`
       },
       {
         id: 'st-study-microscope',
-        name: 'Kính hiển vi khoa học (Microscope)',
+        name: 'Nghiên cứu đào sâu kiến thức',
         type: 'sticker',
         isSvg: true,
         width: 130,
         height: 140,
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="25" y="82" width="50" height="10" rx="3" fill="#64748b" stroke="#334155" stroke-width="2"/><path d="M50 82 V60 A20 20 0 0 1 70 40" fill="none" stroke="#64748b" stroke-width="6" stroke-linecap="round"/><rect x="35" y="16" width="22" height="42" rx="4" transform="rotate(-25 46 37)" fill="#0284c7" stroke="#0369a1" stroke-width="2.5"/><circle cx="34" cy="54" r="8" fill="#facc15" stroke="#ca8a04" stroke-width="2"/></svg>`
-      }
-    ]
-  },
-  {
-    id: 'mood_reactions',
-    label: 'Mood & Energy',
-    icon: '🚀',
-    items: [
+      },
       {
-        id: 'st-mood-rocket',
-        name: 'Tên lửa bứt phá (Rocket Launch)',
+        id: 'st-funky-padlock',
+        name: 'Khái niệm then chốt cần giải mã',
         type: 'sticker',
         isSvg: true,
         width: 140,
         height: 140,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="50 10 68 40 32 40" fill="#ef4444" stroke="#000" stroke-width="2.5"/><rect x="36" y="40" width="28" height="34" rx="4" fill="#f8fafc" stroke="#000" stroke-width="2.5"/><circle cx="50" cy="54" r="6" fill="#38bdf8" stroke="#000" stroke-width="2"/><polygon points="24 64 36 54 36 74" fill="#f97316" stroke="#000" stroke-width="2"/><polygon points="76 64 64 54 64 74" fill="#f97316" stroke="#000" stroke-width="2"/><polygon points="42 74 58 74 50 94" fill="#facc15" stroke="#f97316" stroke-width="2"/></svg>`
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M35 44 V30 A15 15 0 0 1 65 30 V44" fill="none" stroke="#facc15" stroke-width="5" stroke-linecap="round"/><rect x="25" y="44" width="50" height="42" rx="8" fill="#c084fc" stroke="#000" stroke-width="2.5"/><circle cx="50" cy="62" r="8" fill="#4ade80" stroke="#000" stroke-width="2"/><polygon points="48 66 52 66 54 74 46 74" fill="#000"/><path d="M25 60 Q12 55 16 70" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/><path d="M75 60 Q88 55 84 70" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'st-funky-crystal-ball',
+        name: 'Dự đoán đề thi trắc nghiệm',
+        type: 'sticker',
+        isSvg: true,
+        width: 130,
+        height: 140,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="46" r="32" fill="#a7f3d0" stroke="#000" stroke-width="2.5"/><path d="M34 46 Q50 30 66 46 Q50 62 34 46 Z" fill="#fff" stroke="#000" stroke-width="2"/><circle cx="50" cy="46" r="5" fill="#a855f7"/><rect x="32" y="76" width="36" height="12" rx="4" fill="#818cf8" stroke="#000" stroke-width="2.5"/></svg>`
+      }
+    ]
+  },
+  {
+    id: 'quan_trong',
+    label: 'Quan trọng',
+    icon: '🔥',
+    items: [
+      {
+        id: 'st-badge-priority',
+        name: 'Huy hiệu Trọng tâm (Top Priority)',
+        type: 'sticker',
+        isSvg: true,
+        width: 160,
+        height: 60,
+        content: `<svg viewBox="0 0 150 50" width="100%" height="100%"><rect x="4" y="4" width="142" height="42" rx="21" fill="#fef2f2" stroke="#ef4444" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#ef4444"/><path d="M26 18 V27 M26 31 V33" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><text x="44" y="31" font-size="13" font-weight="800" fill="#991b1b" font-family="sans-serif">TRỌNG TÂM</text></svg>`
       },
       {
         id: 'st-mood-flame',
-        name: 'Lửa chuỗi ngày (Streak Flame)',
+        name: 'Ngọn lửa chuỗi ngày học tập',
         type: 'sticker',
         isSvg: true,
         width: 130,
@@ -615,72 +534,74 @@ export const STICKER_CATEGORIES: StickerCategory[] = [
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 10 C50 30 75 40 75 64 A25 25 0 0 1 25 64 C25 44 40 34 50 10 Z" fill="#E0562D" stroke="#9a3412" stroke-width="3"/><path d="M50 38 C50 50 64 56 64 68 A14 14 0 0 1 36 68 C36 56 45 50 50 38 Z" fill="#fef08a"/></svg>`
       },
       {
-        id: 'st-mood-party',
-        name: 'Pháo hoa tiệc tùng (Party Popper)',
+        id: 'st-study-idea',
+        name: 'Ý tưởng đột phá',
         type: 'sticker',
         isSvg: true,
         width: 130,
-        height: 130,
-        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="18 82 46 72 28 54" fill="#facc15" stroke="#000" stroke-width="2.5"/><circle cx="54" cy="38" r="4" fill="#ef4444"/><circle cx="72" cy="46" r="3.5" fill="#3b82f6"/><circle cx="48" cy="22" r="3" fill="#10b981"/><path d="M38 46 Q52 28 68 32" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/><path d="M46 60 Q66 50 82 64" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/></svg>`
+        height: 140,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 18 A24 24 0 0 0 32 54 L36 66 L64 66 L68 54 A24 24 0 0 0 50 18 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/><line x1="40" y1="72" x2="60" y2="72" stroke="#ca8a04" stroke-width="3" stroke-linecap="round"/><line x1="44" y1="78" x2="56" y2="78" stroke="#ca8a04" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="6" x2="50" y2="12" stroke="#eab308" stroke-width="3" stroke-linecap="round"/><line x1="22" y1="20" x2="28" y2="24" stroke="#eab308" stroke-width="3" stroke-linecap="round"/><line x1="78" y1="20" x2="72" y2="24" stroke="#eab308" stroke-width="3" stroke-linecap="round"/></svg>`
       },
       {
-        id: 'st-mood-100',
-        name: 'Điểm 100 tròn (100 Points)',
+        id: 'st-mood-rocket',
+        name: 'Tăng tốc về đích',
         type: 'sticker',
         isSvg: true,
         width: 140,
-        height: 100,
-        content: `<svg viewBox="0 0 120 80" width="100%" height="100%"><text x="60" y="52" font-size="52" font-weight="900" fill="#dc2626" text-anchor="middle" font-family="Arial, sans-serif">100</text><line x1="20" y1="64" x2="100" y2="64" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/><line x1="24" y1="72" x2="96" y2="72" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/></svg>`
-      }
-    ]
-  },
-  {
-    id: 'cute_mascots',
-    label: 'Cute Mascots',
-    icon: '🦆',
-    items: [
+        height: 140,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="50 10 68 40 32 40" fill="#ef4444" stroke="#000" stroke-width="2.5"/><rect x="36" y="40" width="28" height="34" rx="4" fill="#f8fafc" stroke="#000" stroke-width="2.5"/><circle cx="50" cy="54" r="6" fill="#38bdf8" stroke="#000" stroke-width="2"/><polygon points="24 64 36 54 36 74" fill="#f97316" stroke="#000" stroke-width="2"/><polygon points="76 64 64 54 64 74" fill="#f97316" stroke="#000" stroke-width="2"/><polygon points="42 74 58 74 50 94" fill="#facc15" stroke="#f97316" stroke-width="2"/></svg>`
+      },
       {
         id: 'st-mascot-vit',
-        name: 'Chú Vịt Thông Thái (ViTudy Duck Mascot)',
+        name: 'Biểu tượng Chú Vịt ViTudy',
         type: 'sticker',
         isSvg: true,
         width: 140,
         height: 140,
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><ellipse cx="50" cy="58" rx="30" ry="24" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/><circle cx="62" cy="36" r="18" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/><ellipse cx="78" cy="38" rx="12" ry="7" fill="#f97316" stroke="#c2410c" stroke-width="2"/><circle cx="66" cy="32" r="2.5" fill="#000"/><circle cx="68" cy="31" r="0.8" fill="#fff"/><polygon points="45 14 75 22 55 24" fill="#1e293b"/><line x1="42" y1="80" x2="38" y2="92" stroke="#f97316" stroke-width="3" stroke-linecap="round"/><line x1="58" y1="80" x2="58" y2="92" stroke="#f97316" stroke-width="3" stroke-linecap="round"/></svg>`
+      }
+    ]
+  },
+  {
+    id: 'cong_thuc',
+    label: 'Công thức & Dụng cụ',
+    icon: '📐',
+    items: [
+      {
+        id: 'st-funky-laptop',
+        name: 'Laptop thực hành lập trình',
+        type: 'sticker',
+        isSvg: true,
+        width: 140,
+        height: 140,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="25" y="22" width="50" height="40" rx="4" fill="#38bdf8" stroke="#000" stroke-width="2.5"/><rect x="32" y="28" width="36" height="28" rx="2" fill="#fff" stroke="#000" stroke-width="2"/><rect x="40" y="36" width="3" height="3" fill="#000"/><rect x="56" y="36" width="3" height="3" fill="#000"/><path d="M42 46 h16" stroke="#000" stroke-width="2.5"/><polygon points="15 68 85 68 75 62 25 62" fill="#facc15" stroke="#000" stroke-width="2.5"/><path d="M35 68 L25 86 L35 88" fill="none" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/><path d="M65 68 L75 86 L85 88" fill="none" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'st-funky-pencil',
+        name: 'Bút chì ghi chú công thức',
+        type: 'sticker',
+        isSvg: true,
+        width: 130,
+        height: 140,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%" transform="rotate(25 50 50)"><rect x="38" y="24" width="24" height="48" fill="#4ade80" stroke="#000" stroke-width="2.5"/><polygon points="38 72 62 72 50 92" fill="#fed7aa" stroke="#000" stroke-width="2.5"/><polygon points="46 86 54 86 50 92" fill="#000"/><rect x="38" y="10" width="24" height="14" rx="4" fill="#fb7185" stroke="#000" stroke-width="2.5"/><circle cx="45" cy="42" r="2.5" fill="#000"/><circle cx="55" cy="42" r="2.5" fill="#000"/><path d="M46 50 Q50 54 54 50" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>`
       },
       {
         id: 'st-mascot-owl',
-        name: 'Cú Mèo Gia Sư (Wise Tutor Owl)',
+        name: 'Gia sư hướng dẫn giải toán',
         type: 'sticker',
         isSvg: true,
         width: 130,
         height: 140,
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><ellipse cx="50" cy="54" rx="28" ry="32" fill="#78350f" stroke="#451a03" stroke-width="2.5"/><ellipse cx="50" cy="58" rx="18" ry="22" fill="#fef3c7"/><circle cx="38" cy="40" r="11" fill="#fff" stroke="#451a03" stroke-width="2"/><circle cx="62" cy="40" r="11" fill="#fff" stroke="#451a03" stroke-width="2"/><circle cx="38" cy="40" r="4.5" fill="#000"/><circle cx="62" cy="40" r="4.5" fill="#000"/><polygon points="50 48 46 54 54 54" fill="#f97316"/><rect x="32" y="14" width="36" height="8" rx="2" fill="#1e293b"/></svg>`
-      }
-    ]
-  },
-  {
-    id: 'badges_status',
-    label: 'Status Badges',
-    icon: '🏷️',
-    items: [
+      },
       {
-        id: 'st-badge-approved',
-        name: 'Huy hiệu Đã Duyệt (Approved)',
+        id: 'st-funky-dumpster-fire',
+        name: 'Lỗi bug hóc búa cần gỡ',
         type: 'sticker',
         isSvg: true,
         width: 150,
-        height: 60,
-        content: `<svg viewBox="0 0 140 50" width="100%" height="100%"><rect x="4" y="4" width="132" height="42" rx="21" fill="#ecfdf5" stroke="#10b981" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#10b981"/><path d="M21 25 L25 29 L31 21" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="44" y="31" font-size="14" font-weight="800" fill="#065f46" font-family="sans-serif">APPROVED</text></svg>`
-      },
-      {
-        id: 'st-badge-priority',
-        name: 'Ưu tiên hàng đầu (Top Priority)',
-        type: 'sticker',
-        isSvg: true,
-        width: 160,
-        height: 60,
-        content: `<svg viewBox="0 0 150 50" width="100%" height="100%"><rect x="4" y="4" width="142" height="42" rx="21" fill="#fef2f2" stroke="#ef4444" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#ef4444"/><path d="M26 18 V27 M26 31 V33" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><text x="44" y="31" font-size="13" font-weight="800" fill="#991b1b" font-family="sans-serif">TOP PRIORITY</text></svg>`
+        height: 130,
+        content: `<svg viewBox="0 0 100 90" width="100%" height="100%"><polygon points="30 40 40 18 50 32 60 12 70 38 80 24 75 42" fill="#f97316" stroke="#000" stroke-width="2.5"/><polygon points="38 40 45 26 52 35 58 22 68 40" fill="#facc15"/><rect x="20" y="40" width="60" height="38" rx="4" fill="#4ade80" stroke="#000" stroke-width="2.5"/><polygon points="12 40 22 28 80 40" fill="#22c55e" stroke="#000" stroke-width="2.5"/><circle cx="42" cy="56" r="3" fill="#000"/><circle cx="62" cy="56" r="3" fill="#000"/><ellipse cx="52" cy="66" rx="4" ry="5" fill="#000"/><circle cx="28" cy="82" r="4" fill="#000"/><circle cx="72" cy="82" r="4" fill="#000"/></svg>`
       }
     ]
   }
