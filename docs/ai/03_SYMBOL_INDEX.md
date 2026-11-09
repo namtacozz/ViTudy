@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `d809dc9`  
+> **Commit Hash:** `cee67d0`  
 > **Cập nhật lần cuối:** `2026-11-09`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -163,7 +163,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `ExamQuestion` | `type` | [src/types/studyspace.ts:L17-L24](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamSheetData` | `type` | [src/types/studyspace.ts:L26-L35](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ExamStats` | `type` | [src/services/StatsService.ts:L9-L12](file:///F:/AppMaking/ViTudy/src/services/StatsService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `FaqPage` | `component` | [src/app/faq/page.tsx:L52-L155](file:///F:/AppMaking/ViTudy/src/app/faq/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `FaqPage` | `component` | [src/app/faq/page.tsx:L705-L717](file:///F:/AppMaking/ViTudy/src/app/faq/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FeatureGrid` | `component` | [src/components/landing/FeatureGrid.tsx:L75-L160](file:///F:/AppMaking/ViTudy/src/components/landing/FeatureGrid.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FlashcardReview` | `type` | [src/services/FlashcardService.ts:L4-L16](file:///F:/AppMaking/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `generateCardHash` | `fn` | [src/services/FlashcardService.ts:L18-L27](file:///F:/AppMaking/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -207,7 +207,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `RotateTwoWay` | `component` | [src/components/icons/RotateTwoWay.tsx:L11-L29](file:///F:/AppMaking/ViTudy/src/components/icons/RotateTwoWay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `rowToDeskItem` | `fn` | [src/services/StudySpaceService.ts:L46-L77](file:///F:/AppMaking/ViTudy/src/services/StudySpaceService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `saveEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L55-L57](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `SiteFooter` | `component` | [src/components/common/SiteFooter.tsx:L7-L56](file:///F:/AppMaking/ViTudy/src/components/common/SiteFooter.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `SiteFooter` | `component` | [src/components/common/SiteFooter.tsx:L19-L82](file:///F:/AppMaking/ViTudy/src/components/common/SiteFooter.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `SKIN_TONES` | `component` | [src/data/stickersAndEmojis.ts:L42-L49](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `STICKER_CATEGORIES` | `component` | [src/data/stickersAndEmojis.ts:L417-L687](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StickerCategory` | `type` | [src/data/stickersAndEmojis.ts:L20-L25](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

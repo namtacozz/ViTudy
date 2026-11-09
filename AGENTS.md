@@ -636,4 +636,30 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Khi đang ở trên Bàn học và nhấn F5 (Refresh trang): Do URL vẫn giữ `?view=desk`, hệ thống bảo lưu phiên làm việc trên bàn học bình thường.
     * Tại các trang con phụ (`/profile`, `/dashboard`, `/market`, `/auth`), nút quay lại ("Về Bàn Học" / "Quay lại Bàn Học") **BẮT BUỘC** trỏ về `href="/?view=desk"` thay vì `href="/"`, đảm bảo người dùng đang học chuyển qua xem hồ sơ/thống kê rồi bấm quay lại thì quay thẳng về Bàn học mà không bị văng ra Trang chủ.
 
+* **Quy Chuẩn Trang Hỏi Đáp & Chăm Sóc Người Học (FAQ & Support Page Standards — `/faq`):**
+  * **Cấu trúc & Trục căn lề:**
+    * Toàn bộ trang (Header, Tiêu đề, Ô tìm kiếm, Chip danh mục, Danh sách câu hỏi, và Khối Hỗ trợ cuối trang) **căn thẳng hàng một trục duy nhất** theo độ rộng `max-w-4xl mx-auto px-6`.
+    * Triệt tiêu hoàn toàn khối CTA căn giữa cô lập làm lệch hướng đọc của người dùng.
+  * **Bộ câu hỏi toàn diện & Thực tế (14+ câu hỏi chuyên sâu):**
+    * Bắt buộc có các câu hỏi trọng yếu về tài chính và dữ liệu:
+      - *VietQR nạp tiền:* Quy trình đối soát tự động qua SePay/MBBank trong 30s-2p; cơ chế hỗ trợ bù điểm tức thì qua email `support@vitudy.edu.vn`.
+      - *Quy đổi & Chi phí:* 1.000đ = 1 ViToken; chi phí AI hệ thống ~0,05 V (~50đ)/lượt; miễn phí 0 V khi dùng BYOK API Key cá nhân.
+      - *Chính sách hoàn tiền:* ViToken không bao giờ hết hạn; hỗ trợ hoàn tiền 100% trong 24 giờ cho giao dịch nạp nhầm chưa sử dụng.
+      - *Bản quyền Chợ tài liệu:* Tác giả nhận 85% ViToken doanh thu mỗi lượt mở khóa; người mua sở hữu vĩnh viễn và chỉ đọc tương tác 2.5D, không lộ tệp tin gốc PDF.
+      - *Bảo mật & Quyền riêng tư:* Khóa API cá nhân (Gemini, OpenAI) lưu trữ 100% cục bộ trên trình duyệt thiết bị người dùng, không bao giờ gửi về máy chủ ViTudy; dữ liệu bàn học bảo mật bằng Supabase Row-Level Security.
+      - *Thuật toán SM-2:* Giải thích rõ công thức biến thiên hệ số dễ $EF \in [1.3, 2.5]$ và 4 mức đánh giá (Quên, Khó, Vừa, Dễ) với các mốc thời gian ôn tập lặp lại ngắt quãng.
+  * **Công cụ lọc, tìm kiếm & Liên kết trực tiếp (Deep Linking):**
+    * Thanh tìm kiếm thời gian thực: Quét cả tiêu đề câu hỏi, nhãn danh mục lẫn từ khóa nội dung (keywords).
+    * Bộ lọc danh mục dạng chip gọn gàng: `Tất cả`, `Bàn học 2.5D`, `Ôn tập & SM-2`, `ViToken & Nạp tiền`, `Chợ tài liệu`, `Tài khoản & Bảo mật`.
+    * Nút "Mở tất cả" / "Thu gọn tất cả" cho phép mở đồng thời nhiều câu hỏi.
+    * Mỗi câu hỏi có định danh `id` slug duy nhất (ví dụ `#thuat-toan-on-tap-sm2`, `#chuyen-khoan-vietqr-chua-thay-vitoken`) kèm nút sao chép liên kết trực tiếp (Copy link) để đội ngũ hỗ trợ gửi nhanh đường dẫn cho người học.
+    * Đánh giá hữu ích cuối câu: Cho phép người học bấm "Có" / "Chưa rõ" kèm phản hồi ghi nhận tức thời.
+  * **Nút hành động & Kênh liên hệ hỗ trợ đích thực:**
+    * Khối cuối trang dẫn đích thực đến **"Liên hệ hỗ trợ: support@vitudy.edu.vn"** với nút màu cam thương hiệu `#E0562D` và nêu rõ thời gian phản hồi (2 – 4 giờ làm việc, trực từ 08:00 – 22:00 hàng ngày).
+    * Liên kết "Mã nguồn trên GitHub" đóng vai trò nút phụ nhã nhặn, không chiếm đoạt vị trí của kênh hỗ trợ.
+  * **Chuẩn khả năng tiếp cận (Accessibility WCAG AA):**
+    * Vùng bấm câu hỏi là `<button>` tối thiểu 52px, có `aria-expanded={isOpen}`, focus-visible viền cam rõ ràng.
+    * Nhãn danh mục dùng `text-[11px] font-bold text-[#9A3412] bg-[#FFF7ED] border border-[#FFEDD5]`.
+    * Chữ nội dung trả lời dùng `text-slate-700` đạt tỷ lệ tương phản >= 4.5:1.
+
 

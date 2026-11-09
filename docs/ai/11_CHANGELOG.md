@@ -4,6 +4,42 @@
 
 ---
 
+## 2026-11-09 21:22 — main (Nâng Cấp Toàn Diện Trang Hỏi Đáp: Thuật Toán SM-2, Nạp Điểm VietQR, Bản Quyền & Kênh Hỗ Trợ Đích Thực)
+- **Task:** Tái thiết kế toàn diện trang Hỏi Đáp (`/faq`) theo phản hồi đánh giá chi tiết:
+  1. **Nút cuối trang dẫn đúng kênh hỗ trợ & thống nhất trục căn lề:**
+     - Thay thế nút GitHub bằng nút chính **"Liên hệ hỗ trợ: support@vitudy.edu.vn"** màu cam `#E0562D`, nêu rõ thời gian phản hồi (2 – 4 giờ làm việc, trực từ 08:00 – 22:00 tất cả các ngày).
+     - Giữ nút "Mã nguồn trên GitHub" làm nút phụ nhã nhặn.
+     - Căn trái toàn bộ khối theo cùng một trục `max-w-4xl mx-auto px-6` đồng bộ với danh sách câu hỏi và tiêu đề.
+  2. **Bộ câu hỏi mở rộng toàn diện (14 câu hỏi chuyên sâu & thiết thực):**
+     - *Bàn học 2.5D & Điều hướng:* Bàn học vô hạn, ghim nét vẽ theo trang sách, zoom RAF Coalescing chống vỡ hạt font KaTeX, pan phím tắt WASD, bản đồ thu nhỏ Minimap, bôi đen hỏi bài Inteline.
+     - *Ôn tập & Thuật toán SM-2:* Giải thích cặn kẽ thuật toán SuperMemo SM-2, công thức biến thiên hệ số dễ $EF \in [1.3, 2.5]$, các mốc thời gian ôn tập (ngày 1, ngày 6, ngày $n$), 4 nút đánh giá (Quên $q=0$, Khó $q=3$, Vừa $q=4$, Dễ $q=5$), và tính năng AI sinh đề thi trắc nghiệm.
+     - *ViToken & Nạp tiền VietQR:* Giải thích quy trình đối soát tự động 24/7 qua SePay/MBBank trong 30s-2p, cách gửi email xử lý tra soát Napas bù điểm tức thì, tỷ lệ quy đổi chuẩn 1.000đ = 1 ViToken, chi phí AI hệ thống ~0,05 V (~50đ)/lượt, miễn phí 0 V khi dùng BYOK API Key cá nhân, chính sách hoàn tiền 100% trong 24 giờ, và cơ chế điểm danh chuỗi ngày (+5, CN x2, chuỗi 7 ngày +20).
+     - *Bản quyền Chợ tài liệu:* Tác giả hưởng 85% doanh thu ViToken, người mua sở hữu vĩnh viễn đưa lên bàn học tùy ý, bảo vệ bản quyền công nghệ 2.5D không lộ file gốc PDF.
+     - *Tài khoản & Bảo mật:* Khóa API cá nhân (Gemini, OpenAI) lưu trữ 100% cục bộ trong LocalStorage thiết bị, bảo mật Supabase RLS, học nhóm thời gian thực, và quyền xóa vĩnh viễn tài khoản.
+  3. **Công cụ tìm kiếm, chip danh mục, mở tất cả & liên kết trực tiếp:**
+     - Thanh tìm kiếm thời gian thực quét tiêu đề, nhãn danh mục và từ khóa.
+     - 6 chip danh mục: Tất cả, Bàn học 2.5D, Ôn tập & SM-2, ViToken & Nạp tiền, Chợ tài liệu, Tài khoản & Bảo mật.
+     - Nút "Mở tất cả" / "Thu gọn tất cả" (icon `ChevronsUpDown`).
+     - Slug ID và nút sao chép link trực tiếp `#slug` cho từng câu hỏi kèm thông báo toast.
+     - Đánh giá hữu ích cuối mỗi câu: Cho phép người học bấm "Có" / "Chưa rõ" kèm phản hồi ghi nhận tức thời.
+  4. **Khả năng tiếp cận & Chân trang (`SiteFooter.tsx`):**
+     - Header căn chuẩn `max-w-4xl mx-auto px-6`, nút quay lại thông minh ("Về Bàn Học" hoặc "Về Trang Chủ").
+     - Vùng bấm câu hỏi `<button>` tối thiểu 52px, `aria-expanded={isOpen}`, focus-visible rõ nét.
+     - Nhãn danh mục chuẩn WCAG AA: `text-[11px] font-bold text-[#9A3412] bg-[#FFF7ED] border border-[#FFEDD5]`.
+     - Chống ngắt dòng xấu ở chân trang (`whitespace-nowrap`), bổ sung liên kết "Hoàn tiền & Biểu phí" (`/faq#chinh-sach-hoan-tien`) và biểu tượng GitHub nhỏ.
+- **Files Modified:**
+  - `src/app/faq/page.tsx`
+  - `src/components/common/SiteFooter.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 21:14 — main (Khắc Phục Lỗi Ngược Hướng Điều Hướng Quay Lại Giữa Tài Khoản, Bàn Học & Trang Chủ)
 - **Task:** Sửa triệt để lỗi điều hướng ngược khi vào trang Tài khoản (`/profile`):
   1. **Nhận diện điểm xuất phát (Context-Aware Navigation):**
