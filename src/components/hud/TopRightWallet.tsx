@@ -34,7 +34,12 @@ import { getAssetPath } from '@/lib/assets';
 function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={getAssetPath('/icons/vitoken.png')} alt="ViToken" className={`${className} object-contain inline-block flex-shrink-0`} />
+    <img 
+      src={getAssetPath('/icons/vitoken.png')} 
+      alt="ViToken" 
+      className={`${className} object-contain inline-block flex-shrink-0`}
+      style={{ maxWidth: '100%', maxHeight: '100%' }}
+    />
   );
 }
 

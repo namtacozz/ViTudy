@@ -129,7 +129,10 @@ export function TopLeftNav() {
             <img 
               src={getAssetPath('/icons/vitudy.svg')} 
               alt="ViTudy" 
-              className="w-5.5 h-5.5 object-contain flex-shrink-0" 
+              width={24}
+              height={24}
+              className="w-6 h-6 object-contain flex-shrink-0" 
+              style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}
             />
             <span 
               className="text-lg font-black tracking-tight text-[#E0562D] select-none leading-none"

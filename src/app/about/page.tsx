@@ -24,7 +24,10 @@ export default function AboutPage() {
               <img
                 src={getAssetPath('/icons/vitudy.svg')}
                 alt="ViTudy"
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
+                style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px' }}
               />
               <span className="text-base font-bold tracking-tight text-stone-900">ViTudy</span>
             </div>

@@ -27,6 +27,9 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Tương Thích Đường Dẫn Tài Nguyên Tĩnh (Static Asset Base Path Helper — `getAssetPath`):**
       * Khi triển khai trên môi trường có subpath như GitHub Pages (`basePath: "/ViTudy"`), toàn bộ thẻ `<img>` và đường dẫn file tĩnh trong `public/` (ví dụ `/icons/vitudy.svg`, `/icons/vitoken.png`, `/icon.svg`, `/manifest.json`) **BẮT BUỘC** được bọc qua hàm `getAssetPath(path)` (`@/lib/assets`).
       * Hàm `getAssetPath` tự động phát hiện `basePath` từ runtime (`window.location.pathname.startsWith('/ViTudy')`) hoặc biến môi trường `process.env.NEXT_PUBLIC_BASE_PATH`, ngăn chặn hoàn toàn lỗi ảnh 404 (broken image icon) trên GitHub Pages.
+    * **Quy Chuẩn Khống Chế Kích Thước Ảnh & SVG (Strict Image & SVG Size Containment):**
+      * File vector SVG thương hiệu (`vitudy.svg`) bắt buộc dùng `viewBox="0 0 1500 1500" width="100%" height="100%"`, triệt tiêu hoàn toàn kích thước tĩnh `width="2000" height="2000"`.
+      * Mọi thẻ `<img>` hiển thị logo hoặc coin bắt buộc sử dụng class Tailwind hợp lệ (như `w-6 h-6`, `w-8 h-8`), kèm thuộc tính HTML `width={...} height={...}` và inline style phòng vệ `style={{ width, height, maxWidth, maxHeight }}`. Nghiêm cấm sử dụng các class không có trong bảng quy cách của Tailwind (như `w-5.5`), tránh việc trình duyệt bỏ qua CSS khiến icon SVG bị bung tràn màn hình theo kích thước gốc.
   * **Quy Chuẩn React Portal Cho Toàn Bộ Hộp Thoại / Modal (Strict React Portal Rule — 100% Modals):**
     * Mọi hộp thoại (`Modal`, `Dialog`, `Overlay`) phải được bọc trong `createPortal(..., document.body)` với `z-[9990]..z-[9999]`.
     * Nghiêm cấm render modal trực tiếp bên trong container HUD có CSS `transform` (như `TopRightWallet`, `BottomLeftKnowledge`, `MultiplayerBar`), vì các thuộc tính CSS transform khiến phần tử con `fixed inset-0` bị giới hạn trong khung chứa của cha, dẫn đến việc modal bị co dúm thành thanh dọc 40px mép màn hình.

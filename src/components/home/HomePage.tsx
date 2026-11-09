@@ -82,7 +82,10 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <img
               src={getAssetPath('/icons/vitudy.svg')}
               alt="ViTudy"
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
+              style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px' }}
             />
             <span className="text-base font-bold tracking-tight text-stone-900">ViTudy</span>
           </div>
@@ -175,7 +178,14 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <span className="text-[11px] font-semibold text-stone-500 block">Số dư</span>
             <div className="mt-1 flex items-center gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getAssetPath('/icons/vitoken.png')} alt="ViToken" className="w-6 h-6 object-contain flex-shrink-0" />
+              <img 
+                src={getAssetPath('/icons/vitoken.png')} 
+                alt="ViToken" 
+                width={24}
+                height={24}
+                className="w-6 h-6 object-contain flex-shrink-0" 
+                style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}
+              />
               <span className="text-2xl font-black text-stone-900 tracking-tight font-mono">
                 {typeof balance === 'number' ? balance : 50}
               </span>

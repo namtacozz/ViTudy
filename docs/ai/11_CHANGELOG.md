@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-11-09 19:40 — main (Khắc Phục Lỗi Icon ViTudy Phóng To Chiếm Toàn Bộ Màn Hình)
+- **Task:** Xử lý triệt để lỗi logo ViTudy (`vitudy.svg`) bị bung kích thước 2000px chiếm trọn nửa màn hình trên Bàn học:
+  - *Nguyên nhân:* 
+    1. Tại `src/components/hud/TopLeftNav.tsx`, thẻ `<img>` sử dụng class `w-5.5 h-5.5`. Trong Tailwind CSS không tồn tại giá trị `5.5` (chỉ có `w-5` = 20px, `w-6` = 24px), dẫn đến trình duyệt không nhận được quy tắc định cỡ CSS cho thẻ ảnh.
+    2. File SVG gốc `assets/icon/vitoken.svg` và `public/icons/vitudy.svg` chứa thuộc tính kích thước tĩnh `width="2000" height="2000"`. Khi thẻ `<img>` không bị giới hạn bởi CSS, trình duyệt hiển thị SVG theo kích thước gốc 2000x2000px.
+  - *Khắc phục:*
+    1. Cập nhật thẻ `<img>` tại `TopLeftNav.tsx` thành `width={24} height={24} className="w-6 h-6 object-contain flex-shrink-0"` kèm inline style bảo vệ `style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}`.
+    2. Đồng bộ thuộc tính phòng vệ (`width`, `height`, `style`) cho toàn bộ thẻ logo và coin tại `HomePage.tsx`, `AboutPage.tsx`, `TopRightWallet.tsx`.
+    3. Cập nhật file SVG (`public/icons/vitudy.svg`, `public/vitudy.svg`, `assets/icon/vitoken.svg`) thay `width="2000" height="2000"` bằng `viewBox="0 0 1500 1500" width="100%" height="100%"`, bảo đảm SVG luôn co dãn linh hoạt theo container cha mà không thể tự ý bung to.
+- **Files Modified:**
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/app/about/page.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `public/icons/vitudy.svg`
+  - `public/vitudy.svg`
+  - `assets/icon/vitoken.svg`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `pnpm run build:pages`: Static export thành công 13/13 pages, thẻ `<img>` sinh ra với inline style khống chế 32px/24px.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run docs:index ; pnpm run docs:check`: Passed.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 18:30 — main (Khắc Phục 3 Vấn Đề: Lỗi Broken Icon Trên GitHub Pages, Điều Hướng Profile Về Desk & Ưu Tiên Trang Chủ Cho URL Gốc)
 - **Task:** Giải quyết triệt để 3 vấn đề người dùng phản hồi:
   1. **Lỗi hình ảnh icon (Broken image icons trên GitHub Pages):**
