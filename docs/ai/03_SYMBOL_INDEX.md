@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `311fd67`  
+> **Commit Hash:** `b19de98`  
 > **Cập nhật lần cuối:** `2026-11-09`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -50,7 +50,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L30-L544](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L23-L384](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L35-L717](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L28-L384](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
+| `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L27-L370](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
 | `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L94-L952](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
 | `VrFrameOverlay` | `component` | [src/components/hud/VrFrameOverlay.tsx:L5-L15](file:///F:/AppMaking/ViTudy/src/components/hud/VrFrameOverlay.tsx) | Khung viền 4 góc và nhãn chế độ "Không gian học 2.5D" phong cách VR HUD |
 
@@ -170,7 +170,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `getEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L51-L53](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GuestBanner` | `component` | [src/components/auth/GuestBanner.tsx:L12-L54](file:///F:/AppMaking/ViTudy/src/components/auth/GuestBanner.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `HeroSection` | `component` | [src/components/landing/HeroSection.tsx:L52-L238](file:///F:/AppMaking/ViTudy/src/components/landing/HeroSection.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `HomePage` | `component` | [src/components/home/HomePage.tsx:L32-L608](file:///F:/AppMaking/ViTudy/src/components/home/HomePage.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `HomePage` | `component` | [src/components/home/HomePage.tsx:L32-L610](file:///F:/AppMaking/ViTudy/src/components/home/HomePage.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `INITIAL_MARKET_ITEMS` | `component` | [src/data/marketMockData.ts:L24-L851](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `INITIAL_SPACES` | `component` | [src/data/mockSpaces.ts:L3-L332](file:///F:/AppMaking/ViTudy/src/data/mockSpaces.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `IntelineThread` | `type` | [src/types/studyspace.ts:L75-L85](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -181,7 +181,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `MarketItem` | `type` | [src/data/marketMockData.ts:L3-L22](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MarketPage` | `component` | [src/app/market/page.tsx:L28-L718](file:///F:/AppMaking/ViTudy/src/app/market/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MathRenderer` | `component` | [src/components/common/MathRenderer.tsx:L33-L80](file:///F:/AppMaking/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `metadata` | `const` | [src/app/layout.tsx:L29-L36](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `metadata` | `const` | [src/app/layout.tsx:L29-L40](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MigrationDialog` | `component` | [src/components/auth/MigrationDialog.tsx:L10-L110](file:///F:/AppMaking/ViTudy/src/components/auth/MigrationDialog.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MigrationResult` | `type` | [src/services/SyncService.ts:L5-L9](file:///F:/AppMaking/ViTudy/src/services/SyncService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `OAuthButtons` | `component` | [src/components/auth/OAuthButtons.tsx:L10-L64](file:///F:/AppMaking/ViTudy/src/components/auth/OAuthButtons.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -203,7 +203,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `ProfileHeader` | `component` | [src/components/profile/ProfileHeader.tsx:L13-L140](file:///F:/AppMaking/ViTudy/src/components/profile/ProfileHeader.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ProfilePage` | `component` | [src/app/profile/page.tsx:L122-L128](file:///F:/AppMaking/ViTudy/src/app/profile/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `QRCodeDisplay` | `component` | [src/components/payment/QRCodeDisplay.tsx:L29-L285](file:///F:/AppMaking/ViTudy/src/components/payment/QRCodeDisplay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `RootLayout` | `component` | [src/app/layout.tsx:L38-L65](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `RootLayout` | `component` | [src/app/layout.tsx:L42-L71](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `RotateTwoWay` | `component` | [src/components/icons/RotateTwoWay.tsx:L11-L29](file:///F:/AppMaking/ViTudy/src/components/icons/RotateTwoWay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `rowToDeskItem` | `fn` | [src/services/StudySpaceService.ts:L46-L77](file:///F:/AppMaking/ViTudy/src/services/StudySpaceService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `saveEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L55-L57](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

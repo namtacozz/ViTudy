@@ -30,7 +30,11 @@ export const metadata: Metadata = {
   title: 'ViTudy — Bàn Học Tương Tác',
   description: 'Bàn học tương tác, tài liệu học tập và hỗ trợ ôn thi thông minh.',
   icons: {
-    icon: `${basePath}/icon.svg`,
+    icon: [
+      { url: `${basePath}/icons/vitudy.png`, type: 'image/png' },
+      { url: `${basePath}/favicon.ico` },
+    ],
+    apple: `${basePath}/icons/vitudy.png`,
   },
   manifest: `${basePath}/manifest.json`,
 };
@@ -44,7 +48,9 @@ export default function RootLayout({
     <html lang="vi" className={`${openSans.variable} ${patrickHand.variable} ${lora.variable}`} suppressHydrationWarning spellCheck={false}>
       <head>
         <link rel="manifest" href={`${basePath}/manifest.json`} />
-        <link rel="icon" href={`${basePath}/icon.svg`} type="image/svg+xml" />
+        <link rel="icon" href={`${basePath}/icons/vitudy.png`} type="image/png" />
+        <link rel="shortcut icon" href={`${basePath}/favicon.ico`} />
+        <link rel="apple-touch-icon" href={`${basePath}/icons/vitudy.png`} />
         <meta name="theme-color" content="#E0562D" />
       </head>
       <body 

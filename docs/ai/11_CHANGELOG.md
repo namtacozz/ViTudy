@@ -4,6 +4,35 @@
 
 ---
 
+## 2026-11-09 22:05 — main (Lược Bỏ Nút Home Dư Thừa, Đồng Bộ Chữ ViTudy Cam ViT In Đậm & Cập Nhật Favicon Tab Trình Duyệt)
+- **Task:** Tinh chỉnh nhận diện thương hiệu và công thái học theo yêu cầu:
+  1. **Lược bỏ nút Home dư thừa trên thanh TopLeftNav:**
+     - Xóa nút icon `<Home />` trên thanh `TopLeftNav`, người dùng nhấp trực tiếp vào logo hoặc chữ "ViTudy" ở đầu thanh để về trang chủ.
+  2. **Đồng bộ Typography ViTudy ở Trang Chủ:**
+     - Chuyển chữ "ViTudy" tại thanh bên `HomePage` từ font xám đen `text-stone-900` sang chuẩn nhận diện thương hiệu y chang `TopLeftNav`: `text-lg font-black tracking-tight text-[#E0562D] select-none leading-none` (Cam ViT in đậm).
+  3. **Đồng bộ Favicon & Tab Icon Browser:**
+     - Đặt hình ảnh biểu tượng chính thức `assets/icon/logo.png` vào `public/icons/vitudy.png`, `public/icon.png`, `public/favicon.ico`, `src/app/icon.png`, và `src/app/favicon.ico`.
+     - Cập nhật `metadata.icons` và thẻ `<head>` trong `src/app/layout.tsx` và `manifest.json`.
+- **Files Modified:**
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/app/layout.tsx`
+  - `public/manifest.json`
+  - `public/favicon.ico`
+  - `public/favicon.png`
+  - `public/icon.png`
+  - `src/app/favicon.ico`
+  - `src/app/icon.png`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 21:55 — main (Đại Tu Toàn Diện: Trang Tài Khoản, Bộ Chọn Emoji & Sticker, Mời Bạn Cùng Học, Nhật Ký Học Tập & Kéo Thả PDF Thực Tế)
 - **Task:** Triển khai triệt để toàn bộ 4 khu vực đánh giá chuyên sâu và khắc phục các vấn đề nạp PDF, 100% modal portal:
   1. **Trang Tài Khoản (`/profile`) & Quản lý ViToken:**

@@ -150,7 +150,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
               className="w-8 h-8 rounded-xl object-contain shadow-xs flex-shrink-0"
               style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px' }}
             />
-            <span className="text-base font-bold tracking-tight text-stone-900">ViTudy</span>
+            <span className="text-lg font-black tracking-tight text-[#E0562D] select-none leading-none">
+              ViTudy
+            </span>
           </div>
 
           {/* Search Input */}
