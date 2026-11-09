@@ -866,7 +866,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
               author: newListing.author,
               aiScore: newListing.aiScore,
               price: newListing.price,
-              type: 'paper',
+              type: newListing.type || 'paper',
               category: 'cs',
               date: new Date().toLocaleDateString('vi-VN'),
               purchased: true,

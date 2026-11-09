@@ -4,6 +4,55 @@
 
 ---
 
+## 2026-11-09 21:02 — main (Nâng Cấp Kho Emoji Chuẩn Miro, Tích Hợp GIPHY Live, Tối Ưu Độ Sắc Nét Văn Bản & Ghi Hình)
+- **Task:** Nâng cấp toàn diện kho biểu tượng cảm xúc, hình dán và công cụ mở rộng dấu "+" theo mẫu giao diện Miro:
+  1. **Bảng chọn Emoji chuẩn Miro (9 danh mục & Skin tone):**
+     - Tái hiện chính xác thanh điều hướng 9 danh mục theo ảnh Miro: Gần đây (`recent`), Biểu cảm & Con người (`people`), Động vật & Tự nhiên (`nature`), Đồ ăn & Thức uống (`food`), Hoạt động & Thể thao (`activities`), Du lịch & Địa điểm (`travel`), Đồ vật & Dụng cụ (`objects`), Ký hiệu & Biểu trưng (`symbols`), Cờ các quốc gia (`flags`).
+     - Tích hợp bộ chuyển đổi 5 tông màu da Unicode (`Skin tone ✋`) cho các biểu tượng bàn tay và con người.
+     - Tự động ghi nhớ danh sách biểu tượng vừa dùng vào `localStorage` kèm nút `Clear` xóa nhanh.
+     - Chuyển đổi 100% biểu tượng sang vector SVG chính thức Twitter Twemoji (`toTwemojiUrl`) giúp các emoji trên bàn học luôn sắc nét vô cực ở mọi tỷ lệ phóng to thu nhỏ.
+  2. **Kho GIF trực tuyến GIPHY thời gian thực:**
+     - Tìm kiếm GIF trực tuyến thời gian thực với debounce 300ms và bộ gợi ý từ khóa nhanh (#Study, #Anime, #Cat, #Celebration, #Coffee, #Mind Blown...).
+     - Tự động chuyển đổi kích thước và truyền URL phân giải cao (`downsized_large` / `original`) lên bàn học để ảnh GIF luôn rõ nét, không bị nhòe.
+  3. **Khắc phục triệt để lỗi mờ chữ trên màn hình Windows:**
+     - Loại bỏ các cờ CSS `WebkitFontSmoothing: 'antialiased'` và `MozOsxFontSmoothing: 'grayscale'` gây vô hiệu hóa ClearType subpixel rendering trên Windows trong `CodeBlockItem`, `MindMapNodeItem` và các flyout công cụ.
+     - Chuẩn hóa font monospace và kích thước 14px cho khối mã nguồn, tăng độ tương phản số dòng và viền khung.
+  4. **Tích hợp tính năng quay màn hình vào menu dấu "+":**
+     - Đưa công cụ "Record screen" vào danh sách công cụ mở rộng tại `LeftCreationBar` và dọn dẹp nút camera nhàn rỗi ở `BottomLeftKnowledge`.
+  5. **Cải tiến 4 nhóm Modal cốt lõi:**
+     - Modal "Chia sẻ lên Chợ tài liệu" (xóa bỏ KnowInherit, điền sẵn tên hiển thị, bổ sung 3 trường người mua cần, checkbox bản quyền, giải thích tỷ lệ 85%).
+     - Modal "Nạp ViToken qua VietQR" (sửa tỷ lệ chuẩn 1.000đ = 1 ViToken, ẩn nút kiểm thử ở production, bổ sung sao chép số tiền & STK, trạng thái chờ ngân hàng).
+     - Modal "Điểm danh hằng ngày" (tiến độ 1/7 ngày, icon đồng xu ViToken chuẩn, viền nổi bật hôm nay, trạng thái bỏ lỡ, xin quyền thông báo).
+     - Modal "Cài đặt kết nối AI" (gọn gàng, nêu chi phí ~0,05 V, Việt hóa 100% thuật ngữ, nút kiểm tra kết nối đo ms cạnh dropdown mô hình).
+- **Files Modified:**
+  - `src/data/stickersAndEmojis.ts`
+  - `src/components/hud/StickerEmojiPickerFlyout.tsx`
+  - `src/components/objects/StickerItem.tsx`
+  - `src/components/objects/CodeBlockItem.tsx`
+  - `src/components/objects/MindMapNodeItem.tsx`
+  - `src/components/hud/LeftCreationBar.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/services/GiphyService.ts`
+  - `src/services/GiphyService.test.ts`
+  - `src/services/PaymentService.ts`
+  - `src/components/payment/PricingTiers.tsx`
+  - `src/components/payment/TopUpModal.tsx`
+  - `src/components/payment/QRCodeDisplay.tsx`
+  - `src/components/modals/KnowInheritPublishModal.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/context/ViTokenContext.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `supabase/migrations/0016_fix_vitoken_rate.sql`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 16/16 test suites passed (44/44 tests passed 100%).
+  - `pnpm run build:pages`: Static export 13/13 pages thành công.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 20:25 — main (Trích Xuất & Hiển Thị Tài Liệu PDF Thực Tế Thay Vì Mock Text Trên Sách 2.5D)
 - **Task:** Khi người dùng tải file `.pdf` lên bàn học, cuốn sách được tạo ra phải chứa đúng nội dung thực tế (cả trang hình ảnh rendered gốc của PDF lẫn văn bản trích xuất), loại bỏ hoàn toàn văn bản giả lập định sẵn (`"Nội dung trích xuất từ tệp..."`):
   1. **Tích hợp thư viện `pdfjs-dist@4.10.38`:**

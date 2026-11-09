@@ -39,8 +39,8 @@ describe('GiphyService', () => {
     expect(results[0].type).toBe('gif');
     expect(results[0].name).toBe('Happy Dance');
     expect(results[0].url).toBe('https://media.giphy.com/media/test12345/giphy.gif');
-    expect(results[0].width).toBe(260);
-    expect(results[0].height).toBe(195); // 260 / (480 / 360) = 195
+    expect(results[0].width).toBe(320);
+    expect(results[0].height).toBe(240); // 320 / (480 / 360) = 240
   });
 
   it('handles fetch errors without throwing', async () => {

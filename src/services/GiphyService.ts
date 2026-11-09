@@ -66,18 +66,19 @@ export class GiphyService {
   private static mapGiphyResults(items: GiphyApiItem[]): StickerPickerItem[] {
     return items.map((item) => {
       const original = item.images.original;
+      const downsizedLarge = (item.images as any).downsized_large;
       const medium = item.images.downsized_medium;
       const preview = item.images.fixed_height;
 
       // Prefer high-definition original URL for crisp rendering on desk
-      const highResUrl = original?.url || medium?.url || preview?.url || '';
+      const highResUrl = original?.url || downsizedLarge?.url || medium?.url || preview?.url || '';
 
-      const w = Number(original?.width) || 260;
-      const h = Number(original?.height) || 200;
+      const w = Number(original?.width) || 320;
+      const h = Number(original?.height) || 240;
       const ratio = w / (h || 1);
 
-      const targetW = 260;
-      const targetH = Math.max(120, Math.min(360, Math.round(targetW / ratio)));
+      const targetW = 320;
+      const targetH = Math.max(140, Math.min(420, Math.round(targetW / ratio)));
 
       return {
         id: `giphy-${item.id}`,

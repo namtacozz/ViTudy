@@ -72,11 +72,11 @@ export function buildVietQrUrl(params: VietQrParams): string {
 }
 
 const FALLBACK_PACKAGES: PaymentPackage[] = [
-  { id: 'starter', label: 'Khởi đầu', tokenAmount: 2000, priceVnd: 2000, sort: 1 },
-  { id: 'midterm', label: 'Ôn giữa kỳ', tokenAmount: 10000, priceVnd: 10000, sort: 2 },
-  { id: 'semester', label: 'Học kỳ', tokenAmount: 30000, priceVnd: 27000, sort: 3 },
-  { id: 'project', label: 'Đồ án', tokenAmount: 100000, priceVnd: 85000, sort: 4 },
-  { id: 'team', label: 'Nhóm học', tokenAmount: 300000, priceVnd: 255000, sort: 5 },
+  { id: 'starter', label: 'Khởi đầu', tokenAmount: 2, priceVnd: 2000, sort: 1 },
+  { id: 'midterm', label: 'Ôn giữa kỳ', tokenAmount: 10, priceVnd: 10000, sort: 2 },
+  { id: 'semester', label: 'Học kỳ', tokenAmount: 30, priceVnd: 27000, sort: 3 },
+  { id: 'project', label: 'Đồ án', tokenAmount: 100, priceVnd: 85000, sort: 4 },
+  { id: 'team', label: 'Nhóm học', tokenAmount: 300, priceVnd: 255000, sort: 5 },
 ];
 
 export class PaymentService {

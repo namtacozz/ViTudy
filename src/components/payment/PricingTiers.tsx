@@ -12,9 +12,9 @@ interface PricingTiersProps {
 }
 
 const BONUS_MAP: Record<string, string> = {
-  semester: 'Tặng 3.000',
-  project: 'Tặng 15.000',
-  team: 'Tặng 45.000',
+  semester: 'Tặng 3',
+  project: 'Tặng 15',
+  team: 'Tặng 45',
 };
 
 export function PricingTiers({
@@ -57,13 +57,13 @@ export function PricingTiers({
               )}
 
               <div>
-                <div className="flex items-center justify-between gap-1 mb-1 min-h-[18px]">
-                  <span className="text-xs font-bold text-slate-800">{pkg.label}</span>
-                  {bonus && (
-                    <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/80 px-1 py-0.2 rounded">
+                <div className="flex items-center justify-between gap-1 mb-1 min-h-[20px]">
+                  <span className="text-xs font-bold text-slate-900 whitespace-nowrap">{pkg.label}</span>
+                  {bonus ? (
+                    <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded whitespace-nowrap">
                       {bonus}
                     </span>
-                  )}
+                  ) : <span className="h-4" />}
                 </div>
 
                 <div className="mt-1">
@@ -71,18 +71,17 @@ export function PricingTiers({
                     {pkg.priceVnd.toLocaleString('vi-VN')}{' '}
                     <span className="text-[10px] font-sans font-normal text-slate-500">đ</span>
                   </div>
-                  <div className="text-[11px] font-bold text-[#E0562D] mt-1 font-mono">
+                  <div className="text-[11px] font-bold text-[#E0562D] mt-1.5 font-mono whitespace-nowrap">
                     Nhận {pkg.tokenAmount.toLocaleString('vi-VN')} ViToken
                   </div>
                 </div>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-[10px] text-slate-400">Chọn gói</span>
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-end text-[11px]">
                 <div
                   className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-[#E0562D] text-white'
+                      ? 'bg-[#E0562D] text-white ring-1 ring-[#E0562D]'
                       : 'border border-slate-300 text-transparent'
                   }`}
                 >

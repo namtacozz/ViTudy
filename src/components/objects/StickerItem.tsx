@@ -135,25 +135,48 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
             className="w-full h-full object-contain pointer-events-none select-none"
             style={{ imageRendering: 'auto' }}
             draggable={false}
+            onError={(e) => {
+              // Graceful fallback to text emoji if offline/CDN error
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = 'flex';
+            }}
           />
-        ) : sticker?.isSvg ? (
+        ) : null}
+
+        {/* Fallback Unicode representation if no URL or error */}
+        {sticker?.url && (
+          <div 
+            style={{ 
+              display: 'none',
+              fontSize: `${Math.round(Math.min(width, height) * 0.72)}px`,
+              lineHeight: 1,
+              textRendering: 'geometricPrecision'
+            }}
+            className="select-none items-center justify-center pointer-events-none"
+          >
+            {sticker?.content || '⭐'}
+          </div>
+        )}
+
+        {!sticker?.url && sticker?.isSvg ? (
           <div
             className="w-full h-full flex items-center justify-center pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
             dangerouslySetInnerHTML={{ __html: sticker.content }}
           />
-        ) : (
+        ) : !sticker?.url ? (
           <div 
             style={{ 
               fontSize: `${Math.round(Math.min(width, height) * 0.72)}px`,
               lineHeight: 1,
-              textRendering: 'geometricPrecision',
-              WebkitFontSmoothing: 'antialiased'
+              textRendering: 'geometricPrecision'
             }}
             className="select-none flex items-center justify-center"
           >
             {sticker?.content || '⭐'}
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Resize corner handle (Image & Emoji scaling) */}

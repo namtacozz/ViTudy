@@ -401,8 +401,8 @@ export function BottomLeftKnowledge() {
         document.body
       )}
 
-      {/* 2. Button: Ghi hình buổi học (Icon camera) */}
-      {isRecording ? (
+      {/* 2. Chỉ hiện khi đang ghi hình buổi học (Kích hoạt từ menu dấu + ở thanh công cụ trái) */}
+      {isRecording && (
         <div className="flex items-center gap-2 bg-white/95 border border-red-300 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md animate-fade-in">
           <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
           <span className="text-xs font-mono font-bold text-red-600 select-none">
@@ -416,14 +416,6 @@ export function BottomLeftKnowledge() {
             <Square className="w-3 h-3 fill-white stroke-none" />
           </button>
         </div>
-      ) : (
-        <button
-          onClick={() => setIsSetupModalOpen(true)}
-          title="Ghi hình buổi học (Màn hình & Micro)"
-          className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
-        >
-          <Video className="w-4.5 h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
-        </button>
       )}
 
       {/* 3. Button: Mời bạn bè & Supabase (Có đèn tín hiệu trạng thái) */}

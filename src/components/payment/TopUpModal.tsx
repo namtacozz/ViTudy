@@ -105,9 +105,17 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
     }
   };
 
+  const isDevMode = typeof window !== 'undefined' && (
+    window.location.search.includes('dev=true') || 
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  );
+
+  const selectedPkg = packages.find(p => p.id === selectedPackageId) || packages[0];
+
   const handleSimulateDemoTopUp = () => {
-    addTokens(50, 'Nạp thử nghiệm 0đ kiểm thử đồ án');
-    setDemoNotice('Đã cộng 50 ViToken thử nghiệm vào ví của bạn.');
+    addTokens(5, 'Nạp thử nghiệm 0đ kiểm thử đồ án');
+    setDemoNotice('Đã cộng 5 ViToken thử nghiệm vào ví của bạn.');
     setTimeout(() => {
       setDemoNotice(null);
       onClose();
@@ -198,7 +206,15 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
         ) : (
           <div>
             {step === 'select' && (
-              <div className="space-y-4">
+              <div className="space-y-3.5">
+                {/* Tỷ lệ quy đổi chuẩn 1.000đ = 1 ViToken */}
+                <div className="flex items-center justify-between bg-orange-50/70 border border-orange-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-700">
+                  <div className="flex items-center gap-1.5 font-bold text-[#E0562D]">
+                    <span>Tỷ lệ quy đổi chuẩn: 1.000đ = 1 ViToken</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium">Áp dụng cho mọi tính năng học tập</span>
+                </div>
+
                 <PricingTiers
                   packages={packages}
                   selectedPackageId={selectedPackageId}
@@ -214,15 +230,17 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                 )}
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                  {/* Nút nạp thử nghiệm cho người chấm điểm */}
-                  <button
-                    type="button"
-                    onClick={handleSimulateDemoTopUp}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-300 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
-                  >
-                    <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Nạp thử 50 ViToken (chế độ kiểm thử)</span>
-                  </button>
+                  {/* Nút nạp thử nghiệm cho người chấm điểm - Chỉ hiện ở môi trường dev/test */}
+                  {isDevMode ? (
+                    <button
+                      type="button"
+                      onClick={handleSimulateDemoTopUp}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-300 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+                    >
+                      <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Nạp thử 5 ViToken (chế độ kiểm thử)</span>
+                    </button>
+                  ) : <div />}
 
                   <button
                     type="button"
@@ -230,7 +248,13 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                     disabled={isCreatingRequest || isLoadingPackages}
                     className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                   >
-                    <span>{isCreatingRequest ? 'Đang tạo mã VietQR...' : 'Tiếp tục thanh toán'}</span>
+                    <span>
+                      {isCreatingRequest 
+                        ? 'Đang tạo mã VietQR...' 
+                        : selectedPkg 
+                        ? `Thanh toán ${selectedPkg.priceVnd.toLocaleString('vi-VN')}đ` 
+                        : 'Tiếp tục thanh toán'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -256,6 +280,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                     refreshWallet();
                     setStep('success');
                   }}
+                  onRetry={handleBackToSelect}
                 />
               </div>
             )}

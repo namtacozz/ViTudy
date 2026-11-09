@@ -98,9 +98,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
         transformOrigin: '0 0',
         zIndex: isSelected ? 50 : item.zIndex || 10,
         width: item.width || 480,
-        textRendering: 'geometricPrecision',
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale'
+        textRendering: 'geometricPrecision'
       }}
       className={`absolute select-none ${
         isDragging ? 'cursor-grabbing' : 'cursor-default'
@@ -149,8 +147,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
       {/* Code Editor Container: Deep Navy/Black Background matching Image 3 (Crisp vector rendering without layer blur) */}
       <div
         style={{
-          textRendering: 'geometricPrecision',
-          WebkitFontSmoothing: 'antialiased'
+          textRendering: 'geometricPrecision'
         }}
         className={`relative rounded-xl border ${
           isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-slate-800/90 hover:border-slate-700'
@@ -160,7 +157,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
           {/* Line Numbers Column */}
           <div 
             style={{ textRendering: 'geometricPrecision' }}
-            className="flex flex-col select-none text-right pr-3.5 border-r border-slate-800/70 text-slate-500 font-mono text-xs md:text-sm leading-6"
+            className="flex flex-col select-none text-right pr-3.5 border-r border-slate-800/70 text-slate-400 font-mono text-xs md:text-sm leading-6"
           >
             {lineNumbers.map((num) => (
               <span key={num} className="block select-none opacity-60">
@@ -185,12 +182,11 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
               placeholder="Nhập mã nguồn..."
               style={{
                 textRendering: 'geometricPrecision',
-                WebkitFontSmoothing: 'antialiased',
-                MozOsxFontSmoothing: 'grayscale',
-                fontSize: '13.5px',
-                lineHeight: '24px'
+                fontSize: '14px',
+                lineHeight: '24px',
+                fontFamily: 'Consolas, "Cascadia Code", "Courier New", monospace'
               }}
-              className="w-full bg-transparent text-slate-100 font-mono outline-none resize-none overflow-hidden placeholder-slate-600 cursor-text"
+              className="w-full bg-transparent text-slate-50 font-mono outline-none resize-none overflow-hidden placeholder-slate-500 cursor-text font-medium"
               rows={lineCount}
             />
           </div>

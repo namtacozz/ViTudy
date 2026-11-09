@@ -59,6 +59,14 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Đúng (Success / Correct):** Xanh lục bảo ngọc (`#15803D`), nền `#ECFDF5`, viền `#A7F3D0`.
     * **Sai (Danger / Wrong):** Đỏ ruby thanh nhã (`#DC2626`), nền `#FEF2F2`, viền `#FECACA`.
     * **Gợi ý (Warning / Hint):** Vàng mật ong hổ phách (`#92400E`), nền `#FEF3C7`, viền `#FDE68A`.
+  * **Quy Chuẩn Bảng Chọn Emoji & Hình Dán Chuẩn Miro (Miro-Grade Emoji & Sticker Flyout):**
+    * **9 danh mục biểu tượng chuẩn Miro:** Gần đây (`recent`), Biểu cảm & Con người (`people`), Động vật & Tự nhiên (`nature`), Đồ ăn & Thức uống (`food`), Hoạt động & Thể thao (`activities`), Du lịch & Địa điểm (`travel`), Đồ vật & Dụng cụ (`objects`), Ký hiệu & Biểu trưng (`symbols`), Cờ các quốc gia (`flags`).
+    * **Hiển thị Twemoji Vector SVG sắc nét 100% ở mọi mức zoom:** Toàn bộ biểu tượng cảm xúc được render qua vector SVG chính thức của Twitter Twemoji (`https://cdn.jsdelivr.net/gh/twitter/twemoji@.../svg/{cp}.svg`), triệt tiêu hoàn toàn hiện tượng vỡ hạt, răng cưa hoặc mờ nét khi phóng to thu nhỏ bàn học.
+    * **Bộ chọn tông màu da (Skin tone selector):** Cho phép người dùng chuyển đổi linh hoạt 5 tông màu da chuẩn Unicode (Sáng, Sáng vừa, Trung bình, Ngăm, Tối) cho các biểu tượng bàn tay và con người.
+    * **Lưu trữ biểu tượng gần đây (Recent Emojis):** Tự động ghi nhớ các emoji vừa sử dụng vào `localStorage`, có nút `Clear` để xóa nhanh lịch sử.
+    * **Kho GIF trực tuyến GIPHY thời gian thực:** Kết nối API trực tuyến GIPHY với cơ chế debounce tìm kiếm 300ms, bộ tag gợi ý nhanh (#Study, #Anime, #Cat, #Celebration...) và tự động truyền URL chất lượng cao (`downsized_large` / `original`) lên bàn học để ảnh động luôn sắc nét, không bị nhòe hình.
+    * **Ghi hình màn hình (Record screen) tích hợp trong menu dấu "+":** Đưa tính năng quay video bài giảng vào danh mục công cụ mở rộng (`LeftCreationBar`), loại bỏ nút camera dư thừa ở góc dưới bên trái (`BottomLeftKnowledge`).
+    * **Quy chuẩn độ sắc nét văn bản ClearType trên Windows:** Triệt tiêu hoàn toàn các cờ CSS `WebkitFontSmoothing: 'antialiased'` và `MozOsxFontSmoothing: 'grayscale'` gây mờ chữ trên màn hình Windows trong khối mã nguồn (`CodeBlockItem`) và sơ đồ tư duy (`MindMapNodeItem`), đảm bảo font chữ luôn đậm nét, rõ ràng và dễ đọc ở mọi độ phân giải.
 * **Các vùng ngoại lệ có chủ đích (Màu sắc vật thể thực):**
   * **Giấy ghi chú (Sticky Note):** Giữ màu vàng ấm đặc trưng của giấy note (`#fef08a`, `#fed7aa`...).
   * **Bản đồ thu nhỏ (Minimap) & Ma trận (Matrix Map):** Cho phép màu nhận diện vật thể (sách xanh xám, tài liệu xanh ngọc, note vàng, ô xanh/đỏ bài thi).

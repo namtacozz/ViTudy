@@ -232,7 +232,7 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       id: `tx-buy-${Date.now()}`,
       type: 'know_buy',
       amount: -price,
-      description: `Mở khoá tài liệu KnowInherit: "${title}" (Tác giả: ${author} nhận ${authorEarned}V, Phí sàn: ${platformFee}V)`,
+      description: `Mở khoá tài liệu Chợ: "${title}" (Tác giả: ${author} nhận ${authorEarned} ViToken, Phí sàn: ${platformFee} ViToken)`,
       timestamp: new Date().toISOString()
     };
 

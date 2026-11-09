@@ -295,7 +295,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
         {isNoteFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white/95 border border-slate-300 rounded-2xl p-2 shadow-xl backdrop-blur-md flex flex-col gap-2 z-50 animate-fade-in">
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-xl flex flex-col gap-2 z-50 animate-fade-in">
             {stickyColors.map(c => (
               <button
                 key={c.value}
@@ -312,7 +312,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED PEN SUB-TOOLBAR FLYOUT ================= */}
         {isPenFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white/95 border border-slate-300 rounded-2xl p-2 shadow-2xl backdrop-blur-md flex flex-col items-center gap-2 z-50 animate-fade-in min-w-[46px]">
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl flex flex-col items-center gap-2 z-50 animate-fade-in min-w-[46px]">
             {/* Tool 1: Pen (Bút vẽ thường) */}
             <button
               title="Bút vẽ tự do (Pen)"
@@ -453,7 +453,7 @@ export function LeftCreationBar() {
 
         {/* ================= MORE TOOLS FLYOUT (Miro-style, Zero Search) ================= */}
         {isMoreToolsOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white/95 border border-slate-300 rounded-2xl p-3 shadow-2xl backdrop-blur-md flex flex-col gap-1 z-50 animate-fade-in w-72 text-slate-900 select-none">
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-3 shadow-2xl flex flex-col gap-1 z-50 animate-fade-in w-72 text-slate-900 select-none">
             <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-100 mb-1">
               <span className="text-xs font-black text-slate-900 tracking-wide uppercase">
                 Công cụ mở rộng

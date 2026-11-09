@@ -129,9 +129,7 @@ export const MindMapNodeItem = React.memo(function MindMapNodeItem({ item, isSel
         zIndex: isSelected ? 50 : item.zIndex || 15,
         width: nodeWidth,
         height: nodeHeight,
-        textRendering: 'geometricPrecision',
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale'
+        textRendering: 'geometricPrecision'
       }}
       className={`group select-none ${
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
@@ -231,9 +229,7 @@ export const MindMapNodeItem = React.memo(function MindMapNodeItem({ item, isSel
         className="w-full h-full rounded-full bg-white flex items-center justify-center px-6 shadow-xs"
         style={{
           border: `2.5px solid ${color}`,
-          textRendering: 'geometricPrecision',
-          WebkitFontSmoothing: 'antialiased',
-          MozOsxFontSmoothing: 'grayscale'
+          textRendering: 'geometricPrecision'
         }}
       >
         <input
@@ -243,16 +239,14 @@ export const MindMapNodeItem = React.memo(function MindMapNodeItem({ item, isSel
           onChange={handleTextChange}
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
-          placeholder="Type something"
+          placeholder="Nhập nội dung node..."
           spellCheck={false}
           className={`w-full text-center bg-transparent outline-none text-slate-800 placeholder-slate-400 text-sm tracking-tight cursor-text ${
             isBold ? 'font-bold' : 'font-medium'
           }`}
           style={{ 
             fontSize: `${fontSize}px`,
-            textRendering: 'geometricPrecision',
-            WebkitFontSmoothing: 'antialiased',
-            MozOsxFontSmoothing: 'grayscale'
+            textRendering: 'geometricPrecision'
           }}
         />
       </div>
