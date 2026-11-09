@@ -393,14 +393,14 @@ export function InfiniteDesk() {
         </div>
       )}
 
-      {/* 2.5D World Transform Container (Crisp Vector Font Rendering & GPU Layer) */}
+      {/* 2.5D World Transform Container (Crisp Vector Font Rendering at All Zoom Levels) */}
       <div
-        className="absolute top-0 left-0 w-full h-full will-change-transform"
+        className="absolute top-0 left-0 w-full h-full"
         style={{
-          transform: `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) rotate(${transform.rotation || 0}deg) scale(${transform.scale})`,
+          transform: `translate(${Math.round(transform.x)}px, ${Math.round(transform.y)}px) rotate(${transform.rotation || 0}deg) scale(${transform.scale})`,
           transformOrigin: '0 0',
-          backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden'
+          textRendering: 'geometricPrecision',
+          WebkitFontSmoothing: 'antialiased',
         }}
       >
         {/* Render all Desk Items (with Viewport Culling optimization) */}

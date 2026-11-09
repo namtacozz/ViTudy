@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-11-09 11:12 — main (Khắc Phục Vỡ Chữ Khi Phóng To & Chữ Note Bị Nằm Dưới Thanh Ngang)
+- **Task:** Giải quyết 2 phản hồi của người dùng kèm ảnh:
+  1. **Chữ bị vỡ khi phóng quá to (Zoom 232%):**
+     - *Nguyên nhân:* Container bàn học trong `InfiniteDesk.tsx` sử dụng `will-change-transform`, `backfaceVisibility: 'hidden'` và `translate3d(..., 0)`. Các thuộc tính này ép Chromium coi phần tử là một GPU Composited Layer tĩnh được rasterize ở độ phân giải 100%, sau đó GPU sampler chỉ phóng to ảnh bitmap đó lên khi scale tăng $\rightarrow$ Dẫn đến toàn bộ chữ, công thức toán và icon bị răng cưa, nhòe và vỡ hạt khi zoom lớn.
+     - *Khắc phục:* Gỡ bỏ hoàn toàn `will-change-transform` và `backfaceVisibility: 'hidden'`, chuyển từ `translate3d` sang 2D transform trực tiếp `translate(x, y) rotate(deg) scale(s)` cùng `text-rendering: geometricPrecision`. Nhờ đó Chromium luôn re-rasterize vector font ở độ phân giải thực tế của màn hình tại mọi mức zoom (kể cả 200% - 400%), giúp chữ sắc nét như dao cạo (pixel-perfect).
+  2. **Chữ note bị nằm dưới thanh ngang footer (`StickyNoteItem.tsx`):**
+     - *Nguyên nhân:* `textarea` dùng class `h-full` chiếm 100% chiều cao của thân note, kết hợp với chiều cao note cố định (200px) trong khi nội dung có nhiều dòng ngắt dòng $\rightarrow$ Dòng chữ cuối cùng bị thanh kẻ ngang `border-t border-black/10` của footer đè trực tiếp lên chữ.
+     - *Khắc phục:*
+       - Đổi `textarea` sang `w-full flex-1 min-h-0 mb-1.5 pb-1` để phân tách không gian độc lập với footer `flex-shrink-0`.
+       - Nâng cấp thuật toán tính `noteHeight` tự động mở rộng theo số dòng thực tế (`approxLines * lineH + 68`), đảm bảo dòng chữ cuối cùng luôn cách thanh footer một khoảng đệm an toàn ít nhất 8-12px, triệt tiêu 100% lỗi chữ bị đè.
+- **Files Modified:**
+  - `src/components/canvas/InfiniteDesk.tsx`: Gỡ bỏ `will-change-transform` & `backfaceVisibility: 'hidden'`, đổi sang 2D transform vector sharp.
+  - `src/components/objects/StickyNoteItem.tsx`: Co dãn chiều cao note tự động và flex layout chống đè chữ footer.
+  - `AGENTS.md`: Bổ sung quy chuẩn kỹ thuật cho Vector Sharpness và Sticky Note Footer.
+- **Verified by:**
+  - `pnpm test`: 15/15 test suites passed (41/41 tests pass 100%).
+  - `pnpm run docs:check`: Pass.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 10:55 — main (Khắc Phục 3 Vấn Đề UI Whiteboard: Code Block Tối Giản, Sơ Đồ Tư Duy Viên Thuốc & Popover Emoji/Sticker/GIF)
 - **Task:** Hiện thực hóa giao diện chuẩn mực theo 3 ảnh người dùng cung cấp:
   1. **Ảnh 3 (Code block tối giản):**

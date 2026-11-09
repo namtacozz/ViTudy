@@ -205,9 +205,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
   };
 
   // Dynamic font scaling & auto expansion:
-  // Đảm bảo chữ hiển thị trọn vẹn, không bị cắt nội dung và phông chữ rõ ràng dễ đọc
-  const noteBaseHeight = item.height || 200;
-  const noteHeight = isExpanded ? Math.max(noteBaseHeight + 90, 290) : noteBaseHeight;
+  // Đảm bảo chữ hiển thị trọn vẹn, không bao giờ bị thanh ngang footer đè lên chữ
   const textLen = text.length;
   const lineBreaks = (text.match(/\n/g) || []).length;
   const effectiveLen = textLen + lineBreaks * 20;
@@ -217,16 +215,15 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
     let leading = 'leading-[1.42]';
 
     if (effectiveLen <= 15) {
-      size = Math.min(32, Math.max(24, Math.round(noteBaseHeight / 5.5)));
-      leading = 'leading-[1.15]';
+      size = 26;
+      leading = 'leading-[1.18]';
     } else if (effectiveLen <= 40) {
-      size = 20;
-      leading = 'leading-[1.25]';
+      size = 19;
+      leading = 'leading-[1.26]';
     } else if (effectiveLen <= 80) {
-      size = 16;
+      size = 15.5;
       leading = 'leading-[1.32]';
     } else if (effectiveLen <= 150) {
-      // 120 ký tự hiển thị sắc nét vừa khít khung ghi chú tiêu chuẩn
       size = 13.5;
       leading = 'leading-[1.42]';
     } else if (effectiveLen <= 260) {
@@ -239,6 +236,14 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
     return { size, leading };
   })();
+
+  // Tính số dòng thực tế để tự động co dãn chiều cao note, chống thanh ngang footer đè lên chữ
+  const rawLines = text.split('\n');
+  const approxLines = rawLines.reduce((acc, l) => acc + Math.max(1, Math.ceil(l.length / 25)), 0);
+  const lineH = dynamicFont.size * 1.45;
+  const minNeededHeight = Math.ceil(approxLines * lineH) + 68;
+  const noteBaseHeight = Math.max(item.height || 200, minNeededHeight);
+  const noteHeight = isExpanded ? Math.max(noteBaseHeight + 100, 320) : noteBaseHeight;
 
   // Rich format detectors
   const trimmedText = text.trim();
@@ -558,7 +563,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               WebkitTextStroke: isBold ? '0.35px currentColor' : '0px transparent',
               textAlign: textAlign,
             }}
-            className={`w-full h-full bg-transparent resize-none outline-none ${
+            className={`w-full flex-1 min-h-0 mb-1.5 pb-1 bg-transparent resize-none outline-none ${
               isBold ? 'font-bold' : 'font-medium'
             } ${
               textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'
@@ -571,7 +576,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         <div 
           onMouseDown={handleMouseDown}
           title="Cầm chân ghi chú để di chuyển"
-          className="flex items-center justify-between text-[11px] text-stone-700 font-mono pt-1.5 border-t border-black/10 select-none cursor-grab active:cursor-grabbing relative z-10"
+          className="flex-shrink-0 flex items-center justify-between text-[11px] text-stone-700 font-mono pt-1.5 border-t border-black/10 select-none cursor-grab active:cursor-grabbing relative z-10"
         >
           {isEditingTitle ? (
             <input
