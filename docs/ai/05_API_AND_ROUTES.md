@@ -59,12 +59,12 @@
 #### Định Dạng Dữ Liệu Đầu Vào (Request Payload)
 ```typescript
 {
-  provider: 'system' | 'byok_openai' | 'byok_gemini' | 'oauth_chatgpt';
-  model?: string;        // Ví dụ: 'gpt-4o-mini', 'gpt-4o', 'gemini-1.5-flash'
+  provider: 'system' | 'oauth_chatgpt';
+  model?: string;        // Ví dụ: 'gpt-5.6-terra', 'gpt-4o', 'o3-mini', 'gpt-4o-mini'
   prompt: string;        // Câu hỏi hoặc yêu cầu của người học (Bắt buộc)
   context?: string;       // Đoạn trích dẫn tài liệu đang bôi đen hoặc nội dung trang sách
-  apiKey?: string;        // Khoá cá nhân khi dùng chế độ BYOK
   accessToken?: string;   // Token xác thực OAuth khi dùng ChatGPT Plus/Team
+  accountId?: string;     // chatgpt_account_id từ claim JWT
 }
 ```
 

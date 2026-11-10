@@ -40,10 +40,12 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Nút "Thoát" (`LogOut`) trên thanh sẽ ngắt kết nối kênh Realtime, dọn dẹp danh sách bạn bè, xóa tham số `room` khỏi URL và ẩn thanh ngay lập tức mà không cần tải lại trang.
   * **Quy Chuẩn Cài Đặt AI & Kiểm Tra Kết Nối (AI Configuration & Live Test):**
     * Giao diện cấu hình AI gồm 4 bước chuẩn mực:
-      1. Chọn nhà cung cấp: Hệ thống ViTudy (mặc định), Google Gemini (BYOK), OpenAI (BYOK), OpenAI OAuth (ChatGPT Plus).
-      2. Nhập thông tin xác thực tương ứng (Không cần với ViTudy; API Key kèm link lấy key cho Gemini/OpenAI; luồng xác thực thực tế **OAuth 2.0 PKCE + 1-Chạm Dán Callback URL + Tự động làm mới Token + Codex Responses API** cho ChatGPT Plus/Pro, tương thích 100% với ViTai `auth.json`).
-      3. Chọn mô hình AI: Dropdown đồng bộ theo nhà cung cấp, hiển thị rõ ràng tên mô hình và công năng.
+      1. Chọn nhà cung cấp: Hệ thống ViTudy (mặc định) hoặc Đăng nhập ChatGPT (bỏ hoàn toàn các mục nhập API Key thủ công để giữ giao diện tinh gọn, tập trung trải nghiệm).
+      2. Nhập thông tin xác thực tương ứng (Không cần với ViTudy; luồng xác thực thực tế **OAuth 2.0 PKCE + 1-Chạm Dán Callback URL + Tự động làm mới Token + Codex Responses API** cho ChatGPT Plus/Pro, tương thích 100% với ViTai `auth.json`).
+      3. Chọn mô hình AI: Dropdown đồng bộ theo nhà cung cấp, hỗ trợ trọn bộ mô hình Codex cao cấp của ChatGPT (`gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.6-sol`, `gpt-5.5`, `gpt-5`, `gpt-4o`, `gpt-4o-mini`, `o3-mini`, `o1`, `o1-mini`, `chatgpt-4o-latest`).
       4. Nút kiểm tra hoạt động (Test AI): Gửi truy vấn thực tế kiểm tra API và đo độ trễ mạng ms thời gian thực.
+    * **Chức Năng AI Trên Tài Liệu Thật Sự Hoạt Động (Real AI Execution Standard):**
+      * Mọi tác vụ AI trên tài liệu (Tóm tắt trong `SummaryTab`, sinh trắc nghiệm trong `QuizTab`, hỏi nhanh `IntelineModal` & inline popover) đều tự động dùng mô hình và tài khoản ChatGPT đã kết nối mà không tốn ViToken. Tuyệt đối không giả lập dữ liệu tĩnh hoặc fallback ngầm khi người dùng chọn dùng AI.
   * **Quy Chuẩn Thanh Toán VietQR & MBBank (SePay VietQR Standards):**
     * Sử dụng mã NAPAS BIN chính thức của MBBank: `970422` (hoặc `MB`) kèm template `compact2` để 100% ứng dụng ngân hàng và ví điện tử quét mã truy vấn thông tin thành công.
     * Tài khoản thụ hưởng mặc định: `99924052005` - `LE VO THANH NAM`.

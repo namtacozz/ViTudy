@@ -168,7 +168,9 @@ export function PaperSheetComponent({ item, isSelected }: PaperSheetProps) {
 Câu hỏi: "${q}"
 Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối đa 3-4 câu).`;
 
-      spendTokens?.(2, 'Hỏi nhanh AI Inteline');
+      if (aiConfig?.provider === 'system') {
+        spendTokens?.(2, 'Hỏi nhanh AI Inteline');
+      }
 
       const data = await askAi({
         provider: aiConfig?.provider || 'system',

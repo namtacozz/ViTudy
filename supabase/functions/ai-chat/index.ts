@@ -83,11 +83,10 @@ function parseCodexSseStream(rawText: string): string {
 }
 
 function resolveCodexModel(requestedModel: string): string {
-  const m = (requestedModel || '').trim().toLowerCase();
-  if (!m) return 'gpt-5.4-mini';
-  // Allow modern codex / gpt-5 / gpt-4o / o3 / o4 models
-  if (m === 'gpt-4o-mini') return 'gpt-5.4-mini';
-  return requestedModel;
+  const m = (requestedModel || '').trim();
+  if (!m) return 'gpt-5.6-terra';
+  if (m.startsWith('cx/')) return m.slice(3);
+  return m;
 }
 
 serve(async (req: Request) => {
@@ -353,7 +352,8 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
           'Authorization': `Bearer ${token}`,
           'Accept': 'text/event-stream',
           'originator': 'codex_cli_rs',
-          'User-Agent': 'codex_cli_rs/0.1.0 (Windows 10.0.22631; x86_64)',
+          'User-Agent': 'codex_cli_rs/0.136.0 (Linux; x86_64)',
+          'OpenAI-Beta': 'responses=v1',
         };
         if (resolvedAccountId) {
           codexHeaders['ChatGPT-Account-Id'] = resolvedAccountId;
@@ -379,6 +379,10 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
             ],
             store: false,
             stream: true,
+            reasoning: {
+              effort: 'low',
+              summary: 'auto',
+            },
           }),
         });
 

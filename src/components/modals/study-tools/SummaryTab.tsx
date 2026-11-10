@@ -19,7 +19,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
   const { aiConfig, spendTokens } = useViToken();
 
   const [summaryResult, setSummaryResult] = useState<string>('');
-  const [useAi, setUseAi] = useState(false);
+  const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -60,8 +60,9 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
       } else {
         setSummaryResult(summarizeWithTextRank(fullText, 4).join('\n\n'));
       }
-    } catch {
-      setSummaryResult(summarizeWithTextRank(fullText, 4).join('\n\n'));
+    } catch (err: any) {
+      const nonAiFallback = summarizeWithTextRank(fullText, 4).join('\n\n');
+      setSummaryResult(`[Thông báo AI: ${err.message || 'Lỗi kết nối'} - Đã chuyển sang trích xuất TextRank]:\n\n${nonAiFallback}`);
     } finally {
       setLoading(false);
     }

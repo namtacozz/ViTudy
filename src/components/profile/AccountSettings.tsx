@@ -37,18 +37,7 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
   const [nameSuccess, setNameSuccess] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
 
-  // Khóa AI cá nhân (lưu 100% trong LocalStorage trình duyệt)
-  const [openAiKey, setOpenAiKey] = useState('');
-  const [geminiKey, setGeminiKey] = useState('');
-  const [showOpenAi, setShowOpenAi] = useState(false);
-  const [showGemini, setShowGemini] = useState(false);
-
-  const [initialOpenAi, setInitialOpenAi] = useState('');
-  const [initialGemini, setInitialGemini] = useState('');
   const [oauthSession, setOauthSession] = useState<OpenAiOAuthSession | null>(null);
-
-  const [byokSaved, setByokSaved] = useState(false);
-  const [testResult, setTestResult] = useState<{ provider: string; status: 'loading' | 'success' | 'error'; message: string } | null>(null);
 
   // Khởi tạo họ tên & nickname
   useEffect(() => {
@@ -60,19 +49,11 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
       const storedNick = localStorage.getItem('vitudy_user_nickname') || '';
       setNickname(storedNick);
       setInitialNickname(storedNick);
-
-      const storedOpenAi = localStorage.getItem('vitudy_byok_openai') || '';
-      const storedGemini = localStorage.getItem('vitudy_byok_gemini') || '';
-      setOpenAiKey(storedOpenAi);
-      setInitialOpenAi(storedOpenAi);
-      setGeminiKey(storedGemini);
-      setInitialGemini(storedGemini);
       setOauthSession(getOpenAiOAuthSession());
     }
   }, [profile?.display_name]);
 
   const hasNameChanged = displayName.trim() !== initialDisplayName.trim() || nickname.trim() !== initialNickname.trim();
-  const hasByokChanged = openAiKey.trim() !== initialOpenAi.trim() || geminiKey.trim() !== initialGemini.trim();
 
   // Xác định phương thức đăng nhập
   const provider = user?.app_metadata?.provider || 'email';
@@ -123,70 +104,6 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
       setNameError(err.message || 'Lỗi cập nhật họ và tên.');
     } finally {
       setIsUpdatingName(false);
-    }
-  };
-
-  const handleSaveByok = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('vitudy_byok_openai', openAiKey.trim());
-      localStorage.setItem('vitudy_byok_gemini', geminiKey.trim());
-      setInitialOpenAi(openAiKey.trim());
-      setInitialGemini(geminiKey.trim());
-      setByokSaved(true);
-      setTimeout(() => setByokSaved(false), 3000);
-    }
-  };
-
-  const handleClearKey = (provider: 'openai' | 'gemini') => {
-    if (typeof window !== 'undefined') {
-      if (provider === 'openai') {
-        localStorage.removeItem('vitudy_byok_openai');
-        setOpenAiKey('');
-        setInitialOpenAi('');
-      } else {
-        localStorage.removeItem('vitudy_byok_gemini');
-        setGeminiKey('');
-        setInitialGemini('');
-      }
-      setByokSaved(true);
-      setTimeout(() => setByokSaved(false), 2000);
-    }
-  };
-
-  const handleTestKey = async (provider: 'openai' | 'gemini') => {
-    const key = provider === 'openai' ? openAiKey.trim() : geminiKey.trim();
-    if (!key) {
-      setTestResult({
-        provider,
-        status: 'error',
-        message: 'Vui lòng nhập khóa API trước khi kiểm tra.',
-      });
-      return;
-    }
-
-    setTestResult({ provider, status: 'loading', message: 'Đang kiểm tra kết nối API...' });
-
-    try {
-      if (provider === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-        if (res.ok) {
-          setTestResult({ provider, status: 'success', message: 'Kết nối Google Gemini thành công (Độ trễ thấp)!' });
-        } else {
-          setTestResult({ provider, status: 'error', message: 'Khóa Gemini không hợp lệ hoặc đã hết hạn mức.' });
-        }
-      } else {
-        const res = await fetch('https://api.openai.com/v1/models', {
-          headers: { Authorization: `Bearer ${key}` }
-        });
-        if (res.ok) {
-          setTestResult({ provider, status: 'success', message: 'Kết nối OpenAI API thành công!' });
-        } else {
-          setTestResult({ provider, status: 'error', message: 'Khóa OpenAI không hợp lệ hoặc sai quyền truy cập.' });
-        }
-      }
-    } catch {
-      setTestResult({ provider, status: 'error', message: 'Lỗi mạng hoặc không thể kết nối tới máy chủ AI.' });
     }
   };
 
@@ -283,12 +200,12 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
         </form>
       </section>
 
-      {/* 2. Khóa AI của riêng bạn (Thay thế thuật ngữ BYOK) */}
+      {/* 2. Đăng nhập ChatGPT (OAuth PKCE) */}
       <section className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2">
             <KeyRound className="w-4 h-4 text-slate-700" />
-            <h3 className="text-sm font-bold text-slate-900">Khóa AI của riêng bạn</h3>
+            <h3 className="text-sm font-bold text-slate-900">Đăng nhập ChatGPT</h3>
           </div>
           <Link
             href="/?view=desk"
@@ -300,180 +217,59 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
           </Link>
         </div>
         <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-          Khóa API cá nhân chỉ được lưu trữ cục bộ 100% trong trình duyệt máy của bạn (không gửi về máy chủ ViTudy). Khi sử dụng khóa riêng, bạn được miễn phí 0 ViToken cho mọi lượt hỏi bài.
+          Ủy quyền tài khoản ChatGPT (Plus, Pro hoặc Free) qua giao thức bảo mật OAuth 2.0 PKCE để sử dụng trực tiếp các mô hình AI cao cấp (GPT-5.6 Terra, GPT-4o, o3-mini...) mà không tiêu tốn ViToken.
         </p>
 
-        <form onSubmit={handleSaveByok} className="space-y-4 max-w-lg">
-          {/* OpenAI OAuth PKCE Session Status */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <span>OpenAI OAuth (ChatGPT Plus / Pro — Chuẩn PKCE)</span>
-                {oauthSession && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                    <RefreshCw className="w-2.5 h-2.5" />
-                    Auto-Refresh
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                {oauthSession
-                  ? `Đã kết nối: ${oauthSession.email || (oauthSession.accountId ? `#${oauthSession.accountId.slice(0, 8)}` : 'Tài khoản ChatGPT Plus')}`
-                  : 'Chưa kết nối tài khoản ChatGPT Plus qua OAuth PKCE.'}
-              </p>
-            </div>
-            {oauthSession ? (
-              <button
-                type="button"
-                onClick={() => {
-                  clearOpenAiOAuthSession();
-                  setOauthSession(null);
-                }}
-                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-red-50 text-red-600 border border-slate-200 text-[11px] font-bold flex items-center gap-1 cursor-pointer flex-shrink-0"
-              >
-                <LogOut className="w-3 h-3" />
-                <span>Ngắt kết nối</span>
-              </button>
-            ) : (
-              <Link
-                href="/?view=desk"
-                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-[11px] font-bold flex items-center gap-1 flex-shrink-0"
-              >
-                <span>Kết nối trên Bàn học</span>
-                <ExternalLink className="w-3 h-3" />
-              </Link>
-            )}
-          </div>
-
-          {/* OpenAI Key */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label htmlFor="byokOpenAi" className="text-xs font-semibold text-slate-700">
-                OpenAI API Key (sk-...)
-              </label>
-              {openAiKey && (
-                <button
-                  type="button"
-                  onClick={() => handleClearKey('openai')}
-                  className="text-[10px] text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-2.5 h-2.5" />
-                  <span>Xóa khóa</span>
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="relative flex-1">
-                <input
-                  id="byokOpenAi"
-                  type={showOpenAi ? 'text' : 'password'}
-                  value={openAiKey}
-                  onChange={(e) => setOpenAiKey(e.target.value)}
-                  placeholder="sk-proj-..."
-                  className="w-full px-3 py-2 pr-9 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E0562D]/20 focus:border-[#E0562D] font-mono transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOpenAi(!showOpenAi)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showOpenAi ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleTestKey('openai')}
-                className="px-2.5 py-2 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap"
-              >
-                <Activity className="w-3 h-3" />
-                <span>Kiểm tra</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Google Gemini Key */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label htmlFor="byokGemini" className="text-xs font-semibold text-slate-700">
-                Google Gemini API Key (AIzaSy...)
-              </label>
-              {geminiKey && (
-                <button
-                  type="button"
-                  onClick={() => handleClearKey('gemini')}
-                  className="text-[10px] text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-2.5 h-2.5" />
-                  <span>Xóa khóa</span>
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="relative flex-1">
-                <input
-                  id="byokGemini"
-                  type={showGemini ? 'text' : 'password'}
-                  value={geminiKey}
-                  onChange={(e) => setGeminiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="w-full px-3 py-2 pr-9 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E0562D]/20 focus:border-[#E0562D] font-mono transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowGemini(!showGemini)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showGemini ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleTestKey('gemini')}
-                className="px-2.5 py-2 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap"
-              >
-                <Activity className="w-3 h-3" />
-                <span>Kiểm tra</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Test result banner */}
-          {testResult && (
-            <div className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
-              testResult.status === 'success'
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                : testResult.status === 'error'
-                ? 'bg-rose-50 border-rose-200 text-rose-800'
-                : 'bg-blue-50 border-blue-200 text-blue-800'
-            }`}>
-              {testResult.status === 'loading' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
-              ) : testResult.status === 'success' ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+        {/* OpenAI OAuth PKCE Session Status */}
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+              <span>Trạng thái kết nối:</span>
+              {oauthSession ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10.5px] font-bold">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  Đã kết nối
+                </span>
               ) : (
-                <Trash2 className="w-3.5 h-3.5 text-rose-600 flex-shrink-0" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10.5px] font-bold">
+                  Chưa kết nối
+                </span>
               )}
-              <span className="font-medium">{testResult.message}</span>
+              {oauthSession && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-semibold">
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  Auto-Refresh
+                </span>
+              )}
             </div>
-          )}
-
-          {byokSaved && (
-            <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" />
-              <span>Đã lưu khóa API an toàn trên thiết bị của bạn!</span>
+            <p className="text-xs text-slate-600 truncate mt-1">
+              {oauthSession
+                ? `Tài khoản: ${oauthSession.email || (oauthSession.accountId ? `ID #${oauthSession.accountId.slice(0, 8)}` : 'ChatGPT Plus')}`
+                : 'Bạn đang dùng AI Hệ Thống ViTudy (tiêu tốn ViToken theo lượt dùng).'}
             </p>
+          </div>
+          {oauthSession ? (
+            <button
+              type="button"
+              onClick={() => {
+                clearOpenAiOAuthSession();
+                setOauthSession(null);
+              }}
+              className="px-3 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Ngắt kết nối ChatGPT</span>
+            </button>
+          ) : (
+            <Link
+              href="/?view=desk"
+              className="px-4 py-2 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold flex items-center justify-center gap-1.5 flex-shrink-0 transition-all shadow-xs"
+            >
+              <span>Kết nối ChatGPT ngay</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
           )}
-
-          <button
-            type="submit"
-            disabled={!hasByokChanged}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
-          >
-            Lưu khóa cá nhân
-          </button>
-        </form>
+        </div>
       </section>
     </div>
   );

@@ -32,7 +32,7 @@ export function QuizTab({ fullText, documentTitle, onCloseModal, isPaper, target
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [isGraded, setIsGraded] = useState(false);
   const [timeLimit, setTimeLimit] = useState<number>(15);
-  const [useAi, setUseAi] = useState(false);
+  const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
   const [loading, setLoading] = useState(false);
 
   const handleGenerateQuestions = async () => {

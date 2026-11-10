@@ -411,11 +411,16 @@ export async function testAiConnection(params: {
   const startTime = Date.now();
   try {
     if (params.provider === 'system') {
-      await new Promise(r => setTimeout(r, 220));
+      const res = await askAi({
+        provider: 'system',
+        model: params.model,
+        prompt: 'Kiểm tra hệ thống ViTudy. Trả lời đúng 1 từ: OK',
+      });
+      const latency = Date.now() - startTime;
       return {
         success: true,
-        latencyMs: Date.now() - startTime,
-        message: `Hệ thống ViTudy sẵn sàng! Mô hình ${params.model} hoạt động bình thường.`,
+        latencyMs: latency,
+        message: `Hệ thống ViTudy sẵn sàng! Mô hình ${params.model} phản hồi sau ${latency}ms.`,
       };
     }
 
@@ -493,17 +498,25 @@ export async function testAiConnection(params: {
         );
       }
 
+      // Gửi truy vấn thực tế qua askAi để đo độ trễ thực và kiểm tra mô hình ChatGPT
+      await askAi({
+        provider: 'oauth_chatgpt',
+        model: params.model,
+        prompt: 'Kiểm tra kết nối mô hình. Trả lời đúng 1 từ: OK',
+      });
+
       const accountLabel = session.email
         ? session.email
         : session.accountId
         ? `ID: ${session.accountId.slice(0, 8)}...`
         : 'Đã xác thực PKCE';
       const planBadge = session.planType ? ` (${session.planType.toUpperCase()})` : '';
+      const latency = Date.now() - startTime;
 
       return {
         success: true,
-        latencyMs: Date.now() - startTime,
-        message: `Đã kết nối ChatGPT${planBadge} [${accountLabel}]! Mô hình ${params.model} sẵn sàng hoạt động.`,
+        latencyMs: latency,
+        message: `Mô hình ${params.model} phản hồi thành công sau ${latency}ms! [${accountLabel}${planBadge}]`,
       };
     }
 

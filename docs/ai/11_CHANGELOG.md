@@ -4,6 +4,39 @@
 
 ---
 
+## 2026-11-10 18:48 — main (Mở Rộng Trọn Bộ Mô Hình ChatGPT Codex, Tinh Gọn 2 Nhà Cung Cấp & Kết Nối Thực Tế Cho Tóm Tắt/Trắc Nghiệm)
+- **Task:** 
+  1. **Mở Rộng Trọn Bộ 11 Mô Hình ChatGPT Codex:**
+     - Bổ sung danh sách mô hình thực tế từ Codex endpoint (tương thích 100% ViTai): `gpt-5.6-terra` (Codex Flagship - Khuyên dùng), `gpt-5.6-luna`, `gpt-5.6-sol`, `gpt-5.5`, `gpt-5`, `gpt-4o`, `gpt-4o-mini`, `o3-mini`, `o1`, `o1-mini`, `chatgpt-4o-latest`.
+     - Cập nhật hàm `resolveCodexModel` và payload `reasoning: { effort: 'low', summary: 'auto' }`, `OpenAI-Beta: responses=v1`, `User-Agent: codex_cli_rs/0.136.0 (Linux; x86_64)` trong Edge Function `ai-chat` và đã deploy thành công lên Supabase Production.
+  2. **Tinh Gọn Giao Diện: Chỉ Giữ 2 Nhà Cung Cấp Duy Nhất:**
+     - Loại bỏ hoàn toàn hình thức nhập API Key thủ công (Google Gemini & OpenAI BYOK) gây rườm rà.
+     - Giữ lại 2 lựa chọn: **ViTudy (Hệ thống)** (mặc định trừ ViToken) và **Đăng nhập ChatGPT** (OAuth PKCE 1-chạm không tốn ViToken).
+     - Đồng bộ thẻ "Đăng nhập ChatGPT" trong modal AI HUD (`TopRightWallet`) và trang cài đặt tài khoản (`AccountSettings`).
+  3. **Đảm Bảo Chức Năng Hoạt Động Thật 100% (Real AI Execution):**
+     - Nút "Kiểm tra hoạt động (Test AI)" gửi truy vấn thực tế qua `askAi` đến Edge Function và ChatGPT Codex endpoint, đo độ trễ mạng thực ms và hiển thị phản hồi mô hình trực tiếp thay vì giả lập.
+     - Tự động kích hoạt chế độ AI trong `SummaryTab` (Tóm tắt) và `QuizTab` (Sinh trắc nghiệm) khi đã đăng nhập ChatGPT.
+     - Sửa lỗi trừ ViToken ngoài ý muốn trong `BookSpread.tsx` và `PaperSheet.tsx` khi người dùng đang sử dụng tài khoản ChatGPT đã kết nối.
+- **Files Modified:**
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/profile/AccountSettings.tsx`
+  - `src/components/modals/study-tools/SummaryTab.tsx`
+  - `src/components/modals/study-tools/QuizTab.tsx`
+  - `src/components/objects/BookSpread.tsx`
+  - `src/components/objects/PaperSheet.tsx`
+  - `src/lib/aiClient.ts`
+  - `supabase/functions/ai-chat/index.ts`
+  - `AGENTS.md`
+  - `docs/ai/05_API_AND_ROUTES.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+  - `npx supabase functions deploy ai-chat --remote=yndwxcnedlilmsbbydvb --no-verify-jwt --yes`: Deployed to production.
+- **Docs updated:** `AGENTS.md`, `05_API_AND_ROUTES.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 18:20 — main (Triển Khai Xác Thực OpenAI OAuth 2.0 PKCE Thực Tế, 1-Chạm Dán Callback, Auto-Refresh Token & Codex Responses API Chuẩn ViTai)
 - **Task:** Thay thế hoàn toàn cơ chế nhập tay demo của chế độ `oauth_chatgpt` bằng kiến trúc **OAuth 2.0 Authorization Code Flow with PKCE + Auto-Refresh Token + Codex Responses API** học theo ứng dụng Python desktop **ViTai**:
   1. **Module PKCE & Quản Lý Phiên OAuth (`src/lib/openaiOAuth.ts`):**
