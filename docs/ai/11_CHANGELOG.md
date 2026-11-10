@@ -4,6 +4,39 @@
 
 ---
 
+## 2026-11-10 22:20 — main (Tinh Chỉnh Modal Cài Đặt AI Giảm Độ Rối Thị Giác & Bớt Chất AI)
+- **Task:**
+  1. **Màu sắc & Accent tinh giản:**
+     - Giữ duy nhất màu cam (`#E0562D`) làm màu nhấn, toàn bộ nền, viền và chữ chuyển sang thang xám chuẩn (`slate-50` đến `slate-900`).
+     - Màu xanh lá chỉ dùng duy nhất cho chấm trạng thái kết nối 8px (`w-2 h-2 rounded-full bg-emerald-500`).
+  2. **Thẻ nhà cung cấp AI phẳng & tối giản:**
+     - Viền xám 1px khi chưa chọn (`border-slate-200`), viền cam 2px khi được chọn (`border-[#E0562D]`).
+     - Loại bỏ hoàn toàn nhãn "Đang dùng" và các pill màu gây rối thị giác ("Hệ thống ViTudy", "Tài khoản ChatGPT").
+  3. **Khối xác thực một dòng thanh lịch:**
+     - Thay thế hộp xanh lớn bằng một dòng duy nhất: chấm xanh 8px, email tài khoản, liên kết "Đổi tài khoản" và nút "Đăng xuất".
+     - Bỏ các pill "Tự gia hạn đăng nhập" và "Không tốn ViToken".
+  4. **Quyền riêng tư tinh tế:**
+     - Chuyển thành dòng chữ nhỏ 12px màu xám nhẹ (`text-[11px] text-slate-400`), không nền, không icon khóa.
+  5. **Mô hình AI & Phân cấp thị giác:**
+     - Tách hai dòng rõ ràng (Dòng 1: Tên mô hình bên trái, mã model monospace bên phải; Dòng 2: Mô tả xám ngắn gọn).
+     - Mã model hiển thị font monospace thanh thoát, không bọc chip xám to.
+  6. **Bố cục & Bo góc chuẩn mực:**
+     - Bỏ toàn bộ việc đóng khung lồng nhau (card trong card). Phân tách các phần bằng khoảng trắng 24–32px và đường kẻ phân cách mảnh `border-t border-slate-100`.
+     - Bo góc 8px (`rounded-lg`) cho các thành phần điều khiển, bo góc 12px (`rounded-xl`) cho khung modal.
+  7. **Viết lại câu chữ thực tế, loại bỏ tính từ tối thượng:**
+     - "Flagship suy luận tối cao" $\rightarrow$ "Mạnh nhất, phù hợp bài toán nhiều bước".
+     - "Tự động chuyển sang AI ViTudy nếu..." $\rightarrow$ "Khi ChatGPT hết lượt, tự chuyển sang ViTudy (trừ ViToken).".
+- **Files Modified:**
+  - `src/components/hud/TopRightWallet.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `npx vitest run`: Passed 13/13 tests.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 21:05 — main (Tối Ưu Bảng Dữ Liệu Trong Ghi Chú & Hoàn Thiện Trải Nghiệm Chợ Tài Liệu)
 - **Task:**
   1. **Nâng cấp Bảng dữ liệu trong ghi chú (`StickyNoteItem.tsx`):**
