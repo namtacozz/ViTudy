@@ -144,6 +144,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const { user, status } = useAuth();
   const [spaces, setSpaces] = useState<StudySpace[]>(INITIAL_SPACES);
   const [activeSpaceId, setActiveSpaceId] = useState<string>(INITIAL_SPACES[0].id);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [transform, setTransform] = useState<CanvasTransform>(DEFAULT_TRANSFORM);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -369,26 +370,13 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   // Load spaces on startup from Supabase Cloud (when authenticated) or localStorage (guest)
   useEffect(() => {
-    if (status === 'authenticated' && user?.id) {
-      StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
-        if (cloudSpaces && cloudSpaces.length > 0) {
-          setSpaces(cloudSpaces);
-          setActiveSpaceId(cloudSpaces[0].id);
-        } else {
-          // Tài khoản mới chưa có bàn học -> Khởi tạo bàn học mẫu Demo
-          import('@/data/demoSpace').then(({ createDemoStudySpace }) => {
-            const demoSpace = createDemoStudySpace(user.id);
-            setSpaces([demoSpace]);
-            setActiveSpaceId(demoSpace.id);
-            StudySpaceService.saveSpace(demoSpace, user.id).catch(() => {});
-          });
-        }
-      });
-      return;
-    }
+    // 1. Đọc không gian đã lưu từ localStorage trước để đảm bảo dữ liệu không bị mất khi reload
+    let localSpaces: StudySpace[] | null = null;
+    let localActiveId: string | null = null;
 
     try {
       const saved = localStorage.getItem('vitudy_spaces');
+      localActiveId = localStorage.getItem('vitudy_active_space_id');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -404,19 +392,105 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             }
             return data;
           };
-          setSpaces(deepNormalize(parsed));
-          setActiveSpaceId(parsed[0].id);
+          localSpaces = deepNormalize(parsed);
         }
       }
     } catch {
       // fallback
     }
+
+    // Đọc URL param ?space=XYZ nếu có
+    let urlSpaceId: string | null = null;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      urlSpaceId = params.get('space');
+    }
+
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
+        if (cloudSpaces && cloudSpaces.length > 0) {
+          setSpaces(cloudSpaces);
+          const targetId = (urlSpaceId && cloudSpaces.some(s => s.id === urlSpaceId))
+            ? urlSpaceId
+            : (localActiveId && cloudSpaces.some(s => s.id === localActiveId))
+            ? localActiveId
+            : cloudSpaces[0].id;
+          setActiveSpaceId(targetId);
+        } else if (localSpaces && localSpaces.length > 0) {
+          // Chưa có trên cloud nhưng có local -> sync local lên cloud
+          setSpaces(localSpaces);
+          const targetId = (urlSpaceId && localSpaces.some(s => s.id === urlSpaceId))
+            ? urlSpaceId
+            : (localActiveId && localSpaces.some(s => s.id === localActiveId))
+            ? localActiveId
+            : localSpaces[0].id;
+          setActiveSpaceId(targetId);
+          localSpaces.forEach(s => StudySpaceService.saveSpace(s, user.id).catch(() => {}));
+        } else {
+          // Tài khoản mới chưa có bàn học -> Khởi tạo bàn học mẫu Demo
+          import('@/data/demoSpace').then(({ createDemoStudySpace }) => {
+            const demoSpace = createDemoStudySpace(user.id);
+            setSpaces([demoSpace]);
+            setActiveSpaceId(demoSpace.id);
+            StudySpaceService.saveSpace(demoSpace, user.id).catch(() => {});
+          });
+        }
+        setIsLoaded(true);
+      });
+      return;
+    }
+
+    // Khi là khách (Guest)
+    if (localSpaces && localSpaces.length > 0) {
+      setSpaces(localSpaces);
+      const targetId = (urlSpaceId && localSpaces.some(s => s.id === urlSpaceId))
+        ? urlSpaceId
+        : (localActiveId && localSpaces.some(s => s.id === localActiveId))
+        ? localActiveId
+        : localSpaces[0].id;
+      setActiveSpaceId(targetId);
+    }
+    setIsLoaded(true);
   }, [status, user?.id]);
 
-  // Save spaces to localStorage & Supabase Cloud (debounce 500ms)
+  // Kiểm tra liên tục nếu URL thay đổi ?space=XYZ
   useEffect(() => {
+    if (typeof window !== 'undefined' && isLoaded) {
+      const params = new URLSearchParams(window.location.search);
+      const urlSpaceId = params.get('space');
+      if (urlSpaceId && spaces.some(s => s.id === urlSpaceId) && activeSpaceId !== urlSpaceId) {
+        setActiveSpaceId(urlSpaceId);
+      }
+    }
+  }, [isLoaded, spaces, activeSpaceId]);
+
+  // Kiểm tra nếu có tài liệu Chợ vừa mua cần mở trên bàn học
+  useEffect(() => {
+    if (isLoaded && activeSpaceId) {
+      try {
+        const pendingDocStr = localStorage.getItem('vitudy_pending_market_item');
+        if (pendingDocStr) {
+          const pendingItem = JSON.parse(pendingDocStr);
+          localStorage.removeItem('vitudy_pending_market_item');
+          if (pendingItem.type === 'exam' && pendingItem.examQuestions) {
+            addExamSheet(pendingItem.title, pendingItem.examQuestions, 20);
+          } else {
+            addUploadedDocument(pendingItem.title, pendingItem.pages || [{ title: pendingItem.title, text: pendingItem.summary }]);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [isLoaded, activeSpaceId]);
+
+  // Save spaces to localStorage & Supabase Cloud (chỉ lưu sau khi isLoaded === true để tránh ghi đè)
+  useEffect(() => {
+    if (!isLoaded) return;
+
     try {
       localStorage.setItem('vitudy_spaces', JSON.stringify(spaces));
+      localStorage.setItem('vitudy_active_space_id', activeSpaceId);
     } catch {
       // ignore
     }
@@ -438,7 +512,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
       return () => clearTimeout(timer);
     }
-  }, [spaces, strokes, status, user?.id, activeSpaceId]);
+  }, [spaces, strokes, status, user?.id, activeSpaceId, isLoaded]);
 
   const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
 
@@ -485,7 +559,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         {
           id: `book-${Date.now()}`,
           type: 'book',
-          title: 'Giáo trình Ôn Thi Giữa Kỳ',
+          title: 'Giáo trình Ôn Thi Giữa Kỳ: Giải Tích & Tối Ưu',
           x: 160,
           y: 80,
           rotation: 0,
@@ -499,14 +573,50 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             {
               id: 'p-mid-1',
               pageNumber: 1,
-              title: 'Chương 1: Trọng tâm lý thuyết',
-              text: 'Tổng hợp các định lý, công thức và bài toán điển hình trong đề thi giữa kỳ.\n\n• Định nghĩa và điều kiện áp dụng\n• Các bước biến đổi và ví dụ minh họa'
+              title: 'Chương 1: Đạo hàm hàm nhiều biến & Gradient',
+              text: `## 1.1 Khái niệm Gradient trong không gian đa chiều
+Gradient của hàm khả vi $f: \\mathbb{R}^n \\to \\mathbb{R}$ tại điểm $x$ được định nghĩa bởi vector các đạo hàm riêng:
+
+$$\\nabla f(x) = \\left[ \\frac{\\partial f}{\\partial x_1}, \\frac{\\partial f}{\\partial x_2}, \\dots, \\frac{\\partial f}{\\partial x_n} \\right]^T$$
+
+• Hướng của $\\nabla f(x)$ là hướng mà hàm số tăng nhanh nhất.
+• Độ lớn của gradient biểu thị tốc độ tăng của giá trị hàm số.`
             },
             {
               id: 'p-mid-2',
               pageNumber: 2,
-              title: 'Chương 2: Dạng bài tập tính toán',
-              text: 'Phương pháp giải nhanh trắc nghiệm và tự luận các dạng bài thường gặp.'
+              title: 'Chương 2: Ma trận Hessian & Cực trị địa phương',
+              text: `## 2.1 Điều kiện tối ưu bậc hai
+Ma trận Hessian chứa toàn bộ các đạo hàm riêng cấp hai của hàm $f$:
+
+$$H(x) = \\nabla^2 f(x) = \\left[ \\frac{\\partial^2 f}{\\partial x_i \\partial x_j} \\right]_{i,j=1}^n$$
+
+• Điểm dừng $x^*$ thỏa mãn $\\nabla f(x^*) = 0$.
+• Nếu $H(x^*)$ xác định dương ($H \\succ 0$), $x^*$ là điểm cực tiểu địa phương ngặt.
+• Nếu $H(x^*)$ có cả giá trị riêng âm và dương, $x^*$ là điểm yên ngựa (saddle point).`
+            },
+            {
+              id: 'p-mid-3',
+              pageNumber: 3,
+              title: 'Chương 3: Thuật toán Tối ưu Gradient Descent',
+              text: `## 3.1 Quy tắc cập nhật trọng số
+Thuật toán Gradient Descent cập nhật vector tham số $\\theta$ theo công thức:
+
+$$\\theta^{(t+1)} = \\theta^{(t)} - \\eta \\nabla L(\\theta^{(t)})$$
+
+Trong đó:
+• $\\eta > 0$ là tốc độ học (learning rate).
+• $L(\\theta)$ là hàm mất mát (loss function).
+• Dấu trừ biểu thị việc di chuyển ngược hướng gradient để tìm cực tiểu toàn cục hoặc địa phương.`
+            },
+            {
+              id: 'p-mid-4',
+              pageNumber: 4,
+              title: 'Chương 4: Tóm tắt công thức & Bẫy điểm thi',
+              text: `## 4.1 Bảng tổng kết trước giờ vào phòng thi
+• Nhân tử Lagrange cho ràng buộc đẳng thức: $\\mathcal{L}(x, \\lambda) = f(x) + \\lambda^T h(x)$.
+• Điều kiện KKT cho ràng buộc bất đẳng thức: $\\mu_i g_i(x) = 0$ và $\\mu_i \\ge 0$.
+• Phân rã SVD: $A = U \\Sigma V^T$ với $\\Sigma$ chứa các giá trị suy biến giảm dần $\\sigma_1 \\ge \\sigma_2 \\ge \\dots \\ge 0$.`
             }
           ]
         },
@@ -522,7 +632,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           pageCount: 1,
           currentPageIndex: 0,
           stickyColor: '#fef08a',
-          stickyText: 'Lưu ý ôn kỹ: Nhớ giải lại các bài tập trắc nghiệm mẫu trước ngày thi!',
+          stickyText: `Kế hoạch ôn thi 7 ngày:
+• Thứ 2 - Thứ 4: Ôn giải tích và đạo hàm ma trận
+• Thứ 5 - Thứ 6: Giải 5 đề thi mẫu trên bàn học
+• Thứ 7: Làm bài test thử tính giờ và rà soát bẫy điểm số!`,
           pages: []
         }
       ];
@@ -533,13 +646,13 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         {
           id: `paper-theory-${Date.now()}`,
           type: 'paper',
-          title: 'Tờ Tóm Tắt Giáo Trình',
-          x: 140,
-          y: 80,
+          title: 'Tóm Tắt Giáo Trình Giải Tích & Tối Ưu',
+          x: 120,
+          y: 70,
           rotation: 0,
           scale: 1,
           zIndex: 11,
-          pageCount: 1,
+          pageCount: 2,
           currentPageIndex: 0,
           colorTheme: '#047857',
           isBinder: false,
@@ -547,17 +660,29 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             {
               id: 'p-theory-1',
               pageNumber: 1,
-              title: 'Tóm Tắt Giáo Trình',
-              text: 'Các công thức cốt lõi và định nghĩa trọng tâm cần tra cứu nhanh khi giải đề.'
+              title: 'Phần 1: Công thức Đạo hàm Ma trận cốt lõi',
+              text: `## 1. Vi phân Ma trận trong Học Máy
+• Đạo hàm tích vô hướng: $\\frac{\\partial (a^T x)}{\\partial x} = a$.
+• Đạo hàm dạng toàn phương: $\\frac{\\partial (x^T A x)}{\\partial x} = (A + A^T)x$. Khi $A$ đối xứng: $\\frac{\\partial (x^T A x)}{\\partial x} = 2Ax$.
+• Gradient hàm mất mát MSE: $\\nabla_w \\|Xw - y\\|^2 = 2 X^T(Xw - y)$.`
+            },
+            {
+              id: 'p-theory-2',
+              pageNumber: 2,
+              title: 'Phần 2: Phương pháp Tối ưu hóa Hiện đại',
+              text: `## 2. Các biến thể Gradient Descent
+• Momentum: $v_{t+1} = \\gamma v_t + \\eta \\nabla L(\\theta_t)$, $\\theta_{t+1} = \\theta_t - v_{t+1}$.
+• Adam: Kết hợp trung bình trượt bậc 1 $m_t$ và bậc 2 $v_t$, tự động điều chỉnh learning rate cho từng trọng số.
+• L1 Regularization (Lasso): Tạo nghiệm thưa (sparsity), ép các trọng số không quan trọng về đúng 0.`
             }
           ]
         },
         {
-          id: `paper-exam-${Date.now()}`,
+          id: `exam-sheet-${Date.now()}`,
           type: 'paper',
-          title: 'Đề Thi Thử Tốt Nghiệp & Học Phần',
-          x: 640,
-          y: 80,
+          title: 'Đề Thi Thử Học Phần: Giải Tích & Machine Learning (15 Phút)',
+          x: 620,
+          y: 70,
           rotation: 0,
           scale: 1,
           zIndex: 12,
@@ -565,28 +690,73 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           currentPageIndex: 0,
           colorTheme: '#0284c7',
           isBinder: false,
+          isExamSheet: true,
+          examData: {
+            questions: [
+              {
+                id: 'eq-1',
+                question: 'Gradient của hàm số $f(x, y) = x^2 + 3y^2$ tại điểm $(1, 2)$ là:',
+                options: ['[2, 6]^T', '[2, 12]^T', '[1, 6]^T', '[4, 12]^T'],
+                correctAnswer: 1,
+                explanation: 'Ta có $\\frac{\\partial f}{\\partial x} = 2x$, $\\frac{\\partial f}{\\partial y} = 6y$. Tại $(1, 2)$: $\\nabla f(1, 2) = [2(1), 6(2)]^T = [2, 12]^T$.'
+              },
+              {
+                id: 'eq-2',
+                question: 'Khi ma trận Hessian $H$ tại điểm dừng $x^*$ xác định dương, điểm $x^*$ là:',
+                options: ['Điểm yên ngựa', 'Điểm cực đại địa phương', 'Điểm cực tiểu địa phương ngặt', 'Không xác định'],
+                correctAnswer: 2,
+                explanation: 'Theo điều kiện đủ bậc hai, ma trận Hessian xác định dương (mọi giá trị riêng > 0) tại điểm dừng chứng minh hàm số có cực tiểu địa phương ngặt.'
+              },
+              {
+                id: 'eq-3',
+                question: 'Trong thuật toán Gradient Descent, siêu tham số $\\eta$ (learning rate) quá lớn sẽ dẫn tới:',
+                options: ['Hội tụ nhanh hơn tới cực tiểu', 'Mô hình phân kỳ và dao động mạnh', 'Trọng số bị triệt tiêu về 0', 'Tăng thời gian huấn luyện mà không đổi giá trị'],
+                correctAnswer: 1,
+                explanation: 'Nếu learning rate quá lớn, bước cập nhật vượt qua đáy cực tiểu khiến hàm mất mát nhảy vọt và phân kỳ.'
+              },
+              {
+                id: 'eq-4',
+                question: 'Phân rã SVD của ma trận $A = U \\Sigma V^T$, các cột của ma trận $U$ là:',
+                options: ['Vector riêng của $AA^T$', 'Vector riêng của $A^TA$', 'Các giá trị suy biến', 'Các trọng số chuẩn hóa'],
+                correctAnswer: 0,
+                explanation: 'Các cột của $U$ (left singular vectors) là các vector riêng trực chuẩn của ma trận đối xứng $AA^T$.'
+              },
+              {
+                id: 'eq-5',
+                question: 'Thuật toán tối ưu nào kết hợp giữa quán tính Momentum và điều chỉnh tốc độ học thích nghi RMSProp?',
+                options: ['SGD', 'AdaGrad', 'Adam', 'L-BFGS'],
+                correctAnswer: 2,
+                explanation: 'Adam (Adaptive Moment Estimation) ước lượng cả moment bậc 1 (trung bình có trọng số của gradient) và moment bậc 2 (phương sai không định tâm).'
+              }
+            ],
+            userAnswers: {},
+            timeLimitMinutes: 15,
+            isGraded: false
+          },
           pages: [
             {
-              id: 'p-exam-1',
+              id: 'p-exam-cover',
               pageNumber: 1,
-              title: 'Đề Thi Thử',
-              text: 'Câu 1: Cho hàm số f(x). Khẳng định nào sau đây đúng?\nA. Đạo hàm bằng 0 tại cực trị\nB. f(x) luôn đồng biến\nC. f(x) không liên tục'
+              title: 'Đề Thi Thử Giải Tích & ML',
+              text: 'Đề thi 5 câu hỏi trắc nghiệm chuẩn hóa. Nhấp vào các đáp án để chọn câu trả lời, sau đó bấm "Chấm điểm ngay" để xem điểm số và lời giải chi tiết.'
             }
           ]
         },
         {
           id: `note-${Date.now()}`,
           type: 'sticky_note',
-          title: 'Nháp làm bài',
-          x: 1100,
-          y: 120,
+          title: 'Nháp thi & Công thức',
+          x: 1140,
+          y: 90,
           rotation: 0,
           scale: 1,
           zIndex: 15,
           pageCount: 1,
           currentPageIndex: 0,
           stickyColor: '#fef08a',
-          stickyText: 'Bấm nút STudy trên tờ đề thi để tự động chấm điểm và xem lời giải chi tiết!',
+          stickyText: `Nháp tính nhanh:
+• Câu 1: Đạo hàm riêng 2x và 6y -> Thay (1,2) -> [2, 12]
+• Bấm STudy trên đề thi để mở đồng hồ đếm ngược và chấm điểm tự động!`,
           pages: []
         }
       ];
@@ -597,13 +767,13 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         {
           id: `book-group-${Date.now()}`,
           type: 'book',
-          title: 'Tài Liệu Thảo Luận Nhóm',
+          title: 'Sổ Tay Thảo Luận Nhóm: Nghiên Cứu Deep Learning',
           x: 160,
           y: 80,
           rotation: 0,
           scale: 1,
           zIndex: 10,
-          pageCount: 4,
+          pageCount: 3,
           currentPageIndex: 0,
           colorTheme: '#5c3920',
           isBinder: false,
@@ -611,24 +781,60 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             {
               id: 'p-group-1',
               pageNumber: 1,
-              title: 'Chương 1: Đề tài nghiên cứu nhóm',
-              text: 'Phân công nhiệm vụ nhóm:\n• Bạn 1: Đọc và tóm tắt lý thuyết\n• Bạn 2: Thu thập dữ liệu và lập trình mô hình\n• Bạn 3: Thiết kế slide thuyết trình'
+              title: 'Mục tiêu & Phân công công việc',
+              text: `## Phân công nhiệm vụ đề tài học máy
+• Thành (Trưởng nhóm): Huấn luyện kiến trúc Transformer & ViT.
+• Tuấn: Tiền xử lý tập dữ liệu CIFAR-100 và làm sạch nhãn.
+• Lan: Viết báo cáo giải thích độ đo Precision, Recall, F1 và vẽ biểu đồ ROC-AUC.`
+            },
+            {
+              id: 'p-group-2',
+              pageNumber: 2,
+              title: 'Kết quả thực nghiệm mô hình',
+              text: `## Báo cáo thực nghiệm tuần 3
+• Baseline CNN: Accuracy đạt 78.4% sau 20 epochs.
+• ResNet-18: Accuracy đạt 86.2%, không còn hiện tượng vanishing gradient.
+• Transformer (ViT-B/16): Accuracy đạt 92.8% khi áp dụng Data Augmentation (Mixup + CutMix).`
+            },
+            {
+              id: 'p-group-3',
+              pageNumber: 3,
+              title: 'Câu hỏi cần thảo luận trong buổi họp',
+              text: `## Các vấn đề cần giải quyết
+• Làm thế nào để giảm kích thước mô hình khi triển khai lên thiết bị di động?
+• Thử nghiệm kỹ thuật Quantization INT8 và Knowledge Distillation để nén mô hình.`
             }
           ]
         },
         {
           id: `note-group-1-${Date.now()}`,
           type: 'sticky_note',
-          title: 'Ý kiến bạn A',
+          title: 'Ý kiến Thành',
           x: 1120,
-          y: 100,
+          y: 90,
           rotation: 0,
           scale: 1,
           zIndex: 15,
           pageCount: 1,
           currentPageIndex: 0,
           stickyColor: '#fed7aa',
-          stickyText: 'Đã hoàn thành phần phân tích dữ liệu, mọi người xem lại nhé!',
+          stickyText: `Tiến độ nhóm:
+Đã hoàn thành huấn luyện mô hình Transformer, kết quả vượt kỳ vọng 92.8%! Chiều nay 15h họp online nhé cả nhóm.`,
+          pages: []
+        },
+        {
+          id: `note-group-2-${Date.now()}`,
+          type: 'sticky_note',
+          title: 'Góp ý từ Tuấn',
+          x: 1120,
+          y: 330,
+          rotation: 0,
+          scale: 1,
+          zIndex: 16,
+          pageCount: 1,
+          currentPageIndex: 0,
+          stickyColor: '#bbf7d0',
+          stickyText: `Tập dữ liệu đã chuẩn hóa xong và đẩy lên Google Drive. Mình đã chia sẵn train/val/test tỉ lệ 7:1.5:1.5 rồi nhé!`,
           pages: []
         }
       ];
@@ -643,6 +849,15 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       updatedAt: new Date().toISOString(),
       items
     };
+
+    // Lưu ngay lập tức vào localStorage để chống mất dữ liệu khi reload
+    try {
+      const updatedSpaces = [...spaces, newSpace];
+      localStorage.setItem('vitudy_spaces', JSON.stringify(updatedSpaces));
+      localStorage.setItem('vitudy_active_space_id', newSpaceId);
+    } catch {
+      // ignore
+    }
 
     if (status === 'authenticated' && user?.id) {
       StudySpaceService.saveSpace(newSpace, user.id);

@@ -4,6 +4,48 @@
 
 ---
 
+## 2026-11-10 22:45 — main (Tối Ưu Modal Nạp ViToken, Trình Đọc 2 Trang, Dữ Liệu Chợ Thật & Bền Vững Không Gian Bàn Học)
+- **Task:**
+  1. **Tối ưu Modal Nạp ViToken (`TopUpModal.tsx` & `PricingTiers.tsx`):**
+     - Đổi tiêu đề chuẩn "Nạp ViToken", phụ đề ngắn gọn, loại bỏ nền cam nhạt của banner quy đổi thành 1 dòng chữ xám thanh lịch.
+     - 5 thẻ gói cùng cấu trúc 3 dòng: Tên gói (kèm `+N ViToken`), Giá to nhất, Số ViToken nhận được (chữ xám đậm, bỏ monospace đỏ và bỏ nhãn "Không tặng").
+     - Nhãn "Phổ biến" duy nhất trên gói Học kỳ. Trạng thái chọn: viền cam 1.5px và dấu tích, không đổi nền cả thẻ, không đổ bóng.
+     - Khối thanh toán: hiển thị `Số dư: X → Y ViToken` (màu xanh lá cho số dư sau nạp), bỏ chip `(+NV)`, nút thanh toán cam rõ số tiền.
+  2. **Trình đọc giáo trình toàn màn hình (`FullScreenDocModal.tsx` & `MathRenderer.tsx`):**
+     - Nâng cấp `MathRenderer`: biên dịch tiêu đề Markdown `## `, `### ` thành heading thật sự; nhận diện và tách danh sách gạch đầu dòng `•` hoặc `-` thành danh sách chuẩn; công thức KaTeX display block có khoảng trắng tối thiểu 16px (`my-4`); căn lề đều hai bên và khoảng cách dòng 1.6 (`leading-[1.6] text-justify`).
+     - Thanh công cụ: gộp bộ chuyển chế độ segmented "Một trang" / "Hai trang"; nút đóng kèm phím tắt `<kbd>Esc</kbd>`.
+     - Danh sách trang thu nhỏ bên trái: đổi tên thành "Danh sách trang (N)", hiển thị tiêu đề và số trang ở góc thumbnail, triệt tiêu hoàn toàn mã LaTeX thô; chỉ trang đang xem mới có viền cam 2px.
+  3. **Không gian học tập bền vững & Chống mất dữ liệu khi reload (`StudySpaceContext.tsx`, `page.tsx`, `HomePage.tsx`):**
+     - Thêm cờ `isLoaded` ngăn chặn 100% tình trạng ghi đè bàn học trước khi nạp xong dữ liệu từ storage hoặc Supabase Cloud.
+     - Lưu trữ và khôi phục đồng bộ cả danh sách `vitudy_spaces` lẫn bàn học đang mở `vitudy_active_space_id`.
+     - Điều hướng URL `/?view=desk&space=[id]` giúp bấm tạo bàn mới từ Trang chủ vào đúng bàn học vừa tạo thay vì nhảy vào bàn demo.
+     - Xây dựng 4 mẫu bàn học thật sự (`blank`, `midterm`, `curriculum_exam`, `group_study`) với nội dung học thuật thật (đề thi trắc nghiệm 5 câu có chấm điểm, giáo trình tối ưu hóa đa trang, phân công đồ án).
+  4. **Nâng cấp tài liệu Chợ thật & Cấp 5.000 ViToken cho tác giả (`marketMockData.ts`, `ViTokenContext.tsx`, `ViTokenService.ts`):**
+     - Thay thế toàn bộ các trang tài liệu demo 1 dòng thành tài liệu chuyên sâu, phong phú, đa dạng ngành học (Giải tích & Tối ưu AI, Xác suất Thống kê, Deep Learning CNNs, Cấu trúc Dữ liệu & Giải thuật, Design Patterns & SOLID, React & Next.js, Transformers & Attention).
+     - Hỗ trợ nút "Mở trên bàn học" từ Chợ tự động đưa tài liệu lên bàn học đang hoạt động qua `vitudy_pending_market_item`.
+     - Tự động cấp hạn mức đặc quyền 5.000 ViToken cho tài khoản `namtacozz@gmail.com`.
+- **Files Modified:**
+  - `src/components/payment/PricingTiers.tsx`
+  - `src/components/payment/TopUpModal.tsx`
+  - `src/components/common/MathRenderer.tsx`
+  - `src/components/modals/FullScreenDocModal.tsx`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/context/ViTokenContext.tsx`
+  - `src/services/ViTokenService.ts`
+  - `src/data/marketMockData.ts`
+  - `src/app/page.tsx`
+  - `src/app/market/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `pnpm run docs:index ; pnpm run docs:check`
+  - `npx tsc --noEmit`
+  - `npx vitest run`
+  - `pnpm run build:pages`
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 22:20 — main (Tinh Chỉnh Modal Cài Đặt AI Giảm Độ Rối Thị Giác & Bớt Chất AI)
 - **Task:**
   1. **Màu sắc & Accent tinh giản:**

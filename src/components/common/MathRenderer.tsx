@@ -26,89 +26,204 @@ function renderKatexWithCache(math: string, displayMode: boolean): string {
 }
 
 /**
- * MathRenderer parses content containing LaTeX math ($...$ or $$...$$)
- * or common mathematical expressions and renders them via KaTeX with fallback.
- * Memoized with global compile cache to eliminate render lag during zoom/pan.
+ * Render inline elements (KaTeX math and Markdown bold) within a text span
+ */
+function renderInlineContent(text: string): React.ReactNode {
+  if (!text) return null;
+
+  // Split by inline math ($...$ or \(...\))
+  const mathRegex = /(\\\([\s\S]+?\\\)|\$[^\$\n]+?\$)/g;
+  const parts = text.split(mathRegex);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+
+    // Inline Math: \(...\)
+    if (part.startsWith('\\(') && part.endsWith('\\)')) {
+      const rawMath = part.slice(2, -2).trim();
+      const html = renderKatexWithCache(rawMath, false);
+      if (html) {
+        return (
+          <span 
+            key={index} 
+            className="inline-block px-0.5 align-baseline"
+            dangerouslySetInnerHTML={{ __html: html }} 
+          />
+        );
+      }
+      return <code key={index} className="font-mono text-xs">{rawMath}</code>;
+    }
+
+    // Inline Math: $...$
+    if (part.startsWith('$') && part.endsWith('$')) {
+      const rawMath = part.slice(1, -1).trim();
+      const html = renderKatexWithCache(rawMath, false);
+      if (html) {
+        return (
+          <span 
+            key={index} 
+            className="inline-block px-0.5 align-baseline"
+            dangerouslySetInnerHTML={{ __html: html }} 
+          />
+        );
+      }
+      return <code key={index} className="font-mono text-xs">{rawMath}</code>;
+    }
+
+    // Bold text: **...**
+    const boldRegex = /(\*\*[^*]+?\*\*)/g;
+    const textSegments = part.split(boldRegex);
+
+    return (
+      <span key={index}>
+        {textSegments.map((seg, sIdx) => {
+          if (seg.startsWith('**') && seg.endsWith('**')) {
+            return (
+              <strong key={sIdx} className="font-bold text-slate-900">
+                {seg.slice(2, -2)}
+              </strong>
+            );
+          }
+          return seg;
+        })}
+      </span>
+    );
+  });
+}
+
+/**
+ * MathRenderer parses content containing Markdown headings (##), lists (• / -),
+ * and LaTeX math ($...$, $$...$$, \(...\), \[...\]).
+ * Memoized with global compile cache to eliminate render lag.
  */
 export const MathRenderer = React.memo(function MathRenderer({ content, className = '' }: MathRendererProps) {
   if (!content) return null;
 
-  // Split content by inline ($...$ / \(...\)) or block ($$...$$ / \[...\]) math delimiters
-  const mathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\$\n]+?\$)/g;
-  const parts = content.split(mathRegex);
+  // 1. First split by Block Math ($$...$$ or \[...\])
+  const blockMathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\])/g;
+  const rawBlocks = content.split(blockMathRegex);
 
   return (
-    <span className={`inline-math-container ${className}`}>
-      {parts.map((part, index) => {
-        if (!part) return null;
+    <div className={`math-rendered-document leading-[1.6] text-justify ${className}`}>
+      {rawBlocks.map((block, bIdx) => {
+        if (!block) return null;
 
-        // Block Display Math: $$...$$ or \[...\]
-        if ((part.startsWith('$$') && part.endsWith('$$')) || (part.startsWith('\\[') && part.endsWith('\\]'))) {
-          const rawMath = part.slice(2, -2).trim();
+        // Block Display Math ($$...$$ or \[...\]) with minimum 16px vertical margins
+        if ((block.startsWith('$$') && block.endsWith('$$')) || (block.startsWith('\\[') && block.endsWith('\\]'))) {
+          const rawMath = block.slice(2, -2).trim();
           const html = renderKatexWithCache(rawMath, true);
           if (html) {
             return (
-              <span 
-                key={index} 
-                className="block my-2.5 overflow-x-auto no-scrollbar py-1"
+              <div 
+                key={bIdx} 
+                className="my-4 py-1.5 overflow-x-auto no-scrollbar text-center"
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
           }
-          return <code key={index} className="block my-2 font-mono text-xs">{rawMath}</code>;
+          return <code key={bIdx} className="block my-4 font-mono text-xs text-center">{rawMath}</code>;
         }
 
-        // Inline Math: \(...\)
-        if (part.startsWith('\\(') && part.endsWith('\\)')) {
-          const rawMath = part.slice(2, -2).trim();
-          const html = renderKatexWithCache(rawMath, false);
-          if (html) {
-            return (
-              <span 
-                key={index} 
-                className="inline-block px-0.5 align-baseline"
-                dangerouslySetInnerHTML={{ __html: html }} 
-              />
+        // 2. Parse lines for Headings, Lists, and Paragraphs
+        const lines = block.split('\n');
+        const elements: React.ReactNode[] = [];
+        let currentListItems: string[] = [];
+
+        const flushList = () => {
+          if (currentListItems.length > 0) {
+            const listKey = `list-${elements.length}`;
+            elements.push(
+              <ul key={listKey} className="space-y-1.5 my-2.5 pl-1 not-italic">
+                {currentListItems.map((itemText, iIdx) => (
+                  <li key={iIdx} className="flex items-start gap-2 text-slate-800">
+                    <span className="text-[#E0562D] font-bold leading-none mt-1 select-none shrink-0">•</span>
+                    <span className="flex-1 leading-[1.6]">{renderInlineContent(itemText)}</span>
+                  </li>
+                ))}
+              </ul>
             );
+            currentListItems = [];
           }
-          return <code key={index} className="font-mono text-xs">{rawMath}</code>;
-        }
+        };
 
-        // Inline Math: $...$
-        if (part.startsWith('$') && part.endsWith('$')) {
-          const rawMath = part.slice(1, -1).trim();
-          const html = renderKatexWithCache(rawMath, false);
-          if (html) {
-            return (
-              <span 
-                key={index} 
-                className="inline-block px-0.5 align-baseline"
-                dangerouslySetInnerHTML={{ __html: html }} 
-              />
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) {
+            flushList();
+            continue;
+          }
+
+          // Heading 2: ## Title
+          if (line.startsWith('## ')) {
+            flushList();
+            const headingText = line.replace(/^##\s+/, '');
+            elements.push(
+              <div 
+                key={`h2-${i}`} 
+                className="text-base md:text-lg font-bold text-slate-900 my-3.5 block border-b border-slate-200/70 pb-1"
+              >
+                {renderInlineContent(headingText)}
+              </div>
             );
+            continue;
           }
-          return <code key={index} className="font-mono text-xs">{rawMath}</code>;
-        }
 
-        // Normal text: parse markdown bold (**text**)
-        const boldRegex = /(\*\*[^*]+?\*\*)/g;
-        const textSegments = part.split(boldRegex);
+          // Heading 3: ### Title
+          if (line.startsWith('### ')) {
+            flushList();
+            const headingText = line.replace(/^###\s+/, '');
+            elements.push(
+              <div 
+                key={`h3-${i}`} 
+                className="text-sm md:text-base font-bold text-slate-900 my-2.5 block"
+              >
+                {renderInlineContent(headingText)}
+              </div>
+            );
+            continue;
+          }
 
-        return (
-          <span key={index}>
-            {textSegments.map((seg, sIdx) => {
-              if (seg.startsWith('**') && seg.endsWith('**')) {
-                return (
-                  <strong key={sIdx} className="font-bold text-slate-900">
-                    {seg.slice(2, -2)}
-                  </strong>
-                );
+          // Bullet list items starting with • or - or *
+          if (/^[•\-*]\s+/.test(line)) {
+            const itemText = line.replace(/^[•\-*]\s+/, '');
+            currentListItems.push(itemText);
+            continue;
+          }
+
+          // If a line contains inline bullets like "Trong đó: • a ... • b ..."
+          if (line.includes('•')) {
+            const parts = line.split(/•\s*/);
+            const prefix = parts[0]?.trim();
+            if (prefix) {
+              flushList();
+              elements.push(
+                <p key={`p-${i}`} className="my-1.5 text-slate-800 leading-[1.6]">
+                  {renderInlineContent(prefix)}
+                </p>
+              );
+            }
+            for (let pIdx = 1; pIdx < parts.length; pIdx++) {
+              const bulletText = parts[pIdx].trim();
+              if (bulletText) {
+                currentListItems.push(bulletText);
               }
-              return seg;
-            })}
-          </span>
-        );
+            }
+            continue;
+          }
+
+          // Normal Paragraph
+          flushList();
+          elements.push(
+            <p key={`p-${i}`} className="my-2 text-slate-800 leading-[1.6]">
+              {renderInlineContent(line)}
+            </p>
+          );
+        }
+
+        flushList();
+
+        return <div key={bIdx}>{elements}</div>;
       })}
-    </span>
+    </div>
   );
 });

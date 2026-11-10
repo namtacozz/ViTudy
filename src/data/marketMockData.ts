@@ -35,12 +35,80 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Trọng tâm giải tích hàm nhiều biến, đạo hàm ma trận, ứng dụng trong lan truyền ngược mạng nơ-ron.',
     previewText: 'CHƯƠNG 1: ĐẠO HÀM MA TRẬN & TỐI ƯU HOÁ KHÔNG RÀNG BUỘC\n1.1 Khái niệm vi phân toàn phần trong Rn.\n1.2 Ma trận Hessian và quy tắc kiểm tra cực trị địa phương: Điểm cực tiểu ngặt khi H(x*) xác định dương.',
     pages: [
-      { title: 'Chương 1: Đạo hàm Ma trận', text: 'Nền tảng vi phân ma trận trong học máy và tối ưu hóa.' },
-      { title: 'Chương 2: Ma trận Hessian', text: 'Kiểm tra độ cong của hàm mất mát qua ma trận đạo hàm bậc hai.' },
-      { title: 'Chương 3: Nhân tử Lagrange', text: 'Tối ưu hóa có ràng buộc đẳng thức và bất đẳng thức KKT.' },
-      { title: 'Chương 4: Phân rã SVD', text: 'Singular Value Decomposition và giảm chiều dữ liệu PCA.' },
-      { title: 'Chương 5: Gradient Descent', text: 'Các biến thể SGD, Momentum, Adam và bài toán bước nhảy.' },
-      { title: 'Chương 6: Ứng dụng Học Sâu', text: 'Lan truyền ngược Backpropagation qua đồ thị tính toán đạo hàm.' }
+      { 
+        title: 'Chương 1: Đạo hàm Ma trận & Tối ưu hóa không ràng buộc', 
+        text: `## 1.1 Cơ sở Vi phân Ma trận trong Học máy
+Trong tối ưu hóa học sâu, việc tính gradient của hàm mất mát vô hướng $f(X)$ theo ma trận tham số $X \\in \\mathbb{R}^{m \\times n}$ là nền tảng cốt lõi của thuật toán lan truyền ngược.
+
+Đạo hàm của hàm $f$ theo ma trận $X$ được định nghĩa qua ma trận các đạo hàm riêng:
+
+$$\\nabla_X f(X) = \\left[ \\frac{\\partial f}{\\partial X_{ij}} \\right]_{i=1, j=1}^{m, n}$$
+
+Các quy tắc vi phân thường gặp:
+• Đạo hàm tích vô hướng vector: $\\nabla_x (a^T x) = a$.
+• Đạo hàm dạng toàn phương: $\\nabla_x (x^T A x) = (A + A^T)x$. Khi $A$ là ma trận đối xứng: $\\nabla_x (x^T A x) = 2Ax$.
+• Đạo hàm hàm mất mát bình phương tối thiểu (MSE): Với $L(w) = \\|Xw - y\\|_2^2$, gradient tương ứng là $\\nabla_w L(w) = 2X^T(Xw - y)$.` 
+      },
+      { 
+        title: 'Chương 2: Ma trận Hessian & Phân tích Độ cong', 
+        text: `## 2.1 Ma trận Đạo hàm bậc hai Hessian
+Để khảo sát độ cong cục bộ của bề mặt hàm mất mát xung quanh điểm dừng $x^*$, ta sử dụng ma trận Hessian:
+
+$$H(x) = \\nabla^2 f(x) = \\left[ \\frac{\\partial^2 f}{\\partial x_i \\partial x_j} \\right]_{i,j=1}^n$$
+
+Phân loại điểm dừng theo giá trị riêng của $H(x^*)$:
+• Cực tiểu địa phương ngặt: Ma trận Hessian xác định dương ($H \\succ 0$), tức là mọi giá trị riêng $\\lambda_i > 0$.
+• Cực đại địa phương ngặt: Ma trận Hessian xác định âm ($H \\prec 0$), tức là mọi giá trị riêng $\\lambda_i < 0$.
+• Điểm yên ngựa (Saddle point): Tồn tại ít nhất một giá trị riêng dương và một giá trị riêng âm. Đây là thách thức phổ biến nhất khi huấn luyện mạng nơ-ron sâu.` 
+      },
+      { 
+        title: 'Chương 3: Tối ưu có ràng buộc & Nhân tử Lagrange', 
+        text: `## 3.1 Điều kiện Karush-Kuhn-Tucker (KKT)
+Xem xét bài toán tối ưu hóa lồi có ràng buộc tổng quát:
+$$\\min_{x} f(x) \\quad \\text{thỏa mãn} \\quad g_i(x) \\le 0, \\; h_j(x) = 0$$
+
+Hàm Lagrange mở rộng:
+$$\\mathcal{L}(x, \\lambda, \\mu) = f(x) + \\sum_{j} \\lambda_j h_j(x) + \\sum_{i} \\mu_i g_i(x)$$
+
+Hệ điều kiện tối ưu KKT bao gồm 4 nhóm:
+• Stationarity: $\\nabla_x \\mathcal{L}(x^*, \\lambda^*, \\mu^*) = 0$.
+• Primal feasibility: $g_i(x^*) \\le 0$ và $h_j(x^*) = 0$.
+• Dual feasibility: $\\mu_i^* \\ge 0$.
+• Complementary slackness: $\\mu_i^* g_i(x^*) = 0$ cho mọi $i$.` 
+      },
+      { 
+        title: 'Chương 4: Phân rã SVD & Nén thông tin PCA', 
+        text: `## 4.1 Phân rã Giá trị Suy biến (SVD)
+Mọi ma trận thực $A \\in \\mathbb{R}^{m \\times n}$ hạng $r$ đều có thể biểu diễn dưới dạng tích:
+
+$$A = U \\Sigma V^T = \\sum_{i=1}^r \\sigma_i u_i v_i^T$$
+
+Trong đó:
+• $U \\in \\mathbb{R}^{m \\times m}$: Ma trận trực giao chứa các vector riêng trái của $AA^T$.
+• $\\Sigma \\in \\mathbb{R}^{m \\times n}$: Ma trận đường chéo chứa các giá trị suy biến $\\sigma_1 \\ge \\sigma_2 \\ge \\dots \\ge \\sigma_r > 0$.
+• $V \\in \\mathbb{R}^{n \\times n}$: Ma trận trực giao chứa các vector riêng phải của $A^T A$.
+
+Định lý Eckart-Young: Ma trận xấp xỉ hạng $k < r$ tốt nhất theo chuẩn Frobenius chính là $A_k = \\sum_{i=1}^k \\sigma_i u_i v_i^T$, nền tảng của thuật toán nén ảnh và phân tích thành phần chính (PCA).` 
+      },
+      { 
+        title: 'Chương 5: Thuật toán Gradient Descent & Tốc độ hội tụ', 
+        text: `## 5.1 Các biến thể của Thuật toán Hạ Gradient
+Quy tắc cập nhật cơ bản: $\\theta^{(t+1)} = \\theta^{(t)} - \\eta \\nabla L(\\theta^{(t)})$.
+
+Các kỹ thuật tăng tốc hội tụ:
+• Momentum: Tích lũy quán tính từ các bước trước để vượt qua thung lũng dốc và điểm yên ngựa:
+$$v_{t+1} = \\gamma v_t + \\eta \\nabla L(\\theta_t), \\quad \\theta_{t+1} = \\theta_t - v_{t+1}$$
+• Adam (Adaptive Moment Estimation): Ước lượng cả moment bậc 1 (trung bình gradient) và moment bậc 2 (phương sai không định tâm), tự điều chỉnh learning rate riêng cho từng trọng số.` 
+      },
+      { 
+        title: 'Chương 6: Ứng dụng trong Lan truyền ngược (Backpropagation)', 
+        text: `## 6.1 Quy tắc Chuỗi trên Đồ thị Tính toán
+Giả sử mạng có hàm kích hoạt $z = W x + b$ và hàm mất mát $L$. Khi đó đạo hàm đối với trọng số $W$ được tính theo công thức tích ngoài:
+
+$$\\frac{\\partial L}{\\partial W} = \\delta \\cdot x^T$$
+
+Trong đó $\\delta = \\frac{\\partial L}{\\partial z}$ là sai số lan truyền ngược từ tầng trên. Việc lưu trữ activation $x$ trong lượt thuận (forward pass) là lý do vì sao việc huấn luyện đòi hỏi dung lượng VRAM lớn.` 
+      }
     ]
   },
 
@@ -57,7 +125,28 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Các phân phối xác suất quan trọng (Gaussian, Poisson, Bernoulli), định lý giới hạn trung tâm, kiểm định giả thuyết.',
     previewText: 'PHẦN 1: CÁC PHÂN PHỐI XÁC SUẤT CỐT LÕI\n- Phân phối Chuẩn: N(mu, sigma^2).\n- Định lý Giới hạn Trung tâm: Tổng các biến ngẫu nhiên độc lập hội tụ về phân phối chuẩn.',
     pages: [
-      { title: 'Tóm tắt Xác suất Thống kê', text: 'Toàn bộ công thức phân phối xác suất, kỳ vọng E(X), phương sai Var(X), khoảng tin cậy và p-value.' }
+      { 
+        title: 'Phần 1: Các Phân phối Xác suất Cốt lõi', 
+        text: `## 1. Phân phối Rời rạc & Liên tục
+• Phân phối Bernoulli: $P(X = 1) = p, \\; P(X = 0) = 1 - p$. Kỳ vọng $E(X) = p$, Phương sai $\\text{Var}(X) = p(1 - p)$.
+• Phân phối Chuẩn (Gaussian) $\\mathcal{N}(\\mu, \\sigma^2)$:
+$$f(x) = \\frac{1}{\\sigma \\sqrt{2\\pi}} \\exp\\left( -\\frac{(x - \\mu)^2}{2\\sigma^2} \\right)$$
+• Quy tắc 68-95-99.7: 68.3% dữ liệu nằm trong $[\mu - \sigma, \mu + \sigma]$, 95.4% nằm trong $[\mu - 2\sigma, \mu + 2\sigma]$, 99.7% nằm trong $[\mu - 3\sigma, \mu + 3\sigma]$.
+
+Định lý Giới hạn Trung tâm (CLT):
+Cho $X_1, X_2, \\dots, X_n$ là các biến ngẫu nhiên độc lập cùng phân phối có kỳ vọng $\\mu$ và phương sai $\\sigma^2$. Khi $n \\to \\infty$, trung bình mẫu $\\bar{X}_n$ hội tụ theo phân phối:
+$$\\frac{\\bar{X}_n - \\mu}{\\sigma / \\sqrt{n}} \\xrightarrow{d} \\mathcal{N}(0, 1)$$` 
+      },
+      { 
+        title: 'Phần 2: Kiểm định Giả thuyết & Suy diễn Thống kê', 
+        text: `## 2. Kiểm định Giả thuyết trong A/B Testing
+Quy trình 4 bước chuẩn mực:
+• Bước 1: Thiết lập giả thuyết vô hiệu $H_0: \\mu_1 = \\mu_2$ và đối thiết $H_1: \\mu_1 \\ne \\mu_2$.
+• Bước 2: Chọn mức ý nghĩa $\\alpha = 0.05$ (độ tin cậy 95%).
+• Bước 3: Tính giá trị thống kê kiểm định $t$ hoặc $z$:
+$$t = \\frac{\\bar{X}_1 - \\bar{X}_2}{\\sqrt{s_1^2/n_1 + s_2^2/n_2}}$$
+• Bước 4: So sánh $p$-value với $\\alpha$. Nếu $p$-value $< \\alpha$, bác bỏ $H_0$ và kết luận sự khác biệt có ý nghĩa thống kê.` 
+      }
     ]
   },
 
@@ -111,12 +200,77 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Từ mảng, danh sách liên kết, cây nhị phân tìm kiếm đến đồ thị Dijkstra, Floyd-Warshall và quy hoạch động.',
     previewText: 'CHƯƠNG 1: ĐỘ PHỨC TẠP THUẬT TOÁN BIG-O\nPhân tích thời gian chạy T(n) và bộ nhớ phụ O(1), O(n), O(n log n).',
     pages: [
-      { title: 'Chương 1: Big-O & Độ phức tạp', text: 'Khái niệm chặn trên Big-O, chặn dưới Omega và độ phức tạp trung bình.' },
-      { title: 'Chương 2: Danh sách & Ngăn xếp', text: 'Cài đặt Linked List, Stack, Queue và hàng đợi ưu tiên.' },
-      { title: 'Chương 3: Cây nhị phân & AVL', text: 'Cây tìm kiếm nhị phân BST và thuật toán tự cân bằng AVL.' },
-      { title: 'Chương 4: Đồ thị & DFS/BFS', text: 'Biểu diễn ma trận kề, danh sách kề và duyệt đồ thị.' },
-      { title: 'Chương 5: Đường đi ngắn nhất', text: 'Thuật toán Dijkstra với Heap và Bellman-Ford xử lý trọng số âm.' },
-      { title: 'Chương 6: Quy hoạch động', text: 'Nguyên lý tối ưu con, bài toán Knapsack và dãy con tăng dài nhất.' }
+      { 
+        title: 'Chương 1: Phân tích Độ phức tạp Big-O', 
+        text: `## 1.1 Ký hiệu tiệm cận trong Phân tích Thuật toán
+Để đánh giá hiệu quả của một thuật toán độc lập với phần cứng, ta sử dụng ký hiệu độ phức tạp thời gian tiệm cận:
+• Chặn trên $O(g(n))$: $T(n) \\le c \\cdot g(n)$ với mọi $n \\ge n_0$.
+• Chặn dưới $\\Omega(g(n))$: $T(n) \\ge c \\cdot g(n)$ với mọi $n \\ge n_0$.
+• Chặn chặt $\\Theta(g(n))$: $c_1 g(n) \\le T(n) \\le c_2 g(n)$.
+
+Các lớp độ phức tạp thường gặp (sắp xếp tăng dần):
+$$O(1) < O(\\log n) < O(n) < O(n \\log n) < O(n^2) < O(2^n) < O(n!)$$
+Định lý Thợ (Master Theorem) cho hệ thức đệ quy $T(n) = a T(n/b) + f(n)$ giúp xác định nhanh độ phức tạp của thuật toán Chia để trị.` 
+      },
+      { 
+        title: 'Chương 2: Danh sách liên kết & Ngăn xếp hàng đợi', 
+        text: `## 2.1 Cấu trúc Dữ liệu Tuyến tính Động
+So sánh Mảng tĩnh (Array) và Danh sách liên kết đơn (Singly Linked List):
+• Truy xuất ngẫu nhiên theo chỉ số: Mảng đạt $O(1)$, Linked List mất $O(n)$.
+• Chèn / Xóa ở đầu danh sách: Linked List đạt $O(1)$, Mảng mất $O(n)$ do dịch chuyển phần tử.
+
+Ngăn xếp (Stack - LIFO):
+• Ứng dụng: Đánh giá biểu thức tiền tố/hậu tố, quản lý Call Stack hệ điều hành, thuật toán duyệt theo chiều sâu DFS.
+Hàng đợi (Queue - FIFO):
+• Ứng dụng: Bộ đệm I/O Buffer, hàng đợi in ấn, thuật toán duyệt đồ thị theo chiều rộng BFS.` 
+      },
+      { 
+        title: 'Chương 3: Cây tìm kiếm nhị phân & Cây tự cân bằng AVL', 
+        text: `## 3.1 Cân bằng Cây để chống suy biến
+Cây tìm kiếm nhị phân (BST) có tính chất: Mọi nút con bên trái có khóa nhỏ hơn nút gốc, mọi nút con bên phải có khóa lớn hơn.
+
+Hiện tượng suy biến thành danh sách liên kết:
+Khi chèn các phần tử theo thứ tự tăng dần, chiều cao cây tăng lên $h = O(n)$, thao tác tìm kiếm suy biến về $O(n)$.
+
+Giải pháp cây AVL:
+• Hệ số cân bằng $BF(node) = height(left) - height(right) \\in \\{-1, 0, 1\\}$.
+• 4 phép xoay cân bằng chuẩn: Xoay Đơn Trái (Left Rotation), Xoay Đơn Phải (Right Rotation), Xoay Kép Trái-Phải (LR Rotation), Xoay Kép Phải-Trái (RL Rotation).
+• Đảm bảo chiều cao luôn giữ ở mức $O(\\log n)$ trong mọi trường hợp.` 
+      },
+      { 
+        title: 'Chương 4: Đồ thị & Các thuật toán duyệt DFS/BFS', 
+        text: `## 4.1 Biểu diễn và Duyệt Đồ thị
+Biểu diễn đồ thị $G = (V, E)$:
+• Ma trận kề (Adjacency Matrix): Chiếm $O(V^2)$ bộ nhớ, kiểm tra 2 đỉnh có nối nhau mất $O(1)$. Thích hợp đồ thị dày.
+• Danh sách kề (Adjacency List): Chiếm $O(V + E)$ bộ nhớ, tiết kiệm cho đồ thị thưa.
+
+Thuật toán duyệt:
+• BFS (Breadth-First Search): Dùng Hàng đợi (Queue), tìm đường đi ngắn nhất không trọng số, độ phức tạp $O(V + E)$.
+• DFS (Depth-First Search): Dùng Đệ quy / Ngăn xếp, phát hiện chu trình, sắp xếp topo (Topological Sort) cho đồ thị có hướng không chu trình (DAG).` 
+      },
+      { 
+        title: 'Chương 5: Đường đi ngắn nhất Dijkstra & Bellman-Ford', 
+        text: `## 5.1 Thuật toán Tìm đường trên Đồ thị có trọng số
+Thuật toán Dijkstra (Greedy):
+• Yêu cầu: Mọi cạnh phải có trọng số không âm ($w(e) \\ge 0$).
+• Cài đặt với Min-Heap / Priority Queue đạt độ phức tạp $O((V + E) \\log V)$.
+
+Thuật toán Bellman-Ford (Dynamic Programming):
+• Xử lý được đồ thị có trọng số âm.
+• Phát hiện chu trình âm (Negative Cycle) sau $V - 1$ lượt nới lỏng cạnh. Độ phức tạp $O(V \\cdot E)$.` 
+      },
+      { 
+        title: 'Chương 6: Quy hoạch động (Dynamic Programming)', 
+        text: `## 6.1 Nguyên lý Tối ưu con & Bảng phương án
+Hai dấu hiệu nhận biết bài toán Quy hoạch động:
+• Cấu trúc con tối ưu (Optimal Substructure): Lời giải bài toán lớn bao gồm lời giải tối ưu của các bài toán con.
+• Các bài toán con gối nhau (Overlapping Subproblems): Bài toán con được gọi lại nhiều lần.
+
+Bài toán Cái túi 0/1 (0/1 Knapsack):
+Gọi $DP[i][w]$ là giá trị lớn nhất khi chọn từ $i$ đồ vật đầu tiên với sức chứa balo $w$:
+$$DP[i][w] = \\max(DP[i-1][w], \\; DP[i-1][w - w_i] + v_i)$$
+Độ phức tạp $O(n \\cdot W)$ (giả đa thức).` 
+      }
     ]
   },
 
@@ -133,7 +287,32 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Tóm lược 23 mẫu thiết kế GoF và 5 nguyên lý SOLID trên 1 trang trực quan, dễ áp dụng vào phỏng vấn.',
     previewText: 'SOLID PRINCIPLES:\n- S: Single Responsibility (Một lý do thay đổi)\n- O: Open/Closed (Mở rộng, đóng sửa đổi)\n- L: Liskov Substitution\n- I: Interface Segregation\n- D: Dependency Inversion',
     pages: [
-      { title: 'SOLID & GoF Design Patterns', text: 'Tóm tắt Singleton, Factory, Observer, Strategy, Decorator và nguyên lý thiết kế sạch.' }
+      { 
+        title: 'Phần 1: 5 Nguyên lý SOLID trong Thực tế', 
+        text: `## 1. Bản chất Kiến trúc của SOLID
+• S - Single Responsibility Principle (SRP): Một class chỉ nên có duy nhất một lý do để thay đổi (chỉ phục vụ một tác nhân duy nhất).
+• O - Open/Closed Principle (OCP): Thực thể phần mềm nên mở cho việc mở rộng (extension) nhưng đóng đối với việc sửa đổi trực tiếp (modification). Đạt được qua tính đa hình và Interface.
+• L - Liskov Substitution Principle (LSP): Các lớp con phải thay thế được lớp cha mà không làm thay đổi tính đúng đắn của chương trình.
+• I - Interface Segregation Principle (ISP): Nhiều interface nhỏ chuyên biệt tốt hơn một interface khổng lồ đa năng.
+• D - Dependency Inversion Principle (DIP): Module cấp cao không phụ thuộc module cấp thấp, cả hai cùng phụ thuộc vào trừu tượng (Abstraction).` 
+      },
+      { 
+        title: 'Phần 2: 23 Mẫu Thiết Kế GoF Cần Nhớ Khi Phỏng Vấn', 
+        text: `## 2. Phân loại Mẫu Thiết kế Gang of Four (GoF)
+Nhóm Khởi tạo (Creational Patterns):
+• Singleton: Đảm bảo class chỉ có 1 thể hiện duy nhất toàn cục.
+• Factory Method & Abstract Factory: Ủy quyền khởi tạo đối tượng cho lớp con, che giấu logic new cụ thể.
+• Builder: Tách việc khởi dựng đối tượng phức tạp khỏi biểu diễn của nó.
+
+Nhóm Cấu trúc (Structural Patterns):
+• Adapter: Cầu nối giữa 2 interface không tương thích.
+• Decorator: Gắn thêm trách nhiệm động cho đối tượng mà không sửa đổi lớp gốc.
+• Facade: Cung cấp giao diện đơn giản hóa cho một hệ thống con phức tạp.
+
+Nhóm Hành vi (Behavioral Patterns):
+• Observer: Cơ chế đăng ký thông báo một-nhiều (cốt lõi của React state & Event-driven).
+• Strategy: Đóng gói các thuật toán hoán đổi cho nhau tại thời gian chạy runtime.` 
+      }
     ]
   },
 
@@ -150,11 +329,53 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Kiến trúc mạng tích chập từ LeNet, AlexNet, VGG đến ResNet với kết nối tắt Skip Connection.',
     previewText: 'CHƯƠNG 1: TÍCH CHẬP 2D & LỌC TÍN HIỆU\nCách hoạt động của Kernel, Stride, Padding và lớp Pooling giảm số chiều.',
     pages: [
-      { title: 'Chương 1: Phép tích chập', text: 'Toán học của Convolution và trích xuất đặc trưng biên cạnh.' },
-      { title: 'Chương 2: Kiến trúc AlexNet & VGG', text: 'Sự bùng nổ của GPU và xu hướng mạng sâu nhiều tầng.' },
-      { title: 'Chương 3: ResNet & Skip Connections', text: 'Giải quyết triệt để vấn đề triệt tiêu Gradient trong mạng cực sâu.' },
-      { title: 'Chương 4: Phân đoạn ảnh U-Net', text: 'Kiến trúc Encoder-Decoder ứng dụng trong y tế và xe tự hành.' },
-      { title: 'Chương 5: Object Detection YOLO', text: 'Nhận diện vật thể theo thời gian thực một giai đoạn duy nhất.' }
+      { 
+        title: 'Chương 1: Phép tích chập 2D & Trích xuất Đặc trưng', 
+        text: `## 1.1 Toán học của Phép Tích Chập (Convolution)
+Tích chập 2D giữa ảnh đầu vào $I$ và bộ lọc (Kernel) $K$ kích thước $k \\times k$:
+
+$$S(i, j) = (I * K)(i, j) = \\sum_{m} \\sum_{n} I(i - m, j - n) K(m, n)$$
+
+Các siêu tham số cơ bản:
+• Stride ($S$): Bước nhảy của cửa sổ trượt. $S > 1$ giúp giảm kích thước không gian mà không cần pooling.
+• Padding ($P$): Chèn thêm các giá trị 0 quanh viền ảnh. Công thức kích thước đầu ra:
+$$O = \\left\\lfloor \\frac{W - K + 2P}{S} \\right\\rfloor + 1$$
+• Bất biến tịnh tiến (Translation Equivariance): Bộ lọc chia sẻ trọng số (Weight Sharing) giúp nhận diện đặc trưng ở bất kỳ vị trí nào trên ảnh.` 
+      },
+      { 
+        title: 'Chương 2: Kiến trúc AlexNet & Xu hướng Mạng Sâu', 
+        text: `## 2.1 Cột mốc ImageNet 2012
+AlexNet đã tạo nên bước ngoặt lịch sử nhờ 3 cải tiến then chốt:
+• Sử dụng hàm kích hoạt ReLU ($f(x) = \\max(0, x)$) thay thế Sigmoid, loại bỏ hiện tượng bão hòa đạo hàm ở các vùng dương.
+• Kỹ thuật Dropout (tỉ lệ 0.5) trong các tầng fully connected để chống Overfitting.
+• Tận dụng GPU NVIDIA để tính toán song song ma trận kích thước lớn.` 
+      },
+      { 
+        title: 'Chương 3: ResNet & Kết Nối Tắt Skip Connections', 
+        text: `## 3.1 Giải quyết Triệt tiêu Gradient trong Mạng Cực Sâu
+Khi tăng số tầng từ 20 lên 56 tầng, mạng truyền thống gặp hiện tượng suy thoái (Degradation Problem) do gradient triệt tiêu khi lan truyền qua nhiều ma trận trọng số.
+
+Khối dư Residual Block:
+$$y = \\mathcal{F}(x, \\{W_i\\}) + x$$
+Nhờ nhánh tắt đồng nhất (Identity Shortcut $+ x$), gradient khi lan truyền ngược luôn có thành phần $+1$:
+$$\\frac{\\partial L}{\\partial x} = \\frac{\\partial L}{\\partial y} \\left( \\frac{\\partial \\mathcal{F}}{\\partial x} + I \\right)$$
+Điều này bảo đảm gradient không bao giờ bị triệt tiêu, cho phép huấn luyện thành công các mạng sâu hàng trăm tầng (ResNet-50, ResNet-101, ResNet-152).` 
+      },
+      { 
+        title: 'Chương 4: Phân đoạn Ảnh với U-Net', 
+        text: `## 4.1 Kiến trúc Encoder-Decoder đối xứng
+U-Net được thiết kế đặc thù cho bài toán phân đoạn ảnh y tế (Medical Image Segmentation):
+• Nhánh nén (Encoder): Trích xuất đặc trưng ngữ nghĩa mức cao qua các khối Conv + MaxPool.
+• Nhánh giải nén (Decoder): Khôi phục độ phân giải không gian qua phép Upsampling / Transposed Conv.
+• Skip Connections liên tầng: Chuyển trực tiếp bản đồ đặc trưng chi tiết từ Encoder sang Decoder để bảo toàn ranh giới vật thể sắc nét.` 
+      },
+      { 
+        title: 'Chương 5: Nhận diện Vật thể YOLO (You Only Look Once)', 
+        text: `## 5.1 Nhận diện Vật thể Thời gian thực
+Khác với mô hình hai giai đoạn (Faster R-CNN), YOLO xem bài toán phát hiện vật thể như một bài toán hồi quy duy nhất từ điểm ảnh sang tọa độ hộp bao và xác suất lớp.
+• Chia ảnh thành lưới $S \\times S$. Mỗi ô lưới dự đoán $B$ bounding boxes $(x, y, w, h, \\text{confidence})$ và $C$ phân phối lớp.
+• Tốc độ xử lý vượt trội đạt >60 FPS, phù hợp triển khai trực tiếp trên camera biên và xe tự hành.` 
+      }
     ]
   },
 
@@ -201,11 +422,29 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Chuyên sâu Server Components, Streaming SSR, Suspense và quản lý state không gian học 2.5D.',
     previewText: 'CHƯƠNG 1: SERVER VS CLIENT COMPONENTS\nTối ưu bundle size bằng cách giữ logic nặng trên Node.js runtime.',
     pages: [
-      { title: 'Chương 1: Kiến trúc App Router', text: 'Cơ chế định tuyến dạng file và cấu trúc layout lồng nhau.' },
-      { title: 'Chương 2: Server Components', text: 'Giảm tải JavaScript gửi về trình duyệt và bảo mật secrets.' },
-      { title: 'Chương 3: Suspense & Streaming', text: 'Hiển thị giao diện tức thì với HTTP streaming chunked.' },
-      { title: 'Chương 4: Tối ưu hiệu năng 60fps', text: 'Loại bỏ re-render thừa với useMemo, useCallback và canvas DOM.' },
-      { title: 'Chương 5: Triển khai Full-stack', text: 'Tích hợp Edge Functions, Database listeners và WebSockets.' }
+      { 
+        title: 'Chương 1: Kiến trúc App Router & Server Components', 
+        text: `## 1.1 Sự dịch chuyển từ Pages sang App Router
+Next.js App Router chuyển đổi mô hình render mặc định sang React Server Components (RSC):
+• Server Components chạy 100% trên môi trường Node.js/Edge, không bao gồm dependencies trong JavaScript bundle gửi về trình duyệt.
+• Client Components ('use client') chỉ cần thiết khi cần tương tác DOM (onClick, onChange), React Hooks (useState, useEffect) hoặc Web APIs (localStorage, Canvas).` 
+      },
+      { 
+        title: 'Chương 2: Streaming SSR & Suspense Boundaries', 
+        text: `## 2.1 Tối ưu Core Web Vitals với HTTP Streaming
+Thay vì chờ toàn bộ dữ liệu truy vấn từ cơ sở dữ liệu mới trả về trang HTML (khiến TTFB tăng cao), Next.js sử dụng kỹ thuật chunked transfer encoding:
+• Trả về ngay phần khung giao diện tĩnh (Navbar, Sidebar, Skeleton).
+• Bọc các khối dữ liệu chậm bên trong <Suspense fallback={<Skeleton />}>.
+• Khi dữ liệu sẵn sàng, máy chủ stream các khối HTML thay thế vào đúng vị trí trên trang sống mà không cần reload.` 
+      },
+      { 
+        title: 'Chương 3: Tối ưu hiệu năng 60 FPS trên Canvas Không gian', 
+        text: `## 3.1 Quy chuẩn Triệt tiêu Re-render Thừa
+Kinh nghiệm tối ưu không gian bàn học 2.5D:
+• Tách trạng thái điều khiển camera (pan, zoom) khỏi cây render của các vật thể con.
+• Sử dụng kỹ thuật Viewport Culling (chỉ render các phần tử nằm trong khung nhìn hiển thị).
+• Ghi nhớ (memoize) các phép biến đổi CSS transform và biên dịch trước KaTeX sang chuỗi HTML tĩnh.` 
+      }
     ]
   },
 
@@ -222,7 +461,18 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Toàn bộ câu lệnh rebase, cherry-pick, merge squash, stash và mẹo khôi phục commit mất bằng reflog.',
     previewText: 'MẸO KHÔI PHỤC COMMIT: git reflog -> git reset --hard HEAD@{n}.\nQUY TRÌNH REBASE: git fetch origin -> git rebase origin/main.',
     pages: [
-      { title: 'Git Master Cheat Sheet', text: 'Hướng dẫn trực quan từng bước xử lý xung đột merge conflict và git hooks.' }
+      { 
+        title: 'Git Master Cheat Sheet & Xử lý Xung đột', 
+        text: `## 1. Cứu hộ Commit & Nhánh với Git Reflog
+• Khôi phục commit lỡ reset --hard:
+\`git reflog\` (xem lịch sử HEAD@{n}) -> \`git reset --hard HEAD@{n}\`.
+• Rebase an toàn với nhánh chính:
+\`git fetch origin && git rebase origin/main\`.
+• Gộp nhiều commit thành một commit duy nhất:
+\`git reset --soft HEAD~N && git commit -m "feat: commit tổng hợp"\`.
+• Lưu nhanh các thay đổi chưa hoàn tất:
+\`git stash push -m "tam thoi"\` và khôi phục lại bằng \`git stash pop\`.` 
+      }
     ]
   },
 
@@ -239,7 +489,30 @@ export const INITIAL_MARKET_ITEMS: MarketItem[] = [
     summary: 'Công thức toán học Self-Attention, Multi-Head Attention, Positional Encoding và FlashAttention.',
     previewText: 'ATTENTION FORMULA:\nAttention(Q, K, V) = softmax(Q * K^T / sqrt(d_k)) * V.\nĐộ phức tạp O(N^2) theo chiều dài ngữ cảnh.',
     pages: [
-      { title: 'Cơ chế Attention Cốt lõi', text: 'Toàn bộ kiến trúc Transformer gốc trong bài báo Attention Is All You Need.' }
+      { 
+        title: 'Phần 1: Toán học của Cơ chế Self-Attention', 
+        text: `## 1. Scaled Dot-Product Attention
+Cho ma trận Query $Q$, Key $K$ và Value $V$ kích thước $N \\times d_k$:
+
+$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left( \\frac{Q K^T}{\\sqrt{d_k}} \\right) V$$
+
+Ý nghĩa các thành phần:
+• Tích vô hướng $Q K^T$: Đo độ tương đồng ngữ nghĩa giữa từng cặp từ trong câu.
+• Tỉ lệ $\\sqrt{d_k}$: Giữ cho phương sai của tích vô hướng ở mức 1, ngăn softmax bị bão hòa đạo hàm ở các giá trị cực trị.
+• Ma trận xác suất $\\text{softmax}(\\cdot)$: Trọng số chú ý phản ánh mức độ liên quan giữa các token.` 
+      },
+      { 
+        title: 'Phần 2: Multi-Head Attention & Mã hóa Vị trí', 
+        text: `## 2. Đa đầu Chú ý (Multi-Head Attention)
+Cho phép mô hình đồng thời chú ý đến thông tin ở các không gian biểu diễn khác nhau:
+
+$$\\text{MultiHead}(Q, K, V) = \\text{Concat}(\\text{head}_1, \\dots, \\text{head}_h) W^O$$
+trong đó $\\text{head}_i = \\text{Attention}(Q W_i^Q, K W_i^K, V W_i^V)$.
+
+Mã hóa Vị trí Sinusoidal (Positional Encoding):
+Vì Transformer xử lý song song toàn bộ chuỗi nên cần bổ sung thông tin thứ tự:
+$$PE_{(pos, 2i)} = \\sin\\left( \\frac{pos}{10000^{2i/d}} \\right), \\quad PE_{(pos, 2i+1)} = \\cos\\left( \\frac{pos}{10000^{2i/d}} \\right)$$` 
+      }
     ]
   },
 

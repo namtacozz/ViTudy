@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MarketItem } from '@/data/marketMockData';
 import { MarketService } from '@/services/MarketService';
 import { useViToken } from '@/context/ViTokenContext';
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 
 export default function MarketPage() {
+  const router = useRouter();
   const { wallet, spendTokens, addTokens } = useViToken();
   const { user } = useAuth();
 
@@ -87,6 +89,15 @@ export default function MarketPage() {
     loadListings();
   }, [selectedCategory, selectedType, minScore, maxPrice, searchQuery, sortBy]);
 
+  const handleOpenOnDesk = (item: MarketItem) => {
+    try {
+      localStorage.setItem('vitudy_pending_market_item', JSON.stringify(item));
+    } catch {
+      // ignore
+    }
+    router.push('/?view=desk');
+  };
+
   const handlePurchase = (item: MarketItem) => {
     if (wallet.balance < item.price) {
       setIsTopUpOpen(true);
@@ -95,6 +106,11 @@ export default function MarketPage() {
     const success = spendTokens(item.price, `Mua tài liệu Chợ: ${item.title}`);
     if (success) {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, purchased: true } : i));
+      try {
+        localStorage.setItem('vitudy_pending_market_item', JSON.stringify(item));
+      } catch {
+        // ignore
+      }
       setPurchaseSuccess(`Đã mua thành công "${item.title}". Bạn có thể mở tài liệu ngay trên Bàn học!`);
       setTimeout(() => {
         setPurchaseSuccess(null);
@@ -535,13 +551,14 @@ export default function MarketPage() {
                         </button>
 
                         {item.purchased ? (
-                          <Link
-                            href="/?view=desk"
+                          <button
+                            type="button"
+                            onClick={() => handleOpenOnDesk(item)}
                             className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Mở trên bàn học</span>
-                          </Link>
+                          </button>
                         ) : isInsufficient ? (
                           <button
                             type="button"
@@ -671,13 +688,14 @@ export default function MarketPage() {
                   </button>
 
                   {previewItem.purchased ? (
-                    <Link
-                      href="/?view=desk"
+                    <button
+                      type="button"
+                      onClick={() => handleOpenOnDesk(previewItem)}
                       className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                     >
                       <ArrowRight className="w-4 h-4" />
                       <span>Mở trên bàn học</span>
-                    </Link>
+                    </button>
                   ) : wallet.balance < previewItem.price ? (
                     <button
                       type="button"

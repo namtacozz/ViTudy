@@ -163,10 +163,10 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-900 leading-tight">
-              Nạp ViToken qua VietQR
+              Nạp ViToken
             </h2>
             <p className="text-xs text-slate-500">
-              Quét mã ngân hàng 24/7. Hệ thống tự cộng điểm vào tài khoản sau khi chuyển khoản thành công.
+              Quét mã ngân hàng. Số dư được cộng ngay sau khi chuyển khoản thành công.
             </p>
           </div>
         </div>
@@ -237,14 +237,9 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
           <div>
             {step === 'select' && (
               <div className="space-y-3.5">
-                {/* Tỷ lệ quy đổi chuẩn 1.000đ = 1 ViToken */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-orange-50/70 border border-orange-200/80 rounded-xl px-3 py-2 text-xs text-slate-700">
-                  <div className="flex items-center gap-1.5 font-bold text-[#E0562D]">
-                    <span>Tỷ lệ quy đổi chuẩn: 1.000đ = 1 ViToken</span>
-                  </div>
-                  <span className="text-[11px] text-slate-600 font-medium">
-                    Dùng cho hỏi đáp AI, mở tài liệu trên Chợ, xuất đề thi ra bàn
-                  </span>
+                {/* Tỷ lệ quy đổi: một dòng chữ xám nhỏ phía trên danh sách gói */}
+                <div className="text-[11px] text-slate-500 font-medium px-0.5">
+                  1.000đ = 1 ViToken. Dùng cho hỏi đáp AI, mở tài liệu trên Chợ và xuất đề thi.
                 </div>
 
                 <PricingTiers
@@ -263,18 +258,13 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
                   {/* Dự kiến số dư sau khi nạp */}
-                  <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                    <span>Số dư ví:</span>
-                    <span className="font-mono font-bold text-slate-900">{wallet.balance}</span>
+                  <div className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                    <span>Số dư:</span>
+                    <span className="font-bold text-slate-900">{wallet.balance}</span>
                     <span className="text-slate-400">→</span>
-                    <span className="font-mono font-black text-[#E0562D]">
+                    <span className="font-bold text-emerald-600">
                       {wallet.balance + (selectedPkg?.tokenAmount || 0)} ViToken
                     </span>
-                    {selectedPkg && (
-                      <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded font-bold">
-                        (+{selectedPkg.tokenAmount} V)
-                      </span>
-                    )}
                   </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">

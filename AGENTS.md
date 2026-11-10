@@ -71,11 +71,23 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Thống Nhất Thông Tin Hỗ Trợ & Ký Hiệu Tiền Tệ:**
       * Email hỗ trợ duy nhất trên toàn hệ thống: `support@vitudy.edu.vn` (sử dụng hằng số `SUPPORT_EMAIL`), kênh Telegram chính thức là liên kết bấm được `https://t.me/vitudy` (`SUPPORT_TELEGRAM`).
       * Ký hiệu tiền tệ thống nhất toàn bộ: Sử dụng hậu tố `đ` (ví dụ `27.000đ`), triệt tiêu việc dùng lẫn lộn `VNĐ` và `đ`.
-    * **Quy Chuẩn Chọn Gói Nạp ViToken (`PricingTiers`):**
-      * Nhãn tặng viết gọn `+X ViToken` (thay vì `Tặng +X ViToken`), các gói không tặng kèm nhãn phụ `Không tặng` để 5 thẻ gói luôn cân đối chiều cao 100%.
-      * Dưới số ViToken nhận được bắt buộc có dòng mô tả giá trị sử dụng thực tế (~1 lượt hỏi đáp AI, ~15 lượt AI hoặc 2 tài liệu Chợ...).
-      * Chân modal hiển thị rõ số dư ví trước và sau khi nạp: `Số dư ví: X → Y ViToken (+Z V)`.
-      * Tương phản chữ đạt chuẩn WCAG AA: chữ `đ` màu tối, số ViToken nhận màu `#C2410C`. Hỗ trợ phím mũi tên di chuyển giữa các gói (`role="radiogroup"` & `role="radio"`).
+    * **Quy Chuẩn Chọn Gói Nạp ViToken & Modal Nạp (`TopUpModal` & `PricingTiers`):**
+      * Tiêu đề chuẩn: **"Nạp ViToken"**, phụ đề: *"Quét mã ngân hàng. Số dư được cộng ngay sau khi chuyển khoản thành công."*
+      * Banner quy đổi: Rút gọn thành một dòng chữ xám nhỏ phía trên danh sách gói: *"1.000đ = 1 ViToken. Dùng cho hỏi đáp AI, mở tài liệu trên Chợ và xuất đề thi."* Bỏ hoàn toàn khung nền cam nhạt.
+      * Thẻ gói có cấu trúc 3 dòng thống nhất: Hàng 1 gồm tên gói và nhãn `+N ViToken` (chữ cam, không nền); Hàng 2 gồm giá to nhất font sans đậm; Hàng 3 gồm số ViToken nhận được ("Nhận X ViToken" chữ xám đậm `text-slate-700`). Phía dưới là mô tả ứng dụng thực tế. Bỏ hoàn toàn nhãn "Không tặng" và chữ monospace đỏ.
+      * Nhãn nổi bật: Chỉ dùng duy nhất nhãn **"Phổ biến"** cho gói Học kỳ.
+      * Trạng thái chọn: Viền cam 1.5px (`border-[1.5px] border-[#E0562D]`) và dấu tích tròn. Không dùng đổ bóng và không đổi màu nền cả thẻ (giữ nền trắng).
+      * Khối thanh toán chân modal: Bên trái hiển thị `Số dư: X → Y ViToken` (số dư sau nạp dùng màu xanh lá `text-emerald-600 font-bold`, bỏ chip lặp `+NV`); Bên phải là nút thanh toán Cam ViT (`Thanh toán [Giá]đ`).
+    * **Quy Chuẩn Trình Đọc Tài Liệu Toàn Màn Hình (`FullScreenDocModal` & `MathRenderer`):**
+      * **Hiển thị nội dung chuẩn mực:** Ký hiệu `## ` và `### ` bắt buộc render thành tiêu đề thực thụ (đậm, cỡ lớn, có khoảng cách phân cách); Ký tự `•` và `-` được tách thành danh sách có dấu đầu dòng chuẩn HTML `<ul><li>`; Công thức KaTeX display block có khoảng trắng trên dưới tối thiểu 16px (`my-4`); Nội dung trang sách có khoảng cách dòng 1.6 (`leading-[1.6]`) và canh lề đều hai bên (`text-justify`).
+      * **Danh sách trang thu nhỏ bên trái:** Đổi tiêu đề thành "Danh sách trang (N)", hiển thị tiêu đề sạch và số trang ở góc thẻ, triệt tiêu hoàn toàn mã LaTeX thô; Chỉ trang đang xem mới có viền cam 2px (`border-2 border-[#E0562D]`), các trang khác viền xám nhẹ; Bỏ nhãn trang lặp thừa ở chân thumbnail.
+      * **Thanh công cụ trên cùng:** Gộp chuyển chế độ trang thành cụm nút segmented rõ nghĩa ("Một trang" / "Hai trang"); Nút thoát đổi thành "Đóng" kèm phím tắt `<kbd>Esc</kbd>`.
+    * **Quy Chuẩn Lưu Trữ Không Gian Học Tập Bền Vững (Persistent Study Space Architecture):**
+      * Cờ bảo vệ `isLoaded` ngăn chặn 100% việc lưu đè bàn học trước khi nạp xong dữ liệu từ storage hoặc Supabase Cloud.
+      * Lưu trữ đồng bộ cả danh sách bàn học `vitudy_spaces` lẫn bàn học đang chọn `vitudy_active_space_id`.
+      * Hỗ trợ tham số URL `/?view=desk&space=[id]`, bảo đảm khi bấm tạo bàn từ trang chủ (`HomePage`) hoặc tải lại trang (F5), người dùng luôn vào đúng bàn học mong muốn với đầy đủ các vật thể và ghi chú còn nguyên vẹn.
+      * Các mẫu bàn học mới (`blank`, `midterm`, `curriculum_exam`, `group_study`) chứa nội dung học thuật thật sự (giáo trình đa trang, đề thi trắc nghiệm tương tác thật sự có chấm điểm, bài tập tối ưu hóa, phân công đồ án), triệt tiêu hoàn toàn dữ liệu demo giả lập.
+      * Tài khoản tác giả `namtacozz@gmail.com` được tự động cấp đặc quyền 5.000 ViToken.
     * **Quy Chuẩn Màn Quét Mã QR (`QRCodeDisplay`):**
       * Khung nội dung chuyển khoản chia 2 tầng công thái học: Tầng 1 gồm tiêu đề bắt buộc và hướng dẫn; Tầng 2 gồm mã code to bản font-mono và nút sao chép.
       * Đồng hồ đếm ngược có thanh tiến trình co dần 15 phút, tự động đổi sang màu đỏ khi thời gian còn dưới 2 phút.

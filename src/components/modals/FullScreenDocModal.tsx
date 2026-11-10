@@ -230,21 +230,34 @@ export function FullScreenDocModal({
               <RotateTwoWay className="w-3.5 h-3.5 stroke-[2.4]" />
             </button>
 
-            {/* View Mode Toggle: 2-page spread vs 1-page (for books) */}
+            {/* View Mode Toggle: Segmented Control Một trang / Hai trang */}
             {item.type === 'book' && (
               <>
                 <div className="w-[1px] h-4 bg-slate-300 mx-0.5" />
-                <button
-                  onClick={() => setIsTwoPageSpread(!isTwoPageSpread)}
-                  title={isTwoPageSpread ? "Chuyển sang xem 1 trang" : "Chuyển sang xem 2 trang"}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition-all cursor-pointer ${
-                    isTwoPageSpread 
-                      ? 'bg-white border-slate-300 text-slate-900 shadow-2xs' 
-                      : 'border-transparent text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {isTwoPageSpread ? '2 Trang' : '1 Trang'}
-                </button>
+                <div className="flex items-center rounded-lg border border-slate-300 p-0.5 bg-slate-200/80">
+                  <button
+                    type="button"
+                    onClick={() => setIsTwoPageSpread(false)}
+                    className={`text-xs px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                      !isTwoPageSpread 
+                        ? 'bg-white text-slate-900 shadow-2xs' 
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Một trang
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsTwoPageSpread(true)}
+                    className={`text-xs px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                      isTwoPageSpread 
+                        ? 'bg-white text-slate-900 shadow-2xs' 
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Hai trang
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -262,11 +275,11 @@ export function FullScreenDocModal({
 
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 font-bold text-xs border border-slate-300 hover:border-rose-200 shadow-2xs transition-all cursor-pointer active:scale-95"
-            title="Đóng chế độ phóng to (Phím Esc)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs border border-slate-300 shadow-2xs transition-all cursor-pointer active:scale-95"
+            title="Đóng chế độ xem (Phím Esc)"
           >
             <X className="w-4 h-4 stroke-[2.4]" />
-            <span>Thoát</span>
+            <span>Đóng</span>
             <kbd className="text-[10px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded font-mono ml-0.5 border border-slate-200">Esc</kbd>
           </button>
         </div>
@@ -277,32 +290,54 @@ export function FullScreenDocModal({
         className="flex-1 flex overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Left Thumbnails Sidebar (Browser PDF style: preview cards + page numbers) */}
+        {/* Left Thumbnails Sidebar */}
         {!isExam && isSidebarOpen && (
           <div className="w-56 bg-slate-100/95 border-r border-slate-300 flex flex-col overflow-y-auto p-3 gap-3 select-none flex-shrink-0 no-scrollbar shadow-inner animate-fade-in">
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">
-              Trang thu nhỏ ({totalLeaves})
+              Danh sách trang ({totalLeaves})
             </div>
 
             {leaves.map((leaf, lIdx) => {
+              // Chỉ trang đang xem mới có viền cam 2px
               const isSelectedPage = isTwoPageSpread 
-                ? (lIdx === leftIndex || lIdx === rightIndex)
+                ? lIdx === leftIndex 
                 : lIdx === currentPage;
+
+              // Làm sạch text hiển thị trên thumbnail (bỏ ký tự ##, $$, \)
+              const cleanPreviewText = leaf.text
+                ? leaf.text
+                    .replace(/##\s+/g, '')
+                    .replace(/###\s+/g, '')
+                    .replace(/\$\$[\s\S]+?\$\$/g, '[Công thức toán]')
+                    .replace(/\\\[[\s\S]+?\\\]/g, '[Công thức]')
+                    .replace(/\\\([\s\S]+?\\\)/g, '')
+                    .replace(/\$[^\$\n]+?\$/g, '')
+                    .replace(/\\/g, '')
+                    .replace(/\*\*/g, '')
+                    .trim()
+                : '';
+
+              const cleanTitle = (leaf.chapterTitle || `Trang ${leaf.pageNumber}`).replace(/^##\s+/, '');
 
               return (
                 <div 
                   key={leaf.pageNumber || lIdx}
                   onClick={() => setCurrentPage(lIdx)}
-                  className="flex flex-col items-center gap-1 group cursor-pointer"
+                  className="flex flex-col items-center group cursor-pointer"
                 >
                   {/* Miniature Page Card */}
                   <div 
-                    className={`w-full aspect-[1/1.3] bg-white rounded-md p-2.5 flex flex-col justify-between border transition-all overflow-hidden ${
+                    className={`w-full aspect-[1/1.3] bg-white rounded-md p-2.5 flex flex-col justify-between transition-all overflow-hidden relative ${
                       isSelectedPage
-                        ? 'ring-2 ring-[#E0562D] border-[#E0562D] shadow-md scale-102'
-                        : 'border-slate-300 hover:border-slate-400 shadow-2xs hover:shadow-sm'
+                        ? 'border-2 border-[#E0562D] ring-1 ring-[#E0562D]/50 shadow-md'
+                        : 'border border-slate-300 hover:border-slate-400 shadow-2xs hover:shadow-sm'
                     }`}
                   >
+                    {/* Số trang gộp ở góc trên bên phải thumbnail */}
+                    <div className="absolute top-1.5 right-2 text-[9px] font-mono font-bold text-slate-400 bg-slate-100 px-1 py-0.2 rounded">
+                      {leaf.pageNumber}
+                    </div>
+
                     {leaf.image ? (
                       <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
                         <img 
@@ -313,27 +348,21 @@ export function FullScreenDocModal({
                       </div>
                     ) : (
                       <>
-                        <div>
-                          <div className="text-[9px] font-bold text-slate-900 line-clamp-1 border-b border-slate-100 pb-1 mb-1">
-                            {leaf.chapterTitle || `Trang ${leaf.pageNumber}`}
+                        <div className="pr-6">
+                          <div className="text-[9px] font-bold text-slate-900 line-clamp-2 border-b border-slate-100 pb-1 mb-1 leading-tight">
+                            {cleanTitle}
                           </div>
-                          <div className="text-[7.5px] leading-tight text-slate-500 line-clamp-6 select-none pointer-events-none">
-                            {leaf.text}
+                          <div className="text-[8px] leading-relaxed text-slate-500 line-clamp-5 select-none pointer-events-none">
+                            {cleanPreviewText}
                           </div>
                         </div>
-                        <div className="w-full text-right text-[8px] font-mono text-slate-400">
-                          {leaf.pageNumber}
+                        <div className="w-full flex items-center justify-between text-[8px] text-slate-400 border-t border-slate-50 pt-1">
+                          <span className="truncate max-w-[120px]">{item.title}</span>
+                          <span className="font-mono">{leaf.pageNumber}/{totalLeaves}</span>
                         </div>
                       </>
                     )}
                   </div>
-
-                  {/* Page Label */}
-                  <span className={`text-[10.5px] font-mono font-bold transition-colors ${
-                    isSelectedPage ? 'text-[#E0562D]' : 'text-slate-600 group-hover:text-slate-900'
-                  }`}>
-                    Trang {leaf.pageNumber}
-                  </span>
                 </div>
               );
             })}
@@ -479,7 +508,7 @@ export function FullScreenDocModal({
                             </div>
                           </div>
                         ) : (
-                          <div className="text-[15.5px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar">
+                          <div className="text-[15.5px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
                             <MathRenderer content={leftLeaf.text} />
                           </div>
                         )}
@@ -520,7 +549,7 @@ export function FullScreenDocModal({
                             </div>
                           </div>
                         ) : (
-                          <div className="text-[15.5px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar">
+                          <div className="text-[15.5px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
                             <MathRenderer content={rightLeaf.text} />
                           </div>
                         )}
@@ -562,7 +591,7 @@ export function FullScreenDocModal({
                           </div>
                         </div>
                       ) : (
-                        <div className="text-[16px] leading-[1.8] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar">
+                        <div className="text-[16px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
                           <MathRenderer content={leftLeaf.text} />
                         </div>
                       )}

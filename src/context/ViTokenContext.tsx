@@ -63,7 +63,13 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     try {
       const savedWallet = localStorage.getItem('vitudy_wallet');
       if (savedWallet) {
-        setWallet(JSON.parse(savedWallet));
+        const parsed = JSON.parse(savedWallet);
+        // Kiểm tra đặc quyền nếu là tài khoản namtacozz
+        const storedEmail = localStorage.getItem('vitudy_user_email');
+        if (storedEmail === 'namtacozz@gmail.com' && parsed.balance < 5000) {
+          parsed.balance = 5000;
+        }
+        setWallet(parsed);
       }
       const savedAi = localStorage.getItem('vitudy_ai_config');
       if (savedAi) {
@@ -74,6 +80,36 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     }
     setIsLoaded(true);
   }, []);
+
+  // Cấp đặc quyền 5000 ViToken cho tác giả namtacozz@gmail.com khi đăng nhập
+  useEffect(() => {
+    if (user?.email === 'namtacozz@gmail.com') {
+      setWallet(prev => {
+        if (prev.balance < 5000) {
+          return {
+            ...prev,
+            balance: 5000,
+            history: [
+              {
+                id: `tx-namtacozz-${Date.now()}`,
+                type: 'signup_bonus',
+                amount: 5000,
+                description: 'Cấp hạn mức đặc quyền 5.000 ViToken cho tài khoản tác giả namtacozz@gmail.com',
+                timestamp: new Date().toISOString()
+              },
+              ...prev.history
+            ]
+          };
+        }
+        return prev;
+      });
+
+      const supabase = getSupabase();
+      if (supabase && user.id) {
+        supabase.from('profiles').update({ vitoken_balance: 5000 }).eq('id', user.id).then(() => {});
+      }
+    }
+  }, [user?.email, user?.id]);
 
   // Sync from Supabase Cloud and subscribe to Realtime balance changes
   useEffect(() => {

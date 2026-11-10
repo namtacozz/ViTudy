@@ -26,7 +26,7 @@ export class ViTokenService {
     try {
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
-        .select('vitoken_balance, daily_streak_days, last_claim_date')
+        .select('email, vitoken_balance, daily_streak_days, last_claim_date')
         .eq('id', userId)
         .single();
 
@@ -34,10 +34,17 @@ export class ViTokenService {
         return DEFAULT_WALLET;
       }
 
+      let balance = profile.vitoken_balance;
+      // Đặc quyền cấp 5000 ViToken cho tài khoản tác giả namtacozz@gmail.com
+      if (profile.email === 'namtacozz@gmail.com' && balance < 5000) {
+        balance = 5000;
+        await supabase.from('profiles').update({ vitoken_balance: 5000 }).eq('id', userId);
+      }
+
       const history = await this.getHistory(userId, 50);
 
       return {
-        balance: profile.vitoken_balance,
+        balance,
         streakDays: profile.daily_streak_days,
         lastClaimDate: profile.last_claim_date,
         history,
