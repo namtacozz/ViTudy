@@ -4,6 +4,44 @@
 
 ---
 
+## 2026-11-10 20:20 — main (Loại Bỏ Thuật Ngữ PKCE/FREE, Phân Nhóm Mô Hình Dropdown & Thẻ Vai Trò, Tùy Chọn Nâng Cao Khóa API Cá Nhân & Nâng Cấp Trợ Năng Modal AI)
+- **Task:**
+  1. **Loại bỏ hoàn toàn các thuật ngữ kỹ thuật lộ ra ngoài ("PKCE", "FREE"):**
+     - Đổi "Mở cổng Ủy quyền OpenAI PKCE" thành "Quản lý quyền truy cập trên OpenAI".
+     - Đổi "Auto-Refresh (PKCE)" thành "Tự gia hạn đăng nhập" (kèm tooltip giải thích chi tiết).
+     - Đổi badge "FREE" bên cạnh email thành "Không tốn ViToken" để tránh hiểu nhầm với gói tài khoản miễn phí của ChatGPT.
+  2. **Phân nhóm mô hình trực quan & Bổ sung thẻ vai trò (Model Grouping & Role Card):**
+     - Tổ chức dropdown mô hình ChatGPT thành 3 nhóm `<optgroup>` theo mục đích sử dụng: *Siêu suy luận & Chuyên sâu* (GPT-5.6 Terra, Luna, Sol, o3-mini, o1), *Cân bằng & Đa dụng* (GPT-5.5, GPT-5, GPT-4o, ChatGPT-4o Latest), và *Phản hồi nhanh & Tiết kiệm* (GPT-4o Mini, o1-mini).
+     - Bổ sung thẻ tóm tắt vai trò mô hình ngay bên dưới dropdown (hiển thị rõ tên gọi, mục đích và mã kỹ thuật).
+     - Thống nhất nút kiểm tra kết nối hiển thị kết quả thời gian thực thân thiện ("Hoạt động tốt · Phản hồi trong X,Xs").
+  3. **Tùy chọn nâng cao khóa API cá nhân (Advanced BYOK Collapsible):**
+     - Bổ sung khu vực thu gọn "Tùy chọn nâng cao: Dùng khóa API cá nhân (Gemini, OpenAI)" ở cuối modal giúp người dùng kỹ thuật có thể nhập trực tiếp API Key riêng mà không làm rối mắt người dùng đại chúng.
+     - Đồng bộ cài đặt và hiển thị tương ứng trên trang Cài đặt tài khoản (`AccountSettings.tsx`) và trang Hỏi đáp (`faq/page.tsx`).
+  4. **Minh bạch chi phí hệ thống, dự phòng hạn mức & quyền riêng tư dữ liệu:**
+     - Công khai biểu phí hệ thống ViTudy (2 ViToken/lượt thao tác chuyên sâu; nhắc nhở điểm danh nhận 5-10 ViToken miễn phí mỗi ngày).
+     - Bổ sung tùy chọn checkbox: "Tự động chuyển sang AI ViTudy nếu tài khoản ChatGPT hết hạn mức (sẽ trừ ViToken tương ứng)".
+     - Bổ sung cam kết quyền riêng tư: "🔒 Câu hỏi và tài liệu được gửi trực tiếp từ trình duyệt đến OpenAI. ViTudy không lưu trữ tài liệu hay phiên đăng nhập của bạn."
+  5. **Chuốt bóng UI & Tối ưu Trợ Năng (WCAG Accessibility Polish):**
+     - Thêm hộp thoại xác nhận khi người dùng nhấn ngắt kết nối tài khoản ChatGPT để tránh bấm nhầm.
+     - Hỗ trợ điều hướng bằng phím mũi tên (`ArrowUp`/`ArrowDown`/`ArrowLeft`/`ArrowRight`) giữa các thẻ nhà cung cấp AI (`role="radiogroup"` & `role="radio"`).
+     - Bổ sung vùng đọc màn hình động `aria-live="polite"` cho kết quả kiểm tra kết nối AI.
+     - Lược bỏ biểu tượng đồng xu đen trùng lặp cạnh số dư ViToken ở đầu modal; rút gọn nút "Lưu cấu hình" thành "Lưu".
+- **Files Modified:**
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/profile/AccountSettings.tsx`
+  - `src/lib/aiClient.ts`
+  - `src/app/faq/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/03_SYMBOL_INDEX.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+  - `pnpm run docs:index ; pnpm run docs:check ; pnpm run build:pages`: Static export thành công 100%.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`, `03_SYMBOL_INDEX.md`.
+
+---
+
 ## 2026-11-10 20:00 — main (In-situ STudy Overlay Trên Sách, Tái Cấu Trúc Vùng Điều Khiển Trắc Nghiệm, Tùy Chọn Số Câu/Độ Khó/Phạm Vi & Chuẩn Hóa Typography Sentence Case)
 - **Task:**
   1. **Chuyển đổi STudy của Sách thành In-situ Overlay gắn liền trên sách:**

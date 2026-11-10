@@ -217,10 +217,10 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
           </Link>
         </div>
         <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-          Ủy quyền tài khoản ChatGPT (Plus, Pro hoặc Free) qua giao thức bảo mật OAuth 2.0 PKCE để sử dụng trực tiếp các mô hình AI cao cấp (GPT-5.6 Terra, GPT-4o, o3-mini...) mà không tiêu tốn ViToken.
+          Ủy quyền tài khoản ChatGPT (Plus, Pro hoặc Free) qua giao thức bảo mật OAuth 2.0 để sử dụng trực tiếp các mô hình AI cao cấp (GPT-5.6 Terra, GPT-4o, o3-mini...) mà không tiêu tốn ViToken.
         </p>
 
-        {/* OpenAI OAuth PKCE Session Status */}
+        {/* OpenAI OAuth Session Status */}
         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
@@ -236,22 +236,25 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
                 </span>
               )}
               {oauthSession && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-semibold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-semibold border border-blue-200">
                   <RefreshCw className="w-2.5 h-2.5" />
-                  Auto-Refresh
+                  Tự gia hạn
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-600 truncate mt-1">
               {oauthSession
                 ? `Tài khoản: ${oauthSession.email || (oauthSession.accountId ? `ID #${oauthSession.accountId.slice(0, 8)}` : 'ChatGPT Plus')}`
-                : 'Bạn đang dùng AI Hệ Thống ViTudy (tiêu tốn ViToken theo lượt dùng).'}
+                : 'Bạn đang dùng AI hệ thống ViTudy (2 ViToken / lượt thao tác chuyên sâu).'}
             </p>
           </div>
           {oauthSession ? (
             <button
               type="button"
               onClick={() => {
+                if (typeof window !== 'undefined' && !window.confirm('Bạn có chắc chắn muốn ngắt kết nối tài khoản ChatGPT?')) {
+                  return;
+                }
                 clearOpenAiOAuthSession();
                 setOauthSession(null);
               }}

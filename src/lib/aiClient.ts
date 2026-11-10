@@ -509,14 +509,15 @@ export async function testAiConnection(params: {
         ? session.email
         : session.accountId
         ? `ID: ${session.accountId.slice(0, 8)}...`
-        : 'Đã xác thực PKCE';
+        : 'Đã xác thực';
       const planBadge = session.planType ? ` (${session.planType.toUpperCase()})` : '';
       const latency = Date.now() - startTime;
+      const latencySec = (latency / 1000).toFixed(1);
 
       return {
         success: true,
         latencyMs: latency,
-        message: `Mô hình ${params.model} phản hồi thành công sau ${latency}ms! [${accountLabel}${planBadge}]`,
+        message: `Hoạt động tốt · Phản hồi trong ${latencySec}s (${params.model} - ${accountLabel}${planBadge})`,
       };
     }
 

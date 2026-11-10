@@ -26,7 +26,11 @@ import {
   Plus,
   RefreshCw,
   ClipboardPaste,
-  LogOut
+  LogOut,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Lock
 } from 'lucide-react';
 import { MarketModal } from '../modals/MarketModal';
 import { TopUpModal } from '../payment/TopUpModal';
@@ -54,27 +58,68 @@ function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-const PROVIDER_MODELS: Record<AiProvider, { id: string; name: string }[]> = {
-  system: [
-    { id: 'gpt-4o-mini', name: 'gpt-4o-mini' },
-    { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash' },
-    { id: 'gpt-4o', name: 'gpt-4o' },
-  ],
-  oauth_chatgpt: [
-    { id: 'gpt-5.6-terra', name: 'gpt-5.6-terra' },
-    { id: 'gpt-5.6-luna', name: 'gpt-5.6-luna' },
-    { id: 'gpt-5.6-sol', name: 'gpt-5.6-sol' },
-    { id: 'gpt-5.5', name: 'gpt-5.5' },
-    { id: 'gpt-5', name: 'gpt-5' },
-    { id: 'gpt-4o', name: 'gpt-4o' },
-    { id: 'gpt-4o-mini', name: 'gpt-4o-mini' },
-    { id: 'o3-mini', name: 'o3-mini' },
-    { id: 'o1', name: 'o1' },
-    { id: 'o1-mini', name: 'o1-mini' },
-    { id: 'chatgpt-4o-latest', name: 'chatgpt-4o-latest' },
-  ],
-  byok_gemini: [],
-  byok_openai: [],
+export interface ModelItem {
+  id: string;
+  name: string;
+  desc: string;
+}
+
+export interface ModelGroup {
+  group: string;
+  models: ModelItem[];
+}
+
+const CHATGPT_MODEL_GROUPS: ModelGroup[] = [
+  {
+    group: 'Siêu suy luận & Chuyên sâu',
+    models: [
+      { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', desc: 'Flagship suy luận tối cao' },
+      { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', desc: 'Suy luận logic nâng cao' },
+      { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', desc: 'Phân tích tài liệu chuyên sâu' },
+      { id: 'o3-mini', name: 'o3-mini', desc: 'Chuyên Toán học & STEM xuất sắc' },
+      { id: 'o1', name: 'o1', desc: 'Suy luận logic đa tầng phức tạp' },
+    ]
+  },
+  {
+    group: 'Cân bằng & Đa dụng',
+    models: [
+      { id: 'gpt-5.5', name: 'GPT-5.5', desc: 'Cân bằng tốc độ & chất lượng' },
+      { id: 'gpt-5', name: 'GPT-5', desc: 'Thế hệ mới toàn diện' },
+      { id: 'gpt-4o', name: 'GPT-4o', desc: 'Đa phương thức mạnh mẽ' },
+      { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest', desc: 'Bản cập nhật mới nhất' },
+    ]
+  },
+  {
+    group: 'Phản hồi nhanh & Tiết kiệm',
+    models: [
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Nhanh, nhẹ, tiết kiệm hạn mức' },
+      { id: 'o1-mini', name: 'o1-mini', desc: 'Suy luận toán nhanh' },
+    ]
+  }
+];
+
+const SYSTEM_MODEL_LIST: ModelItem[] = [
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Mặc định · Phản hồi nhanh & chính xác' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Tối ưu tóm tắt & sinh đề thi' },
+  { id: 'gpt-4o', name: 'GPT-4o', desc: 'Chuyên sâu · Phân tích bài toán khó' },
+];
+
+const BYOK_GEMINI_MODELS: ModelItem[] = [
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Nhanh, nhẹ, miễn phí' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Suy luận đa phương thức nâng cao' },
+];
+
+const BYOK_OPENAI_MODELS: ModelItem[] = [
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Nhanh & tiết kiệm chi phí' },
+  { id: 'gpt-4o', name: 'GPT-4o', desc: 'Toàn diện cao cấp' },
+  { id: 'o3-mini', name: 'o3-mini', desc: 'Suy luận STEM xuất sắc' },
+];
+
+const PROVIDER_MODELS: Record<AiProvider, ModelItem[]> = {
+  system: SYSTEM_MODEL_LIST,
+  oauth_chatgpt: CHATGPT_MODEL_GROUPS.flatMap(g => g.models),
+  byok_gemini: BYOK_GEMINI_MODELS,
+  byok_openai: BYOK_OPENAI_MODELS,
   oauth_gemini: []
 };
 
@@ -123,6 +168,8 @@ export function TopRightWallet() {
   const [selectedModel, setSelectedModel] = useState<string>(aiConfig.model || 'gpt-4o-mini');
   const [apiKeyInput, setApiKeyInput] = useState((aiConfig as any).apiKey || '');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showAdvancedByok, setShowAdvancedByok] = useState(false);
+  const [autoFallbackToSystem, setAutoFallbackToSystem] = useState(true);
   const [chatGptCodeInput, setChatGptCodeInput] = useState('');
   const [oauthSession, setOauthSession] = useState<OpenAiOAuthSession | null>(null);
   const [isExchangingOAuth, setIsExchangingOAuth] = useState(false);
@@ -133,6 +180,12 @@ export function TopRightWallet() {
 
   useEffect(() => {
     if (isAiModalOpen) {
+      if (typeof window !== 'undefined') {
+        const fallbackPref = localStorage.getItem('vitudy_auto_fallback_system');
+        if (fallbackPref !== null) {
+          setAutoFallbackToSystem(fallbackPref === 'true');
+        }
+      }
       setSelectedProvider(aiConfig.provider);
       const currentModels = PROVIDER_MODELS[aiConfig.provider] || [];
       const isValid = currentModels.some((m) => m.id === aiConfig.model);
@@ -201,8 +254,9 @@ export function TopRightWallet() {
     if (selectedProvider !== aiConfig.provider) return true;
     if (selectedModel !== (aiConfig.model || 'gpt-4o-mini')) return true;
     if (selectedProvider === 'oauth_chatgpt' && (chatGptCodeInput.trim() !== '' || Boolean(oauthSession) !== Boolean(aiConfig.isOauthConnected))) return true;
+    if ((selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') && apiKeyInput.trim() !== ((aiConfig as any).apiKey || '')) return true;
     return false;
-  }, [selectedProvider, selectedModel, chatGptCodeInput, oauthSession, aiConfig]);
+  }, [selectedProvider, selectedModel, chatGptCodeInput, oauthSession, aiConfig, apiKeyInput]);
 
   const handleStartOpenAiPkce = async () => {
     try {
@@ -283,6 +337,23 @@ export function TopRightWallet() {
     });
     setTestConnectionStatus('idle');
     setTestResultMessage(null);
+  };
+
+  const handleDisconnectConfirm = () => {
+    if (typeof window !== 'undefined' && !window.confirm('Bạn có chắc chắn muốn ngắt kết nối tài khoản ChatGPT khỏi ViTudy?')) {
+      return;
+    }
+    handleDisconnectOpenAi();
+  };
+
+  const handleProviderKeyDown = (e: React.KeyboardEvent, provider: AiProvider) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      handleSelectProvider(provider === 'system' ? 'oauth_chatgpt' : 'system');
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      handleSelectProvider(provider === 'system' ? 'oauth_chatgpt' : 'system');
+    }
   };
 
   const handleClaim = () => {
@@ -759,12 +830,7 @@ export function TopRightWallet() {
             {/* User ViToken Balance in AI Modal */}
             <div className="my-3 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs">
               <span className="text-slate-600 font-medium">Số dư ví của bạn:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono font-black text-slate-900">{wallet.balance} ViToken</span>
-                <div className="w-4 h-4 rounded-full bg-slate-900 text-white font-black text-[9px] flex items-center justify-center">
-                  V
-                </div>
-              </div>
+              <span className="font-mono font-black text-slate-900">{wallet.balance} ViToken</span>
             </div>
 
             <form onSubmit={handleSaveAiConfig} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
@@ -773,14 +839,18 @@ export function TopRightWallet() {
                 <label className="text-xs font-bold text-slate-800 block mb-1.5">
                   1. Chọn Nhà cung cấp AI
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div 
+                  role="radiogroup" 
+                  aria-label="Chọn nhà cung cấp AI"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                >
                   {[
                     {
                       id: 'system' as AiProvider,
                       name: 'ViTudy (Hệ thống)',
-                      badge: 'Mặc định',
+                      badge: selectedProvider === 'system' ? 'Mặc định khi chưa đăng nhập' : 'Hệ thống ViTudy',
                       badgeStyle: 'bg-orange-50 text-[#E0562D] border-orange-200',
-                      desc: 'Sẵn sàng dùng ngay. Tự động trừ ViToken theo lượt dùng.',
+                      desc: '2 ViToken / lượt thao tác chuyên sâu (Miễn phí từ quà điểm danh hằng ngày).',
                       icon: <Sparkles className="w-4 h-4 text-[#E0562D]" />
                     },
                     {
@@ -788,7 +858,7 @@ export function TopRightWallet() {
                       name: 'Đăng nhập ChatGPT',
                       badge: 'Tài khoản ChatGPT',
                       badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-                      desc: 'Ủy quyền tài khoản ChatGPT (Plus, Pro, Free) dùng hạn mức trực tiếp, không tốn ViToken.',
+                      desc: 'Dùng tài khoản ChatGPT của bạn, không tốn ViToken.',
                       icon: <OpenAILogo className="w-4 h-4 text-emerald-700" />
                     }
                   ].map(opt => {
@@ -798,8 +868,12 @@ export function TopRightWallet() {
                     return (
                       <div
                         key={opt.id}
+                        role="radio"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onKeyDown={(e) => handleProviderKeyDown(e, opt.id)}
                         onClick={() => handleSelectProvider(opt.id)}
-                        className={`p-2.5 rounded-2xl border text-xs cursor-pointer flex flex-col justify-between transition-all select-none ${
+                        className={`p-3 rounded-2xl border text-xs cursor-pointer flex flex-col justify-between transition-all select-none ${
                           isSelected
                             ? 'bg-orange-50/40 border-[#E0562D] ring-1 ring-[#E0562D]'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -819,7 +893,7 @@ export function TopRightWallet() {
                           />
                         </div>
 
-                        <p className="text-[11px] text-slate-500 leading-snug mb-1.5">
+                        <p className="text-[11px] text-slate-500 leading-relaxed mb-2">
                           {opt.desc}
                         </p>
 
@@ -828,7 +902,7 @@ export function TopRightWallet() {
                             {opt.badge}
                           </span>
                           {isCurrentActive && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white border border-slate-900">
                               Đang dùng
                             </span>
                           )}
@@ -840,7 +914,7 @@ export function TopRightWallet() {
               </div>
 
               {/* 2. Khung Thông tin xác thực */}
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <label className="font-bold text-slate-900">
                     2. Thông tin xác thực kết nối
@@ -851,17 +925,25 @@ export function TopRightWallet() {
                       onClick={handleStartOpenAiPkce}
                       className="text-[#E0562D] hover:underline flex items-center gap-1 text-[11px] font-bold cursor-pointer"
                     >
-                      <span>Mở cổng Ủy quyền OpenAI PKCE</span>
+                      <span>Quản lý quyền truy cập trên OpenAI</span>
                       <ExternalLink className="w-3 h-3" />
                     </button>
                   )}
                 </div>
 
                 {selectedProvider === 'system' && (
-                  <div className="text-xs text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between leading-relaxed">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#E0562D] flex-shrink-0" />
-                      <span>Hệ thống ViTudy tích hợp sẵn, không cần tài khoản riêng. Chi phí ước tính: <strong>0,05 ViToken</strong> / lượt hỏi (khoảng 50đ).</span>
+                  <div className="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200 space-y-2 leading-relaxed">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-[#E0562D] flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold text-slate-900 mb-0.5">Hệ thống ViTudy tích hợp sẵn</div>
+                        <p className="text-[11px] text-slate-600">
+                          Sẵn sàng sử dụng ngay mà không cần tài khoản hay API Key riêng. Định mức: <strong>2 ViToken / lượt thao tác chuyên sâu</strong> (Tóm tắt, sinh đề thi, thẻ ghi nhớ, hỏi Inteline).
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-2 bg-orange-50 border border-orange-200 rounded-lg text-[10.5px] text-[#9A3412] font-medium">
+                      Mẹo: Điểm danh mỗi ngày tại góc trên bên phải để nhận miễn phí <strong>5 – 10 ViToken</strong>!
                     </div>
                   </div>
                 )}
@@ -877,16 +959,14 @@ export function TopRightWallet() {
                               <div className="text-xs font-bold text-slate-900 truncate">
                                 Đã kết nối: {oauthSession.email || (oauthSession.accountId ? `Tài khoản #${oauthSession.accountId.slice(0, 8)}` : 'ChatGPT Plus / Pro')}
                               </div>
-                              <div className="text-[10.5px] text-emerald-800 flex items-center gap-1.5 mt-0.5">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 font-semibold">
+                              <div className="text-[10.5px] text-emerald-800 flex items-center gap-1.5 mt-1">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-semibold border border-emerald-200">
                                   <RefreshCw className="w-2.5 h-2.5" />
-                                  {oauthSession.refreshToken ? 'Auto-Refresh (PKCE)' : 'Phiên hoạt động'}
+                                  Tự gia hạn đăng nhập
                                 </span>
-                                {oauthSession.planType && (
-                                  <span className="uppercase font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-emerald-200 text-slate-700">
-                                    {oauthSession.planType}
-                                  </span>
-                                )}
+                                <span className="font-bold text-[10px] px-2 py-0.5 rounded-full bg-white border border-emerald-300 text-emerald-800">
+                                  Không tốn ViToken
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -901,12 +981,30 @@ export function TopRightWallet() {
                             </button>
                             <button
                               type="button"
-                              onClick={handleDisconnectOpenAi}
-                              title="Ngắt kết nối"
+                              onClick={handleDisconnectConfirm}
+                              title="Ngắt kết nối tài khoản ChatGPT"
+                              aria-label="Ngắt kết nối tài khoản ChatGPT"
                               className="p-1.5 rounded-lg bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 cursor-pointer transition-all"
                             >
                               <LogOut className="w-3.5 h-3.5" />
                             </button>
+                          </div>
+                        </div>
+
+                        {/* Tùy chọn dự phòng và giới hạn */}
+                        <div className="pt-2 border-t border-emerald-200/60 mt-1 flex flex-col gap-1.5">
+                          <label className="flex items-center gap-2 text-[11px] text-emerald-950 cursor-pointer select-none">
+                            <input 
+                              type="checkbox"
+                              checked={autoFallbackToSystem}
+                              onChange={(e) => setAutoFallbackToSystem(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded accent-[#E0562D] cursor-pointer"
+                            />
+                            <span>Tự động chuyển sang AI ViTudy nếu tài khoản ChatGPT hết hạn mức (sẽ trừ ViToken tương ứng)</span>
+                          </label>
+
+                          <div className="text-[10.5px] text-emerald-800/90 leading-tight">
+                            🔒 <strong>Quyền riêng tư:</strong> Câu hỏi và tài liệu được gửi trực tiếp từ trình duyệt của bạn đến OpenAI. ViTudy không lưu trữ tài liệu hay phiên đăng nhập của bạn.
                           </div>
                         </div>
                       </div>
@@ -973,7 +1071,7 @@ export function TopRightWallet() {
 
                         <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 leading-relaxed">
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                          <span>Chuẩn OAuth 2.0 PKCE + Codex Responses API (tương thích 100% ViTai). Tự động làm mới phiên, không tốn ViToken.</span>
+                          <span>Bảo mật chuẩn OAuth 2.0. Tự động gia hạn đăng nhập, không tốn ViToken.</span>
                         </div>
                       </div>
                     )}
@@ -982,7 +1080,7 @@ export function TopRightWallet() {
               </div>
 
               {/* 3. Chọn Mô Hình AI & Kiểm tra kết nối */}
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <label htmlFor="ai-model-select" className="font-bold text-slate-900">
                     3. Chọn Mô hình AI
@@ -1002,13 +1100,33 @@ export function TopRightWallet() {
                         setTestConnectionStatus('idle');
                         setTestResultMessage(null);
                       }}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono font-medium outline-none focus:border-slate-800 cursor-pointer shadow-2xs"
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium outline-none focus:border-slate-800 cursor-pointer shadow-2xs"
                     >
-                      {(PROVIDER_MODELS[selectedProvider] || []).map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
+                      {selectedProvider === 'oauth_chatgpt' ? (
+                        CHATGPT_MODEL_GROUPS.map((group) => (
+                          <optgroup key={group.group} label={group.group}>
+                            {group.models.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} — {m.desc} ({m.id})
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))
+                      ) : selectedProvider === 'system' ? (
+                        <optgroup label="Mô hình hệ thống ViTudy">
+                          {SYSTEM_MODEL_LIST.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name} — {m.desc} ({m.id})
+                            </option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        (PROVIDER_MODELS[selectedProvider] || []).map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name} — {m.desc} ({m.id})
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
 
@@ -1023,17 +1141,104 @@ export function TopRightWallet() {
                   </button>
                 </div>
 
-                {/* Kết quả kiểm tra */}
-                {testConnectionStatus === 'success' && testResultMessage && (
-                  <div className="p-2 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs flex items-center gap-2 animate-fade-in font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span className="leading-tight">{testResultMessage}</span>
-                  </div>
-                )}
-                {testConnectionStatus === 'error' && testResultMessage && (
-                  <div className="p-2 bg-red-50 border border-red-300 rounded-xl text-red-900 text-xs flex items-center gap-2 animate-fade-in font-medium">
-                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    <span className="leading-tight">{testResultMessage}</span>
+                {/* Thẻ tóm tắt mục đích mô hình */}
+                {(() => {
+                  const allModels = PROVIDER_MODELS[selectedProvider] || [];
+                  const activeModelInfo = allModels.find(m => m.id === selectedModel) || allModels[0];
+                  return (
+                    <div className="text-[11px] text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 flex items-center justify-between">
+                      <span className="truncate mr-2">
+                        <strong className="text-slate-800 mr-1">Mục đích:</strong>
+                        {activeModelInfo?.desc || 'Mô hình AI học tập'}
+                      </span>
+                      <code className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded flex-shrink-0">
+                        {selectedModel}
+                      </code>
+                    </div>
+                  );
+                })()}
+
+                {/* Kết quả kiểm tra với aria-live */}
+                <div aria-live="polite">
+                  {testConnectionStatus === 'success' && testResultMessage && (
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs flex items-center gap-2 animate-fade-in font-medium">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span className="leading-tight">{testResultMessage}</span>
+                    </div>
+                  )}
+                  {testConnectionStatus === 'error' && testResultMessage && (
+                    <div className="p-2.5 bg-red-50 border border-red-300 rounded-xl text-red-900 text-xs flex items-center gap-2 animate-fade-in font-medium">
+                      <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      <span className="leading-tight">{testResultMessage}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tùy chọn nâng cao: Khóa API cá nhân (Gemini, OpenAI) */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedByok(!showAdvancedByok)}
+                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  {showAdvancedByok ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  <span>Tùy chọn nâng cao: Dùng khóa API cá nhân (Gemini, OpenAI)</span>
+                </button>
+
+                {showAdvancedByok && (
+                  <div className="mt-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 animate-fade-in text-xs">
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Dành cho người dùng nâng cao muốn sử dụng trực tiếp API Key riêng của Google Gemini hoặc OpenAI (không tốn ViToken). Khóa được lưu cục bộ trên trình duyệt của bạn.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectProvider('byok_gemini')}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
+                          selectedProvider === 'byok_gemini'
+                            ? 'bg-orange-50 border-[#E0562D] text-[#E0562D]'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        Google Gemini API
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectProvider('byok_openai')}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
+                          selectedProvider === 'byok_openai'
+                            ? 'bg-orange-50 border-[#E0562D] text-[#E0562D]'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        OpenAI API Key
+                      </button>
+                    </div>
+
+                    {(selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') && (
+                      <div className="space-y-1.5 pt-1">
+                        <label className="text-[11px] font-bold text-slate-700 block">
+                          Nhập API Key {selectedProvider === 'byok_gemini' ? 'Google Gemini' : 'OpenAI'}:
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showApiKey ? 'text' : 'password'}
+                            value={apiKeyInput}
+                            onChange={(e) => setApiKeyInput(e.target.value)}
+                            placeholder={selectedProvider === 'byok_gemini' ? 'AIzaSy...' : 'sk-proj-...'}
+                            className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono pr-8"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowApiKey(!showApiKey)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                          >
+                            {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1049,7 +1254,7 @@ export function TopRightWallet() {
               <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                 <div>
                   {!hasAiChanges && (
-                    <span className="text-[11px] text-slate-400 italic">Chưa có thay đổi</span>
+                    <span className="text-xs text-slate-500 font-medium">Chưa có thay đổi</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -1066,7 +1271,7 @@ export function TopRightWallet() {
                     title={!hasAiChanges ? 'Chưa có thay đổi cấu hình' : 'Lưu cài đặt kết nối'}
                     className="px-5 py-2 rounded-xl text-xs font-bold bg-[#E0562D] hover:bg-[#c9451e] disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-xs cursor-pointer transition-all active:scale-95"
                   >
-                    Lưu cấu hình
+                    Lưu
                   </button>
                 </div>
               </div>

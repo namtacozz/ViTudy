@@ -194,9 +194,9 @@ const FAQ_LIST: FaqItem[] = [
         </p>
         <p>Biểu phí sử dụng các tính năng AI hệ thống rất tiết kiệm:</p>
         <ul className="list-disc pl-5 space-y-1.5 text-slate-700">
-          <li><strong>Hỏi bài Inteline / Giải thích thuật ngữ:</strong> Khoảng <strong>0,05 ViToken</strong> (tương đương 50 đồng / lần hỏi).</li>
-          <li><strong>Sinh đề thi trắc nghiệm (10 câu):</strong> Khoảng <strong>0,5 ViToken</strong> (tương đương 500 đồng).</li>
-          <li><strong>Dùng API Key cá nhân (BYOK):</strong> Nếu bạn cấu hình khóa API riêng của Google Gemini hoặc OpenAI trong mục Cài đặt AI, mọi lượt hỏi bài và sinh đề sẽ là <strong>0 ViToken (Hoàn toàn miễn phí)</strong>.</li>
+          <li><strong>Hỏi bài Inteline / Tóm tắt / Sinh trắc nghiệm:</strong> Chỉ <strong>2 ViToken</strong> cho mỗi lượt phân tích chuyên sâu (có thể nhận miễn phí 5 – 10 ViToken mỗi ngày qua Điểm danh).</li>
+          <li><strong>Đăng nhập tài khoản ChatGPT:</strong> Khi bạn liên kết tài khoản ChatGPT trong mục Cài đặt AI, mọi lượt hỏi bài, tóm tắt và sinh đề sẽ là <strong>0 ViToken (Hoàn toàn miễn phí)</strong> dùng trực tiếp hạn mức OpenAI của bạn.</li>
+          <li><strong>Dùng API Key cá nhân (BYOK):</strong> Nếu bạn sử dụng khóa API riêng của Google Gemini hoặc OpenAI ở mục Tùy chọn nâng cao, hệ thống cũng hoàn toàn <strong>miễn phí 0 ViToken</strong>.</li>
         </ul>
       </div>
     ),
@@ -300,15 +300,15 @@ const FAQ_LIST: FaqItem[] = [
     id: 'luu-tru-khoa-api-va-bao-mat',
     category: 'tai_khoan_bao_mat',
     categoryLabel: 'Tài khoản & Bảo mật',
-    question: 'Khóa API cá nhân (Gemini, OpenAI) và dữ liệu học tập của tôi được lưu ở đâu?',
-    keywords: ['api key', 'gemini', 'openai', 'bảo mật', 'dữ liệu', 'mã hóa', 'quyền riêng tư'],
+    question: 'Tài khoản ChatGPT, khóa API và dữ liệu học tập của tôi được lưu ở đâu?',
+    keywords: ['chatgpt', 'oauth', 'api key', 'gemini', 'openai', 'bảo mật', 'dữ liệu', 'mã hóa', 'quyền riêng tư'],
     answer: (
       <div className="space-y-3">
         <p>
           Chúng tôi đặt quyền riêng tư và an toàn thông tin của người học lên hàng đầu:
         </p>
         <ul className="list-disc pl-5 space-y-1.5 text-slate-700">
-          <li><strong>Khóa API cá nhân (BYOK):</strong> Khi bạn nhập API Key của Google Gemini hoặc OpenAI, khóa này được <strong>lưu trữ cục bộ 100% trong bộ nhớ trình duyệt (LocalStorage)</strong> trên chính thiết bị của bạn. Máy chủ ViTudy tuyệt đối không thu thập hay lưu trữ khóa API cá nhân của bạn dưới bất kỳ hình thức nào.</li>
+          <li><strong>Tài khoản ChatGPT & Khóa API cá nhân (BYOK):</strong> Khi bạn đăng nhập ChatGPT hoặc nhập API Key, toàn bộ phiên xác thực và khóa được <strong>lưu trữ cục bộ 100% trong bộ nhớ trình duyệt (LocalStorage)</strong> trên chính thiết bị của bạn. Mọi câu hỏi và nội dung tài liệu được gửi trực tiếp từ trình duyệt đến OpenAI/Gemini; máy chủ ViTudy tuyệt đối không thu thập hay lưu trữ phiên đăng nhập hay nội dung của bạn.</li>
           <li><strong>Dữ liệu bàn học:</strong> Tọa độ các vật thể, ghi chú và nét vẽ trên bàn học được đồng bộ an toàn qua dịch vụ đám mây Supabase với chính sách bảo mật cấp dòng (Row-Level Security - RLS), chỉ có chính tài khoản của bạn mới có quyền truy xuất.</li>
         </ul>
       </div>

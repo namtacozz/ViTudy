@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `6bd2059`  
+> **Commit Hash:** `0a60653`  
 > **Cập nhật lần cuối:** `2026-11-10`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -48,10 +48,12 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `BottomRightToolkit` | `component` | [src/components/hud/BottomRightToolkit.tsx:L17-L202](file:///F:/AppMaking/ViTudy/src/components/hud/BottomRightToolkit.tsx) | HUD góc dưới-phải: công cụ bút dạ quang, tạo note, khoá góc nhìn, zoom 100% |
 | `InviteModal` | `component` | [src/components/hud/InviteModal.tsx:L14-L132](file:///F:/AppMaking/ViTudy/src/components/hud/InviteModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L30-L544](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
+| `ModelGroup` | `type` | [src/components/hud/TopRightWallet.tsx:L67-L70](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
+| `ModelItem` | `type` | [src/components/hud/TopRightWallet.tsx:L61-L65](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L23-L384](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L35-L717](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L27-L370](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
-| `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L99-L1085](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
+| `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L144-L1290](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
 | `VrFrameOverlay` | `component` | [src/components/hud/VrFrameOverlay.tsx:L5-L15](file:///F:/AppMaking/ViTudy/src/components/hud/VrFrameOverlay.tsx) | Khung viền 4 góc và nhãn chế độ "Không gian học 2.5D" phong cách VR HUD |
 
 ### Modals & Workflows
@@ -154,7 +156,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `splitSentences` | `fn` | [src/lib/nonAiEngine.ts:L56-L62](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `startOpenAiPkceLogin` | `fn` | [src/lib/openaiOAuth.ts:L137-L146](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `summarizeWithTextRank` | `fn` | [src/lib/nonAiEngine.ts:L79-L120](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thuật toán TextRank & TF-IDF trích xuất tóm tắt nội dung không cần AI |
-| `testAiConnection` | `fn` | [src/lib/aiClient.ts:L405-L535](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `testAiConnection` | `fn` | [src/lib/aiClient.ts:L405-L536](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `ViewportTransform` | `type` | [src/lib/viewportCulling.ts:L9-L15](file:///F:/AppMaking/ViTudy/src/lib/viewportCulling.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 
 ### Types & Data
@@ -162,7 +164,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
 | `AboutPage` | `component` | [src/app/about/page.tsx:L9-L178](file:///F:/AppMaking/ViTudy/src/app/about/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `AccountSettings` | `component` | [src/components/profile/AccountSettings.tsx:L28-L276](file:///F:/AppMaking/ViTudy/src/components/profile/AccountSettings.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `AccountSettings` | `component` | [src/components/profile/AccountSettings.tsx:L28-L279](file:///F:/AppMaking/ViTudy/src/components/profile/AccountSettings.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ActiveToolType` | `type` | [src/types/studyspace.ts:L98-L105](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AiConfig` | `type` | [src/types/vitoken.ts:L21-L27](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AiProvider` | `type` | [src/types/vitoken.ts:L19-L19](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
