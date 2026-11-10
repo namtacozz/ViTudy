@@ -737,6 +737,23 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Hành động ví tại ProfileHeader:** Bổ sung nút "Nạp thêm" mở trực tiếp `TopUpModal` và liên kết "Xem lịch sử nạp" cuộn mượt xuống khối lịch sử giao dịch. Nút đổi ảnh đại diện đạt kích thước chuẩn 36px x 36px có `aria-label="Đổi ảnh đại diện"`.
   * **Đồng bộ Sentence Case toàn bộ nút điều hướng:** "Về bàn học", "Về trang chủ", "Đăng xuất" trên `/profile`, `/dashboard`, `/market`.
 
+* **Quy Chuẩn Bảng Dữ Liệu Trong Ghi Chú & Thanh Công Cụ Nổi (Sticky Note Table & Floating Toolbar Standards):**
+  * **Tương tác sửa ô trực tiếp (Inline Cell Editing):** Cho phép người dùng nhấp đúp thẳng vào bất kỳ ô nào trong bảng dữ liệu để chỉnh sửa nội dung tại chỗ. Bỏ nút "Sửa bảng" gây rối ở header; đổi nút dưới chân ghi chú thành "Sửa ghi chú" (với icon `Edit3`) để người dùng hiểu rõ nút này phục vụ sửa toàn bộ văn bản thô.
+  * **Thanh công cụ nổi nâng cao:** Đặt thanh công cụ cách đỉnh ghi chú thoáng đãng (`bottom-full mb-6`), không bao giờ đè lên băng dính hay che sách phía trên; mở rộng cầu hover bridge vô hình (`before:-bottom-6 before:h-6`).
+  * **An toàn chống xóa nhầm:** Nút xóa (`Trash2`) tách biệt và có cơ chế xác nhận 2 bước ("Xác nhận xóa?" trong 3s) trước khi thực thi. Nút xoay `RotateTwoWay` có tooltip và `aria-label` hướng dẫn chi tiết (kéo để xoay, nhấp đúp trả về 0°).
+  * **Căn lề số liệu & Badge tiến độ học tập:** Tự động căn giữa font monospace cho các ô chứa số hoặc phần trăm; tự động chuyển các trạng thái tiến độ ("Đang ôn", "Đã xong", "Chưa học") thành nhãn màu chuyên nghiệp (hổ phách, ngọc lục bảo, xám đá).
+  * **Hàng Tổng phân bổ tự động & Thao tác bảng:** Tự động tính hàng "Tổng" khi có cột tỷ lệ % và cảnh báo nếu khác 100%; nút "+ Thêm hàng" nhanh ở chân bảng; khung bảng co dãn linh hoạt theo số hàng (không để khoảng trắng thừa).
+  * **Chân ghi chú tinh gọn:** Bỏ bộ đếm ký tự thừa khi ở chế độ xem trực quan bảng; nút mở rộng ghi rõ "Mở rộng ghi chú" / "Thu gọn ghi chú"; tương phản chữ đạt chuẩn $\ge 4.5:1$.
+
+* **Quy Chuẩn Chợ Tài Liệu Hoàn Chỉnh (Marketplace Standards — `/market`):**
+  * **Trạng thái thiếu ViToken thông minh:** Khi số dư ví không đủ mua tài liệu (`wallet.balance < item.price`), nút hành động tự động chuyển thành "Thiếu [X] ViToken · Nạp thêm" màu cam nhạt dẫn thẳng vào `TopUpModal` nạp nhanh qua VietQR, thay vì báo lỗi sau khi bấm.
+  * **Nút nạp nhanh trên thanh số dư:** Bổ sung nút "+" nhỏ gọn ngay cạnh số dư ví (`Ví: X ViToken [+]`) cho phép người dùng nạp tiền bất cứ lúc nào mà không cần rời trang.
+  * **Thống nhất ký hiệu tiền tệ & Đơn giá duy nhất:** Toàn bộ hệ thống Chợ sử dụng duy nhất đơn vị "ViToken" (triệt tiêu hoàn toàn chữ "V"). Giá chỉ hiển thị một nơi bên trái thẻ, nút hành động chỉ ghi "Mua" khi đủ tiền.
+  * **Trạng thái sở hữu & Mở trên bàn học:** Tài liệu đã mua hiển thị huy hiệu xanh "Đã sở hữu" và nút "Mở trên bàn học" dẫn trực tiếp về bàn học (`/?view=desk`).
+  * **Bản sắc nhận diện từng loại tài liệu:** Bổ sung dải accent bar trên đầu thẻ theo loại tài liệu (Sách: màu nâu đất ấm áp; Tờ tóm tắt: màu vàng cam hổ phách; Đề thi: màu xanh ngọc lam tri thức).
+  * **Giải thích điểm AI thẩm định:** Huy hiệu Điểm AI có tooltip nêu rõ tiêu chí chấm chất lượng học thuật (độ chuẩn xác, tính sư phạm và độ đầy đủ kiến thức).
+  * **Bố cục bộ lọc 2 hàng công thái học:** Tích hợp 3 tab chính ("Tất cả tài liệu", "Đã mua", "Của tôi"), ô tìm kiếm chuẩn hóa "Tìm theo tên, tác giả, môn học...", chip môn học và bộ lọc phụ gọn gàng kèm nút "Đặt lại".
+
 * **Quy Chuẩn Trang Hỏi Đáp & Chăm Sóc Người Học (FAQ & Support Page Standards — `/faq`):**
   * **Cấu trúc & Trục căn lề:**
     * Toàn bộ trang (Header, Tiêu đề, Ô tìm kiếm, Chip danh mục, Danh sách câu hỏi, và Khối Hỗ trợ cuối trang) **căn thẳng hàng một trục duy nhất** theo độ rộng `max-w-4xl mx-auto px-6`.

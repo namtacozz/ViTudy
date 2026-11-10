@@ -4,6 +4,38 @@
 
 ---
 
+## 2026-11-10 21:05 — main (Tối Ưu Bảng Dữ Liệu Trong Ghi Chú & Hoàn Thiện Trải Nghiệm Chợ Tài Liệu)
+- **Task:**
+  1. **Nâng cấp Bảng dữ liệu trong ghi chú (`StickyNoteItem.tsx`):**
+     - Hỗ trợ chỉnh sửa trực tiếp từng ô bảng tại chỗ (Inline Cell Editing) bằng thao tác nhấp đúp (Double click).
+     - Bỏ hẳn nút "Sửa bảng" gây trùng lặp ở header bảng; đổi nút ở chân ghi chú thành "Sửa ghi chú" với icon `Edit3` để phân biệt rõ với việc sửa ô tại chỗ.
+     - Nâng thanh công cụ nổi lên cao thoáng đãng (`bottom-full mb-6`) không đè lên băng keo hay che sách phía trên; mở rộng hover bridge `before:-bottom-6 before:h-6`.
+     - Tách nút xóa riêng biệt kèm xác nhận an toàn 2 bước ("Xác nhận xóa?" trong 3s) chống vô tình xóa mất ghi chú.
+     - Nút xoay `RotateTwoWay` có tooltip và `aria-label` đầy đủ; nút đổi màu có ring tương phản hiển thị màu hiện tại.
+     - Tự động căn giữa font monospace cho các ô số liệu hoặc tỷ lệ %; tự động chuyển các trạng thái tiến độ ("Đang ôn", "Đã xong", "Chưa học") thành nhãn màu sinh động.
+     - Tự động tính hàng "Tổng" khi có cột tỷ lệ % và cảnh báo nếu khác 100%; bổ sung nút "+ Thêm hàng" nhanh ở chân bảng; khung bảng co dãn linh hoạt theo số hàng.
+     - Chân ghi chú tinh gọn: ẩn bộ đếm ký tự khi ở chế độ xem bảng trực quan; nút mở rộng ghi rõ "Mở rộng ghi chú" / "Thu gọn ghi chú".
+  2. **Nâng cấp Chợ tài liệu (`/market` & `page.tsx`):**
+     - Xử lý thông minh khi số dư ví không đủ mua (`wallet.balance < item.price`): nút hành động tự động chuyển thành "Thiếu [X] ViToken · Nạp thêm" màu cam nhạt dẫn thẳng vào `TopUpModal` nạp nhanh qua VietQR.
+     - Bổ sung nút "+" nạp tiền nhanh ngay cạnh số dư ví (`Ví: X ViToken [+]`) trên thanh điều hướng Chợ.
+     - Thống nhất duy nhất đơn vị "ViToken" (loại bỏ hoàn toàn chữ "V"). Giá chỉ hiển thị một nơi bên trái thẻ, nút hành động chỉ ghi "Mua" khi đủ tiền.
+     - Tài liệu đã mua hiển thị nhãn xanh "Đã sở hữu" và nút "Mở trên bàn học" dẫn thẳng vào bàn học (`/?view=desk`).
+     - Bổ sung dải accent bar trên đầu thẻ mang bản sắc nhận diện từng loại tài liệu (Sách: nâu đất; Tờ tóm tắt: vàng hổ phách; Đề thi: xanh ngọc lam).
+     - Bổ sung tooltip giải thích tiêu chí chấm điểm AI chất lượng học thuật (độ chuẩn xác, tính sư phạm và độ đầy đủ kiến thức).
+     - Tái cấu trúc bộ lọc 2 hàng công thái học: 3 tab chính ("Tất cả tài liệu", "Đã mua", "Của tôi"), ô tìm kiếm chuẩn hóa "Tìm theo tên, tác giả, môn học...", chip môn học và bộ lọc phụ gọn gàng kèm nút "Đặt lại".
+     - Tích hợp `TopUpModal` trực tiếp trên trang Chợ tài liệu.
+- **Files Modified:**
+  - `src/components/objects/StickyNoteItem.tsx`
+  - `src/app/market/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `npx vitest run`: Passed.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 20:45 — main (Tối Ưu Modal Mời Học Nhóm, Trang Chủ, Cài Đặt Hồ Sơ & Đồng Bộ Sentence Case)
 - **Task:**
   1. **Nâng cấp Modal "Mời bạn cùng học" (`BottomLeftKnowledge.tsx` & `MultiplayerBar.tsx`):**

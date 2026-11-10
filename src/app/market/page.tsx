@@ -7,6 +7,7 @@ import { MarketService } from '@/services/MarketService';
 import { useViToken } from '@/context/ViTokenContext';
 import { useAuth } from '@/hooks/useAuth';
 import { getAssetPath } from '@/lib/assets';
+import { TopUpModal } from '@/components/payment/TopUpModal';
 import { 
   ArrowLeft, 
   Store, 
@@ -22,7 +23,9 @@ import {
   RotateCcw,
   Plus,
   Layers,
-  ArrowRight
+  ArrowRight,
+  ShoppingBag,
+  Share2
 } from 'lucide-react';
 
 export default function MarketPage() {
@@ -30,6 +33,7 @@ export default function MarketPage() {
   const { user } = useAuth();
 
   const [items, setItems] = useState<MarketItem[]>([]);
+  const [activeMarketTab, setActiveMarketTab] = useState<'all' | 'purchased' | 'my_shares'>('all');
   const [selectedType, setSelectedType] = useState<'all' | 'book' | 'paper' | 'exam'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [minScore, setMinScore] = useState<number>(0);
@@ -37,6 +41,7 @@ export default function MarketPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'score' | 'price_asc' | 'price_desc'>('newest');
   const [isLoading, setIsLoading] = useState(true);
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
   // Preview modal state
   const [previewItem, setPreviewItem] = useState<MarketItem | null>(null);
@@ -84,7 +89,7 @@ export default function MarketPage() {
 
   const handlePurchase = (item: MarketItem) => {
     if (wallet.balance < item.price) {
-      alert(`Số dư ViToken không đủ (${wallet.balance}/${item.price} V). Vui lòng nạp thêm ViToken hoặc điểm danh để tích lũy.`);
+      setIsTopUpOpen(true);
       return;
     }
     const success = spendTokens(item.price, `Mua tài liệu Chợ: ${item.title}`);
@@ -103,7 +108,8 @@ export default function MarketPage() {
     selectedCategory !== 'all' || 
     minScore > 0 || 
     maxPrice > 0 || 
-    sortBy !== 'newest';
+    sortBy !== 'newest' ||
+    activeMarketTab !== 'all';
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -112,6 +118,7 @@ export default function MarketPage() {
     setMinScore(0);
     setMaxPrice(0);
     setSortBy('newest');
+    setActiveMarketTab('all');
   };
 
   const handleCreateShareItem = (e: React.FormEvent) => {
@@ -181,6 +188,16 @@ export default function MarketPage() {
     }
   };
 
+  const displayedItems = items.filter(item => {
+    if (activeMarketTab === 'purchased') {
+      return item.purchased === true;
+    }
+    if (activeMarketTab === 'my_shares') {
+      return item.id.startsWith('mkt-custom') || item.author.includes('Bạn') || item.author.includes('Tác giả');
+    }
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-stone-100/70 py-8 px-4 sm:px-6 font-sans">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -216,8 +233,8 @@ export default function MarketPage() {
               <span>Chia sẻ tài liệu</span>
             </button>
 
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 rounded-xl shadow-xs">
-              {/* Official ViToken coin icon */}
+            {/* Wallet pill with quick "+" top-up button */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-stone-200 rounded-xl shadow-xs">
               <img
                 src={getAssetPath('/icons/vitoken.svg')}
                 alt="ViToken"
@@ -228,12 +245,78 @@ export default function MarketPage() {
               />
               <span className="text-xs text-stone-600 font-medium">Ví:</span>
               <span className="font-mono font-black text-xs text-[#E0562D]">{wallet.balance} ViToken</span>
+              <button
+                type="button"
+                onClick={() => setIsTopUpOpen(true)}
+                title="Nạp thêm ViToken qua VietQR"
+                aria-label="Nạp thêm ViToken"
+                className="ml-1 w-6 h-6 rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white flex items-center justify-center shadow-2xs transition-colors cursor-pointer active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Filter & Search Bar */}
-        <div className="bg-white border border-stone-200 rounded-3xl p-5 shadow-sm space-y-3.5">
+        {/* Filter & Search Bar — 2 Hàng Công Thái Học & Tinh Gọn */}
+        <div className="bg-white border border-stone-200 rounded-3xl p-5 shadow-sm space-y-3">
+          {/* Main Scope Tabs: Tất cả, Đã mua, Của tôi */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-stone-100">
+            <div className="flex items-center gap-1.5 bg-stone-100 p-1 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setActiveMarketTab('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeMarketTab === 'all'
+                    ? 'bg-white text-stone-900 shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                Tất cả tài liệu ({items.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMarketTab('purchased')}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeMarketTab === 'purchased'
+                    ? 'bg-white text-emerald-800 shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Đã mua ({items.filter(i => i.purchased).length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMarketTab('my_shares')}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeMarketTab === 'my_shares'
+                    ? 'bg-white text-[#E0562D] shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <Share2 className="w-3.5 h-3.5 text-[#E0562D]" />
+                <span>Của tôi ({items.filter(i => i.id.startsWith('mkt-custom') || i.author.includes('Bạn')).length})</span>
+              </button>
+            </div>
+
+            {/* Sort by */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-stone-500 font-medium">Sắp xếp:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-stone-50 border border-stone-200 text-stone-700 py-1.5 px-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="score">Điểm AI cao nhất</option>
+                <option value="price_asc">Giá tăng dần</option>
+                <option value="price_desc">Giá giảm dần</option>
+                <option value="oldest">Cũ nhất</option>
+              </select>
+            </div>
+          </div>
+
           {/* Row 1: Search & Type Tabs */}
           <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
@@ -241,7 +324,7 @@ export default function MarketPage() {
               <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Tìm kiếm tài liệu, tác giả, bài giải..."
+                placeholder="Tìm theo tên, tác giả, môn học..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder:text-stone-400 outline-none focus:border-stone-800 transition-colors"
@@ -280,27 +363,26 @@ export default function MarketPage() {
             </div>
           </div>
 
-          {/* Row 2: Category Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 border-t border-stone-100">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                  selectedCategory === cat.id
-                    ? 'bg-[#E0562D] text-white shadow-xs'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200/80'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+          {/* Row 2: Category Pills & Sub-filters */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-stone-100">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    selectedCategory === cat.id
+                      ? 'bg-[#E0562D] text-white shadow-xs'
+                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200/80'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Row 3: Sub-filters (Min Score, Max Price, Sort & Results count) */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-stone-100 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-xs">
               {/* Min score */}
               <select
                 value={minScore}
@@ -308,8 +390,8 @@ export default function MarketPage() {
                 className="bg-stone-50 border border-stone-200 text-stone-700 py-1.5 px-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer"
               >
                 <option value={0}>Tất cả điểm AI</option>
-                <option value={80}>Điểm AI ≥ 80</option>
-                <option value={90}>Điểm AI ≥ 90 (Xuất sắc)</option>
+                <option value={80}>Điểm AI từ 80</option>
+                <option value={90}>Điểm AI từ 90</option>
               </select>
 
               {/* Max price */}
@@ -324,19 +406,6 @@ export default function MarketPage() {
                 <option value={50}>≤ 50 ViToken</option>
               </select>
 
-              {/* Sort by */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-stone-50 border border-stone-200 text-stone-700 py-1.5 px-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer"
-              >
-                <option value="newest">Mới nhất</option>
-                <option value="oldest">Cũ nhất</option>
-                <option value="score">Điểm AI cao nhất</option>
-                <option value="price_asc">Giá tăng dần</option>
-                <option value="price_desc">Giá giảm dần</option>
-              </select>
-
               {/* Reset button */}
               {hasActiveFilters && (
                 <button
@@ -349,20 +418,16 @@ export default function MarketPage() {
                 </button>
               )}
             </div>
-
-            <div className="text-[11px] font-bold text-stone-600 bg-stone-100 px-3 py-1.5 rounded-xl">
-              {items.length} tài liệu
-            </div>
           </div>
         </div>
 
-        {/* Listing Grid (3 Columns Balanced) */}
+        {/* Listing Grid (3 Columns Balanced with Document Type Identity Bar) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {isLoading ? (
             <div className="col-span-full py-16 text-center text-xs text-stone-500">
               Đang tải danh mục tài liệu...
             </div>
-          ) : items.length === 0 ? (
+          ) : displayedItems.length === 0 ? (
             <div className="col-span-full py-16 text-center text-xs text-stone-500 bg-white border border-stone-200 rounded-3xl p-8">
               <Search className="w-8 h-8 mx-auto mb-2 text-stone-300" />
               <p className="text-sm font-semibold text-stone-700">Không tìm thấy tài liệu phù hợp</p>
@@ -378,24 +443,39 @@ export default function MarketPage() {
               )}
             </div>
           ) : (
-            items.map((item) => {
+            displayedItems.map((item) => {
               const pageCount = item.pageCount || (item.pages ? item.pages.length : (item.type === 'book' ? 48 : (item.type === 'exam' ? 4 : 1)));
               const downloadsCount = item.downloadsCount || (item.aiScore * 3 + 12);
               const updatedDate = item.updatedDate || item.date;
+              const isInsufficient = wallet.balance < item.price;
+              const missingTokens = item.price - wallet.balance;
+
+              // Dải màu nhận diện bản sắc từng loại tài liệu
+              const accentBarClass = item.type === 'book'
+                ? 'bg-gradient-to-r from-amber-800 via-amber-900 to-stone-900'
+                : item.type === 'paper'
+                ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500'
+                : 'bg-gradient-to-r from-teal-500 via-emerald-600 to-teal-700';
 
               return (
                 <div
                   key={item.id}
-                  className="bg-white border border-stone-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:border-stone-300 hover:shadow-md transition-all group"
+                  className="bg-white border border-stone-200 rounded-3xl shadow-sm flex flex-col justify-between hover:border-stone-300 hover:shadow-md transition-all group overflow-hidden"
                 >
-                  <div>
+                  {/* Accent Top Bar */}
+                  <div className={`h-1.5 w-full ${accentBarClass}`} />
+
+                  <div className="p-5 flex-1 flex flex-col">
                     {/* Header: Document Type Badge + AI Score */}
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="text-[10.5px] font-bold font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 uppercase tracking-wide">
                         {getTypeLabel(item.type)}
                       </span>
 
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shadow-2xs">
+                      <div 
+                        title="Điểm thẩm định chất lượng học thuật bởi AI: Tính chuẩn xác, sư phạm và độ đầy đủ kiến thức."
+                        className="flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shadow-2xs cursor-help"
+                      >
                         <Sparkles className="w-3 h-3 text-emerald-600" />
                         <span>AI: {item.aiScore}/100</span>
                       </div>
@@ -416,7 +496,7 @@ export default function MarketPage() {
                     </div>
 
                     {/* Trust Metadata */}
-                    <div className="text-[11px] text-stone-500 flex flex-wrap items-center gap-1.5 mb-3 font-medium">
+                    <div className="text-[11px] text-stone-600 flex flex-wrap items-center gap-1.5 mb-3 font-medium">
                       <span>{pageCount} trang</span>
                       <span>•</span>
                       <span>{downloadsCount} lượt mua</span>
@@ -425,53 +505,62 @@ export default function MarketPage() {
                     </div>
 
                     {/* Summary */}
-                    <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed mb-4">
+                    <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed mb-4 flex-1">
                       {item.summary}
                     </p>
-                  </div>
 
-                  {/* Footer: Price & Actions */}
-                  <div className="pt-3.5 border-t border-stone-100 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 font-mono font-black text-[#E0562D]">
-                      <img 
-                        src={getAssetPath('/icons/vitoken.svg')} 
-                        alt="ViToken" 
-                        width={18} 
-                        height={18} 
-                        className="w-4.5 h-4.5 rounded-full object-contain shrink-0" 
-                        style={{ width: '18px', height: '18px', maxWidth: '18px', maxHeight: '18px' }}
-                      />
-                      <span className="text-base">{item.price}</span>
-                      <span className="text-xs">ViToken</span>
-                    </div>
+                    {/* Footer: Price & Actions */}
+                    <div className="pt-3.5 border-t border-stone-100 flex items-center justify-between gap-2 mt-auto">
+                      <div className="flex items-center gap-1.5 font-mono font-black text-[#E0562D]">
+                        <img 
+                          src={getAssetPath('/icons/vitoken.svg')} 
+                          alt="ViToken" 
+                          width={18} 
+                          height={18} 
+                          className="w-4.5 h-4.5 rounded-full object-contain shrink-0" 
+                          style={{ width: '18px', height: '18px', maxWidth: '18px', maxHeight: '18px' }}
+                        />
+                        <span className="text-base">{item.price}</span>
+                        <span className="text-xs">ViToken</span>
+                      </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewItem(item)}
-                        className="px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-stone-600" />
-                        <span>Xem thử</span>
-                      </button>
-
-                      {item.purchased ? (
-                        <Link
-                          href="/?view=desk"
-                          className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Đã sở hữu</span>
-                        </Link>
-                      ) : (
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => handlePurchase(item)}
-                          className="px-3 py-1.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold flex items-center gap-1 transition-all shadow-xs cursor-pointer active:scale-95"
+                          onClick={() => setPreviewItem(item)}
+                          className="px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
                         >
-                          <span>Mua {item.price} V</span>
+                          <Eye className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Xem thử</span>
                         </button>
-                      )}
+
+                        {item.purchased ? (
+                          <Link
+                            href="/?view=desk"
+                            className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Mở trên bàn học</span>
+                          </Link>
+                        ) : isInsufficient ? (
+                          <button
+                            type="button"
+                            onClick={() => setIsTopUpOpen(true)}
+                            title={`Ví hiện có ${wallet.balance} ViToken, thiếu ${missingTokens} ViToken. Nhấp để nạp thêm qua VietQR.`}
+                            className="px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-300 hover:bg-orange-100 text-[#E0562D] text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer active:scale-95"
+                          >
+                            <span>Thiếu {missingTokens} ViToken · Nạp thêm</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handlePurchase(item)}
+                            className="px-4 py-1.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold flex items-center gap-1 transition-all shadow-xs cursor-pointer active:scale-95"
+                          >
+                            <span>Mua</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -589,13 +678,21 @@ export default function MarketPage() {
                       <ArrowRight className="w-4 h-4" />
                       <span>Mở trên bàn học</span>
                     </Link>
+                  ) : wallet.balance < previewItem.price ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsTopUpOpen(true)}
+                      className="px-5 py-2 rounded-xl bg-orange-50 border border-orange-300 hover:bg-orange-100 text-[#E0562D] text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    >
+                      <span>Thiếu {previewItem.price - wallet.balance} ViToken · Nạp thêm</span>
+                    </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handlePurchase(previewItem)}
                       className="px-5 py-2 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                     >
-                      Mua tài liệu ngay
+                      Mua tài liệu
                     </button>
                   )}
                 </div>
@@ -649,9 +746,9 @@ export default function MarketPage() {
                     onChange={e => setShareType(e.target.value as any)}
                     className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-stone-800 cursor-pointer"
                   >
-                    <option value="paper">Tờ tóm tắt (15 V)</option>
-                    <option value="book">Sách / Giáo trình (50 V)</option>
-                    <option value="exam">Đề thi trắc nghiệm (30 V)</option>
+                    <option value="paper">Tờ tóm tắt (15 ViToken)</option>
+                    <option value="book">Sách / Giáo trình (50 ViToken)</option>
+                    <option value="exam">Đề thi trắc nghiệm (30 ViToken)</option>
                   </select>
                 </div>
 
@@ -713,6 +810,12 @@ export default function MarketPage() {
           </div>
         </div>
       )}
+
+      {/* TopUp Modal VietQR */}
+      <TopUpModal 
+        isOpen={isTopUpOpen} 
+        onClose={() => setIsTopUpOpen(false)} 
+      />
     </div>
   );
 }
