@@ -87,7 +87,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
     return (
       <div className="flex-1 flex flex-col p-4 font-sans text-slate-900 bg-white overflow-hidden select-none">
         {/* Dòng 1: Tiêu đề viết ngang ra không xuống dòng: Tóm tắt nội dung trọng tâm (Bỏ mô tả) */}
-        <h4 className="text-xs font-black text-slate-900 tracking-tight whitespace-nowrap mb-2">
+        <h4 className="text-xs font-bold text-slate-900 tracking-tight whitespace-nowrap mb-2">
           Tóm tắt nội dung trọng tâm
         </h4>
 
@@ -98,13 +98,12 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
               ? 'bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border-[#E0562D]/60 shadow-2xs ring-1 ring-[#E0562D]/20' 
               : 'bg-slate-50 border-slate-200 hover:border-slate-300'
           }`}>
-            <div className="flex items-center gap-2">
-              <Sparkles className={`w-3.5 h-3.5 ${useAi ? 'text-[#E0562D] animate-pulse' : 'text-slate-400'}`} />
-              <span className={`text-xs font-black ${useAi ? 'text-[#E0562D]' : 'text-slate-700'}`}>
-                Sử dụng AI.
+            <div className="flex flex-col">
+              <span className={`text-xs font-bold ${useAi ? 'text-[#E0562D]' : 'text-slate-700'}`}>
+                Dùng AI chuyên sâu
               </span>
-              <span className="text-[9.5px] px-1.5 py-0.5 rounded-full bg-[#FFF7ED] text-[#9A3412] font-bold border border-[#FFEDD5]">
-                Chuyên sâu
+              <span className="text-[10px] text-slate-500">
+                {useAi ? 'Chắt lọc luận điểm logic · Miễn phí' : 'Nhanh, miễn phí'}
               </span>
             </div>
             <input 
@@ -116,19 +115,18 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
           </label>
         </div>
 
-        {/* Dòng 3: Nút nằm sát bên phải là Tạo tóm tắt màu nền cam ViT chữ trắng. Text viết ngang ra không wrap */}
+        {/* Dòng 3: Nút nằm sát bên phải là Tạo tóm tắt màu nền cam ViT chữ trắng */}
         <div className="flex justify-end mb-3">
           <button
             onClick={handleGenerateSummary}
             disabled={loading}
-            className="px-4 py-2 bg-[#E0562D] hover:bg-[#c9451e] active:scale-95 text-white rounded-xl text-xs font-bold whitespace-nowrap shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 bg-[#E0562D] hover:bg-[#c9451e] active:scale-95 text-white rounded-xl text-xs font-bold whitespace-nowrap shadow-xs transition-all flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
-            <Sparkles className="w-3.5 h-3.5 text-white stroke-[2.4]" />
             <span>{loading ? 'Đang tóm tắt...' : 'Tạo tóm tắt'}</span>
           </button>
         </div>
 
-        {/* Summary Content Body (Không xuất hiện cuộn trừ khi tràn subpixel) */}
+        {/* Summary Content Body */}
         <div className="flex-1 min-h-[160px] max-h-[220px] flex flex-col">
           {summaryResult ? (
             <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs leading-relaxed text-slate-800 whitespace-pre-line overflow-y-auto no-scrollbar">
@@ -150,7 +148,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors border border-slate-200 cursor-pointer whitespace-nowrap"
             >
               <StickyNote className="w-3.5 h-3.5 text-amber-600 stroke-[2.4]" />
-              <span>Ghim Tóm Tắt Lên Bàn</span>
+              <span>Ghim tóm tắt lên bàn</span>
             </button>
 
             <button
@@ -171,10 +169,10 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
       {/* Controls Bar */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Tóm Tắt Văn Bản Trọng Tâm</h4>
+          <h4 className="text-sm font-bold text-slate-900">Tóm tắt nội dung trọng tâm</h4>
           <p className="text-xs text-slate-500">
             {useAi 
-              ? 'Mô hình AI chắt lọc các luận điểm logic (tiêu tốn 2 ViToken)'
+              ? 'Mô hình AI chắt lọc các luận điểm logic (không tốn ViToken khi kết nối ChatGPT)'
               : 'Động cơ Non-AI TextRank phân tích tần suất câu (Miễn phí 100%)'}
           </p>
         </div>
@@ -187,16 +185,15 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
               onChange={(e) => setUseAi(e.target.checked)}
               className="rounded accent-slate-900"
             />
-            <span>Dùng AI Chuyên Sâu</span>
+            <span>Dùng AI chuyên sâu</span>
           </label>
 
           <button
             onClick={handleGenerateSummary}
             disabled={loading}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{loading ? 'Đang trích xuất...' : 'Tạo Tóm Tắt'}</span>
+            <span>{loading ? 'Đang trích xuất...' : 'Tạo tóm tắt'}</span>
           </button>
         </div>
       </div>
@@ -210,7 +207,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
         ) : (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs text-center border-2 border-dashed border-slate-200 rounded-xl">
             <Sparkles className="w-8 h-8 mb-2 text-slate-300" />
-            <span>Nhấn "Tạo Tóm Tắt" để bắt đầu trích xuất các ý chính của tài liệu</span>
+            <span>Nhấn "Tạo tóm tắt" để bắt đầu trích xuất các ý chính của tài liệu</span>
           </div>
         )}
       </div>
@@ -220,15 +217,15 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
         <div className="pt-4 border-t border-slate-200 flex items-center justify-between mt-4">
           <button
             onClick={handlePinSummaryToDesk}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors border border-slate-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors border border-slate-300 cursor-pointer"
           >
             <StickyNote className="w-3.5 h-3.5 text-amber-600" />
-            <span>Ghim Tóm Tắt Thành Note Lên Bàn</span>
+            <span>Ghim tóm tắt lên bàn</span>
           </button>
 
           <button
             onClick={handleCopyToClipboard}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Đã sao chép' : 'Sao chép nội dung'}</span>

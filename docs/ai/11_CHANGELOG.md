@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-11-10 20:00 — main (In-situ STudy Overlay Trên Sách, Tái Cấu Trúc Vùng Điều Khiển Trắc Nghiệm, Tùy Chọn Số Câu/Độ Khó/Phạm Vi & Chuẩn Hóa Typography Sentence Case)
+- **Task:**
+  1. **Chuyển đổi STudy của Sách thành In-situ Overlay gắn liền trên sách:**
+     - Thay thế modal `createPortal` backdrop đen toàn màn hình (`fixed inset-0 bg-black/60`) bằng overlay gắn trực tiếp lên bìa sách `BookSpread` (`absolute inset-0 z-40 bg-white rounded-2xl border border-slate-300 flex flex-col overflow-hidden shadow-2xl`), tương tự cơ chế in-situ của `PaperSheet`.
+     - Overlay xoay, zoom và di chuyển đồng bộ với cuốn sách trên bàn học 2.5D; hỗ trợ phím tắt `Esc` và nút đóng `X` có hit area chuẩn để tắt nhanh.
+     - Thanh tiêu đề tinh gọn: `Công cụ học: [Tên tài liệu]`, badge `Sách · [X] trang` (thay vì monospace `Sách Mở Đôi`), phụ đề hữu ích *"Tóm tắt, câu hỏi và thẻ ôn từ nội dung sách này"*.
+  2. **Tái cấu trúc vùng điều khiển công thái học 2 hàng cho Trắc nghiệm (`QuizTab.tsx`):**
+     - Hàng 1: Tiêu đề và mô tả nằm riêng biệt, không bị chèn ép thành 2 dòng.
+     - Hàng 2: Khu vực điều khiển rộng rãi với 3 tùy chọn trước khi sinh câu hỏi:
+       * Số câu: 3, 5, 10 (mặc định 5).
+       * Độ khó: Dễ, Vừa, Khó (mặc định Vừa).
+       * Phạm vi: Trang hiện tại, Cả cuốn sách (mặc định Cả cuốn sách).
+     - Phân định rõ ràng hai chế độ: Bỏ chọn là "Nhanh, miễn phí (offline)"; Chọn là "AI phân tích logic, có lời giải chi tiết".
+     - Hiển thị trực tiếp chi phí trên nút bấm hành động (`Sinh 5 câu · Miễn phí` với ChatGPT/Non-AI; `Sinh 5 câu · 2 ViToken` với AI hệ thống); hiển thị số dư ví ở góc nhỏ.
+  3. **Lược bỏ toàn bộ icon thừa trước text (Icon Minimalism):**
+     - Bỏ icon `Sparkles` trước nhãn "Dùng AI chuyên sâu" và nút "Sinh câu hỏi" / "Tạo tóm tắt" / "Dựng lộ trình" / "Trích xuất thẻ ghi nhớ".
+     - Bỏ icon `CalendarCheck` trước nút "Ôn tập hôm nay".
+  4. **Chuẩn hóa chữ thường ngữ pháp tiếng Việt (Sentence Case):**
+     - Đổi toàn bộ các nhãn sang chữ thường sau chữ đầu: `Tóm tắt`, `Trắc nghiệm`, `Thẻ ghi nhớ`, `Lộ trình học`, `Sinh câu hỏi`, `Dùng AI chuyên sâu`, `Xuất đề thi ra bàn`, `Chấm điểm ngay`, `Làm lại câu sai`, `Lưu câu sai vào thẻ ghi nhớ`.
+  5. **Nâng cấp trạng thái rỗng và hậu kiểm tra trắc nghiệm (Post-Quiz Actions):**
+     - Thay khung nét đứt trống rỗng bằng quy trình 3 bước tự ôn tập thực tế và thẻ mô phỏng câu hỏi mẫu minh họa có độ tương phản cao (>= 4.5:1).
+     - Sau khi chấm điểm: tự động mở lời giải cho các câu làm sai (render KaTeX qua `MathRenderer`), bổ sung nút "Làm lại câu sai", "Lưu câu sai vào thẻ ghi nhớ" (ghim sticky note lên bàn học), và "Làm lại tất cả".
+- **Files Modified:**
+  - `src/components/objects/BookSpread.tsx`
+  - `src/components/modals/StudyToolsModal.tsx`
+  - `src/components/modals/study-tools/QuizTab.tsx`
+  - `src/components/modals/study-tools/SummaryTab.tsx`
+  - `src/components/modals/study-tools/FlashcardTab.tsx`
+  - `src/components/modals/study-tools/RoadmapTab.tsx`
+  - `src/components/objects/PaperSheet.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+  - `pnpm run docs:index ; pnpm run docs:check ; pnpm run build:pages`: Static export thành công 100%.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 19:40 — main (Hỗ Trợ KaTeX Toàn Diện Cho Tóm Tắt, Mở Rộng AI Cho Trắc Nghiệm/Flashcard/Lộ Trình Sách & Lược Bỏ Tab OCR)
 - **Task:**
   1. **Khắc phục triệt để lỗi hiển thị công thức toán học (`MathRenderer.tsx` & `SummaryTab.tsx`):**

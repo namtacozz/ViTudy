@@ -281,7 +281,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                 }`}
               >
                 <FileText className="w-3.5 h-3.5 stroke-[2.4]" />
-                <span>Tóm Tắt</span>
+                <span>Tóm tắt</span>
               </button>
               <button
                 onClick={() => setPaperStudyTab('quiz')}
@@ -292,7 +292,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                 }`}
               >
                 <HelpCircle className="w-3.5 h-3.5 stroke-[2.4]" />
-                <span>Trắc Nghiệm</span>
+                <span>Trắc nghiệm</span>
               </button>
             </div>
 

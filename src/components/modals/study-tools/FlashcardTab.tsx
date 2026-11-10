@@ -171,7 +171,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Thẻ Ghi Nhớ Lặp Lại Ngắt Quãng (Spaced Repetition)</h4>
+          <h4 className="text-sm font-bold text-slate-900">Thẻ ghi nhớ ôn ngắt quãng</h4>
           <p className="text-xs text-slate-500">
             {useAi 
               ? 'Mô hình AI chắt lọc các khái niệm, định nghĩa và công thức cốt lõi thành flashcard'
@@ -180,25 +180,21 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 select-none">
             <input 
               type="checkbox"
               checked={useAi}
               onChange={(e) => setUseAi(e.target.checked)}
               className="rounded accent-[#E0562D]"
             />
-            <span className="flex items-center gap-1">
-              <Sparkles className={`w-3.5 h-3.5 ${useAi ? 'text-[#E0562D]' : 'text-slate-400'}`} />
-              Dùng AI Chuyên Sâu
-            </span>
+            <span>Dùng AI chuyên sâu</span>
           </label>
 
           {user && (
             <button
               onClick={handleLoadDueCards}
-              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center cursor-pointer"
             >
-              <CalendarCheck className="w-3.5 h-3.5 text-[#E0562D]" />
               <span>Ôn tập hôm nay</span>
             </button>
           )}
@@ -206,10 +202,9 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
           <button
             onClick={handleGenerateFlashcards}
             disabled={loading}
-            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 flex items-center justify-center"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{loading ? 'Đang tạo thẻ...' : flashcards.length > 0 ? 'Tạo Lại Thẻ' : 'Trích Xuất Flashcards'}</span>
+            <span>{loading ? 'Đang tạo thẻ...' : flashcards.length > 0 ? 'Tạo lại thẻ' : 'Trích xuất thẻ ghi nhớ'}</span>
           </button>
         </div>
       </div>
@@ -231,7 +226,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
             >
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span className="font-bold text-slate-600 uppercase">
-                  {isFlipped ? 'Mặt Sau (Định Nghĩa / Giải Thích)' : 'Mặt Trước (Thuật Ngữ)'}
+                  {isFlipped ? 'Mặt sau (Định nghĩa / Giải thích)' : 'Mặt trước (Khái niệm)'}
                 </span>
                 <span className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">
                   <RotateCw className="w-3 h-3" /> Lật thẻ
@@ -292,7 +287,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
               <button
                 onClick={handlePrev}
                 disabled={currentIdx === 0}
-                className="p-2 rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                className="p-2 rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5 text-slate-700" />
               </button>
@@ -304,7 +299,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
               <button
                 onClick={handleNext}
                 disabled={currentIdx === flashcards.length - 1}
-                className="p-2 rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                className="p-2 rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-5 h-5 text-slate-700" />
               </button>
@@ -313,7 +308,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
         ) : (
           <div className="h-64 w-full flex flex-col items-center justify-center text-slate-400 text-xs text-center border-2 border-dashed border-slate-200 rounded-xl">
             <Layers className="w-8 h-8 mb-2 text-slate-300" />
-            <span>Nhấn "Trích Xuất Flashcards" để tạo bộ thẻ ghi nhớ thông minh</span>
+            <span>Nhấn "Trích xuất thẻ ghi nhớ" để tạo bộ thẻ ghi nhớ thông minh</span>
           </div>
         )}
       </div>
@@ -323,14 +318,14 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
         <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
           <button
             onClick={handleExportCardToDesk}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors border border-slate-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors border border-slate-300 cursor-pointer"
           >
             <StickyNote className="w-3.5 h-3.5 text-amber-600" />
-            <span>Ghim Thẻ Này Lên Bàn Học</span>
+            <span>Ghim thẻ lên bàn</span>
           </button>
 
           <span className="text-[11px] text-slate-400 italic">
-            Nhấp trực tiếp vào thẻ hoặc nhấn nút Lật để xem đáp án
+            Nhấp trực tiếp vào thẻ hoặc nhấn nút Lật thẻ để xem đáp án
           </span>
         </div>
       )}

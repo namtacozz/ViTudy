@@ -108,7 +108,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Lộ Trình Học & Cây Mục Lục</h4>
+          <h4 className="text-sm font-bold text-slate-900">Lộ trình học & cây mục lục</h4>
           <p className="text-xs text-slate-500">
             {useAi 
               ? 'Mô hình AI xây dựng lộ trình từng chặng mục tiêu cá nhân hóa (không tốn ViToken khi kết nối ChatGPT)'
@@ -117,26 +117,22 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 select-none">
             <input 
               type="checkbox"
               checked={useAi}
               onChange={(e) => setUseAi(e.target.checked)}
               className="rounded accent-[#E0562D]"
             />
-            <span className="flex items-center gap-1">
-              <Sparkles className={`w-3.5 h-3.5 ${useAi ? 'text-[#E0562D]' : 'text-slate-400'}`} />
-              Dùng AI Chuyên Sâu
-            </span>
+            <span>Dùng AI chuyên sâu</span>
           </label>
 
           <button
             onClick={handleGenerateRoadmap}
             disabled={loading}
-            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95"
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs flex items-center justify-center disabled:opacity-50 cursor-pointer active:scale-95"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{loading ? 'Đang dựng...' : roadmap.length > 0 ? 'Cập Nhật Lộ Trình' : 'Dựng Lộ Trình'}</span>
+            <span>{loading ? 'Đang dựng...' : roadmap.length > 0 ? 'Cập nhật lộ trình' : 'Dựng lộ trình'}</span>
           </button>
         </div>
       </div>

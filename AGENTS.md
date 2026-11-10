@@ -49,9 +49,19 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Quy Chuẩn Hiển Thị Công Thức Toán Học KaTeX (`MathRenderer`):**
       * Bộ phân tích `MathRenderer` bắt buộc nhận diện và biên dịch hoàn hảo toàn bộ các dạng biểu diễn công thức LaTeX: Display block (`$$...$$`, `\[...\]`) và Inline (`$...$`, `\(...\)`), cùng định dạng in đậm `**...**`.
       * Bắt buộc render nội dung tóm tắt, câu hỏi trắc nghiệm, các mặt flashcard và lộ trình học qua `MathRenderer`, triệt tiêu hoàn toàn việc hiển thị chuỗi LaTeX thô (`\(\nabla f(x)\)`, `\[\theta^{(t+1)}...\]`).
-    * **Quy Chuẩn Bộ Công Cụ STudy Của Sách:**
-      * Bỏ tab "Quét ảnh OCR" khỏi danh mục thẻ thanh điều hướng chính của STudy (chỉ giữ `OcrTab` làm module phụ trợ nội bộ).
-      * Bốn tab học tập chuẩn mực gồm: **Tóm Tắt** (`summary`), **Trắc Nghiệm** (`quiz`), **Thẻ Ghi Nhớ** (`flashcards`), và **Lộ Trình Học** (`roadmap`) — toàn bộ đều trang bị checkbox "Dùng AI Chuyên Sâu".
+    * **Quy Chuẩn Bộ Công Cụ STudy Của Sách (In-situ Overlay & Cockpit Standards):**
+      * **Hiển thị trực tiếp trên vật thể (In-situ Overlay):** STudy trên sách bắt buộc mount trực tiếp trên `BookSpread` (`absolute inset-0 z-40 bg-white rounded-2xl border border-slate-300 flex flex-col overflow-hidden shadow-2xl`), tương tự như `PaperSheet`. Tuyệt đối không render modal backdrop toàn màn hình (`fixed inset-0 bg-black/60`) làm che khuất bàn học.
+      * **Thanh tiêu đề tinh gọn & Phím tắt Esc:** Tiêu đề chuẩn `Công cụ học: [Tên tài liệu]`, phụ đề *"Tóm tắt, câu hỏi và thẻ ôn từ nội dung sách này"*, badge loại tài liệu kèm số trang `Sách · [X] trang` (thay vì nhãn `Sách Mở Đôi`), nút đóng `X` có hit target chuẩn và lắng nghe phím tắt `Esc` để đóng nhanh.
+      * **Triệt tiêu icon thừa trước chữ (No redundant pre-text icons):** Lược bỏ toàn bộ icon ngôi sao lấp lánh (`Sparkles`) hay lịch (`CalendarCheck`) đứng trước chữ trong các nhãn: "Dùng AI chuyên sâu", "Sinh câu hỏi", "Ôn tập hôm nay", "Dựng lộ trình", "Tạo tóm tắt".
+      * **Quy chuẩn chữ thường ngữ pháp tiếng Việt (Sentence Case Typography):** Viết hoa chữ cái đầu câu cho toàn bộ nhãn, nút và tiêu đề tab: `Tóm tắt`, `Trắc nghiệm`, `Thẻ ghi nhớ`, `Lộ trình học`, `Sinh câu hỏi`, `Dùng AI chuyên sâu`, `Xuất đề thi ra bàn`, `Chấm điểm ngay`, `Làm lại câu sai`, `Lưu câu sai vào thẻ ghi nhớ`.
+      * **Bố cục điều khiển công thái học 2 hàng (Two-Row Ergonomic Controls):**
+        * *Hàng 1:* Tiêu đề và dòng mô tả riêng biệt, không chèn ép nút điều khiển vào cùng dòng.
+        * *Hàng 2:* Khu vực tùy chọn rộng rãi gồm 3 lựa chọn trước khi sinh: Số câu (3, 5, 10), Độ khó (Dễ, Vừa, Khó), Phạm vi (Trang hiện tại, Cả cuốn sách).
+        * *Phân định rõ ràng cơ chế AI:* Khi bỏ chọn: "Nhanh, miễn phí (offline)"; Khi chọn: "AI phân tích logic, có lời giải chi tiết".
+        * *Hiển thị chi phí & số dư trực tiếp:* Nút hành động hiển thị rõ số câu kèm chi phí (`Sinh 5 câu · Miễn phí` khi dùng ChatGPT/Non-AI hoặc `Sinh 5 câu · 2 ViToken` với AI hệ thống), hiển thị số dư ví ở góc nhỏ.
+      * **Trạng thái rỗng giàu thông tin (Rich Empty State):** Không để khung nét đứt trống trơn; hiển thị quy trình 3 bước tự ôn tập thực tế kèm thẻ câu hỏi mẫu minh họa có độ tương phản cao (>= 4.5:1).
+      * **Hậu kiểm tra & Ôn tập câu sai (Post-Quiz Review Actions):** Sau khi chấm điểm, tự động mở lời giải cho các câu làm sai (render qua `MathRenderer`), cung cấp nút "Làm lại câu sai", "Lưu câu sai vào thẻ ghi nhớ" (ghim note lên bàn học), và "Xuất đề thi ra bàn".
+      * Bốn tab học tập chuẩn mực gồm: **Tóm tắt** (`summary`), **Trắc nghiệm** (`quiz`), **Thẻ ghi nhớ** (`flashcards`), và **Lộ trình học** (`roadmap`) — bỏ hoàn toàn tab "Quét ảnh OCR" khỏi thanh điều hướng chính.
   * **Quy Chuẩn Thanh Toán VietQR & MBBank (SePay VietQR Standards):**
     * Sử dụng mã NAPAS BIN chính thức của MBBank: `970422` (hoặc `MB`) kèm template `compact2` để 100% ứng dụng ngân hàng và ví điện tử quét mã truy vấn thông tin thành công.
     * Tài khoản thụ hưởng mặc định: `99924052005` - `LE VO THANH NAM`.
