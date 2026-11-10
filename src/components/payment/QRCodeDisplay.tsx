@@ -18,6 +18,7 @@ import {
   QrCode,
   Zap
 } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_TELEGRAM } from '@/lib/constants';
 
 interface QRCodeDisplayProps {
   request: PaymentRequestResult;
@@ -91,12 +92,13 @@ export function QRCodeDisplay({
 
   const isExpiringSoon = secondsLeft < 180 && secondsLeft > 0;
   const isExpired = secondsLeft <= 0;
+  const percentLeft = Math.max(0, Math.min(100, (secondsLeft / 900) * 100));
 
   return (
     <div className="space-y-4">
-      {/* Timer & Security Banner */}
+      {/* Timer & Security Banner kèm Progress Bar */}
       <div
-        className={`flex items-center justify-between p-3 rounded-2xl border text-xs ${
+        className={`p-3 rounded-2xl border text-xs ${
           isExpired
             ? 'bg-red-50 border-red-200 text-red-700'
             : isExpiringSoon
@@ -104,18 +106,36 @@ export function QRCodeDisplay({
             : 'bg-slate-50 border-slate-200 text-slate-700'
         }`}
       >
-        <div className="flex items-center gap-2">
-          <Clock className={`w-4 h-4 ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-amber-600' : 'text-slate-600'}`} />
-          <span className="font-medium">
-            {isExpired ? 'Mã thanh toán đã hết hạn' : 'Thời gian hiệu lực của mã QR:'}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className={`w-4 h-4 ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-amber-600' : 'text-slate-600'}`} />
+            <span className="font-medium">
+              {isExpired ? 'Mã thanh toán đã hết hạn' : 'Thời gian hiệu lực của mã QR:'}
+            </span>
+          </div>
+          <span className="font-mono font-black text-sm tracking-wide">
+            {formatTime(secondsLeft)}
           </span>
         </div>
-        <span className="font-mono font-black text-sm tracking-wide">
-          {formatTime(secondsLeft)}
-        </span>
+
+        {/* Thanh đếm ngược tiến trình */}
+        {!isExpired && (
+          <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden mt-2">
+            <div 
+              className={`h-full transition-all duration-1000 ${
+                secondsLeft < 120 
+                  ? 'bg-red-500' 
+                  : secondsLeft < 300 
+                  ? 'bg-amber-500' 
+                  : 'bg-[#E0562D]'
+              }`}
+              style={{ width: `${percentLeft}%` }}
+            />
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* QR Code Column */}
         <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-3xl shadow-xs">
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center">
@@ -134,7 +154,7 @@ export function QRCodeDisplay({
                   <button
                     type="button"
                     onClick={onRetry}
-                    className="px-3.5 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
+                    className="px-4 py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
                   >
                     Tạo mã mới
                   </button>
@@ -155,20 +175,23 @@ export function QRCodeDisplay({
 
         {/* Transfer Details Column */}
         <div className="space-y-2.5 text-xs">
-          {/* Transfer Code Highlight */}
+          {/* Transfer Code Highlight: Xếp thành 2 tầng */}
           <div className="p-3 bg-orange-50/70 border border-orange-200 rounded-2xl">
-            <div className="text-[11px] font-bold text-[#E0562D] uppercase tracking-wider mb-1 flex items-center justify-between">
-              <span>Nội dung chuyển khoản (BẮT BUỘC)</span>
-              <span className="text-[10px] text-orange-700 font-semibold">Nhập đúng nội dung này để hệ thống nhận diện</span>
+            <div className="text-xs font-black text-[#E0562D] uppercase tracking-wider">
+              Nội dung chuyển khoản (bắt buộc)
             </div>
-            <div className="flex items-center justify-between gap-2 mt-1">
-              <span className="text-xl font-black font-mono tracking-widest text-slate-900 select-all">
+            <div className="text-[11px] text-slate-600 font-medium mt-0.5">
+              Nhập đúng nội dung này để hệ thống tự động nhận diện và cộng ViToken
+            </div>
+            <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-orange-200/60">
+              <span className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 select-all">
                 {request.code}
               </span>
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-[11px] font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+                aria-label="Sao chép nội dung chuyển khoản"
               >
                 {copiedCode ? (
                   <>
@@ -185,6 +208,12 @@ export function QRCodeDisplay({
             </div>
           </div>
 
+          {/* Cảnh báo giữ nguyên số tiền */}
+          <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-medium leading-relaxed">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Giữ nguyên số tiền khi chuyển. Sửa số tiền có thể khiến giao dịch không được nhận diện tự động.</span>
+          </div>
+
           {/* Bank Info Rows */}
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
             <div className="flex items-center justify-between">
@@ -192,7 +221,7 @@ export function QRCodeDisplay({
                 <Building2 className="w-3.5 h-3.5 text-slate-500" />
                 <span>Ngân hàng:</span>
               </div>
-              <span className="font-bold text-slate-900 font-mono">MBBank (Quân Đội)</span>
+              <span className="font-bold text-slate-900 font-sans">MBBank (Quân Đội)</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -207,6 +236,7 @@ export function QRCodeDisplay({
                   onClick={handleCopyAccount}
                   className="p-1 text-slate-500 hover:text-slate-800 cursor-pointer"
                   title="Sao chép số tài khoản"
+                  aria-label="Sao chép số tài khoản"
                 >
                   {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -218,7 +248,7 @@ export function QRCodeDisplay({
                 <User className="w-3.5 h-3.5 text-slate-500" />
                 <span>Người thụ hưởng:</span>
               </div>
-              <span className="font-bold text-slate-900 uppercase text-[11px] font-mono">
+              <span className="font-bold text-slate-900 uppercase font-sans text-xs">
                 {DEFAULT_BANK_CONFIG.accountName}
               </span>
             </div>
@@ -227,13 +257,14 @@ export function QRCodeDisplay({
               <span className="text-slate-600 text-[11px]">Số tiền thanh toán:</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-black font-mono text-[#E0562D]">
-                  {request.amountVnd.toLocaleString('vi-VN')} VNĐ
+                  {request.amountVnd.toLocaleString('vi-VN')}đ
                 </span>
                 <button
                   type="button"
                   onClick={handleCopyAmount}
                   className="p-1 text-slate-500 hover:text-slate-800 cursor-pointer"
                   title="Sao chép số tiền"
+                  aria-label="Sao chép số tiền"
                 >
                   {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -275,8 +306,23 @@ export function QRCodeDisplay({
           )}
 
           {/* Dòng hỗ trợ khi gặp sự cố */}
-          <p className="text-[10px] text-slate-400 text-center leading-normal pt-1">
-            Nếu chuyển khoản quá 15 phút chưa nhận được ViToken, vui lòng liên hệ hỗ trợ: support@vitudy.com hoặc nhóm Telegram ViTudy.
+          <p className="text-xs text-slate-600 text-center leading-relaxed font-medium pt-1">
+            Nếu chuyển khoản quá 15 phút chưa nhận được ViToken, vui lòng liên hệ:{' '}
+            <a 
+              href={`mailto:${SUPPORT_EMAIL}?subject=Tra soat giao dich ${request.code}`} 
+              className="font-bold underline text-slate-800 hover:text-[#E0562D]"
+            >
+              {SUPPORT_EMAIL}
+            </a>
+            {' '}hoặc qua{' '}
+            <a 
+              href={SUPPORT_TELEGRAM} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="font-bold underline text-slate-800 hover:text-[#E0562D]"
+            >
+              nhóm Telegram ViTudy
+            </a>.
           </p>
         </div>
       </div>

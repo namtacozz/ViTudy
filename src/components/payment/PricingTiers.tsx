@@ -12,9 +12,17 @@ interface PricingTiersProps {
 }
 
 const BONUS_MAP: Record<string, string> = {
-  semester: 'Tặng +3 ViToken',
-  project: 'Tặng +15 ViToken',
-  team: 'Tặng +45 ViToken',
+  semester: '+3 ViToken',
+  project: '+15 ViToken',
+  team: '+45 ViToken',
+};
+
+const USAGE_MAP: Record<string, string> = {
+  starter: '~1 lượt hỏi đáp AI chuyên sâu',
+  midterm: '~5 lượt AI hoặc tải đề thi',
+  semester: '~15 lượt AI hoặc 2 tài liệu Chợ',
+  project: '~50 lượt AI hoặc cả học kỳ',
+  team: 'Dành cho nhóm học & đồ án lớn',
 };
 
 export function PricingTiers({
@@ -31,19 +39,41 @@ export function PricingTiers({
     );
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = (index + 1) % packages.length;
+      onSelectPackage(packages[nextIndex]);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = (index - 1 + packages.length) % packages.length;
+      onSelectPackage(packages[prevIndex]);
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
-        {packages.map((pkg) => {
+      <div 
+        role="radiogroup" 
+        aria-label="Chọn gói nạp ViToken"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5"
+      >
+        {packages.map((pkg, idx) => {
           const isSelected = selectedPackageId === pkg.id;
           const isPopular = pkg.id === 'semester';
           const bonus = BONUS_MAP[pkg.id];
+          const usageDesc = USAGE_MAP[pkg.id] || 'Áp dụng cho mọi tính năng học tập';
 
           return (
             <div
               key={pkg.id}
+              role="radio"
+              aria-checked={isSelected}
+              tabIndex={isSelected ? 0 : -1}
+              aria-label={`Gói ${pkg.label}, ${pkg.priceVnd.toLocaleString('vi-VN')} đồng, nhận ${pkg.tokenAmount} ViToken. ${usageDesc}`}
               onClick={() => onSelectPackage(pkg)}
-              className={`relative rounded-2xl p-3 border transition-all cursor-pointer flex flex-col justify-between text-left ${
+              onKeyDown={(e) => handleKeyDown(e, idx)}
+              className={`relative rounded-2xl p-3 border transition-all cursor-pointer flex flex-col justify-between text-left outline-none focus:ring-2 focus:ring-[#E0562D] ${
                 isSelected
                   ? 'border-[#E0562D] bg-orange-50/50 ring-2 ring-[#E0562D]/40 shadow-xs'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
@@ -63,21 +93,28 @@ export function PricingTiers({
                     <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded whitespace-nowrap">
                       {bonus}
                     </span>
-                  ) : <span className="h-4" />}
+                  ) : (
+                    <span className="text-[9px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                      Không tặng
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-1">
                   <div className="text-lg font-black font-mono text-slate-900 leading-none">
                     {pkg.priceVnd.toLocaleString('vi-VN')}{' '}
-                    <span className="text-[10px] font-sans font-normal text-slate-500">đ</span>
+                    <span className="text-[11px] font-sans font-bold text-slate-800">đ</span>
                   </div>
-                  <div className="text-[11px] font-bold text-[#E0562D] mt-1.5 font-mono whitespace-nowrap">
+                  <div className="text-[11px] font-black text-[#C2410C] mt-1.5 font-mono whitespace-nowrap">
                     Nhận {pkg.tokenAmount.toLocaleString('vi-VN')} ViToken
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-1 leading-snug font-medium min-h-[28px]">
+                    {usageDesc}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-end text-[11px]">
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-end text-[11px]">
                 <div
                   className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                     isSelected

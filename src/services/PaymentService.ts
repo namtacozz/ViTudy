@@ -273,4 +273,18 @@ export class PaymentService {
       return [];
     }
   }
+
+  static async cancelPayment(requestId: string): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase) return true;
+    try {
+      const { error } = await supabase
+        .from('payment_requests')
+        .update({ status: 'failed' })
+        .eq('id', requestId);
+      return !error;
+    } catch {
+      return false;
+    }
+  }
 }

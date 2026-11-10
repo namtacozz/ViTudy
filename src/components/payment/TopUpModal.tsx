@@ -11,7 +11,14 @@ import {
   ArrowLeft, 
   FlaskConical
 } from 'lucide-react';
-import { PaymentPackage, PaymentRequestResult, PaymentService } from '@/services/PaymentService';
+import { 
+  PaymentPackage, 
+  PaymentRequestResult, 
+  PaymentService,
+  PaymentHistoryItem,
+  getEffectiveBankConfig,
+  buildVietQrUrl
+} from '@/services/PaymentService';
 import { PricingTiers } from './PricingTiers';
 import { QRCodeDisplay } from './QRCodeDisplay';
 import { PaymentSuccess } from './PaymentSuccess';
@@ -25,7 +32,7 @@ interface TopUpModalProps {
 }
 
 export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
-  const { refreshWallet, addTokens } = useViToken();
+  const { wallet, refreshWallet, addTokens } = useViToken();
   const [activeTab, setActiveTab] = useState<'topup' | 'history'>('topup');
   const [packages, setPackages] = useState<PaymentPackage[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<string>('semester');
@@ -202,17 +209,42 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
 
         {/* Tab Content */}
         {activeTab === 'history' ? (
-          <PaymentHistory />
+          <PaymentHistory 
+            onRetryPayment={() => {
+              setActiveTab('topup');
+              setStep('select');
+            }}
+            onResumePending={(item: PaymentHistoryItem) => {
+              const activeBank = getEffectiveBankConfig();
+              const qrUrl = buildVietQrUrl({
+                ...activeBank,
+                amount: item.amountVnd,
+                addInfo: item.code,
+              });
+              setCurrentRequest({
+                id: item.id,
+                code: item.code,
+                amountVnd: item.amountVnd,
+                tokenAmount: item.tokenAmount,
+                qrUrl,
+                expiresAt: new Date(new Date(item.createdAt).getTime() + 15 * 60 * 1000).toISOString(),
+              });
+              setActiveTab('topup');
+              setStep('qr');
+            }}
+          />
         ) : (
           <div>
             {step === 'select' && (
               <div className="space-y-3.5">
                 {/* Tỷ lệ quy đổi chuẩn 1.000đ = 1 ViToken */}
-                <div className="flex items-center justify-between bg-orange-50/70 border border-orange-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-700">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-orange-50/70 border border-orange-200/80 rounded-xl px-3 py-2 text-xs text-slate-700">
                   <div className="flex items-center gap-1.5 font-bold text-[#E0562D]">
                     <span>Tỷ lệ quy đổi chuẩn: 1.000đ = 1 ViToken</span>
                   </div>
-                  <span className="text-[11px] text-slate-500 font-medium">Áp dụng cho mọi tính năng học tập</span>
+                  <span className="text-[11px] text-slate-600 font-medium">
+                    Dùng cho hỏi đáp AI, mở tài liệu trên Chợ, xuất đề thi ra bàn
+                  </span>
                 </div>
 
                 <PricingTiers
@@ -229,33 +261,50 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                  {/* Nút nạp thử nghiệm cho người chấm điểm - Chỉ hiện ở môi trường dev/test */}
-                  {isDevMode ? (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+                  {/* Dự kiến số dư sau khi nạp */}
+                  <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                    <span>Số dư ví:</span>
+                    <span className="font-mono font-bold text-slate-900">{wallet.balance}</span>
+                    <span className="text-slate-400">→</span>
+                    <span className="font-mono font-black text-[#E0562D]">
+                      {wallet.balance + (selectedPkg?.tokenAmount || 0)} ViToken
+                    </span>
+                    {selectedPkg && (
+                      <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded font-bold">
+                        (+{selectedPkg.tokenAmount} V)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {/* Nút nạp thử nghiệm cho người chấm điểm - Chỉ hiện ở môi trường dev/test */}
+                    {isDevMode && (
+                      <button
+                        type="button"
+                        onClick={handleSimulateDemoTopUp}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-slate-300 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Nạp thử 5 V</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
-                      onClick={handleSimulateDemoTopUp}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-300 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+                      onClick={handleStartPayment}
+                      disabled={isCreatingRequest || isLoadingPackages}
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                     >
-                      <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Nạp thử 5 ViToken (chế độ kiểm thử)</span>
+                      <span>
+                        {isCreatingRequest 
+                          ? 'Đang tạo mã VietQR...' 
+                          : selectedPkg 
+                          ? `Thanh toán ${selectedPkg.priceVnd.toLocaleString('vi-VN')}đ` 
+                          : 'Tiếp tục thanh toán'}
+                      </span>
                     </button>
-                  ) : <div />}
-
-                  <button
-                    type="button"
-                    onClick={handleStartPayment}
-                    disabled={isCreatingRequest || isLoadingPackages}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                  >
-                    <span>
-                      {isCreatingRequest 
-                        ? 'Đang tạo mã VietQR...' 
-                        : selectedPkg 
-                        ? `Thanh toán ${selectedPkg.priceVnd.toLocaleString('vi-VN')}đ` 
-                        : 'Tiếp tục thanh toán'}
-                    </span>
-                  </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -290,6 +339,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                 tokenAmount={currentRequest.tokenAmount}
                 amountVnd={currentRequest.amountVnd}
                 code={currentRequest.code}
+                newBalance={wallet.balance}
                 onClose={onClose}
                 onViewHistory={() => {
                   setActiveTab('history');

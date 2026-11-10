@@ -467,11 +467,13 @@ export function TopRightWallet() {
         {/* Chợ Tài Liệu */}
         <button
           id="market-trigger-btn"
+          data-tour="market-btn"
           onClick={() => {
             closeAllModals();
             setIsMarketOpen(true);
           }}
-          title="Chợ Tài Liệu"
+          title="Chợ tài liệu"
+          aria-label="Chợ tài liệu"
           className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer group ${
             isMarketOpen 
               ? 'bg-slate-200 text-slate-900' 
@@ -491,10 +493,11 @@ export function TopRightWallet() {
               closeAllModals();
               setIsHistoryModalOpen(true);
             }}
-            className={`flex items-center gap-1.5 px-2.5 h-9 rounded-lg transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 h-10 rounded-lg transition-all cursor-pointer ${
               isHistoryModalOpen ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-800 hover:bg-white/80'
             }`}
-            title="Xem lịch sử số dư ViToken (1 V = 1 ViToken)"
+            title={`Số dư: ${wallet.balance} ViToken · Bấm để xem lịch sử nạp & trừ điểm`}
+            aria-label={`Số dư ví: ${wallet.balance} ViToken. Bấm để xem lịch sử giao dịch`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
@@ -508,6 +511,9 @@ export function TopRightWallet() {
             <span className="text-xs font-black font-mono text-slate-900">
               {wallet.balance}
             </span>
+            <span className="text-[11px] font-bold text-slate-600 hidden sm:inline">
+              ViToken
+            </span>
           </button>
 
           <button
@@ -517,9 +523,10 @@ export function TopRightWallet() {
               setIsTopUpOpen(true);
             }}
             title="Nạp ViToken (VietQR)"
-            className="flex items-center justify-center w-7 h-9 rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-0.5"
+            aria-label="Nạp ViToken qua VietQR"
+            className="flex items-center justify-center w-10 h-10 min-w-[40px] rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-0.5"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[3]" />
           </button>
         </div>
 
@@ -538,7 +545,8 @@ export function TopRightWallet() {
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
           }`}
-          title={`Cài đặt mô hình AI (Mô hình: ${aiConfig.model})`}
+          title="Cài đặt AI"
+          aria-label="Cài đặt AI"
         >
           <Bot className="w-5 h-5 text-slate-900 stroke-[2.4]" />
         </button>

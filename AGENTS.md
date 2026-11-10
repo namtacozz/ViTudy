@@ -68,6 +68,24 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Sử dụng mã NAPAS BIN chính thức của MBBank: `970422` (hoặc `MB`) kèm template `compact2` để 100% ứng dụng ngân hàng và ví điện tử quét mã truy vấn thông tin thành công.
     * Tài khoản thụ hưởng mặc định: `99924052005` - `LE VO THANH NAM`.
     * Cơ chế dự phòng ngoại lệ: Khi hàm RPC Supabase chưa cập nhật trong schema cache, hệ thống tự động sinh mã VietQR hợp lệ trên client để trải nghiệm thanh toán luôn liền mạch.
+    * **Thống Nhất Thông Tin Hỗ Trợ & Ký Hiệu Tiền Tệ:**
+      * Email hỗ trợ duy nhất trên toàn hệ thống: `support@vitudy.edu.vn` (sử dụng hằng số `SUPPORT_EMAIL`), kênh Telegram chính thức là liên kết bấm được `https://t.me/vitudy` (`SUPPORT_TELEGRAM`).
+      * Ký hiệu tiền tệ thống nhất toàn bộ: Sử dụng hậu tố `đ` (ví dụ `27.000đ`), triệt tiêu việc dùng lẫn lộn `VNĐ` và `đ`.
+    * **Quy Chuẩn Chọn Gói Nạp ViToken (`PricingTiers`):**
+      * Nhãn tặng viết gọn `+X ViToken` (thay vì `Tặng +X ViToken`), các gói không tặng kèm nhãn phụ `Không tặng` để 5 thẻ gói luôn cân đối chiều cao 100%.
+      * Dưới số ViToken nhận được bắt buộc có dòng mô tả giá trị sử dụng thực tế (~1 lượt hỏi đáp AI, ~15 lượt AI hoặc 2 tài liệu Chợ...).
+      * Chân modal hiển thị rõ số dư ví trước và sau khi nạp: `Số dư ví: X → Y ViToken (+Z V)`.
+      * Tương phản chữ đạt chuẩn WCAG AA: chữ `đ` màu tối, số ViToken nhận màu `#C2410C`. Hỗ trợ phím mũi tên di chuyển giữa các gói (`role="radiogroup"` & `role="radio"`).
+    * **Quy Chuẩn Màn Quét Mã QR (`QRCodeDisplay`):**
+      * Khung nội dung chuyển khoản chia 2 tầng công thái học: Tầng 1 gồm tiêu đề bắt buộc và hướng dẫn; Tầng 2 gồm mã code to bản font-mono và nút sao chép.
+      * Đồng hồ đếm ngược có thanh tiến trình co dần 15 phút, tự động đổi sang màu đỏ khi thời gian còn dưới 2 phút.
+      * Tên ngân hàng và người thụ hưởng dùng phông sans rõ ràng, kèm cảnh báo giữ nguyên số tiền chuyển khoản để tránh giao dịch ngoại lệ.
+    * **Quy Chuẩn Lịch Sử Giao Dịch Nạp (`PaymentHistory`):**
+      * Tự động thu gọn các giao dịch đã hết hạn cũ vào khối collapsible (chỉ giữ giao dịch hết hạn gần nhất) để tránh làm tràn màn hình.
+      * Giao dịch đang chờ thanh toán có đồng hồ đếm ngược `(còn MM:SS)` và nút "Hủy mã".
+      * Bổ sung liên kết "Tôi đã chuyển khoản" dẫn tới email tra soát đối soát Napas cho các giao dịch hết hạn hoặc chờ lâu.
+      * Hiển thị thời gian thân thiện (`Hôm nay HH:mm`, `Hôm qua HH:mm`, `dd/MM HH:mm`) và nút sao chép mã giao dịch.
+      * Trạng thái rỗng có hành động hướng dẫn cụ thể theo từng tab lọc.
   * **Khoảng Cách HUD Bám Sát Mép Tường Trình Duyệt (Snug HUD Wall Spacing — 4px Strict):**
     * Toàn bộ các khung, nút ở HUD được đưa sát vào tường trình duyệt: khoảng cách từ mép hướng ra ngoài của HUD đến rìa web chỉ còn **4px (`1/4` so với 16px mặc định cũ: `top-1`, `bottom-1`, `left-1`, `right-1`)**.
     * Áp dụng đồng bộ cho: `TopLeftNav` (`top-1 left-1`), `TopRightWallet` (`top-1 right-1`), `LeftCreationBar` (`left-1`), `BottomLeftKnowledge` (`bottom-1 left-1`), `BottomRightToolkit` (`bottom-1 right-1`), và `MultiplayerBar` (`bottom-1 left-1/2 -translate-x-1/2` căn giữa sát mép dưới).

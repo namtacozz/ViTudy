@@ -4,6 +4,53 @@
 
 ---
 
+## 2026-11-10 20:30 — main (Tối Ưu Toàn Diện Luồng Nạp ViToken VietQR & Thanh Công Cụ HUD Theo Góp Ý Chuyên Sâu)
+- **Task:**
+  1. **Nâng cấp Thanh công cụ góc phải (`TopRightWallet.tsx`):**
+     - Hiển thị rõ ràng đơn vị "ViToken" bên cạnh số dư ví (49 ViToken), tooltip chi tiết kèm aria-label cho trình đọc màn hình.
+     - Bổ sung tooltip xuất hiện ngay và `aria-label` cho nút Chợ tài liệu (`Store`) và nút Cài đặt AI (`Bot`).
+     - Tăng diện tích bấm của nút "+" nạp tiền nhanh đạt chuẩn touch target tối thiểu 40-44px (`w-10 h-10`).
+  2. **Chuốt bóng màn Chọn gói nạp (`PricingTiers.tsx` & `TopUpModal.tsx`):**
+     - Sửa triệt để lỗi tràn viền của nhãn tặng: viết gọn `+X ViToken`, bổ sung nhãn phụ `Không tặng` cho 2 gói đầu giúp 5 thẻ có chiều cao đồng đều 100%.
+     - Bổ sung dòng giá trị sử dụng thực tế cho từng gói nạp (~1 lượt hỏi đáp AI chuyên sâu, ~15 lượt AI hoặc 2 tài liệu Chợ, ~50 lượt AI hoặc cả học kỳ...).
+     - Thay đổi dòng mô tả lợi ích chuẩn xác: "Dùng cho hỏi đáp AI, mở tài liệu trên Chợ, xuất đề thi ra bàn".
+     - Bổ sung dòng hiển thị dự kiến số dư ví trước và sau khi nạp ở chân modal (`Số dư ví: 49 → 79 ViToken (+30 V)`).
+     - Nâng cấp độ tương phản chữ đạt chuẩn WCAG AA: chữ `đ` màu tối, số ViToken màu `#C2410C`. Hỗ trợ phím mũi tên di chuyển giữa các gói (`role="radiogroup"` & `role="radio"`).
+  3. **Tái cấu trúc màn Quét mã QR VietQR (`QRCodeDisplay.tsx`):**
+     - Thống nhất hằng số email hỗ trợ toàn hệ thống `support@vitudy.edu.vn` (`SUPPORT_EMAIL`) và biến Telegram thành liên kết bấm được `https://t.me/vitudy` (`SUPPORT_TELEGRAM`).
+     - Thống nhất ký hiệu tiền tệ sang "27.000đ" (thay cho "27.000 VNĐ").
+     - Tách khung nội dung chuyển khoản thành 2 tầng công thái học: Tầng 1 gồm tiêu đề và mô tả; Tầng 2 gồm mã code to bản font-mono và nút sao chép riêng biệt.
+     - Bổ sung thanh tiến trình co dần 15 phút bên dưới đồng hồ đếm ngược, tự động chuyển màu đỏ khi thời gian còn dưới 2 phút.
+     - Bổ sung dòng cảnh báo giữ nguyên số tiền chuyển khoản để tránh lỗi giao dịch ngoại lệ.
+     - Chuyển phông chữ ngân hàng và người thụ hưởng sang phông sans rõ ràng, tăng kích thước và độ tương phản của dòng hướng dẫn hỗ trợ.
+  4. **Nâng cấp Lịch sử giao dịch nạp (`PaymentHistory.tsx`):**
+     - Tự động thu gọn các giao dịch đã hết hạn cũ vào khối collapsible (chỉ hiển thị giao dịch hết hạn gần nhất) giúp giao diện luôn gọn gàng, không bị tràn màn hình.
+     - Bổ sung đồng hồ đếm ngược `(còn MM:SS)` và nút "Hủy mã" cho giao dịch đang chờ thanh toán.
+     - Bổ sung liên kết "Tôi đã chuyển khoản" dẫn tới email tra soát đối soát Napas cho các giao dịch hết hạn hoặc chờ lâu.
+     - Chuẩn hóa thời gian tương đối thân thiện (`Hôm nay HH:mm`, `Hôm qua HH:mm`, `dd/MM HH:mm`) và bổ sung nút sao chép mã giao dịch.
+     - Thiết kế trạng thái rỗng có hành động và hướng dẫn cụ thể theo từng tab lọc.
+  5. **Chuẩn hóa màn Nạp thành công (`PaymentSuccess.tsx`):**
+     - Thống nhất ký hiệu tiền tệ "đ", hiển thị số dư ví mới của người dùng sau khi nạp.
+- **Files Modified:**
+  - `src/lib/constants.ts` (new)
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/payment/PricingTiers.tsx`
+  - `src/components/payment/TopUpModal.tsx`
+  - `src/components/payment/QRCodeDisplay.tsx`
+  - `src/components/payment/PaymentHistory.tsx`
+  - `src/components/payment/PaymentSuccess.tsx`
+  - `src/services/PaymentService.ts`
+  - `AGENTS.md`
+  - `docs/ai/03_SYMBOL_INDEX.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 unit tests passed).
+  - `pnpm run docs:index ; pnpm run docs:check ; pnpm run build:pages`: Static export GitHub Pages hoàn thành.
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`, `03_SYMBOL_INDEX.md`.
+
+---
+
 ## 2026-11-10 20:20 — main (Loại Bỏ Thuật Ngữ PKCE/FREE, Phân Nhóm Mô Hình Dropdown & Thẻ Vai Trò, Tùy Chọn Nâng Cao Khóa API Cá Nhân & Nâng Cấp Trợ Năng Modal AI)
 - **Task:**
   1. **Loại bỏ hoàn toàn các thuật ngữ kỹ thuật lộ ra ngoài ("PKCE", "FREE"):**

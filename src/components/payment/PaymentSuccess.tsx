@@ -7,6 +7,7 @@ interface PaymentSuccessProps {
   tokenAmount: number;
   amountVnd: number;
   code: string;
+  newBalance?: number;
   onClose: () => void;
   onViewHistory: () => void;
 }
@@ -15,6 +16,7 @@ export function PaymentSuccess({
   tokenAmount,
   amountVnd,
   code,
+  newBalance,
   onClose,
   onViewHistory,
 }: PaymentSuccessProps) {
@@ -26,7 +28,7 @@ export function PaymentSuccess({
 
       <div>
         <h3 className="text-lg font-black text-slate-900">
-          Nạp ViToken Thành Công!
+          Nạp ViToken thành công!
         </h3>
         <p className="text-xs text-slate-500 mt-1">
           Hệ thống đã tự động ghi nhận thanh toán và cộng điểm vào ví của bạn.
@@ -38,14 +40,23 @@ export function PaymentSuccess({
           <span className="text-slate-500">Số ViToken nhận được:</span>
           <div className="flex items-center gap-1.5 font-black text-[#E0562D] font-mono text-sm">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>+{tokenAmount.toLocaleString()} V</span>
+            <span>+{tokenAmount.toLocaleString()} ViToken</span>
           </div>
         </div>
+
+        {typeof newBalance === 'number' && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">Số dư ví hiện tại:</span>
+            <span className="font-mono font-black text-emerald-700 text-sm">
+              {newBalance.toLocaleString()} ViToken
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <span className="text-slate-500">Số tiền đã trả:</span>
           <span className="font-bold text-slate-800 font-mono">
-            {amountVnd.toLocaleString('vi-VN')} VNĐ
+            {amountVnd.toLocaleString('vi-VN')}đ
           </span>
         </div>
 
