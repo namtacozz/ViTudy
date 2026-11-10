@@ -242,36 +242,43 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         {/* Sidebar Middle / Bottom Section */}
         <div className="pt-2 space-y-3">
           {/* Widget: Mục tiêu học hôm nay */}
-          <div className="p-3.5 rounded-2xl bg-[#f5efe6] border border-[#e8dfd3]">
+          <div className="p-3 rounded-2xl bg-[#f5efe6] border border-[#e8dfd3]">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5 text-[#B8431A]" />
-                Mục tiêu hôm nay
+                <span>Mục tiêu hôm nay</span>
               </span>
               <span className="text-[11px] font-bold text-[#B8431A]">1 / 4 phiên</span>
             </div>
             <div className="w-full h-1.5 bg-stone-200/90 rounded-full overflow-hidden mb-1.5">
               <div className="h-full bg-[#E0562D] rounded-full transition-all" style={{ width: '25%' }} />
             </div>
-            <p className="text-[10px] text-stone-600 leading-tight">
-              Hoàn thành 25 phút Pomodoro để duy trì chuỗi học.
+            <p className="text-[10px] text-stone-600 leading-tight mb-2">
+              Hoàn thành phiên 25 phút Pomodoro để tập trung sâu.
             </p>
+            <button
+              type="button"
+              onClick={() => onEnterDesk()}
+              className="w-full py-1.5 bg-white hover:bg-orange-50 border border-stone-200 hover:border-[#E0562D] text-[#E0562D] text-[11px] font-bold rounded-lg transition-colors text-center cursor-pointer active:scale-98"
+            >
+              Bắt đầu phiên 25p
+            </button>
           </div>
 
           {/* Bottom Sidebar Card: Số dư ViToken */}
-          <div className="bg-[#f4efe8] border border-[#e8e1d7] rounded-2xl p-4">
-            <span className="text-[11px] font-bold text-stone-600 block uppercase tracking-wider">Số dư</span>
+          <div className="bg-[#f4efe8] border border-[#e8e1d7] rounded-2xl p-3.5">
+            <span className="text-[11px] font-bold text-stone-600 block">Số dư khả dụng</span>
             <div className="mt-1 flex items-center gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={getAssetPath('/icons/vitoken.svg')} 
                 alt="ViToken" 
-                width={24}
-                height={24}
-                className="w-6 h-6 object-contain flex-shrink-0" 
-                style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}
+                width={20}
+                height={20}
+                className="w-5 h-5 object-contain flex-shrink-0" 
+                style={{ width: '20px', height: '20px', maxWidth: '20px', maxHeight: '20px' }}
               />
-              <span className="text-2xl font-black text-stone-900 tracking-tight font-sans">
+              <span className="text-xl font-black text-stone-900 tracking-tight font-sans">
                 {typeof balance === 'number' ? balance : 50}
               </span>
               <span className="text-xs text-stone-600 font-semibold">ViToken</span>
@@ -279,7 +286,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <button
               type="button"
               onClick={() => setIsTopUpOpen(true)}
-              className="w-full mt-3 py-2.5 bg-[#E0562D] hover:bg-[#c9451e] text-white font-bold text-xs rounded-xl shadow-xs transition-colors text-center cursor-pointer active:scale-98"
+              className="w-full mt-2.5 py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white font-bold text-xs rounded-xl shadow-xs transition-colors text-center cursor-pointer active:scale-98"
             >
               Nạp ViToken
             </button>
@@ -291,13 +298,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
       <main className="flex-1 p-6 md:p-10 flex flex-col max-w-6xl mx-auto overflow-y-auto">
         {/* Sticky Top Bar (Cố định khi cuộn) */}
         <header className="sticky top-0 z-20 -mx-6 md:-mx-10 px-6 md:px-10 py-3.5 bg-[#faf8f5]/95 backdrop-blur-md border-b border-[#ece7e1] flex items-center justify-between mb-6">
-          {/* Breadcrumb bên trái */}
-          <div className="flex items-center gap-2 text-xs text-stone-600 font-medium">
-            <span>Không gian học tập</span>
-            <span>/</span>
-            <span className="text-stone-900 font-bold">
-              {isAuthenticated ? `Bàn học của ${shortName}` : 'Bàn học trải nghiệm'}
-            </span>
+          {/* Tiêu đề thanh trên cùng bên trái */}
+          <div className="flex items-center gap-2 text-xs font-semibold text-stone-700">
+            <span className="text-stone-900 font-bold">Không gian học tập ViTudy</span>
           </div>
 
           {/* Nút hành động bên phải */}
@@ -327,26 +330,29 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
               <span>Chuỗi {streakDays || 1} ngày · {isClaimedToday ? 'Đã điểm danh' : 'Điểm danh'}</span>
             </button>
 
-            {/* Avatar hoặc Nút Đăng nhập */}
+            {/* Avatar hoặc Nút Đăng nhập - Đảm bảo khoảng đệm phải và hit area 40-44px không bị cắt */}
             {user ? (
-              <Link
-                href="/profile?from=home"
-                title={`Hồ sơ cá nhân (${userName})`}
-                className="w-8.5 h-8.5 rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
-              >
-                {profile?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.avatar_url}
-                    alt={userName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#FFF7ED] text-[#B8431A] font-bold text-xs flex items-center justify-center select-none">
-                    {shortName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </Link>
+              <div className="pl-1 pr-1 sm:pr-0">
+                <Link
+                  href="/profile?from=home"
+                  title={`Hồ sơ cá nhân (${userName})`}
+                  aria-label={`Hồ sơ cá nhân (${userName})`}
+                  className="w-10 h-10 min-w-[40px] rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                >
+                  {profile?.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatar_url}
+                      alt={userName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#FFF7ED] text-[#B8431A] font-bold text-sm flex items-center justify-center select-none">
+                      {shortName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </Link>
+              </div>
             ) : (
               <Link
                 href="/auth"
@@ -498,7 +504,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                 {/* Bìa sổ chung ở trung tâm */}
                 <div className="w-22 h-15 rounded-xs bg-[#5c3920] shadow-xs flex items-center justify-center opacity-85">
                   <div className="w-16 h-10 border border-amber-200/30 rounded-2xs flex flex-col items-center justify-center">
-                    <span className="text-[8px] font-bold text-amber-100 tracking-wider">ROOM</span>
+                    <span className="text-[9px] font-bold text-amber-100 tracking-wider">Phòng học</span>
                   </div>
                 </div>
 
@@ -545,10 +551,10 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
           {/* Table Container */}
           <div className="w-full">
-            {/* Table Header: Chữ xám đậm đạt tương phản */}
-            <div className="grid grid-cols-12 text-xs font-bold text-stone-700 pb-2.5 border-b border-stone-200 px-3 tracking-wider uppercase">
+            {/* Table Header: Chữ xám đậm đạt tương phản, viết thường sentence case */}
+            <div className="grid grid-cols-12 text-xs font-semibold text-stone-600 pb-2.5 border-b border-stone-200 px-3">
               <div className="col-span-6">Tên bàn học</div>
-              <div className="col-span-3 text-left">Tài liệu & Ghi chú</div>
+              <div className="col-span-3 text-left">Tài liệu & ghi chú</div>
               <div className="col-span-3 text-right pr-2">Mở lần cuối</div>
             </div>
 
@@ -560,6 +566,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                 </div>
               ) : (
                 displayedSpaces.map((space, idx) => {
+                  const cleanSpaceName = space.name.replace(/\(Demo\)/i, '').trim();
+                  const isDemo = space.name.includes('(Demo)');
+
                   return (
                     <div
                       key={space.id}
@@ -584,8 +593,15 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
                         {/* Text info */}
                         <div className="min-w-0">
-                          <div className="text-sm font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                            {space.name}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
+                              {cleanSpaceName}
+                            </span>
+                            {isDemo && (
+                              <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded shrink-0">
+                                Mẫu
+                              </span>
+                            )}
                           </div>
                           {space.description && (
                             <div className="text-xs text-stone-600 truncate mt-0.5">

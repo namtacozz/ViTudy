@@ -4,6 +4,47 @@
 
 ---
 
+## 2026-11-10 20:45 — main (Tối Ưu Modal Mời Học Nhóm, Trang Chủ, Cài Đặt Hồ Sơ & Đồng Bộ Sentence Case)
+- **Task:**
+  1. **Nâng cấp Modal "Mời bạn cùng học" (`BottomLeftKnowledge.tsx` & `MultiplayerBar.tsx`):**
+     - Đặt quyền mặc định an toàn là "Chỉ xem" (`view_only`), tránh việc người lạ có liên kết chỉnh sửa bàn học ngoài ý muốn.
+     - Bổ sung chức năng quản lý liên kết: "Tạo liên kết mới" (`roomSalt` ngẫu nhiên để vô hiệu hóa liên kết cũ) và bộ chọn hạn dùng liên kết (1 giờ, 24 giờ, Vô hạn).
+     - Bổ sung nút mời bạn rời khỏi phòng (`UserMinus`) ngay trong danh sách người trực tuyến.
+     - Phản hồi sao chép trực quan ("Đã sao chép" trong 2.5s), chia sẻ nhanh qua Zalo, Messenger và hiển thị mã QR.
+     - Triệt tiêu hoàn toàn trùng lặp thông tin ở chân modal; nâng tương phản chữ mô tả >= 4.5:1; hỗ trợ phím `Esc` và phím mũi tên chuyển quyền.
+  2. **Chuốt bóng Trang chủ (`HomePage.tsx`):**
+     - Sửa triệt để lỗi cấn mép góc phải của Avatar người dùng, đảm bảo vùng bấm tối thiểu 44px.
+     - Chuẩn hóa breadcrumb thành "Không gian học tập ViTudy".
+     - Thẻ "Mục tiêu hôm nay" tinh gọn trên 1 dòng, bổ sung nút "Bắt đầu phiên 25p" dẫn trực tiếp vào bàn học kích hoạt đồng hồ Pomodoro.
+     - Đổi thẻ học nhóm từ "ROOM" thành "Phòng học".
+     - Chuẩn hóa tiêu đề bảng sang Sentence case ("Tên bàn học", "Tài liệu & ghi chú", "Mở lần cuối") và bàn học mẫu "Bàn học khởi đầu" kèm huy hiệu "Mẫu".
+  3. **Chuốt bóng Trang Tài khoản (`AccountSettings.tsx`, `ProfileHeader.tsx`, `/profile/page.tsx`):**
+     - Đổi khối kết nối thành "Kết nối ChatGPT", icon `Bot`, loại bỏ toàn bộ thuật ngữ "PKCE", "Auto-Refresh" và danh sách model thô.
+     - Hộp thoại xác nhận ngắt kết nối giải thích rõ ràng hậu quả chuyển sang AI hệ thống (2 ViToken/lượt).
+     - Rút gọn nhãn "Tên gọi ngắn" kèm phụ đề hướng dẫn trực quan.
+     - Nút Lưu khi chưa đổi hiển thị rõ "Chưa có thay đổi" trên nền xám tương phản cao `bg-slate-200 text-slate-500`.
+     - `ProfileHeader`: Nút đổi ảnh đại diện kích thước chuẩn 36px (`aria-label="Đổi ảnh đại diện"`), bổ sung nút "Nạp thêm" mở `TopUpModal` và liên kết "Xem lịch sử nạp" cuộn mượt xuống bảng giao dịch.
+  4. **Đồng bộ Sentence Case toàn hệ thống:**
+     - Chuẩn hóa nút điều hướng quay lại: "Về bàn học", "Về trang chủ", "Đăng xuất" trên `/profile`, `/dashboard`, `/market`.
+- **Files Modified:**
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/components/hud/MultiplayerBar.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/components/profile/AccountSettings.tsx`
+  - `src/components/profile/ProfileHeader.tsx`
+  - `src/app/profile/page.tsx`
+  - `src/app/dashboard/page.tsx`
+  - `src/app/market/page.tsx`
+  - `src/data/demoSpace.ts`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 unit tests passed).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 20:30 — main (Tối Ưu Toàn Diện Luồng Nạp ViToken VietQR & Thanh Công Cụ HUD Theo Góp Ý Chuyên Sâu)
 - **Task:**
   1. **Nâng cấp Thanh công cụ góc phải (`TopRightWallet.tsx`):**

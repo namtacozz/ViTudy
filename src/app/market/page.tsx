@@ -192,7 +192,7 @@ export default function MarketPage() {
             className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 hover:text-stone-900 transition-colors bg-white px-3.5 py-2 rounded-xl border border-stone-200 shadow-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>{returnDestination === 'home' ? 'Về Trang Chủ' : 'Về Bàn Học'}</span>
+            <span>{returnDestination === 'home' ? 'Về trang chủ' : 'Về bàn học'}</span>
           </Link>
 
           <div className="flex items-center gap-2.5">

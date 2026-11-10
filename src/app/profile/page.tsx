@@ -7,6 +7,7 @@ import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { AccountSettings } from '@/components/profile/AccountSettings';
 import { DeleteAccount } from '@/components/profile/DeleteAccount';
 import { PaymentHistory } from '@/components/payment/PaymentHistory';
+import { TopUpModal } from '@/components/payment/TopUpModal';
 import { ArrowLeft, LogOut, Loader2, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
@@ -17,6 +18,7 @@ function ProfilePageContent() {
 
   const fromParam = searchParams.get('from');
   const [returnDestination, setReturnDestination] = useState<'desk' | 'home'>('home');
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
   useEffect(() => {
     if (fromParam === 'desk' || fromParam === 'home') {
@@ -46,7 +48,7 @@ function ProfilePageContent() {
   };
 
   const returnHref = returnDestination === 'desk' ? '/?view=desk' : '/?view=home';
-  const returnLabel = returnDestination === 'desk' ? 'Về Bàn Học' : 'Về Trang Chủ';
+  const returnLabel = returnDestination === 'desk' ? 'Về bàn học' : 'Về trang chủ';
 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -92,13 +94,17 @@ function ProfilePageContent() {
         </div>
 
         {/* 1. Profile Header */}
-        <ProfileHeader profile={profile} email={user.email || ''} />
+        <ProfileHeader 
+          profile={profile} 
+          email={user.email || ''} 
+          onOpenTopUp={() => setIsTopUpOpen(true)}
+        />
 
         {/* 2. Account Settings (Name & BYOK) */}
         <AccountSettings profile={profile} />
 
         {/* 3. Payment History Card */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+        <div id="payment-history" className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D]">
               <CreditCard className="w-5 h-5" />
@@ -114,6 +120,12 @@ function ProfilePageContent() {
 
         {/* 4. Delete Account Zone */}
         <DeleteAccount userEmail={user.email || ''} />
+
+        {/* 5. Top Up Modal */}
+        <TopUpModal 
+          isOpen={isTopUpOpen} 
+          onClose={() => setIsTopUpOpen(false)} 
+        />
       </div>
     </div>
   );

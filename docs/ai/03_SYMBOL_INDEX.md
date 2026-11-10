@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `e48f672`  
+> **Commit Hash:** `2ff0f05`  
 > **Cập nhật lần cuối:** `2026-11-10`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -44,13 +44,13 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
-| `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L39-L832](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
+| `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L44-L991](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
 | `BottomRightToolkit` | `component` | [src/components/hud/BottomRightToolkit.tsx:L17-L202](file:///F:/AppMaking/ViTudy/src/components/hud/BottomRightToolkit.tsx) | HUD góc dưới-phải: công cụ bút dạ quang, tạo note, khoá góc nhìn, zoom 100% |
 | `InviteModal` | `component` | [src/components/hud/InviteModal.tsx:L14-L132](file:///F:/AppMaking/ViTudy/src/components/hud/InviteModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L30-L544](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `ModelGroup` | `type` | [src/components/hud/TopRightWallet.tsx:L67-L70](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `ModelItem` | `type` | [src/components/hud/TopRightWallet.tsx:L61-L65](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L23-L384](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
+| `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L23-L395](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L35-L717](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L27-L370](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
 | `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L144-L1298](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
@@ -166,7 +166,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
 | `AboutPage` | `component` | [src/app/about/page.tsx:L9-L178](file:///F:/AppMaking/ViTudy/src/app/about/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `AccountSettings` | `component` | [src/components/profile/AccountSettings.tsx:L28-L279](file:///F:/AppMaking/ViTudy/src/components/profile/AccountSettings.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `AccountSettings` | `component` | [src/components/profile/AccountSettings.tsx:L29-L288](file:///F:/AppMaking/ViTudy/src/components/profile/AccountSettings.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ActiveToolType` | `type` | [src/types/studyspace.ts:L98-L105](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AiConfig` | `type` | [src/types/vitoken.ts:L21-L27](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AiProvider` | `type` | [src/types/vitoken.ts:L19-L19](file:///F:/AppMaking/ViTudy/src/types/vitoken.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -198,7 +198,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `getEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L51-L53](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GuestBanner` | `component` | [src/components/auth/GuestBanner.tsx:L12-L54](file:///F:/AppMaking/ViTudy/src/components/auth/GuestBanner.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `HeroSection` | `component` | [src/components/landing/HeroSection.tsx:L52-L238](file:///F:/AppMaking/ViTudy/src/components/landing/HeroSection.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `HomePage` | `component` | [src/components/home/HomePage.tsx:L33-L638](file:///F:/AppMaking/ViTudy/src/components/home/HomePage.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `HomePage` | `component` | [src/components/home/HomePage.tsx:L33-L654](file:///F:/AppMaking/ViTudy/src/components/home/HomePage.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `INITIAL_MARKET_ITEMS` | `component` | [src/data/marketMockData.ts:L24-L851](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `INITIAL_SPACES` | `component` | [src/data/mockSpaces.ts:L3-L332](file:///F:/AppMaking/ViTudy/src/data/mockSpaces.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `IntelineThread` | `type` | [src/types/studyspace.ts:L75-L85](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -228,8 +228,8 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `PricingSection` | `component` | [src/components/landing/PricingSection.tsx:L84-L180](file:///F:/AppMaking/ViTudy/src/components/landing/PricingSection.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PricingTiers` | `component` | [src/components/payment/PricingTiers.tsx:L28-L134](file:///F:/AppMaking/ViTudy/src/components/payment/PricingTiers.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PrivacyPage` | `component` | [src/app/privacy/page.tsx:L8-L98](file:///F:/AppMaking/ViTudy/src/app/privacy/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `ProfileHeader` | `component` | [src/components/profile/ProfileHeader.tsx:L13-L140](file:///F:/AppMaking/ViTudy/src/components/profile/ProfileHeader.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `ProfilePage` | `component` | [src/app/profile/page.tsx:L122-L128](file:///F:/AppMaking/ViTudy/src/app/profile/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `ProfileHeader` | `component` | [src/components/profile/ProfileHeader.tsx:L14-L163](file:///F:/AppMaking/ViTudy/src/components/profile/ProfileHeader.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `ProfilePage` | `component` | [src/app/profile/page.tsx:L134-L140](file:///F:/AppMaking/ViTudy/src/app/profile/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `QRCodeDisplay` | `component` | [src/components/payment/QRCodeDisplay.tsx:L30-L331](file:///F:/AppMaking/ViTudy/src/components/payment/QRCodeDisplay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `RootLayout` | `component` | [src/app/layout.tsx:L42-L71](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `RotateTwoWay` | `component` | [src/components/icons/RotateTwoWay.tsx:L11-L29](file:///F:/AppMaking/ViTudy/src/components/icons/RotateTwoWay.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |

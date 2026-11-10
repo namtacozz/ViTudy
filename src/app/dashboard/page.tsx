@@ -116,7 +116,7 @@ export default function DashboardPage() {
   }
 
   const returnHref = returnDestination === 'home' ? '/?view=home' : '/?view=desk';
-  const returnLabel = returnDestination === 'home' ? 'Về Trang Chủ' : 'Về Bàn Học';
+  const returnLabel = returnDestination === 'home' ? 'Về trang chủ' : 'Về bàn học';
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 px-4 sm:px-6 font-sans text-slate-800">

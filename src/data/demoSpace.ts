@@ -86,7 +86,7 @@ $$\\min_{\\text{rank}(B) \\le k} \\|A - B\\|_F = \\|A - A_k\\|_F = \\sqrt{\\sum_
 
   return {
     id: spaceId,
-    name: 'Bàn Học Khởi Đầu (Demo)',
+    name: 'Bàn học khởi đầu',
     subject: 'Khoa Học Máy Tính & AI',
     description: 'Không gian học tập mẫu trải nghiệm thực tế với sách và ghi chú 2.5D.',
     createdAt: new Date().toISOString(),

@@ -714,6 +714,29 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Khi đang ở trên Bàn học và nhấn F5 (Refresh trang): Do URL vẫn giữ `?view=desk`, hệ thống bảo lưu phiên làm việc trên bàn học bình thường.
     * Tại các trang con phụ (`/profile`, `/dashboard`, `/market`, `/auth`), nút quay lại ("Về Bàn Học" / "Quay lại Bàn Học") **BẮT BUỘC** trỏ về `href="/?view=desk"` thay vì `href="/"`, đảm bảo người dùng đang học chuyển qua xem hồ sơ/thống kê rồi bấm quay lại thì quay thẳng về Bàn học mà không bị văng ra Trang chủ.
 
+* **Quy Chuẩn Modal "Mời bạn cùng học" (Multiplayer Presence & Invite Modal Standards):**
+  * **Quyền tham gia mặc định an toàn ("Chỉ xem"):** Mặc định quyền khi tạo phòng là "Chỉ xem" (`view_only`), bảo vệ tuyệt đối bàn học của chủ phòng khỏi bị khách chỉnh sửa ngoài ý muốn. Chủ phòng có thể chủ động chuyển sang "Cùng chỉnh sửa" (`edit`).
+  * **Quản lý liên kết phòng học toàn diện:**
+    * Nút "Tạo liên kết mới" (`RefreshCw`): Cho phép chủ phòng tạo lại muối phòng ngẫu nhiên (`roomSalt`), lập tức vô hiệu hóa liên kết cũ để tránh bị người lạ tiếp tục truy cập.
+    * Bộ chọn hạn dùng liên kết (`roomLinkExpiry`): Hỗ trợ các mốc 1 giờ, 24 giờ, hoặc Vô thời hạn.
+    * Nút mời rời phòng (`UserMinus`): Cho phép chủ phòng loại bỏ từng bạn học ra khỏi phòng ngay trong danh sách người trực tuyến.
+  * **Phản hồi sao chép & Chia sẻ tức thì:** Nút "Sao chép" chuyển thành "Đã sao chép" kèm biểu tượng `Check` xanh trong 2.5 giây. Hỗ trợ nút chia sẻ nhanh qua Zalo, Messenger và hiển thị mã QR tham gia phòng nhanh.
+  * **Triệt tiêu lặp từ & Tối ưu tương phản WCAG AA:** Bỏ các dòng mô tả lặp lại ở chân modal; dòng mô tả quyền và trạng thái chờ có màu `text-slate-600` đạt tỷ lệ tương phản >= 4.5:1. Hỗ trợ phím `Esc` đóng nhanh modal và điều hướng phím giữa hai thẻ quyền (`role="radiogroup"` & `role="radio"`).
+
+* **Quy Chuẩn Trang Chủ & Danh Sách Bàn Học (HomePage Polish Standards):**
+  * **Khắc phục triệt để lỗi cấn mép Avatar:** Khung avatar góc phải trên header có khoảng cách đệm `pr-3 sm:pr-4` và kích thước tối thiểu 44x44px, không bao giờ bị cắt góc hay đè sát mép phải trình duyệt.
+  * **Breadcrumb nhất quán:** Breadcrumb chuyển về "Không gian học tập ViTudy" mạch lạc, không ghép tên cá nhân gây hiểu nhầm ngữ cảnh.
+  * **Thẻ "Mục tiêu hôm nay" tinh gọn:** Tiêu đề viết hoa chữ cái đầu (Sentence case: "Mục tiêu hôm nay"), làm rõ cơ chế "Hoàn thành 25 phút Pomodoro để duy trì chuỗi học", bổ sung nút hành động "Bắt đầu phiên 25p" dẫn trực tiếp vào bàn học kích hoạt đồng hồ.
+  * **Quy chuẩn chữ thường ngữ pháp (Sentence Case) trên bảng:** Toàn bộ tiêu đề cột trong bảng bàn học dùng chữ thường sau chữ cái đầu: "Tên bàn học", "Tài liệu & ghi chú", "Mở lần cuối".
+  * **Bàn học mẫu chuẩn mực:** Bỏ hậu tố thô `(Demo)`, hiển thị nhãn đẹp "Bàn học khởi đầu" kèm huy hiệu "Mẫu". Thẻ học nhóm đổi nhãn "ROOM" thành "Phòng học".
+
+* **Quy Chuẩn Trang Hồ Sơ Tài Khoản & Quản Lý ChatGPT (Account & Profile Standards):**
+  * **Khối "Kết nối ChatGPT":** Đổi tên từ "Đăng nhập ChatGPT" sang "Kết nối ChatGPT", biểu tượng robot `Bot`. Triệt tiêu hoàn toàn các thuật ngữ kỹ thuật như "PKCE", "Auto-Refresh" và danh sách mô hình liệt kê thủ công; dùng nhãn "Tự gia hạn" và văn bản giải thích rõ: "Dùng tài khoản ChatGPT của bạn để hỏi đáp và phân tích tài liệu mà không tiêu tốn ViToken của hệ thống.". Hộp thoại xác nhận ngắt kết nối nêu rõ hậu quả chuyển sang AI hệ thống (2 ViToken/lượt).
+  * **Trường tên gọi ngắn:** Rút gọn nhãn thành "Tên gọi ngắn" với dòng phụ hướng dẫn: "VD: Thành (dùng cho lời chào trang chủ và trên bàn học)".
+  * **Trạng thái nút Lưu khi chưa đổi:** Hiển thị rõ chữ "Chưa có thay đổi" trên nền màu xám có độ tương phản cao `bg-slate-200 text-slate-500 font-medium`.
+  * **Hành động ví tại ProfileHeader:** Bổ sung nút "Nạp thêm" mở trực tiếp `TopUpModal` và liên kết "Xem lịch sử nạp" cuộn mượt xuống khối lịch sử giao dịch. Nút đổi ảnh đại diện đạt kích thước chuẩn 36px x 36px có `aria-label="Đổi ảnh đại diện"`.
+  * **Đồng bộ Sentence Case toàn bộ nút điều hướng:** "Về bàn học", "Về trang chủ", "Đăng xuất" trên `/profile`, `/dashboard`, `/market`.
+
 * **Quy Chuẩn Trang Hỏi Đáp & Chăm Sóc Người Học (FAQ & Support Page Standards — `/faq`):**
   * **Cấu trúc & Trục căn lề:**
     * Toàn bộ trang (Header, Tiêu đề, Ô tìm kiếm, Chip danh mục, Danh sách câu hỏi, và Khối Hỗ trợ cuối trang) **căn thẳng hàng một trục duy nhất** theo độ rộng `max-w-4xl mx-auto px-6`.

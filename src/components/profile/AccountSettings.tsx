@@ -6,7 +6,7 @@ import { getSupabase } from '@/lib/supabase';
 import { 
   Check, 
   Loader2, 
-  KeyRound, 
+  Bot, 
   UserCheck, 
   Eye, 
   EyeOff, 
@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   Mail,
   RefreshCw,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { getOpenAiOAuthSession, clearOpenAiOAuthSession, OpenAiOAuthSession } from '@/lib/openaiOAuth';
@@ -57,7 +58,7 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
 
   // Xác định phương thức đăng nhập
   const provider = user?.app_metadata?.provider || 'email';
-  const providerLabel = provider === 'google' ? 'Tài khoản Google' : 'Mật khẩu & Email';
+  const providerLabel = provider === 'google' ? 'Đăng nhập bằng Google' : 'Đổi mật khẩu';
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,9 +132,9 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
                 type="text"
                 readOnly
                 value={user?.email || profile?.email || ''}
-                className="w-full max-w-md px-3.5 py-2 text-xs bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-mono outline-none cursor-not-allowed select-all"
+                className="w-full max-w-md px-3.5 py-2 text-xs bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-sans outline-none cursor-not-allowed select-all"
               />
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
                 <ShieldCheck className="w-3 h-3 text-emerald-600" />
                 <span>{providerLabel}</span>
               </span>
@@ -157,15 +158,18 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
 
           {/* Tên gọi ngắn */}
           <div>
-            <label htmlFor="accountNickname" className="block text-xs font-semibold text-slate-700 mb-1">
-              Tên gọi ngắn (Dùng cho lời chào trang chủ & bàn học)
+            <label htmlFor="accountNickname" className="block text-xs font-semibold text-slate-700 mb-0.5">
+              Tên gọi ngắn
             </label>
+            <p className="text-[11px] text-slate-500 mb-1.5">
+              VD: Thành (dùng cho lời chào trang chủ và trên bàn học)
+            </p>
             <input
               id="accountNickname"
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="VD: Thành (để hiển thị &quot;Ôn bài thôi, Thành&quot;)"
+              placeholder="VD: Thành"
               className="w-full max-w-md px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E0562D]/20 focus:border-[#E0562D] transition-all"
             />
           </div>
@@ -178,34 +182,39 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isUpdatingName || !hasNameChanged}
-            className="px-4 py-2.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
-          >
-            {isUpdatingName ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Đang lưu...</span>
-              </>
-            ) : nameSuccess ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                <span>Đã lưu</span>
-              </>
-            ) : (
-              <span>Lưu thay đổi</span>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={isUpdatingName || !hasNameChanged}
+              className="px-5 py-2.5 bg-[#E0562D] hover:bg-[#c9451e] disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              {isUpdatingName ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Đang lưu...</span>
+                </>
+              ) : nameSuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Đã lưu</span>
+                </>
+              ) : (
+                <span>Lưu thay đổi</span>
+              )}
+            </button>
+            {!hasNameChanged && !nameSuccess && (
+              <span className="text-xs text-slate-500 font-medium">Chưa có thay đổi</span>
             )}
-          </button>
+          </div>
         </form>
       </section>
 
-      {/* 2. Đăng nhập ChatGPT (OAuth PKCE) */}
+      {/* 2. Kết nối ChatGPT */}
       <section className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2">
-            <KeyRound className="w-4 h-4 text-slate-700" />
-            <h3 className="text-sm font-bold text-slate-900">Đăng nhập ChatGPT</h3>
+            <Bot className="w-4 h-4 text-slate-700" />
+            <h3 className="text-sm font-bold text-slate-900">Kết nối ChatGPT</h3>
           </div>
           <Link
             href="/?view=desk"
@@ -217,7 +226,7 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
           </Link>
         </div>
         <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-          Ủy quyền tài khoản ChatGPT (Plus, Pro hoặc Free) qua giao thức bảo mật OAuth 2.0 để sử dụng trực tiếp các mô hình AI cao cấp (GPT-5.6 Terra, GPT-4o, o3-mini...) mà không tiêu tốn ViToken.
+          Dùng tài khoản ChatGPT của bạn để hỏi đáp và phân tích tài liệu mà không tiêu tốn ViToken của hệ thống.
         </p>
 
         {/* OpenAI OAuth Session Status */}
@@ -252,7 +261,7 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
             <button
               type="button"
               onClick={() => {
-                if (typeof window !== 'undefined' && !window.confirm('Bạn có chắc chắn muốn ngắt kết nối tài khoản ChatGPT?')) {
+                if (typeof window !== 'undefined' && !window.confirm('Sau khi ngắt kết nối ChatGPT, các tính năng AI sẽ tự động chuyển sang AI hệ thống ViTudy (tiêu tốn 2 ViToken/lượt). Bạn có chắc chắn muốn ngắt kết nối?')) {
                   return;
                 }
                 clearOpenAiOAuthSession();
