@@ -4,8 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { generateFlashcardsFromRules, Flashcard } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
 import { FlashcardService } from '@/services/FlashcardService';
 import { ReviewQuality } from '@/lib/sm2';
+import { MathRenderer } from '@/components/common/MathRenderer';
 import { 
   Layers, 
   RotateCw, 
@@ -24,19 +27,91 @@ interface FlashcardTabProps {
 export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
   const { addStickyNote } = useStudySpace();
   const { user } = useAuth();
+  const { aiConfig, spendTokens } = useViToken();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [sm2Notice, setSm2Notice] = useState<string | null>(null);
+  const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
+  const [loading, setLoading] = useState(false);
 
-  const handleGenerateFlashcards = () => {
+  const handleGenerateFlashcards = async () => {
     if (!fullText) return;
-    const cards = generateFlashcardsFromRules(fullText, 8);
-    setFlashcards(cards);
-    setCurrentIdx(0);
-    setIsFlipped(false);
-    setSm2Notice(null);
+
+    if (!useAi) {
+      const cards = generateFlashcardsFromRules(fullText, 8);
+      setFlashcards(cards);
+      setCurrentIdx(0);
+      setIsFlipped(false);
+      setSm2Notice(null);
+      return;
+    }
+
+    if (aiConfig.provider === 'system') {
+      const ok = spendTokens(2, `Tạo thẻ ghi nhớ AI: ${documentTitle.slice(0, 30)}`);
+      if (!ok) {
+        alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang trích xuất Non-AI miễn phí.');
+        setUseAi(false);
+        const cards = generateFlashcardsFromRules(fullText, 8);
+        setFlashcards(cards);
+        setCurrentIdx(0);
+        setIsFlipped(false);
+        setSm2Notice(null);
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const prompt = `Từ nội dung học tập sau đây, hãy trích xuất 6 đến 8 thẻ ghi nhớ (flashcards) trọng tâm nhất để ôn thi và nắm vững kiến thức.
+Mỗi thẻ gồm:
+- "front": Thuật ngữ, câu hỏi hoặc khái niệm trọng tâm
+- "back": Định nghĩa ngắn gọn, giải thích bản chất, công thức toán/lý (dùng LaTeX chuẩn \\(...\\) hoặc \\[...\\] nếu có)
+Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào khác ngoài JSON:
+[
+  {
+    "front": "Thuật ngữ hoặc câu hỏi...",
+    "back": "Định nghĩa, bản chất và công thức..."
+  }
+]`;
+
+      const data = await askAi({
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        apiKey: aiConfig.apiKey,
+        prompt,
+        context: fullText.slice(0, 4000),
+      });
+
+      const rawText = data.reply || '';
+      const match = rawText.match(/\[[\s\S]*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setFlashcards(parsed.map((item: any, idx: number) => ({
+            id: `ai-fc-${idx}-${Date.now()}`,
+            front: item.front || '',
+            back: item.back || ''
+          })));
+          setCurrentIdx(0);
+          setIsFlipped(false);
+          setSm2Notice(null);
+          return;
+        }
+      }
+      setFlashcards(generateFlashcardsFromRules(fullText, 8));
+      setCurrentIdx(0);
+      setIsFlipped(false);
+      setSm2Notice(null);
+    } catch {
+      setFlashcards(generateFlashcardsFromRules(fullText, 8));
+      setCurrentIdx(0);
+      setIsFlipped(false);
+      setSm2Notice(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoadDueCards = async () => {
@@ -98,11 +173,26 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
         <div>
           <h4 className="text-sm font-bold text-slate-900">Thẻ Ghi Nhớ Lặp Lại Ngắt Quãng (Spaced Repetition)</h4>
           <p className="text-xs text-slate-500">
-            Tự động phát hiện các cấu trúc định nghĩa "là", "gồm có", "tập trung vào" để tạo thẻ ôn tập.
+            {useAi 
+              ? 'Mô hình AI chắt lọc các khái niệm, định nghĩa và công thức cốt lõi thành flashcard'
+              : 'Động cơ Non-AI phát hiện cấu trúc định nghĩa "là", "gồm có", "tập trung vào" (chạy 100% offline)'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300">
+            <input 
+              type="checkbox"
+              checked={useAi}
+              onChange={(e) => setUseAi(e.target.checked)}
+              className="rounded accent-[#E0562D]"
+            />
+            <span className="flex items-center gap-1">
+              <Sparkles className={`w-3.5 h-3.5 ${useAi ? 'text-[#E0562D]' : 'text-slate-400'}`} />
+              Dùng AI Chuyên Sâu
+            </span>
+          </label>
+
           {user && (
             <button
               onClick={handleLoadDueCards}
@@ -115,9 +205,11 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
 
           <button
             onClick={handleGenerateFlashcards}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer"
+            disabled={loading}
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
           >
-            {flashcards.length > 0 ? 'Tạo Lại Thẻ' : 'Trích Xuất Flashcards'}
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{loading ? 'Đang tạo thẻ...' : flashcards.length > 0 ? 'Tạo Lại Thẻ' : 'Trích Xuất Flashcards'}</span>
           </button>
         </div>
       </div>
@@ -135,7 +227,7 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
             {/* Card Frame */}
             <div
               onClick={() => setIsFlipped(!isFlipped)}
-              className="w-full h-56 bg-white border-2 border-slate-300 hover:border-slate-800 rounded-2xl p-6 shadow-md cursor-pointer flex flex-col justify-between transition-all select-none relative group"
+              className="w-full h-56 bg-white border-2 border-slate-300 hover:border-slate-800 rounded-2xl p-6 shadow-md cursor-pointer flex flex-col justify-between transition-all select-none relative group overflow-y-auto"
             >
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span className="font-bold text-slate-600 uppercase">
@@ -146,10 +238,10 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
                 </span>
               </div>
 
-              <div className="flex-1 flex items-center justify-center text-center px-4">
-                <p className={`text-slate-900 leading-relaxed font-sans ${isFlipped ? 'text-sm' : 'text-base font-bold'}`}>
-                  {isFlipped ? currentCard.back : currentCard.front}
-                </p>
+              <div className="flex-1 flex items-center justify-center text-center px-4 py-2">
+                <div className={`text-slate-900 leading-relaxed font-sans ${isFlipped ? 'text-xs md:text-sm' : 'text-sm md:text-base font-bold'}`}>
+                  <MathRenderer content={isFlipped ? currentCard.back : currentCard.front} />
+                </div>
               </div>
 
               <div className="text-center text-[10px] text-slate-400 font-mono">

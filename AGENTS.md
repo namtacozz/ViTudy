@@ -45,7 +45,13 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       3. Chọn mô hình AI: Dropdown đồng bộ theo nhà cung cấp, hỗ trợ trọn bộ mô hình Codex cao cấp của ChatGPT (`gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.6-sol`, `gpt-5.5`, `gpt-5`, `gpt-4o`, `gpt-4o-mini`, `o3-mini`, `o1`, `o1-mini`, `chatgpt-4o-latest`). **Quy chuẩn danh sách mô hình tinh gọn:** Dropdown bắt buộc chỉ hiển thị thuần túy tên mô hình (plain model name dạng font-mono), tuyệt đối không kèm chú thích hay miêu tả hoa mỹ rườm rà. `selectedModel` luôn được đồng bộ tự động khi mở modal hoặc đổi nhà cung cấp, loại bỏ hoàn toàn việc fallback về các mã không hợp lệ như `gpt-5.4-mini`.
       4. Nút kiểm tra hoạt động (Test AI): Gửi truy vấn thực tế kiểm tra API và đo độ trễ mạng ms thời gian thực.
     * **Chức Năng AI Trên Tài Liệu Thật Sự Hoạt Động (Real AI Execution Standard):**
-      * Mọi tác vụ AI trên tài liệu (Tóm tắt trong `SummaryTab`, sinh trắc nghiệm trong `QuizTab`, hỏi nhanh `IntelineModal` & inline popover) đều tự động dùng mô hình và tài khoản ChatGPT đã kết nối mà không tốn ViToken. Tuyệt đối không giả lập dữ liệu tĩnh hoặc fallback ngầm khi người dùng chọn dùng AI.
+      * Mọi tác vụ AI trên tài liệu (Tóm tắt trong `SummaryTab`, sinh trắc nghiệm trong `QuizTab`, thẻ ghi nhớ trong `FlashcardTab`, lộ trình học trong `RoadmapTab`, hỏi nhanh `IntelineModal` & inline popover) đều tự động dùng mô hình và tài khoản ChatGPT đã kết nối mà không tốn ViToken. Tuyệt đối không giả lập dữ liệu tĩnh hoặc fallback ngầm khi người dùng chọn dùng AI.
+    * **Quy Chuẩn Hiển Thị Công Thức Toán Học KaTeX (`MathRenderer`):**
+      * Bộ phân tích `MathRenderer` bắt buộc nhận diện và biên dịch hoàn hảo toàn bộ các dạng biểu diễn công thức LaTeX: Display block (`$$...$$`, `\[...\]`) và Inline (`$...$`, `\(...\)`), cùng định dạng in đậm `**...**`.
+      * Bắt buộc render nội dung tóm tắt, câu hỏi trắc nghiệm, các mặt flashcard và lộ trình học qua `MathRenderer`, triệt tiêu hoàn toàn việc hiển thị chuỗi LaTeX thô (`\(\nabla f(x)\)`, `\[\theta^{(t+1)}...\]`).
+    * **Quy Chuẩn Bộ Công Cụ STudy Của Sách:**
+      * Bỏ tab "Quét ảnh OCR" khỏi danh mục thẻ thanh điều hướng chính của STudy (chỉ giữ `OcrTab` làm module phụ trợ nội bộ).
+      * Bốn tab học tập chuẩn mực gồm: **Tóm Tắt** (`summary`), **Trắc Nghiệm** (`quiz`), **Thẻ Ghi Nhớ** (`flashcards`), và **Lộ Trình Học** (`roadmap`) — toàn bộ đều trang bị checkbox "Dùng AI Chuyên Sâu".
   * **Quy Chuẩn Thanh Toán VietQR & MBBank (SePay VietQR Standards):**
     * Sử dụng mã NAPAS BIN chính thức của MBBank: `970422` (hoặc `MB`) kèm template `compact2` để 100% ứng dụng ngân hàng và ví điện tử quét mã truy vấn thông tin thành công.
     * Tài khoản thụ hưởng mặc định: `99924052005` - `LE VO THANH NAM`.

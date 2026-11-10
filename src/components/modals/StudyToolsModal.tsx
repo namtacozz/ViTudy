@@ -9,7 +9,6 @@ import {
   HelpCircle, 
   Layers, 
   ListOrdered, 
-  Camera, 
   X
 } from 'lucide-react';
 import { SummaryTab } from './study-tools/SummaryTab';
@@ -29,7 +28,7 @@ interface StudyToolsModalProps {
 export function StudyToolsModal({ item, isOpen, onClose, isPaper: explicitIsPaper, targetPos: explicitTargetPos }: StudyToolsModalProps) {
   const isPaper = explicitIsPaper !== undefined ? explicitIsPaper : item.type !== 'book';
   const targetPos = explicitTargetPos || { x: item.x + (isPaper ? 390 : 1010), y: item.y };
-  const [activeTab, setActiveTab] = useState<'summary' | 'quiz' | 'flashcards' | 'roadmap' | 'ocr'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'quiz' | 'flashcards' | 'roadmap'>('summary');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -209,18 +208,6 @@ export function StudyToolsModal({ item, isOpen, onClose, isPaper: explicitIsPape
             <ListOrdered className="w-3.5 h-3.5" />
             <span>Lộ Trình Học</span>
           </button>
-
-          <button
-            onClick={() => setActiveTab('ocr')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'ocr'
-                ? 'border-slate-900 text-slate-900 bg-white rounded-t-lg'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>Quét Ảnh OCR</span>
-          </button>
         </div>
 
         {/* Tab Body */}
@@ -235,9 +222,6 @@ export function StudyToolsModal({ item, isOpen, onClose, isPaper: explicitIsPape
         )}
         {activeTab === 'roadmap' && (
           <RoadmapTab pages={item.pages} itemType={item.type} itemId={item.id} />
-        )}
-        {activeTab === 'ocr' && (
-          <OcrTab documentTitle={item.title} />
         )}
       </div>
     </div>,

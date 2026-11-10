@@ -3,12 +3,16 @@
 import React, { useState } from 'react';
 import { extractOutlineAndRoadmap, RoadmapStep } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { useViToken } from '@/context/ViTokenContext';
+import { askAi } from '@/lib/aiClient';
+import { MathRenderer } from '@/components/common/MathRenderer';
 import { 
   ListOrdered, 
   Clock, 
   ChevronRight, 
   CheckCircle,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 
 interface RoadmapTabProps {
@@ -20,13 +24,81 @@ interface RoadmapTabProps {
 
 export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTabProps) {
   const { setBookPage } = useStudySpace();
+  const { aiConfig, spendTokens } = useViToken();
 
   const [roadmap, setRoadmap] = useState<RoadmapStep[]>([]);
+  const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
+  const [loading, setLoading] = useState(false);
 
-  const handleGenerateRoadmap = () => {
+  const handleGenerateRoadmap = async () => {
     if (!pages || pages.length === 0) return;
-    const steps = extractOutlineAndRoadmap(pages);
-    setRoadmap(steps);
+
+    if (!useAi) {
+      const steps = extractOutlineAndRoadmap(pages);
+      setRoadmap(steps);
+      return;
+    }
+
+    if (aiConfig.provider === 'system') {
+      const ok = spendTokens(2, 'Dựng lộ trình học AI');
+      if (!ok) {
+        alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang dựng lộ trình Non-AI.');
+        setUseAi(false);
+        setRoadmap(extractOutlineAndRoadmap(pages));
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const fullContext = pages.map((p, idx) => `[Trang ${idx + 1}: ${p.title || 'Mục ' + (idx + 1)}]\n${p.text.slice(0, 500)}`).join('\n\n');
+      const prompt = `Từ cấu trúc và nội dung các trang tài liệu sau đây, hãy xây dựng một lộ trình học tập cá nhân hóa (4 đến 6 chặng) giúp người học nắm vững kiến thức từ cơ bản đến chuyên sâu.
+Mỗi chặng gồm:
+- "title": Tên chặng học súc tích và hành động cụ thể (ví dụ: "Chặng 1: Nền tảng khái niệm ...")
+- "description": Mục tiêu cốt lõi cần đạt và cách ôn tập
+- "estimatedMinutes": Thời gian hoàn thành dự kiến (số nguyên phút)
+- "pageIndex": Số thứ tự trang bắt đầu tương ứng (0-indexed)
+Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào khác ngoài JSON:
+[
+  {
+    "title": "Chặng 1: ...",
+    "description": "...",
+    "estimatedMinutes": 20,
+    "pageIndex": 0
+  }
+]`;
+
+      const data = await askAi({
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        apiKey: aiConfig.apiKey,
+        prompt,
+        context: fullContext.slice(0, 4000),
+      });
+
+      const rawText = data.reply || '';
+      const match = rawText.match(/\[[\s\S]*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRoadmap(parsed.map((item: any, idx: number) => ({
+            id: `ai-rm-${idx}-${Date.now()}`,
+            stepNumber: idx + 1,
+            title: item.title || `Chặng ${idx + 1}`,
+            description: item.description || '',
+            estimatedMinutes: typeof item.estimatedMinutes === 'number' ? item.estimatedMinutes : 15,
+            pageIndex: typeof item.pageIndex === 'number' ? item.pageIndex : idx,
+            isCompleted: false,
+          })));
+          return;
+        }
+      }
+      setRoadmap(extractOutlineAndRoadmap(pages));
+    } catch {
+      setRoadmap(extractOutlineAndRoadmap(pages));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const totalReadingMinutes = roadmap.reduce((acc, cur) => acc + (cur.estimatedMinutes || 2), 0);
@@ -38,16 +110,35 @@ export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTab
         <div>
           <h4 className="text-sm font-bold text-slate-900">Lộ Trình Học & Cây Mục Lục</h4>
           <p className="text-xs text-slate-500">
-            Tự động chia nhỏ nội dung theo chương/mục và ước lượng thời gian học (200 từ/phút).
+            {useAi 
+              ? 'Mô hình AI xây dựng lộ trình từng chặng mục tiêu cá nhân hóa (không tốn ViToken khi kết nối ChatGPT)'
+              : 'Động cơ Non-AI chia nhỏ nội dung theo chương/mục và ước lượng thời gian học (chạy 100% offline)'}
           </p>
         </div>
 
-        <button
-          onClick={handleGenerateRoadmap}
-          className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
-        >
-          {roadmap.length > 0 ? 'Cập Nhật Lộ Trình' : 'Dựng Lộ Trình'}
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300">
+            <input 
+              type="checkbox"
+              checked={useAi}
+              onChange={(e) => setUseAi(e.target.checked)}
+              className="rounded accent-[#E0562D]"
+            />
+            <span className="flex items-center gap-1">
+              <Sparkles className={`w-3.5 h-3.5 ${useAi ? 'text-[#E0562D]' : 'text-slate-400'}`} />
+              Dùng AI Chuyên Sâu
+            </span>
+          </label>
+
+          <button
+            onClick={handleGenerateRoadmap}
+            disabled={loading}
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{loading ? 'Đang dựng...' : roadmap.length > 0 ? 'Cập Nhật Lộ Trình' : 'Dựng Lộ Trình'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Roadmap Content */}
@@ -67,16 +158,20 @@ export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTab
                   className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-300 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold font-mono">
+                    <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold font-mono shrink-0">
                       {idx + 1}
                     </div>
                     <div>
-                      <h5 className="text-xs font-bold text-slate-900">{step.title}</h5>
-                      <p className="text-[11px] text-slate-500 line-clamp-1">{step.description}</p>
+                      <h5 className="text-xs font-bold text-slate-900">
+                        <MathRenderer content={step.title} />
+                      </h5>
+                      <div className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">
+                        <MathRenderer content={step.description} />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                     <span className="text-[11px] text-slate-500 font-mono">
                       ~{step.estimatedMinutes} phút
                     </span>
@@ -89,7 +184,7 @@ export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTab
                             setBookPage(itemId, step.pageIndex);
                           }
                         }}
-                        className="p-1 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors"
+                        className="p-1 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors cursor-pointer"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </button>

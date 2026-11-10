@@ -33,8 +33,8 @@ function renderKatexWithCache(math: string, displayMode: boolean): string {
 export const MathRenderer = React.memo(function MathRenderer({ content, className = '' }: MathRendererProps) {
   if (!content) return null;
 
-  // Split content by inline $...$ or block $$...$$ math delimiters
-  const mathRegex = /(\$\$[\s\S]+?\$\$|\$[^\$\n]+?\$)/g;
+  // Split content by inline ($...$ / \(...\)) or block ($$...$$ / \[...\]) math delimiters
+  const mathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\$\n]+?\$)/g;
   const parts = content.split(mathRegex);
 
   return (
@@ -42,7 +42,8 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
       {parts.map((part, index) => {
         if (!part) return null;
 
-        if (part.startsWith('$$') && part.endsWith('$$')) {
+        // Block Display Math: $$...$$ or \[...\]
+        if ((part.startsWith('$$') && part.endsWith('$$')) || (part.startsWith('\\[') && part.endsWith('\\]'))) {
           const rawMath = part.slice(2, -2).trim();
           const html = renderKatexWithCache(rawMath, true);
           if (html) {
@@ -57,14 +58,15 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
           return <code key={index} className="block my-2 font-mono text-xs">{rawMath}</code>;
         }
 
-        if (part.startsWith('$') && part.endsWith('$')) {
-          const rawMath = part.slice(1, -1).trim();
+        // Inline Math: \(...\)
+        if (part.startsWith('\\(') && part.endsWith('\\)')) {
+          const rawMath = part.slice(2, -2).trim();
           const html = renderKatexWithCache(rawMath, false);
           if (html) {
             return (
               <span 
                 key={index} 
-                className="inline-block px-0.5"
+                className="inline-block px-0.5 align-baseline"
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
@@ -72,8 +74,40 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
           return <code key={index} className="font-mono text-xs">{rawMath}</code>;
         }
 
-        // Normal text: handle line breaks and bold markers
-        return <span key={index}>{part}</span>;
+        // Inline Math: $...$
+        if (part.startsWith('$') && part.endsWith('$')) {
+          const rawMath = part.slice(1, -1).trim();
+          const html = renderKatexWithCache(rawMath, false);
+          if (html) {
+            return (
+              <span 
+                key={index} 
+                className="inline-block px-0.5 align-baseline"
+                dangerouslySetInnerHTML={{ __html: html }} 
+              />
+            );
+          }
+          return <code key={index} className="font-mono text-xs">{rawMath}</code>;
+        }
+
+        // Normal text: parse markdown bold (**text**)
+        const boldRegex = /(\*\*[^*]+?\*\*)/g;
+        const textSegments = part.split(boldRegex);
+
+        return (
+          <span key={index}>
+            {textSegments.map((seg, sIdx) => {
+              if (seg.startsWith('**') && seg.endsWith('**')) {
+                return (
+                  <strong key={sIdx} className="font-bold text-slate-900">
+                    {seg.slice(2, -2)}
+                  </strong>
+                );
+              }
+              return seg;
+            })}
+          </span>
+        );
       })}
     </span>
   );

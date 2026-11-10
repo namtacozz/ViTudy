@@ -6,6 +6,7 @@ import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
 import { askAi } from '@/lib/aiClient';
 import { Sparkles, Copy, Check, StickyNote } from 'lucide-react';
+import { MathRenderer } from '@/components/common/MathRenderer';
 
 interface SummaryTabProps {
   fullText: string;
@@ -131,7 +132,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
         <div className="flex-1 min-h-[160px] max-h-[220px] flex flex-col">
           {summaryResult ? (
             <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs leading-relaxed text-slate-800 whitespace-pre-line overflow-y-auto no-scrollbar">
-              {summaryResult}
+              <MathRenderer content={summaryResult} />
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs text-center border-2 border-dashed border-slate-200 rounded-xl p-4">
@@ -204,7 +205,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
       <div className="flex-1 mt-4">
         {summaryResult ? (
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-sm leading-relaxed text-slate-800 whitespace-pre-line">
-            {summaryResult}
+            <MathRenderer content={summaryResult} />
           </div>
         ) : (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs text-center border-2 border-dashed border-slate-200 rounded-xl">

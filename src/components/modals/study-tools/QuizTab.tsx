@@ -11,10 +11,11 @@ import {
   XCircle, 
   FileText, 
   Award, 
-  Clock,
-  RotateCcw,
-  Sparkles
+  Clock, 
+  RotateCcw, 
+  Sparkles 
 } from 'lucide-react';
+import { MathRenderer } from '@/components/common/MathRenderer';
 
 interface QuizTabProps {
   fullText: string;
@@ -191,7 +192,8 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
               {questions.map((q, idx) => (
                 <div key={q.id || idx} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs">
                   <p className="font-bold text-slate-900 mb-2 leading-snug">
-                    Câu {idx + 1}: {q.question}
+                    <span>Câu {idx + 1}: </span>
+                    <MathRenderer content={q.question} />
                   </p>
                   <div className="grid grid-cols-1 gap-1.5 pl-1">
                     {q.options.map((opt, oIdx) => {
@@ -217,7 +219,9 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
                           <span className="w-4 h-4 rounded text-[9.5px] font-bold flex items-center justify-center bg-slate-200 text-slate-700 flex-shrink-0">
                             {String.fromCharCode(65 + oIdx)}
                           </span>
-                          <span className="truncate flex-1">{opt}</span>
+                          <span className="flex-1">
+                            <MathRenderer content={opt} />
+                          </span>
                         </button>
                       );
                     })}
@@ -269,17 +273,32 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
       {/* Header Bar */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Trắc Nghiệm Tự Động (Non-AI Cloze Deletion)</h4>
+          <h4 className="text-sm font-bold text-slate-900">Trắc Nghiệm Ôn Tập Kiến Thức</h4>
           <p className="text-xs text-slate-500">
-            Tự động bóc tách thuật ngữ bài học sinh 4 phương án lựa chọn, chạy 100% offline.
+            {useAi 
+              ? 'Mô hình AI phân tích câu hỏi logic chuyên sâu kèm lời giải (không tốn ViToken khi kết nối ChatGPT)'
+              : 'Động cơ Non-AI bóc tách thuật ngữ sinh 4 phương án lựa chọn, chạy 100% offline'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300">
+            <input 
+              type="checkbox"
+              checked={useAi}
+              onChange={(e) => setUseAi(e.target.checked)}
+              className="rounded accent-[#E0562D]"
+            />
+            <span className="flex items-center gap-1">
+              <Sparkles className={`w-3.5 h-3.5 ${useAi ? 'text-[#E0562D]' : 'text-slate-400'}`} />
+              Dùng AI Chuyên Sâu
+            </span>
+          </label>
+
           {questions.length > 0 && (
             <button
               onClick={handleExportToExamSheet}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-95"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Xuất Tờ Đề Thi Ra Bàn</span>
@@ -288,9 +307,11 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
 
           <button
             onClick={handleGenerateQuestions}
-            className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold transition-colors shadow-2xs"
+            disabled={loading}
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-2xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95"
           >
-            {questions.length > 0 ? 'Tạo Đề Mới' : 'Sinh Câu Hỏi'}
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{loading ? 'Đang tạo đề...' : questions.length > 0 ? 'Tạo Đề Mới' : 'Sinh Câu Hỏi'}</span>
           </button>
         </div>
       </div>
@@ -306,7 +327,10 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
               return (
                 <div key={q.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                   <div className="font-bold text-xs text-slate-900 mb-2.5 flex items-start justify-between gap-2">
-                    <span>Câu {qIdx + 1}: {q.question}</span>
+                    <span className="flex-1">
+                      <span className="font-bold mr-1">Câu {qIdx + 1}:</span>
+                      <MathRenderer content={q.question} />
+                    </span>
                     {isGraded && (
                       isCorrect ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
@@ -342,11 +366,20 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
                           }`}>
                             {String.fromCharCode(65 + oIdx)}
                           </span>
-                          <span className="flex-1 truncate">{opt}</span>
+                          <span className="flex-1">
+                            <MathRenderer content={opt} />
+                          </span>
                         </button>
                       );
                     })}
                   </div>
+
+                  {isGraded && q.explanation && (
+                    <div className="mt-2.5 p-2.5 rounded-lg bg-white border border-slate-200 text-[11.5px] text-slate-600">
+                      <strong className="text-slate-800 mr-1">Giải thích:</strong>
+                      <MathRenderer content={q.explanation} />
+                    </div>
+                  )}
                 </div>
               );
             })}

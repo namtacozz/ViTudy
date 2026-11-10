@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-11-10 19:40 — main (Hỗ Trợ KaTeX Toàn Diện Cho Tóm Tắt, Mở Rộng AI Cho Trắc Nghiệm/Flashcard/Lộ Trình Sách & Lược Bỏ Tab OCR)
+- **Task:**
+  1. **Khắc phục triệt để lỗi hiển thị công thức toán học (`MathRenderer.tsx` & `SummaryTab.tsx`):**
+     - Mở rộng Regex nhận diện KaTeX hỗ trợ đầy đủ toàn bộ cú pháp LaTeX phổ biến do AI sinh ra: Display math (`\[...\]` và `$$...$$`), Inline math (`\(...\)` và `$...$`), cùng định dạng in đậm `**...**`.
+     - Tích hợp `MathRenderer` vào `SummaryTab`, chuyển đổi toàn bộ công thức toán học (gradient $\nabla f(x)$, phân rã ma trận $A=U\Sigma V^T$, vector đạo hàm, learning rate $\eta$) thành các ký hiệu KaTeX sắc nét, triệt tiêu hoàn toàn chuỗi văn bản thô.
+  2. **Trang bị tùy chọn AI Chuyên Sâu cho 100% công cụ STudy của Sách:**
+     - **Trắc nghiệm (`QuizTab.tsx`):** Thêm checkbox "Dùng AI Chuyên Sâu" trên giao diện Sách, render câu hỏi và các phương án bằng `MathRenderer`.
+     - **Thẻ ghi nhớ (`FlashcardTab.tsx`):** Tích hợp luồng sinh Flashcard AI bóc tách khái niệm/định nghĩa/công thức toán, hỗ trợ `MathRenderer` cả mặt trước và mặt sau thẻ.
+     - **Lộ trình học (`RoadmapTab.tsx`):** Bổ sung luồng AI thiết kế lộ trình học tập cá nhân hóa 4-6 chặng từ cơ bản đến nâng cao, ước tính thời gian và gợi ý mục tiêu.
+  3. **Lược bỏ tab Quét ảnh OCR khỏi danh mục thẻ STudy:**
+     - Xóa tab `ocr` khỏi thanh điều hướng của `StudyToolsModal.tsx`, tinh gọn thanh tab còn 4 chức năng cốt lõi: Tóm Tắt, Trắc Nghiệm, Thẻ Ghi Nhớ, Lộ Trình Học. Giữ lại `OcrTab.tsx` làm module hỗ trợ phụ trợ khi cần.
+- **Files Modified:**
+  - `src/components/common/MathRenderer.tsx`
+  - `src/components/modals/study-tools/SummaryTab.tsx`
+  - `src/components/modals/study-tools/QuizTab.tsx`
+  - `src/components/modals/study-tools/FlashcardTab.tsx`
+  - `src/components/modals/study-tools/RoadmapTab.tsx`
+  - `src/components/modals/StudyToolsModal.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 19:19 — main (Triệt Tiêu Hardcode Fallback Namtacozz, Chuẩn Hóa Chế Độ Khách & Thêm Nút Đăng Nhập Trên HomePage)
 - **Task:**
   1. **Khắc phục triệt để lỗi chào `namtacozz` khi chưa đăng nhập:**
