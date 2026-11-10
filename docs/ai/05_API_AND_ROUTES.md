@@ -84,10 +84,12 @@
 * `500 Internal Server Error`: Lỗi ngoại lệ hệ thống gateway.
 
 #### Dịch Vụ Bên Ngoài Được Gọi (External Endpoints)
-1. **ChatGPT Codex Backend (SRS 3.2 Chế độ 3):**
-   * URL: `https://chatgpt.com/backend-api/codex/responses`
-   * Headers: `Authorization: Bearer <token>`, `originator: codex_cli_rs`, `User-Agent: codex-cli/0.1.0`
-   * Model: `gpt-4o`
+1. **ChatGPT Codex Backend & OpenAI OAuth PKCE (SRS 3.2 Chế độ 3):**
+   * Authorize URL: `https://auth.openai.com/oauth/authorize` (`client_id=app_EMoamEEZ73f0CkXaXp7hrann`, `code_challenge_method=S256`, `originator=codex_cli_rs`, `codex_cli_simplified_flow=true`)
+   * Token URL: `https://auth.openai.com/oauth/token` (`grant_type=authorization_code` kèm `code_verifier`, và `grant_type=refresh_token` tự động làm mới token)
+   * Codex Responses API URL: `https://chatgpt.com/backend-api/codex/responses`
+   * Headers: `Authorization: Bearer <access_token>`, `ChatGPT-Account-Id: <chatgpt_account_id>`, `originator: codex_cli_rs`, `Accept: text/event-stream`
+   * Payload chuẩn OpenAI Responses API (`instructions`, `input`, `store: false`, `stream: true`) kèm bộ đọc SSE (`response.output_text.delta`).
 2. **Google Gemini REST API (SRS 3.2 Chế độ 2):**
    * URL: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}`
    * Model: `gemini-1.5-flash`

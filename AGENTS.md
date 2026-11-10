@@ -41,7 +41,7 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Quy Chuẩn Cài Đặt AI & Kiểm Tra Kết Nối (AI Configuration & Live Test):**
     * Giao diện cấu hình AI gồm 4 bước chuẩn mực:
       1. Chọn nhà cung cấp: Hệ thống ViTudy (mặc định), Google Gemini (BYOK), OpenAI (BYOK), OpenAI OAuth (ChatGPT Plus).
-      2. Nhập thông tin xác thực tương ứng (Không cần với ViTudy; API Key kèm link lấy key cho Gemini/OpenAI; mã ủy quyền cho ChatGPT Plus).
+      2. Nhập thông tin xác thực tương ứng (Không cần với ViTudy; API Key kèm link lấy key cho Gemini/OpenAI; luồng xác thực thực tế **OAuth 2.0 PKCE + 1-Chạm Dán Callback URL + Tự động làm mới Token + Codex Responses API** cho ChatGPT Plus/Pro, tương thích 100% với ViTai `auth.json`).
       3. Chọn mô hình AI: Dropdown đồng bộ theo nhà cung cấp, hiển thị rõ ràng tên mô hình và công năng.
       4. Nút kiểm tra hoạt động (Test AI): Gửi truy vấn thực tế kiểm tra API và đo độ trễ mạng ms thời gian thực.
   * **Quy Chuẩn Thanh Toán VietQR & MBBank (SePay VietQR Standards):**

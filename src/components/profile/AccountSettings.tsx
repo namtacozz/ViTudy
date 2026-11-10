@@ -14,9 +14,12 @@ import {
   Activity, 
   ExternalLink,
   ShieldCheck,
-  Mail
+  Mail,
+  RefreshCw,
+  LogOut
 } from 'lucide-react';
 import Link from 'next/link';
+import { getOpenAiOAuthSession, clearOpenAiOAuthSession, OpenAiOAuthSession } from '@/lib/openaiOAuth';
 
 interface AccountSettingsProps {
   profile: UserProfile | null;
@@ -42,6 +45,7 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
 
   const [initialOpenAi, setInitialOpenAi] = useState('');
   const [initialGemini, setInitialGemini] = useState('');
+  const [oauthSession, setOauthSession] = useState<OpenAiOAuthSession | null>(null);
 
   const [byokSaved, setByokSaved] = useState(false);
   const [testResult, setTestResult] = useState<{ provider: string; status: 'loading' | 'success' | 'error'; message: string } | null>(null);
@@ -63,6 +67,7 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
       setInitialOpenAi(storedOpenAi);
       setGeminiKey(storedGemini);
       setInitialGemini(storedGemini);
+      setOauthSession(getOpenAiOAuthSession());
     }
   }, [profile?.display_name]);
 
@@ -299,6 +304,47 @@ export function AccountSettings({ profile }: AccountSettingsProps) {
         </p>
 
         <form onSubmit={handleSaveByok} className="space-y-4 max-w-lg">
+          {/* OpenAI OAuth PKCE Session Status */}
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                <span>OpenAI OAuth (ChatGPT Plus / Pro — Chuẩn PKCE)</span>
+                {oauthSession && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    <RefreshCw className="w-2.5 h-2.5" />
+                    Auto-Refresh
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                {oauthSession
+                  ? `Đã kết nối: ${oauthSession.email || (oauthSession.accountId ? `#${oauthSession.accountId.slice(0, 8)}` : 'Tài khoản ChatGPT Plus')}`
+                  : 'Chưa kết nối tài khoản ChatGPT Plus qua OAuth PKCE.'}
+              </p>
+            </div>
+            {oauthSession ? (
+              <button
+                type="button"
+                onClick={() => {
+                  clearOpenAiOAuthSession();
+                  setOauthSession(null);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-red-50 text-red-600 border border-slate-200 text-[11px] font-bold flex items-center gap-1 cursor-pointer flex-shrink-0"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Ngắt kết nối</span>
+              </button>
+            ) : (
+              <Link
+                href="/?view=desk"
+                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-[11px] font-bold flex items-center gap-1 flex-shrink-0"
+              >
+                <span>Kết nối trên Bàn học</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+
           {/* OpenAI Key */}
           <div>
             <div className="flex items-center justify-between mb-1">

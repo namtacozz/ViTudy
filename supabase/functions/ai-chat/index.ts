@@ -2,22 +2,211 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { authenticateUser, getServiceRoleClient } from '../_shared/auth.ts';
 
+const OPENAI_OAUTH_CLIENT_ID = 'app_EMoamEEZ73f0CkXaXp7hrann';
+const OPENAI_OAUTH_REDIRECT_URI = 'http://localhost:1455/auth/callback';
+const OPENAI_TOKEN_URL = 'https://auth.openai.com/oauth/token';
+const CODEX_RESPONSES_URL = 'https://chatgpt.com/backend-api/codex/responses';
+
+function extractAccountIdFromJwt(jwt: string): string | undefined {
+  try {
+    const parts = jwt.trim().split('.');
+    if (parts.length !== 3) return undefined;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padLen = (4 - (base64.length % 4)) % 4;
+    const padded = base64 + '='.repeat(padLen);
+    const decoded = atob(padded);
+    const payload = JSON.parse(decoded);
+    const authClaim = payload?.['https://api.openai.com/auth'] || {};
+    return (
+      authClaim.chatgpt_account_id ||
+      payload.chatgpt_account_id ||
+      payload.account_id ||
+      undefined
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+function parseCodexSseStream(rawText: string): string {
+  const trimmed = rawText.trim();
+  if (!trimmed) return '';
+
+  // Fallback if response is plain JSON instead of SSE
+  if (trimmed.startsWith('{')) {
+    try {
+      const json = JSON.parse(trimmed);
+      if (typeof json.output_text === 'string' && json.output_text) return json.output_text;
+      if (typeof json.reply === 'string' && json.reply) return json.reply;
+      const msgContent = json.choices?.[0]?.message?.content;
+      if (typeof msgContent === 'string' && msgContent) return msgContent;
+      const outText = json.output?.[0]?.content?.[0]?.text;
+      if (typeof outText === 'string' && outText) return outText;
+    } catch {
+      // Not single JSON object, parse as SSE lines below
+    }
+  }
+
+  let accumulatedDelta = '';
+  let completedFallback = '';
+
+  const lines = rawText.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line.startsWith('data:')) continue;
+    const dataStr = line.slice(5).trim();
+    if (!dataStr || dataStr === '[DONE]') continue;
+
+    try {
+      const evt = JSON.parse(dataStr);
+      if (evt.type === 'response.output_text.delta' && typeof evt.delta === 'string') {
+        accumulatedDelta += evt.delta;
+      } else if (evt.type === 'response.completed' && evt.response) {
+        const outputs = evt.response.output;
+        if (Array.isArray(outputs)) {
+          for (const item of outputs) {
+            if (Array.isArray(item?.content)) {
+              for (const part of item.content) {
+                if (typeof part?.text === 'string') {
+                  completedFallback += part.text;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // Skip malformed SSE line
+    }
+  }
+
+  return (accumulatedDelta || completedFallback).trim();
+}
+
+function resolveCodexModel(requestedModel: string): string {
+  const m = (requestedModel || '').trim().toLowerCase();
+  if (!m) return 'gpt-5.4-mini';
+  // Allow modern codex / gpt-5 / gpt-4o / o3 / o4 models
+  if (m === 'gpt-4o-mini') return 'gpt-5.4-mini';
+  return requestedModel;
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // 1. Authenticate user via JWT
-    const { user, error: authError } = await authenticateUser(req);
-    if (!user || authError) {
+    const body = await req.json();
+    const { action } = body;
+
+    // =========================================================================
+    // OAUTH ACTION 1: Exchange PKCE authorization_code -> access_token + refresh_token
+    // =========================================================================
+    if (action === 'exchange_openai_code') {
+      const { code, codeVerifier, redirectUri } = body;
+      if (!code || !codeVerifier) {
+        return new Response(
+          JSON.stringify({
+            error: 'missing_params',
+            message: 'Thiếu mã xác thực (code) hoặc khóa đối chiếu PKCE (code_verifier).',
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const tokenRes = await fetch(OPENAI_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'authorization_code',
+          client_id: OPENAI_OAUTH_CLIENT_ID,
+          code: String(code).trim(),
+          redirect_uri: redirectUri || OPENAI_OAUTH_REDIRECT_URI,
+          code_verifier: String(codeVerifier).trim(),
+        }),
+      });
+
+      const tokenData = await tokenRes.json().catch(() => ({}));
+      if (!tokenRes.ok || !tokenData.access_token) {
+        const errDetail =
+          tokenData.error_description ||
+          tokenData.error?.message ||
+          tokenData.error ||
+          `HTTP ${tokenRes.status}`;
+        return new Response(
+          JSON.stringify({
+            error: 'oauth_exchange_failed',
+            message: `Không thể đổi mã ủy quyền OpenAI: ${errDetail}`,
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const accountId = extractAccountIdFromJwt(tokenData.access_token);
       return new Response(
-        JSON.stringify({ error: 'unauthorized', message: 'Vui lòng đăng nhập để sử dụng tính năng AI.' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+          expires_in: tokenData.expires_in,
+          account_id: accountId,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const body = await req.json();
+    // =========================================================================
+    // OAUTH ACTION 2: Refresh expired access_token using refresh_token
+    // =========================================================================
+    if (action === 'refresh_openai_token') {
+      const { refreshToken } = body;
+      if (!refreshToken) {
+        return new Response(
+          JSON.stringify({
+            error: 'missing_refresh_token',
+            message: 'Thiếu refresh_token để gia hạn phiên ChatGPT.',
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const refreshRes = await fetch(OPENAI_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'refresh_token',
+          client_id: OPENAI_OAUTH_CLIENT_ID,
+          refresh_token: String(refreshToken).trim(),
+        }),
+      });
+
+      const refreshData = await refreshRes.json().catch(() => ({}));
+      if (!refreshRes.ok || !refreshData.access_token) {
+        const errDetail =
+          refreshData.error_description ||
+          refreshData.error?.message ||
+          refreshData.error ||
+          `HTTP ${refreshRes.status}`;
+        return new Response(
+          JSON.stringify({
+            error: 'oauth_refresh_failed',
+            message: `Phiên đăng nhập ChatGPT đã hết hạn và không thể tự gia hạn (${errDetail}). Vui lòng kết nối lại.`,
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const accountId = extractAccountIdFromJwt(refreshData.access_token);
+      return new Response(
+        JSON.stringify({
+          access_token: refreshData.access_token,
+          refresh_token: refreshData.refresh_token || refreshToken,
+          expires_in: refreshData.expires_in,
+          account_id: accountId,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const {
       provider = 'system',
       model = 'gpt-4o-mini',
@@ -25,7 +214,17 @@ serve(async (req: Request) => {
       context = '',
       apiKey = '',
       accessToken = '',
+      accountId: clientAccountId = '',
     } = body;
+
+    // 1. Authenticate user via JWT (Strictly required for 'system' provider that debits ViToken)
+    const { user, error: authError } = await authenticateUser(req);
+    if (provider === 'system' && (!user || authError)) {
+      return new Response(
+        JSON.stringify({ error: 'unauthorized', message: 'Vui lòng đăng nhập để sử dụng tính năng AI hệ thống.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!prompt || typeof prompt !== 'string') {
       return new Response(
@@ -48,7 +247,7 @@ serve(async (req: Request) => {
     const supabaseAdmin = getServiceRoleClient();
 
     // 2. Server-side Rate Limiting (Hourly & Daily for system provider)
-    if (provider === 'system') {
+    if (provider === 'system' && user) {
       const { data: hourLimit, error: hourErr } = await supabaseAdmin.rpc('consume_rate_limit', {
         p_user: user.id,
         p_action: 'ai_chat_hour',
@@ -91,7 +290,7 @@ serve(async (req: Request) => {
     let balanceAfter: number | undefined;
     const requestId = crypto.randomUUID();
 
-    if (provider === 'system') {
+    if (provider === 'system' && user) {
       const { data: costData } = await supabaseAdmin
         .from('ai_model_costs')
         .select('vitoken_cost, enabled')
@@ -135,7 +334,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
 
     try {
       if (provider === 'oauth_chatgpt') {
-        const token = accessToken || apiKey;
+        const token = (accessToken || apiKey || '').trim();
         if (!token) {
           return new Response(
             JSON.stringify({ error: 'unauthorized_token', message: 'Thiếu Token ủy quyền ChatGPT.' }),
@@ -143,29 +342,53 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
           );
         }
 
-        const codexRes = await fetch('https://chatgpt.com/backend-api/codex/responses', {
+        const resolvedAccountId = clientAccountId || extractAccountIdFromJwt(token);
+        const codexModel = resolveCodexModel(model);
+        const userMessageText = cleanContext
+          ? `NGỮ CẢNH TÀI LIỆU:\n${cleanContext}\n\nCÂU HỎI:\n${cleanPrompt}`
+          : cleanPrompt;
+
+        const codexHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'text/event-stream',
+          'originator': 'codex_cli_rs',
+          'User-Agent': 'codex_cli_rs/0.1.0 (Windows 10.0.22631; x86_64)',
+        };
+        if (resolvedAccountId) {
+          codexHeaders['ChatGPT-Account-Id'] = resolvedAccountId;
+        }
+
+        const codexRes = await fetch(CODEX_RESPONSES_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'originator': 'codex_cli_rs',
-            'User-Agent': 'codex-cli/0.1.0 (Windows; x86_64)',
-          },
+          headers: codexHeaders,
           body: JSON.stringify({
-            model: 'gpt-4o',
-            messages: [
-              { role: 'system', content: systemInstruction },
-              { role: 'user', content: cleanContext ? `NGỮ CẢNH TÀI LIỆU:\n${cleanContext}\n\nCÂU HỎI:\n${cleanPrompt}` : cleanPrompt },
+            model: codexModel,
+            instructions: systemInstruction,
+            input: [
+              {
+                type: 'message',
+                role: 'user',
+                content: [
+                  {
+                    type: 'input_text',
+                    text: userMessageText,
+                  },
+                ],
+              },
             ],
+            store: false,
+            stream: true,
           }),
         });
 
         if (!codexRes.ok) {
-          throw new Error(`Codex Gateway error: status ${codexRes.status}`);
+          const errBody = await codexRes.text().catch(() => '');
+          throw new Error(`Codex Gateway (${codexRes.status}): ${errBody.slice(0, 200)}`);
         }
 
-        const codexData = await codexRes.json();
-        reply = codexData.choices?.[0]?.message?.content || codexData.reply || 'Không có phản hồi từ ChatGPT Codex.';
+        const rawSse = await codexRes.text();
+        reply = parseCodexSseStream(rawSse) || 'Không có phản hồi từ ChatGPT Codex.';
 
       } else if (provider === 'byok_gemini' || provider === 'oauth_gemini') {
         const geminiKey = apiKey || accessToken;
@@ -238,7 +461,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
 
     } catch (callError: any) {
       // Auto-refund if system token was debited
-      if (provider === 'system') {
+      if (provider === 'system' && user) {
         await supabaseAdmin.rpc('credit_vitoken', {
           p_user: user.id,
           p_amount: tokenCost,

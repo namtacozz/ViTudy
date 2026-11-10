@@ -23,11 +23,20 @@ import {
   ShieldCheck,
   Zap,
   Bell,
-  Plus
+  Plus,
+  RefreshCw,
+  ClipboardPaste,
+  LogOut
 } from 'lucide-react';
 import { MarketModal } from '../modals/MarketModal';
 import { TopUpModal } from '../payment/TopUpModal';
-import { testAiConnection } from '@/lib/aiClient';
+import { testAiConnection, exchangeOpenAiCode } from '@/lib/aiClient';
+import {
+  startOpenAiPkceLogin,
+  getOpenAiOAuthSession,
+  clearOpenAiOAuthSession,
+  OpenAiOAuthSession,
+} from '@/lib/openaiOAuth';
 import { getAssetPath } from '@/lib/assets';
 
 // Vector Coin SVG Icon -> Logo ViToken chính thức từ vitoken.svg
@@ -64,8 +73,8 @@ const PROVIDER_MODELS: Record<AiProvider, { id: string; name: string; tag: strin
     { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', tag: 'Đa nhiệm nâng cao' },
   ],
   oauth_chatgpt: [
+    { id: 'gpt-5.4-mini', name: 'ChatGPT Codex Mini', tag: 'Khuyên dùng - Phản hồi siêu tốc & chuẩn xác' },
     { id: 'gpt-4o', name: 'ChatGPT Plus GPT-4o', tag: 'Mô hình flagship tài khoản Plus' },
-    { id: 'gpt-4o-mini', name: 'ChatGPT Plus Fast', tag: 'Phản hồi nhanh' },
     { id: 'o3-mini', name: 'ChatGPT Plus o3-mini', tag: 'Lý luận toán học chuyên sâu' },
   ],
   oauth_gemini: [
@@ -119,9 +128,16 @@ export function TopRightWallet() {
   const [apiKeyInput, setApiKeyInput] = useState((aiConfig as any).apiKey || '');
   const [showApiKey, setShowApiKey] = useState(false);
   const [chatGptCodeInput, setChatGptCodeInput] = useState('');
+  const [oauthSession, setOauthSession] = useState<OpenAiOAuthSession | null>(null);
+  const [isExchangingOAuth, setIsExchangingOAuth] = useState(false);
+  const [hasOpenedPkceWindow, setHasOpenedPkceWindow] = useState(false);
   const [testConnectionStatus, setTestConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testResultMessage, setTestResultMessage] = useState<string | null>(null);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOauthSession(getOpenAiOAuthSession());
+  }, [isAiModalOpen]);
 
   const [dailyClaimResult, setDailyClaimResult] = useState<string | null>(null);
   const [dailyReminder, setDailyReminder] = useState(true);
@@ -177,9 +193,90 @@ export function TopRightWallet() {
     if (selectedProvider !== aiConfig.provider) return true;
     if (selectedModel !== (aiConfig.model || 'gpt-4o-mini')) return true;
     if (selectedProvider.startsWith('byok') && apiKeyInput.trim() !== ((aiConfig as any).apiKey || '')) return true;
-    if (selectedProvider === 'oauth_chatgpt' && chatGptCodeInput.trim() !== '') return true;
+    if (selectedProvider === 'oauth_chatgpt' && (chatGptCodeInput.trim() !== '' || Boolean(oauthSession) !== Boolean(aiConfig.isOauthConnected))) return true;
     return false;
-  }, [selectedProvider, selectedModel, apiKeyInput, chatGptCodeInput, aiConfig]);
+  }, [selectedProvider, selectedModel, apiKeyInput, chatGptCodeInput, oauthSession, aiConfig]);
+
+  const handleStartOpenAiPkce = async () => {
+    try {
+      setTestConnectionStatus('idle');
+      setTestResultMessage(null);
+      const { authorizeUrl } = await startOpenAiPkceLogin();
+      setHasOpenedPkceWindow(true);
+      window.open(authorizeUrl, '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      setTestConnectionStatus('error');
+      setTestResultMessage(err.message || 'Không thể khởi tạo phiên đăng nhập PKCE.');
+    }
+  };
+
+  const handleConnectOpenAiInput = async (rawValue?: string) => {
+    const inputToUse = (rawValue ?? chatGptCodeInput).trim();
+    if (!inputToUse) {
+      setTestConnectionStatus('error');
+      setTestResultMessage('Vui lòng dán đường dẫn callback (http://localhost:1455/auth/callback?code=...) hoặc nội dung auth.json.');
+      return;
+    }
+
+    setIsExchangingOAuth(true);
+    setTestConnectionStatus('testing');
+    setTestResultMessage(null);
+    try {
+      const session = await exchangeOpenAiCode(inputToUse);
+      setOauthSession(session);
+      setChatGptCodeInput('');
+      setHasOpenedPkceWindow(false);
+      updateAiConfig({
+        provider: 'oauth_chatgpt',
+        model: selectedModel,
+        isOauthConnected: true,
+      });
+      setTestConnectionStatus('success');
+      const accountLabel = session.email || (session.accountId ? `ID ${session.accountId.slice(0, 8)}...` : 'ChatGPT Plus');
+      setTestResultMessage(`Đã kết nối thành công tài khoản ${accountLabel} (Chuẩn PKCE + Tự động gia hạn Token).`);
+    } catch (err: any) {
+      setTestConnectionStatus('error');
+      setTestResultMessage(err.message || 'Không thể đổi mã ủy quyền OpenAI OAuth.');
+    } finally {
+      setIsExchangingOAuth(false);
+    }
+  };
+
+  const handlePasteAndConnectOneClick = async () => {
+    try {
+      if (chatGptCodeInput.trim()) {
+        await handleConnectOpenAiInput(chatGptCodeInput);
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const clipText = await navigator.clipboard.readText();
+        if (clipText && clipText.trim()) {
+          setChatGptCodeInput(clipText.trim());
+          await handleConnectOpenAiInput(clipText.trim());
+          return;
+        }
+      }
+      setTestConnectionStatus('error');
+      setTestResultMessage('Bộ nhớ tạm (Clipboard) đang trống hoặc trình duyệt chặn quyền đọc. Hãy dán (Ctrl+V) vào ô bên dưới.');
+    } catch {
+      setTestConnectionStatus('error');
+      setTestResultMessage('Trình duyệt yêu cầu dán thủ công: Hãy nhấn Ctrl+V vào ô nhập bên dưới rồi bấm Kết nối.');
+    }
+  };
+
+  const handleDisconnectOpenAi = () => {
+    clearOpenAiOAuthSession();
+    setOauthSession(null);
+    setChatGptCodeInput('');
+    setHasOpenedPkceWindow(false);
+    updateAiConfig({
+      provider: selectedProvider,
+      model: selectedModel,
+      isOauthConnected: false,
+    });
+    setTestConnectionStatus('idle');
+    setTestResultMessage(null);
+  };
 
   const handleClaim = () => {
     const res = claimDailyStreak();
@@ -223,12 +320,16 @@ export function TopRightWallet() {
     }
   };
 
-  const handleSaveAiConfig = (e: React.FormEvent) => {
+  const handleSaveAiConfig = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedProvider === 'oauth_chatgpt' && chatGptCodeInput.trim() && !oauthSession) {
+      await handleConnectOpenAiInput(chatGptCodeInput);
+    }
     updateAiConfig({
       provider: selectedProvider,
       apiKey: (selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') ? apiKeyInput.trim() : undefined,
-      model: selectedModel
+      model: selectedModel,
+      isOauthConnected: selectedProvider === 'oauth_chatgpt' ? Boolean(getOpenAiOAuthSession()) : aiConfig.isOauthConnected,
     });
     setSaveSuccessMessage('Đã lưu cấu hình AI thành công.');
     setTimeout(() => {
@@ -777,15 +878,14 @@ export function TopRightWallet() {
                     </a>
                   )}
                   {selectedProvider === 'oauth_chatgpt' && (
-                    <a
-                      href="https://chatgpt.com"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#E0562D] hover:underline flex items-center gap-1 text-[11px] font-bold"
+                    <button
+                      type="button"
+                      onClick={handleStartOpenAiPkce}
+                      className="text-[#E0562D] hover:underline flex items-center gap-1 text-[11px] font-bold cursor-pointer"
                     >
-                      <span>Mở ChatGPT Plus</span>
+                      <span>Mở cổng Ủy quyền OpenAI PKCE</span>
                       <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </button>
                   )}
                 </div>
 
@@ -829,21 +929,116 @@ export function TopRightWallet() {
                 )}
 
                 {selectedProvider === 'oauth_chatgpt' && (
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Dán mã ủy quyền callback hoặc Token ChatGPT Plus..."
-                      value={chatGptCodeInput}
-                      onChange={(e) => {
-                        setChatGptCodeInput(e.target.value);
-                        setTestConnectionStatus('idle');
-                        setTestResultMessage(null);
-                      }}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono shadow-2xs"
-                    />
-                    <div className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                      Ủy quyền qua ChatGPT Plus để dùng hạn mức của bạn mà không tốn ViToken.
-                    </div>
+                  <div className="space-y-2.5">
+                    {oauthSession ? (
+                      <div className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-3 flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                            <div className="truncate">
+                              <div className="text-xs font-bold text-slate-900 truncate">
+                                Đã kết nối: {oauthSession.email || (oauthSession.accountId ? `Tài khoản #${oauthSession.accountId.slice(0, 8)}` : 'ChatGPT Plus / Pro')}
+                              </div>
+                              <div className="text-[10.5px] text-emerald-800 flex items-center gap-1.5 mt-0.5">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 font-semibold">
+                                  <RefreshCw className="w-2.5 h-2.5" />
+                                  {oauthSession.refreshToken ? 'Auto-Refresh (PKCE)' : 'Phiên hoạt động'}
+                                </span>
+                                {oauthSession.planType && (
+                                  <span className="uppercase font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-emerald-200 text-slate-700">
+                                    {oauthSession.planType}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={handleStartOpenAiPkce}
+                              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold cursor-pointer transition-all"
+                            >
+                              Đổi tài khoản
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDisconnectOpenAi}
+                              title="Ngắt kết nối"
+                              className="p-1.5 rounded-lg bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 cursor-pointer transition-all"
+                            >
+                              <LogOut className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={handleStartOpenAiPkce}
+                            className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-2xs"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Bước 1: Đăng nhập ChatGPT</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handlePasteAndConnectOneClick}
+                            disabled={isExchangingOAuth}
+                            className="py-2 px-3 rounded-xl bg-[#E0562D] hover:bg-[#c9451e] disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-2xs"
+                          >
+                            <ClipboardPaste className="w-3.5 h-3.5" />
+                            <span>{isExchangingOAuth ? 'Đang xác thực...' : 'Bước 2: Dán & Kết nối ngay'}</span>
+                          </button>
+                        </div>
+
+                        {hasOpenedPkceWindow && (
+                          <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
+                            Sau khi đăng nhập xong trên tab mới, trình duyệt sẽ chuyển sang địa chỉ <code className="font-mono font-bold">http://localhost:1455/auth/callback?code=...</code> (báo không thể truy cập trang là hoàn toàn bình thường). Hãy <strong>sao chép toàn bộ thanh địa chỉ đó</strong> rồi bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Hoặc dán URL http://localhost:1455/auth/callback?code=... / auth.json (ViTai) tại đây"
+                            value={chatGptCodeInput}
+                            onChange={(e) => {
+                              setChatGptCodeInput(e.target.value);
+                              setTestConnectionStatus('idle');
+                              setTestResultMessage(null);
+                            }}
+                            onPaste={(e) => {
+                              const pasted = e.clipboardData?.getData('text');
+                              if (pasted && (pasted.includes('code=') || pasted.includes('refresh_token') || pasted.includes('access_token'))) {
+                                e.preventDefault();
+                                setChatGptCodeInput(pasted.trim());
+                                void handleConnectOpenAiInput(pasted.trim());
+                              }
+                            }}
+                            className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 focus:bg-white font-mono shadow-2xs"
+                          />
+                          {chatGptCodeInput.trim() && (
+                            <button
+                              type="button"
+                              onClick={() => handleConnectOpenAiInput(chatGptCodeInput)}
+                              disabled={isExchangingOAuth}
+                              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer flex-shrink-0"
+                            >
+                              Kết nối
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 leading-relaxed">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          <span>Chuẩn OAuth 2.0 PKCE + Codex Responses API (tương thích 100% ViTai). Tự động làm mới phiên, không tốn ViToken.</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-11-10 18:20 — main (Triển Khai Xác Thực OpenAI OAuth 2.0 PKCE Thực Tế, 1-Chạm Dán Callback, Auto-Refresh Token & Codex Responses API Chuẩn ViTai)
+- **Task:** Thay thế hoàn toàn cơ chế nhập tay demo của chế độ `oauth_chatgpt` bằng kiến trúc **OAuth 2.0 Authorization Code Flow with PKCE + Auto-Refresh Token + Codex Responses API** học theo ứng dụng Python desktop **ViTai**:
+  1. **Module PKCE & Quản Lý Phiên OAuth (`src/lib/openaiOAuth.ts`):**
+     - Sinh cặp khóa `code_verifier` (64 bytes), `code_challenge` (SHA-256 Base64URL) và `state` chống CSRF trực tiếp bằng Web Crypto API.
+     - Tạo URL ủy quyền chuẩn OpenAI (`client_id=app_EMoamEEZ73f0CkXaXp7hrann`, `redirect_uri=http://localhost:1455/auth/callback`, `scope=openid profile email offline_access`, `originator=codex_cli_rs`, `codex_cli_simplified_flow=true`).
+     - Bộ phân tích thông minh `parseOpenAiCallbackInput`: hỗ trợ dán nguyên URL callback (`http://localhost:1455/auth/callback?code=...&state=...`), chuỗi query, nội dung file `auth.json` của ViTai, hoặc JWT `access_token`.
+     - Giải mã JWT payload trích xuất `chatgpt_account_id` (claim `https://api.openai.com/auth`), `email`, `planType` và `exp`.
+  2. **Tự Động Đổi Code, Auto-Refresh Token & Codex Responses API (`src/lib/aiClient.ts` & `supabase/functions/ai-chat/index.ts`):**
+     - Trao đổi `authorization_code` + `code_verifier` lấy `access_token` và `refresh_token` qua `https://auth.openai.com/oauth/token` (hỗ trợ trực tiếp CORS trên trình duyệt kèm fallback qua Supabase Edge Function `ai-chat`).
+     - Tự động kiểm tra hạn `expiresAt` trước mỗi lệnh hỏi AI (`ensureValidOpenAiSession`) và âm thầm làm mới `access_token` bằng `refresh_token` mà không làm gián đoạn việc học.
+     - Chuẩn hóa lệnh gọi `https://chatgpt.com/backend-api/codex/responses` trên Supabase Edge Function `ai-chat` theo đúng định dạng OpenAI Responses API (`instructions`, `input: [{ type: 'message', role: 'user', content: [{ type: 'input_text', text }] }]`, `store: false`, `stream: true`), đính kèm header `ChatGPT-Account-Id` và bộ đọc luồng SSE (`response.output_text.delta`).
+     - Đã triển khai (`supabase functions deploy ai-chat`) lên Supabase Production (`yndwxcnedlilmsbbydvb`).
+  3. **Giao Diện Kết Nối 2 Bước 1-Chạm (`src/components/hud/TopRightWallet.tsx` & `src/components/profile/AccountSettings.tsx`):**
+     - **Bước 1: Đăng nhập ChatGPT** (mở cửa sổ đăng nhập PKCE).
+     - **Bước 2: Dán & Kết nối ngay** (1 chạm đọc Clipboard hoặc tự động kích hoạt ngay khi nhấn `Ctrl+V` vào ô nhập).
+     - Hiển thị thẻ trạng thái **Đã kết nối** kèm email/ID tài khoản, huy hiệu `Auto-Refresh (PKCE)`, nút **Đổi tài khoản** và **Ngắt kết nối**, đồng bộ với trang Tài khoản (`/profile`).
+- **Files Modified:**
+  - `src/lib/openaiOAuth.ts` (new)
+  - `src/lib/openaiOAuth.test.ts` (new)
+  - `src/lib/aiClient.ts`
+  - `src/lib/aiClient.test.ts`
+  - `supabase/functions/ai-chat/index.ts`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/profile/AccountSettings.tsx`
+  - `AGENTS.md`
+  - `docs/ai/05_API_AND_ROUTES.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+  - `npx supabase functions deploy ai-chat --remote=yndwxcnedlilmsbbydvb --no-verify-jwt --yes`: Deployed to production.
+- **Docs updated:** `AGENTS.md`, `05_API_AND_ROUTES.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-09 22:05 — main (Lược Bỏ Nút Home Dư Thừa, Đồng Bộ Chữ ViTudy Cam ViT In Đậm & Cập Nhật Favicon Tab Trình Duyệt)
 - **Task:** Tinh chỉnh nhận diện thương hiệu và công thái học theo yêu cầu:
   1. **Lược bỏ nút Home dư thừa trên thanh TopLeftNav:**
