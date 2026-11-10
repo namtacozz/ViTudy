@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-11-10 19:05 — main (Chuẩn Hóa Danh Sách Mô Hình Thuần Tên, Đồng Bộ State SelectedModel & Khắc Phục Lỗi Fallback gpt-5.4-mini)
+- **Task:**
+  1. **Khắc phục triệt để lỗi fallback gpt-5.4-mini:**
+     - Giải thích và khắc phục triệt để lỗi `"The 'gpt-5.4-mini' model is not supported"` phát sinh do phiên bản cũ của Edge Function có luật gán lại `m === 'gpt-4o-mini' -> 'gpt-5.4-mini'` và state client ban đầu chưa đồng bộ.
+     - Hàm `resolveCodexModel` trong `supabase/functions/ai-chat/index.ts` hiện tại chỉ trả về model thật người dùng đã chọn (`gpt-5.6-terra`, `gpt-4o`, `o3-mini`, v.v.), mặc định fallback về `gpt-5.6-terra` / `gpt-4o`, tuyệt đối không bao giờ gửi `gpt-5.4-mini`.
+  2. **Tinh gọn danh sách mô hình (Plain Model Names):**
+     - Loại bỏ hoàn toàn các mô tả phụ hoa mỹ, dài dòng trong `PROVIDER_MODELS` và `<select>` (`TopRightWallet.tsx`).
+     - Dropdown giờ chỉ hiển thị thuần túy tên mô hình chuẩn dạng font-mono (ví dụ: `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-4o`, `o3-mini`, `gpt-4o-mini`).
+  3. **Đồng bộ hóa tức thời State `selectedModel`:**
+     - Bổ sung `useEffect` khi mở modal `isAiModalOpen` để đồng bộ `selectedProvider` và `selectedModel` chuẩn theo `aiConfig.model`, ngăn ngừa tình trạng hiển thị một đằng gửi đi một nẻo.
+- **Files Modified:**
+  - `src/components/hud/TopRightWallet.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 18:48 — main (Mở Rộng Trọn Bộ Mô Hình ChatGPT Codex, Tinh Gọn 2 Nhà Cung Cấp & Kết Nối Thực Tế Cho Tóm Tắt/Trắc Nghiệm)
 - **Task:** 
   1. **Mở Rộng Trọn Bộ 11 Mô Hình ChatGPT Codex:**

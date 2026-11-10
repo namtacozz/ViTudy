@@ -54,24 +54,24 @@ function ViTokenCoin({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-const PROVIDER_MODELS: Record<AiProvider, { id: string; name: string; tag: string }[]> = {
+const PROVIDER_MODELS: Record<AiProvider, { id: string; name: string }[]> = {
   system: [
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Mặc định - Phản hồi nhanh & tiết kiệm ViToken' },
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', tag: 'Chuyên giải tích, công thức & tài liệu dài' },
-    { id: 'gpt-4o', name: 'GPT-4o Flagship', tag: 'Phân tích nâng cao chuyên sâu' },
+    { id: 'gpt-4o-mini', name: 'gpt-4o-mini' },
+    { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash' },
+    { id: 'gpt-4o', name: 'gpt-4o' },
   ],
   oauth_chatgpt: [
-    { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', tag: 'Codex Flagship - Siêu mô hình mạnh nhất (Khuyên dùng)' },
-    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', tag: 'Phản hồi siêu tốc & cân bằng chuẩn xác' },
-    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', tag: 'Phân tích tư duy logic sâu & toán học' },
-    { id: 'gpt-5.5', name: 'GPT-5.5', tag: 'Codex thế hệ 5.5 tiên tiến' },
-    { id: 'gpt-5', name: 'GPT-5', tag: 'Codex thế hệ 5 tiêu chuẩn' },
-    { id: 'gpt-4o', name: 'GPT-4o', tag: 'Mô hình đa nhiệm toàn diện tài khoản Plus' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Tốc độ cực nhanh, nhẹ & mượt mà' },
-    { id: 'o3-mini', name: 'o3-mini', tag: 'Lý luận logic, suy luận toán học & code chuyên sâu' },
-    { id: 'o1', name: 'o1', tag: 'Mô hình suy luận chiều sâu thế hệ mới' },
-    { id: 'o1-mini', name: 'o1-mini', tag: 'Suy luận nhanh toán học & khoa học STEM' },
-    { id: 'chatgpt-4o-latest', name: 'ChatGPT 4o Latest', tag: 'Bản cập nhật ChatGPT mới nhất' },
+    { id: 'gpt-5.6-terra', name: 'gpt-5.6-terra' },
+    { id: 'gpt-5.6-luna', name: 'gpt-5.6-luna' },
+    { id: 'gpt-5.6-sol', name: 'gpt-5.6-sol' },
+    { id: 'gpt-5.5', name: 'gpt-5.5' },
+    { id: 'gpt-5', name: 'gpt-5' },
+    { id: 'gpt-4o', name: 'gpt-4o' },
+    { id: 'gpt-4o-mini', name: 'gpt-4o-mini' },
+    { id: 'o3-mini', name: 'o3-mini' },
+    { id: 'o1', name: 'o1' },
+    { id: 'o1-mini', name: 'o1-mini' },
+    { id: 'chatgpt-4o-latest', name: 'chatgpt-4o-latest' },
   ],
   byok_gemini: [],
   byok_openai: [],
@@ -132,8 +132,20 @@ export function TopRightWallet() {
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setOauthSession(getOpenAiOAuthSession());
-  }, [isAiModalOpen]);
+    if (isAiModalOpen) {
+      setSelectedProvider(aiConfig.provider);
+      const currentModels = PROVIDER_MODELS[aiConfig.provider] || [];
+      const isValid = currentModels.some((m) => m.id === aiConfig.model);
+      if (isValid) {
+        setSelectedModel(aiConfig.model);
+      } else if (currentModels.length > 0) {
+        setSelectedModel(currentModels[0].id);
+      }
+      setOauthSession(getOpenAiOAuthSession());
+      setTestConnectionStatus('idle');
+      setTestResultMessage(null);
+    }
+  }, [isAiModalOpen, aiConfig]);
 
   const [dailyClaimResult, setDailyClaimResult] = useState<string | null>(null);
   const [dailyReminder, setDailyReminder] = useState(true);
@@ -990,11 +1002,11 @@ export function TopRightWallet() {
                         setTestConnectionStatus('idle');
                         setTestResultMessage(null);
                       }}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium outline-none focus:border-slate-800 cursor-pointer shadow-2xs truncate"
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono font-medium outline-none focus:border-slate-800 cursor-pointer shadow-2xs"
                     >
                       {(PROVIDER_MODELS[selectedProvider] || []).map((m) => (
                         <option key={m.id} value={m.id}>
-                          {m.name} — {m.tag}
+                          {m.name}
                         </option>
                       ))}
                     </select>
