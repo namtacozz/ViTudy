@@ -44,7 +44,7 @@ export function KnowInheritPublishModal({
   const { addTokens } = useViToken();
   const { user, profile } = useAuth();
 
-  const defaultAuthor = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Thành Nam';
+  const defaultAuthor = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Tác giả ViTudy';
   const initialType: 'book' | 'paper' | 'exam' = item.isExamSheet ? 'exam' : item.type === 'book' ? 'book' : 'paper';
 
   const [authorName, setAuthorName] = useState(defaultAuthor);

@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-11-10 19:19 — main (Triệt Tiêu Hardcode Fallback Namtacozz, Chuẩn Hóa Chế Độ Khách & Thêm Nút Đăng Nhập Trên HomePage)
+- **Task:**
+  1. **Khắc phục triệt để lỗi chào `namtacozz` khi chưa đăng nhập:**
+     - Loại bỏ toàn bộ fallback chuỗi tĩnh `|| 'namtacozz'` trong `HomePage.tsx`. Khi chưa có session đăng nhập, người dùng là Khách vãng lai (`guest`).
+     - Tùy biến lời chào: Người dùng đã đăng nhập hiển thị `"Ôn bài thôi, [Tên/Nickname]"`; Khách chưa đăng nhập hiển thị `"Chào mừng đến với ViTudy"` kèm phụ đề giới thiệu tính năng.
+     - Breadcrumb trang chủ: Khách hiển thị `"Không gian học tập / Bàn học trải nghiệm"`, đã đăng nhập hiển thị `"Không gian học tập / Bàn học của [Tên]"`.
+  2. **Bổ sung nút Đăng nhập (`/auth`) trên Header Trang Chủ:**
+     - Khi chưa đăng nhập (`!user`), header góc phải hiển thị rõ ràng nút **"Đăng nhập"** màu Cam ViT (`#E0562D`) kèm icon `LogIn` dẫn trực tiếp tới `/auth`.
+     - Triệt tiêu việc hiển thị avatar giả chữ "N" dẫn sang `/profile` gây nhầm lẫn tài khoản.
+  3. **Chuẩn hóa tác giả mặc định:**
+     - Sửa fallback tác giả tài liệu trong `KnowInheritPublishModal.tsx` từ `'Thành Nam'` thành `'Tác giả ViTudy'`.
+     - Xóa hardcode domain tĩnh trong `MultiplayerBar.tsx`.
+- **Files Modified:**
+  - `src/components/home/HomePage.tsx`
+  - `src/components/modals/KnowInheritPublishModal.tsx`
+  - `src/components/hud/MultiplayerBar.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `npx tsc --noEmit`: 0 lỗi type.
+  - `pnpm test`: 17/17 test suites passed (55/55 tests passed 100%).
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 19:05 — main (Chuẩn Hóa Danh Sách Mô Hình Thuần Tên, Đồng Bộ State SelectedModel & Khắc Phục Lỗi Fallback gpt-5.4-mini)
 - **Task:**
   1. **Khắc phục triệt để lỗi fallback gpt-5.4-mini:**

@@ -15,7 +15,8 @@ import {
   Clock,
   Target,
   FileText,
-  MousePointer2
+  MousePointer2,
+  LogIn
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useViToken } from '@/context/ViTokenContext';
@@ -48,8 +49,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const [showAllSpaces, setShowAllSpaces] = useState(false);
   const [activeNav, setActiveNav] = useState<'home' | 'my_desks' | 'starred'>('home');
 
-  // Username display: profile display name -> user email prefix -> 'namtacozz'
-  const userName = profile?.display_name || user?.email?.split('@')[0] || 'namtacozz';
+  // Username display: profile display name -> user email prefix -> '' (if guest)
+  const isAuthenticated = Boolean(user);
+  const userName = profile?.display_name || user?.email?.split('@')[0] || '';
 
   // Lấy tên gọi ngắn gọn cho lời chào (Ví dụ "Thành Nam Lê Võ" -> "Thành", hoặc ưu tiên nickname đã lưu)
   const getShortGreetingName = (fullName: string) => {
@@ -63,7 +65,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     const words = trimmed.split(/\s+/);
     return words[0] || 'Bạn';
   };
-  const shortName = getShortGreetingName(userName);
+  const shortName = isAuthenticated ? getShortGreetingName(userName) : 'Bạn';
 
   // Handle streak claim
   const handleClaimStreak = () => {
@@ -293,7 +295,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           <div className="flex items-center gap-2 text-xs text-stone-600 font-medium">
             <span>Không gian học tập</span>
             <span>/</span>
-            <span className="text-stone-900 font-bold">Bàn học của {shortName}</span>
+            <span className="text-stone-900 font-bold">
+              {isAuthenticated ? `Bàn học của ${shortName}` : 'Bàn học trải nghiệm'}
+            </span>
           </div>
 
           {/* Nút hành động bên phải */}
@@ -323,25 +327,36 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
               <span>Chuỗi {streakDays || 1} ngày · {isClaimedToday ? 'Đã điểm danh' : 'Điểm danh'}</span>
             </button>
 
-            {/* Avatar tròn bên phải */}
-            <Link
-              href="/profile?from=home"
-              title={`Hồ sơ cá nhân (${userName})`}
-              className="w-8.5 h-8.5 rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
-            >
-              {profile?.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile.avatar_url}
-                  alt={userName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-[#FFF7ED] text-[#B8431A] font-bold text-xs flex items-center justify-center select-none">
-                  {shortName.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </Link>
+            {/* Avatar hoặc Nút Đăng nhập */}
+            {user ? (
+              <Link
+                href="/profile?from=home"
+                title={`Hồ sơ cá nhân (${userName})`}
+                className="w-8.5 h-8.5 rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
+              >
+                {profile?.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatar_url}
+                    alt={userName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#FFF7ED] text-[#B8431A] font-bold text-xs flex items-center justify-center select-none">
+                    {shortName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link
+                href="/auth"
+                title="Đăng nhập tài khoản"
+                className="px-3.5 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <LogIn className="w-3.5 h-3.5 stroke-[2.4]" />
+                <span>Đăng nhập</span>
+              </Link>
+            )}
           </div>
         </header>
 
@@ -356,8 +371,21 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         {/* Lời chào: Căn trái cùng trục với các khối bên dưới, kích thước 36-40px gọn gàng */}
         <div className="mb-8 mt-1 text-left">
           <h1 className="text-3xl md:text-4xl font-serif text-stone-900 tracking-tight">
-            Ôn bài thôi, <span className="text-[#B8431A] font-serif font-normal">{shortName}</span>
+            {isAuthenticated ? (
+              <>
+                Ôn bài thôi, <span className="text-[#B8431A] font-serif font-normal">{shortName}</span>
+              </>
+            ) : (
+              <>
+                Chào mừng đến với <span className="text-[#B8431A] font-serif font-normal">ViTudy</span>
+              </>
+            )}
           </h1>
+          {!isAuthenticated && (
+            <p className="text-xs md:text-sm text-stone-600 font-medium mt-1">
+              Không gian học tập 2.5D tích hợp AI. Bạn có thể mở bàn học dùng thử ngay hoặc đăng nhập để lưu trữ dữ liệu cá nhân.
+            </p>
+          )}
         </div>
 
         {/* ================= SECTION 1: Bắt đầu bàn học mới ================= */}

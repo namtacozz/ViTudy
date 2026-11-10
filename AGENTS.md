@@ -63,6 +63,18 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Đúng (Success / Correct):** Xanh lục bảo ngọc (`#15803D`), nền `#ECFDF5`, viền `#A7F3D0`.
     * **Sai (Danger / Wrong):** Đỏ ruby thanh nhã (`#DC2626`), nền `#FEF2F2`, viền `#FECACA`.
     * **Gợi ý (Warning / Hint):** Vàng mật ong hổ phách (`#92400E`), nền `#FEF3C7`, viền `#FDE68A`.
+  * **Quy Chuẩn Trạng Thái Khách & Xác Thực Trên Toàn Bộ Màn Hình (Guest vs Authenticated State Rule):**
+    * **Tuyệt đối cấm hardcode tên người dùng tĩnh:** Nghiêm cấm đặt fallback là tên cá nhân (`namtacozz`, `Thành Nam`) khi `user` hoặc `profile` là `null`.
+    * **Phân định rõ ràng 2 trạng thái trên Trang Chủ (`HomePage`):**
+      * **Đã đăng nhập (`isAuthenticated === true`):**
+        * Lời chào: `Ôn bài thôi, [Tên ngắn/Nickname]`.
+        * Breadcrumb: `Không gian học tập / Bàn học của [Tên ngắn]`.
+        * Header bên phải: Avatar tròn cá nhân dẫn vào `/profile?from=home`.
+      * **Chưa đăng nhập (Khách / Guest):**
+        * Lời chào: `Chào mừng đến với ViTudy` kèm phụ đề giới thiệu không gian học tập 2.5D và mời đăng nhập lưu dữ liệu.
+        * Breadcrumb: `Không gian học tập / Bàn học trải nghiệm`.
+        * Header bên phải: Nút **"Đăng nhập"** màu Cam ViT (`#E0562D`) kèm icon `LogIn` dẫn trực tiếp tới `/auth`. Tuyệt đối không hiển thị avatar hay ký tự viết tắt giả lập.
+    * **Tác giả tài liệu mặc định:** Khi khách hoặc người dùng mới chưa đặt tên xuất bản lên Chợ tài liệu, tên hiển thị mặc định là **"Tác giả ViTudy"** (không dùng tên cá nhân).
   * **Quy Chuẩn Điều Hướng Quay Lại (Context-Aware Back Navigation Standard):**
     * **Đúng ngữ cảnh điểm xuất phát:**
       * Khi người dùng vào Tài khoản từ Bàn học (`/profile?from=desk`), nút quay lại hiển thị rõ ràng **"Về Bàn Học"** và điều hướng chính xác về `/?view=desk`.
