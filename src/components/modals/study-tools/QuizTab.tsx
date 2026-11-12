@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateClozeQuestions, QuizQuestion } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
@@ -18,6 +18,7 @@ import {
   BookmarkPlus
 } from 'lucide-react';
 import { MathRenderer } from '@/components/common/MathRenderer';
+import { getStudyCache, setStudyCache } from '@/lib/studyToolsCache';
 
 interface QuizTabProps {
   fullText: string;
@@ -39,19 +40,31 @@ export function QuizTab({
   const { addExamSheet, addStickyNote } = useStudySpace();
   const { wallet, aiConfig, spendTokens } = useViToken();
 
+  const cacheKey = documentTitle || 'default-doc';
+  const cachedData = getStudyCache(cacheKey);
+
   const [questionCount, setQuestionCount] = useState<3 | 5 | 10>(5);
   const [difficulty, setDifficulty] = useState<'Dễ' | 'Vừa' | 'Khó'>('Vừa');
   const [scope, setScope] = useState<'Trang hiện tại' | 'Cả cuốn sách'>('Cả cuốn sách');
   const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
   const [loading, setLoading] = useState(false);
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
-  const [isGraded, setIsGraded] = useState(false);
+  const [questions, setQuestions] = useState<QuizQuestion[]>(cachedData.quizQuestions || []);
+  const [userAnswers, setUserAnswers] = useState<Record<string, number>>(cachedData.userAnswers || {});
+  const [isGraded, setIsGraded] = useState(cachedData.isGraded || false);
   const [timeLimit, setTimeLimit] = useState<number>(15);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
   const [aiErrorNotice, setAiErrorNotice] = useState<string | null>(null);
-  const [creationSource, setCreationSource] = useState<'ai' | 'offline' | null>(null);
+  const [creationSource, setCreationSource] = useState<'ai' | 'offline' | null>(cachedData.creationSource || null);
   const [expandedExplanations, setExpandedExplanations] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setStudyCache(cacheKey, {
+      quizQuestions: questions,
+      userAnswers,
+      isGraded,
+      creationSource
+    });
+  }, [questions, userAnswers, isGraded, creationSource, cacheKey]);
 
   const isOauth = aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected);
   const isSystemAi = aiConfig.provider === 'system';
@@ -343,16 +356,14 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
   const wrongQuestions = isGraded ? getWrongQuestions() : [];
 
   return (
-    <div className="flex-1 flex flex-col p-5 overflow-y-auto no-scrollbar font-sans text-slate-900 bg-white">
-      {/* HÀNG 1: Tiêu đề & Mô tả riêng biệt trên một hàng rộng rãi */}
-      <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+    <div 
+      data-scrollable="true"
+      className="flex-1 flex flex-col p-3.5 sm:p-4 overflow-y-auto font-sans text-slate-900 bg-white"
+    >
+      {/* HÀNG 1: Tiêu đề súc tích */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Trắc nghiệm ôn tập kiến thức</h4>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {useAi 
-              ? 'Mô hình AI phân tích câu hỏi logic kèm lời giải chi tiết và công thức'
-              : 'Động cơ Non-AI bóc tách thuật ngữ sinh phương án lựa chọn, chạy 100% offline miễn phí'}
-          </p>
+          <h4 className="text-xs sm:text-sm font-bold text-slate-900">Trắc nghiệm ôn tập</h4>
         </div>
 
         {/* Hiển thị số dư ví khi dùng AI hệ thống */}

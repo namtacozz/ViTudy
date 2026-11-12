@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { extractOutlineAndRoadmap, RoadmapStep } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
 import { askAi } from '@/lib/aiClient';
 import { MathRenderer } from '@/components/common/MathRenderer';
+import { getStudyCache, setStudyCache } from '@/lib/studyToolsCache';
 import { 
   ListOrdered, 
   Clock, 
@@ -26,9 +27,18 @@ export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTab
   const { setBookPage } = useStudySpace();
   const { aiConfig, spendTokens } = useViToken();
 
-  const [roadmap, setRoadmap] = useState<RoadmapStep[]>([]);
+  const cacheKey = itemId || 'default-doc';
+  const cachedData = getStudyCache(cacheKey);
+
+  const [roadmap, setRoadmap] = useState<RoadmapStep[]>(cachedData.roadmap || []);
   const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (roadmap.length > 0) {
+      setStudyCache(cacheKey, { roadmap });
+    }
+  }, [roadmap, cacheKey]);
 
   const handleGenerateRoadmap = async () => {
     if (!pages || pages.length === 0) return;
@@ -104,20 +114,18 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
   const totalReadingMinutes = roadmap.reduce((acc, cur) => acc + (cur.estimatedMinutes || 2), 0);
 
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-y-auto no-scrollbar font-sans text-slate-900 bg-white">
+    <div 
+      data-scrollable="true"
+      className="flex-1 flex flex-col p-3.5 sm:p-4 overflow-y-auto font-sans text-slate-900 bg-white"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Lộ trình học & cây mục lục</h4>
-          <p className="text-xs text-slate-500">
-            {useAi 
-              ? 'Mô hình AI xây dựng lộ trình từng chặng mục tiêu cá nhân hóa'
-              : 'Động cơ Non-AI chia nhỏ nội dung và ước lượng thời gian học (chạy 100% offline)'}
-          </p>
+          <h4 className="text-xs sm:text-sm font-bold text-slate-900">Lộ trình học tập</h4>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 select-none whitespace-nowrap shrink-0">
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-full transition-colors border border-slate-300 select-none whitespace-nowrap shrink-0">
             <input 
               type="checkbox"
               checked={useAi}
@@ -130,7 +138,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
           <button
             onClick={handleGenerateRoadmap}
             disabled={loading}
-            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs flex items-center justify-center disabled:opacity-50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            className="px-3.5 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs flex items-center justify-center disabled:opacity-50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
           >
             <span>{loading ? 'Đang dựng...' : roadmap.length > 0 ? 'Cập nhật lộ trình' : 'Dựng lộ trình'}</span>
           </button>

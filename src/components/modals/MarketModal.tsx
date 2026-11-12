@@ -36,9 +36,10 @@ import { getPurchasedItemIds, recordPurchasedItemId } from '@/services/MarketPur
 interface MarketModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onEnterDesk?: (spaceId?: string) => void;
 }
 
-export function MarketModal({ isOpen, onClose }: MarketModalProps) {
+export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) {
   const { addUploadedDocument, addExamSheet, activeSpace, addMarketItemToSpace } = useStudySpace();
   const { purchaseKnowledgeItem, addTokens, wallet } = useViToken();
 
@@ -183,28 +184,15 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     });
   }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy, isCabinetView, purchasedIds]);
 
-  // Action: Add document to study desk (direct to current desk if open, or via space selector modal)
+  // Action: Add document to study desk via space selector modal so user can choose destination desk
   const handleAddToDesk = (item: MarketItem) => {
-    // Nếu đang ở view bàn học và có activeSpace hợp lệ
-    if (activeSpace?.id) {
-      if (addMarketItemToSpace) {
-        addMarketItemToSpace(activeSpace.id, item);
-      }
-      setSuccessToast(`Đã thêm "${item.title}" vào bàn học hiện tại!`);
-      setTimeout(() => {
-        setSuccessToast(null);
-        onClose();
-      }, 1100);
-      return;
-    }
-
     setSpaceSelectDoc(item);
   };
 
   const handleBuyMarketItem = (item: MarketItem) => {
     setErrorMessage(null);
 
-    // If already purchased, simply open space selector or add directly
+    // If already purchased, open space selector to choose desk
     if (isItemPurchased(item)) {
       handleAddToDesk(item);
       return;
@@ -223,19 +211,6 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
         items.map(i => (i.id === item.id ? { ...i, purchased: true } : i))
       );
       
-      // Nếu đang ở bàn học thì thêm ngay vào bàn hiện tại
-      if (activeSpace?.id) {
-        if (addMarketItemToSpace) {
-          addMarketItemToSpace(activeSpace.id, item);
-        }
-        setSuccessToast(`Đã mua và thêm "${item.title}" vào bàn học hiện tại!`);
-        setTimeout(() => {
-          setSuccessToast(null);
-          onClose();
-        }, 1100);
-        return;
-      }
-
       // Mở modal chọn bàn học để người dùng chọn bàn mở ngay
       setSpaceSelectDoc(item);
     } else {
@@ -997,6 +972,18 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
         <SelectSpaceForDocModal
           isOpen={!!spaceSelectDoc}
           onClose={() => setSpaceSelectDoc(null)}
+          onSuccessOpen={(targetSpaceId) => {
+            setSpaceSelectDoc(null);
+            onClose();
+            if (onEnterDesk) {
+              onEnterDesk(targetSpaceId);
+            } else if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              url.searchParams.set('view', 'desk');
+              url.searchParams.set('space', targetSpaceId);
+              window.location.href = url.toString();
+            }
+          }}
           item={spaceSelectDoc}
         />
       )}

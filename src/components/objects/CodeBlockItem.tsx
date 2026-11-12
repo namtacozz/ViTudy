@@ -80,6 +80,23 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
     updateCodeBlock(item.id, newCode, item.codeLanguage);
   };
 
+  // Lắng nghe phím Delete/Backspace khi item đang được chọn mà không focus vào textarea
+  useEffect(() => {
+    if (!isSelected) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as HTMLElement).isContentEditable)) {
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        removeDeskItem(item.id);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSelected, item.id, removeDeskItem]);
+
   const lines = code.split('\n');
   const lineCount = Math.max(lines.length, 3);
   const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
@@ -100,7 +117,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
         width: item.width || 480,
         textRendering: 'geometricPrecision'
       }}
-      className={`absolute select-none ${
+      className={`group absolute select-none ${
         isDragging ? 'cursor-grabbing' : 'cursor-default'
       }`}
     >
@@ -117,9 +134,15 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
           Code block
         </span>
 
-        {/* Action icons appear cleanly on hover */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onMouseDown={(e) => e.stopPropagation()}>
+        {/* Action icons appear cleanly on hover or when selected */}
+        <div 
+          className={`flex items-center gap-1 transition-opacity ${
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`} 
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <button
+            type="button"
             onClick={handleCopy}
             title="Sao chép mã"
             className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 shadow-xs transition-colors cursor-pointer"
@@ -127,6 +150,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.4]" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
           <button
+            type="button"
             onMouseDown={handleRotateMouseDown}
             onDoubleClick={handleRotateDoubleClick}
             title="Xoay (Kéo để xoay, nhấp đúp về 0°)"
@@ -135,6 +159,7 @@ export const CodeBlockItem = React.memo(function CodeBlockItem({ item, isSelecte
             <RotateTwoWay className="w-3.5 h-3.5" />
           </button>
           <button
+            type="button"
             onClick={handleDelete}
             title="Xoá khối mã nguồn"
             className="p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 shadow-xs transition-colors cursor-pointer"

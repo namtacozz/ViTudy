@@ -10,11 +10,19 @@ export interface MigrationResult {
 
 export class SyncService {
   static hasPendingLocalData(userId: string): boolean {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined' || !userId) return false;
 
-    // Check if already migrated for this user
+    // Check if already migrated or dismissed for this user
     const flag = localStorage.getItem(`vitudy_migrated_${userId}`);
-    if (flag === 'true') return false;
+    if (flag === 'true' || flag === 'dismissed') return false;
+
+    // Only inspect guest-created spaces (not demo template spaces)
+    const userPrefix = `user_${userId}_`;
+    const userRaw = localStorage.getItem(`${userPrefix}vitudy_spaces`);
+    if (userRaw) {
+      // User already has specific storage initialized, no migration needed
+      return false;
+    }
 
     const raw = localStorage.getItem('vitudy_spaces');
     if (!raw) return false;
@@ -23,9 +31,15 @@ export class SyncService {
       const spaces: StudySpace[] = JSON.parse(raw);
       if (!Array.isArray(spaces) || spaces.length === 0) return false;
 
-      // Check if user has items or customized spaces different from empty initial
-      const totalItems = spaces.reduce((sum, s) => sum + (s.items?.length || 0), 0);
-      return totalItems > 0;
+      // Ignore pure initial demo spaces
+      const demoIds = new Set(INITIAL_SPACES.map(s => s.id));
+      const userCreatedSpaces = spaces.filter(s => !demoIds.has(s.id));
+      if (userCreatedSpaces.length > 0) return true;
+
+      // Check if user has added custom items beyond the initial mock items
+      const initialTotalItems = INITIAL_SPACES.reduce((sum, s) => sum + (s.items?.length || 0), 0);
+      const currentTotalItems = spaces.reduce((sum, s) => sum + (s.items?.length || 0), 0);
+      return currentTotalItems > initialTotalItems;
     } catch {
       return false;
     }

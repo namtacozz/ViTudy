@@ -9,6 +9,7 @@ import { askAi } from '@/lib/aiClient';
 import { FlashcardService } from '@/services/FlashcardService';
 import { ReviewQuality } from '@/lib/sm2';
 import { MathRenderer } from '@/components/common/MathRenderer';
+import { getStudyCache, setStudyCache } from '@/lib/studyToolsCache';
 import { 
   Layers, 
   RotateCw, 
@@ -29,12 +30,21 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
   const { user } = useAuth();
   const { aiConfig, spendTokens } = useViToken();
 
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const cacheKey = documentTitle || 'default-doc';
+  const cachedData = getStudyCache(cacheKey);
+
+  const [flashcards, setFlashcards] = useState<Flashcard[]>(cachedData.flashcards || []);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [sm2Notice, setSm2Notice] = useState<string | null>(null);
   const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (flashcards.length > 0) {
+      setStudyCache(cacheKey, { flashcards });
+    }
+  }, [flashcards, cacheKey]);
 
   const handleGenerateFlashcards = async () => {
     if (!fullText) return;
@@ -167,20 +177,18 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
   const currentCard = flashcards[currentIdx];
 
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-y-auto no-scrollbar font-sans text-slate-900 bg-white">
+    <div 
+      data-scrollable="true"
+      className="flex-1 flex flex-col p-3.5 sm:p-4 overflow-y-auto font-sans text-slate-900 bg-white"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Thẻ ghi nhớ ôn ngắt quãng</h4>
-          <p className="text-xs text-slate-500">
-            {useAi 
-              ? 'Mô hình AI chắt lọc các khái niệm, định nghĩa và công thức cốt lõi'
-              : 'Động cơ Non-AI phát hiện cấu trúc định nghĩa (chạy 100% offline)'}
-          </p>
+          <h4 className="text-xs sm:text-sm font-bold text-slate-900">Thẻ ghi nhớ</h4>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 select-none whitespace-nowrap shrink-0">
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-full transition-colors border border-slate-300 select-none whitespace-nowrap shrink-0">
             <input 
               type="checkbox"
               checked={useAi}

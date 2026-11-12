@@ -103,15 +103,15 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const [editingName, setEditingName] = useState<string>('');
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const rowMenuRef = useRef<HTMLDivElement>(null);
 
   // Close profile dropdown and row menu on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as HTMLElement;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setIsProfileDropdownOpen(false);
       }
-      if (rowMenuRef.current && !rowMenuRef.current.contains(event.target as Node)) {
+      if (!target.closest('[data-row-menu="true"]')) {
         setMenuOpenSpaceId(null);
       }
     };
@@ -991,7 +991,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                             <span>{getRecentTimeString(space)}</span>
                             
                             {/* "⋯" Menu Button */}
-                            <div className="relative" ref={rowMenuRef}>
+                            <div className="relative" data-row-menu="true">
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -1008,12 +1008,13 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                               {menuOpenSpaceId === space.id && (
                                 <div 
                                   className="absolute right-0 top-7 z-30 w-36 bg-white rounded-xl border border-stone-200 shadow-xl p-1 text-xs text-stone-700 animate-fade-in font-sans text-left"
+                                  onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
                                     type="button"
                                     onClick={(e) => handleStartRename(space, e)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors"
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
                                   >
                                     <Pencil className="w-3.5 h-3.5 text-stone-500" />
                                     <span>Đổi tên</span>
@@ -1021,7 +1022,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                                   <button
                                     type="button"
                                     onClick={(e) => handleDuplicate(space.id, e)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors"
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
                                   >
                                     <Copy className="w-3.5 h-3.5 text-stone-500" />
                                     <span>Nhân bản</span>
@@ -1030,7 +1031,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                                   <button
                                     type="button"
                                     onClick={(e) => handleDelete(space.id, e)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition-colors"
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition-colors cursor-pointer"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                     <span>Xóa</span>
@@ -1146,7 +1147,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
       {/* ================= MODALS ================= */}
       <TopUpModal isOpen={isTopUpOpen} onClose={() => setIsTopUpOpen(false)} />
-      <MarketModal isOpen={isMarketOpen} onClose={() => setIsMarketOpen(false)} />
+      <MarketModal isOpen={isMarketOpen} onClose={() => setIsMarketOpen(false)} onEnterDesk={onEnterDesk} />
       <AiConfigModal isOpen={isAiConfigOpen} onClose={() => setIsAiConfigOpen(false)} />
     </div>
   );

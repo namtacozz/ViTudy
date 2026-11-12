@@ -24,9 +24,10 @@ interface SelectSpaceForDocModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: MarketItem | null;
+  onSuccessOpen?: (spaceId: string) => void;
 }
 
-export function SelectSpaceForDocModal({ isOpen, onClose, item }: SelectSpaceForDocModalProps) {
+export function SelectSpaceForDocModal({ isOpen, onClose, item, onSuccessOpen }: SelectSpaceForDocModalProps) {
   const router = useRouter();
   const { spaces, activeSpaceId, addMarketItemToSpace, createSpace, switchSpace, saveCurrentSpaceImmediately } = useStudySpace();
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,12 +116,22 @@ export function SelectSpaceForDocModal({ isOpen, onClose, item }: SelectSpaceFor
       // 2. Lưu trạng thái ngay lập tức
       await saveCurrentSpaceImmediately?.();
 
-      // 3. Đóng modal
+      // 3. Đóng modal và báo thành công
       onClose();
-
-      // 4. Kích hoạt switchSpace và chuyển view sang bàn học đã chọn
-      switchSpace(targetSpaceId);
-      router.push(`/?view=desk&space=${encodeURIComponent(targetSpaceId)}`);
+      if (onSuccessOpen) {
+        onSuccessOpen(targetSpaceId);
+      } else {
+        // 4. Kích hoạt switchSpace và chuyển view sang bàn học đã chọn
+        switchSpace(targetSpaceId);
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', 'desk');
+          url.searchParams.set('space', targetSpaceId);
+          window.location.href = url.toString();
+        } else {
+          router.push(`/?view=desk&space=${encodeURIComponent(targetSpaceId)}`);
+        }
+      }
     }
   };
 

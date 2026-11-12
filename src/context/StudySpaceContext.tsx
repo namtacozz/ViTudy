@@ -372,6 +372,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const [redoStack, setRedoStack] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
+  const recentAddedItemIdsRef = useRef<string[]>([]);
 
   const addStroke = (stroke: import('@/types/studyspace').DrawingStroke) => {
     setStrokes(prev => [...prev, stroke]);
@@ -380,7 +381,14 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   const undoStroke = () => {
     setStrokes(prev => {
-      if (prev.length === 0) return prev;
+      if (prev.length === 0) {
+        // Nếu không có nét vẽ nào để hoàn tác, kiểm tra hoàn tác vật thể vừa thêm (Code block, Note, etc.)
+        const lastItemId = recentAddedItemIdsRef.current.pop();
+        if (lastItemId) {
+          removeDeskItem(lastItemId);
+        }
+        return prev;
+      }
       const last = prev[prev.length - 1];
       // If the last stroke was beautified by smart shape, restore its original hand-drawn stroke on first undo
       if (last.isSmartShape && last.originalPoints && last.originalPoints.length > 0) {
@@ -462,13 +470,21 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   // Load spaces on startup from Supabase Cloud (when authenticated) or localStorage (guest)
   useEffect(() => {
-    const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
+    const isAuth = status === 'authenticated' && Boolean(user?.id);
+    const userPrefix = isAuth ? `user_${user!.id}_` : 'guest_';
     let localSpaces: StudySpace[] | null = null;
     let localActiveId: string | null = null;
 
     try {
-      const saved = localStorage.getItem(`${userPrefix}vitudy_spaces`) || localStorage.getItem('vitudy_spaces');
-      localActiveId = localStorage.getItem(`${userPrefix}vitudy_active_space_id`) || localStorage.getItem('vitudy_active_space_id');
+      // Khi đã đăng nhập: CHỈ đọc storage riêng của tài khoản này, KHÔNG đọc fallback sang guest/demo chung
+      const saved = isAuth 
+        ? localStorage.getItem(`${userPrefix}vitudy_spaces`)
+        : (localStorage.getItem('guest_vitudy_spaces') || localStorage.getItem('vitudy_spaces'));
+      
+      localActiveId = isAuth
+        ? localStorage.getItem(`${userPrefix}vitudy_active_space_id`)
+        : (localStorage.getItem('guest_vitudy_active_space_id') || localStorage.getItem('vitudy_active_space_id'));
+
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -507,7 +523,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       } catch {}
     };
 
-    if (status === 'authenticated' && user?.id) {
+    if (isAuth && user?.id) {
       StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
         let targetId = '';
         if (cloudSpaces && cloudSpaces.length > 0) {
@@ -517,9 +533,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             if (!localMatch) return cs;
             const localTime = new Date(localMatch.updatedAt || localMatch.lastOpenedAt || 0).getTime();
             const cloudTime = new Date(cs.updatedAt || cs.lastOpenedAt || 0).getTime();
-            // Nếu local có tài liệu mà cloud trống, hoặc local có mốc lưu mới hơn/bằng -> ưu tiên dữ liệu local
             if (localMatch.items && (cs.items.length === 0 || localTime >= cloudTime || localMatch.items.length >= cs.items.length)) {
-              // Tự động đẩy local items lên cloud để đồng bộ
               StudySpaceService.saveSpace(localMatch, user.id)
                 .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
                 .catch(() => {});
@@ -532,6 +546,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             return cs;
           });
 
+          // Chỉ merge các space local của chính user này nếu chưa có trên cloud
           if (localSpaces && localSpaces.length > 0) {
             localSpaces.forEach(ls => {
               if (!mergedSpaces.some(cs => cs.id === ls.id)) {
@@ -542,7 +557,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
               }
             });
           }
+
           setSpaces(mergedSpaces);
+          try {
+            localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(mergedSpaces));
+          } catch {}
+
           targetId = (urlSpaceId && mergedSpaces.some(s => s.id === urlSpaceId))
             ? urlSpaceId
             : (localActiveId && mergedSpaces.some(s => s.id === localActiveId))
@@ -550,7 +570,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             : mergedSpaces[0].id;
           setActiveSpaceId(targetId);
         } else if (localSpaces && localSpaces.length > 0) {
-          // Chưa có trên cloud nhưng có local -> sync local lên cloud
+          // Chưa có trên cloud nhưng có local của user -> sync local lên cloud
           setSpaces(localSpaces);
           targetId = (urlSpaceId && localSpaces.some(s => s.id === urlSpaceId))
             ? urlSpaceId
@@ -564,9 +584,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
               .catch(() => {});
           });
         } else {
-          // Tài khoản mới chưa tạo bàn học: giữ danh sách trống để chỉ hiện khi người dùng tạo mới
+          // Tài khoản mới chưa tạo bàn học: giữ danh sách trống
           setSpaces([]);
           setActiveSpaceId('');
+          try {
+            localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify([]));
+          } catch {}
         }
 
         if (targetId) {
@@ -926,7 +949,7 @@ Trong đó:
           ]
         },
         {
-          id: `note-${Date.now()}`,
+          id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `note-${Date.now()}`,
           type: 'sticky_note',
           title: 'Ghi chú ôn thi',
           x: 1120,
@@ -1048,7 +1071,7 @@ Trong đó:
           ]
         },
         {
-          id: `note-${Date.now()}`,
+          id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `note-${Date.now()}`,
           type: 'sticky_note',
           title: 'Nháp thi & Công thức',
           x: 1140,
@@ -1201,27 +1224,46 @@ Trong đó:
       if (activeSpaceId === spaceId && updated.length > 0) {
         setActiveSpaceId(updated[0].id);
       }
+      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
       try {
+        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updated));
         localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
       } catch {
         // ignore
       }
       return updated;
     });
+
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.deleteSpace(spaceId).catch(() => {});
+    }
   };
 
   const renameSpace = (spaceId: string, newName: string) => {
     const trimmed = normalizeNFC(newName.trim());
     if (!trimmed) return;
+    let targetRenamedSpace: StudySpace | null = null;
     setSpaces(prev => {
-      const updated = prev.map(s => (s.id === spaceId ? { ...s, name: trimmed, updatedAt: new Date().toISOString() } : s));
+      const updated = prev.map(s => {
+        if (s.id === spaceId) {
+          targetRenamedSpace = { ...s, name: trimmed, updatedAt: new Date().toISOString() };
+          return targetRenamedSpace;
+        }
+        return s;
+      });
+      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
       try {
+        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updated));
         localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
       } catch {
         // ignore
       }
       return updated;
     });
+
+    if (status === 'authenticated' && user?.id && targetRenamedSpace) {
+      StudySpaceService.saveSpace(targetRenamedSpace, user.id).catch(() => {});
+    }
   };
 
   const duplicateSpace = (spaceId: string): string => {
@@ -1237,20 +1279,30 @@ Trong đó:
       lastOpenedAt: new Date().toISOString(),
       items: (source.items || []).map(i => ({
         ...i,
-        id: `${i.id}-dup-${Math.random().toString(36).slice(2, 6)}`,
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${i.id}-dup-${Math.random().toString(36).slice(2, 6)}`,
         x: i.x + 30,
         y: i.y + 30
       }))
     };
     setSpaces(prev => {
       const updated = [newSpace, ...prev];
+      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
       try {
+        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updated));
         localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
       } catch {
         // ignore
       }
       return updated;
     });
+
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.saveSpace(newSpace, user.id).then(() => {
+        if (newSpace.items && newSpace.items.length > 0) {
+          StudySpaceService.upsertItems(newSpace.id, newSpace.items).catch(() => {});
+        }
+      }).catch(() => {});
+    }
     return newId;
   };
 
@@ -1787,7 +1839,7 @@ Trong đó:
   };
 
   const addStickyNote = (text = '', x?: number, y?: number, color = '#fef08a', width?: number, height?: number): string => {
-    const noteId = `sticky-${Date.now()}`;
+    const noteId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sticky-${Date.now()}`;
     const w = width || 220;
     const h = height || 200;
 
@@ -1831,11 +1883,12 @@ Trong đó:
       })
     );
     setSelectedItemId(noteId);
+    recentAddedItemIdsRef.current.push(noteId);
     return noteId;
   };
 
   const addCodeBlock = (snippet = '', x?: number, y?: number, language = 'javascript'): string => {
-    const codeId = `code-${Date.now()}`;
+    const codeId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `code-${Date.now()}`;
     const w = 480;
     const h = 200;
 
@@ -1875,11 +1928,12 @@ Trong đó:
       })
     );
     setSelectedItemId(codeId);
+    recentAddedItemIdsRef.current.push(codeId);
     return codeId;
   };
 
   const addMindMapNode = (text = '', x?: number, y?: number, parentId?: string, color = '#a855f7'): string => {
-    const mindId = `mind-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const mindId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `mind-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const w = 240;
     const h = 64;
 
@@ -1920,6 +1974,7 @@ Trong đó:
       })
     );
     setSelectedItemId(mindId);
+    recentAddedItemIdsRef.current.push(mindId);
     return mindId;
   };
 
@@ -2079,7 +2134,7 @@ Trong đó:
     }));
 
     const newItem: DeskItem = {
-      id: `doc-${Date.now()}`,
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `doc-${Date.now()}`,
       type,
       title: normalizeNFC(title),
       x: 320 + Math.random() * 80,
@@ -2103,9 +2158,12 @@ Trong đó:
 
   const addMarketItemToSpace = (spaceId: string, marketItem: import('@/data/marketMockData').MarketItem) => {
     let newItem: DeskItem;
+    const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `item-${Date.now()}`;
+
     if (marketItem.type === 'exam' && marketItem.examQuestions && marketItem.examQuestions.length > 0) {
+      const examId = generateId();
       newItem = {
-        id: `exam-${Date.now()}`,
+        id: examId,
         type: 'paper',
         title: normalizeNFC(marketItem.title),
         x: 380 + Math.random() * 40,
@@ -2129,7 +2187,7 @@ Trong đó:
         },
         pages: [
           {
-            id: `p-exam-market-${Date.now()}`,
+            id: generateId(),
             pageNumber: 1,
             title: normalizeNFC(marketItem.title),
             text: normalizeNFC(`${marketItem.summary}\n\n${marketItem.previewText}`)
@@ -2148,15 +2206,16 @@ Trong đó:
           ];
       
       const pages: PageContent[] = rawPages.map((p: any, idx: number) => ({
-        id: `p-${Date.now()}-${idx}`,
+        id: generateId(),
         pageNumber: idx + 1,
         title: normalizeNFC(p.title || `Trang ${idx + 1}`),
         text: normalizeNFC(p.text),
         image: p.image
       }));
 
+      const docId = generateId();
       newItem = {
-        id: `doc-${Date.now()}`,
+        id: docId,
         type: isBook ? 'book' : 'paper',
         title: normalizeNFC(marketItem.title),
         x: 320 + Math.random() * 60,
@@ -2183,6 +2242,12 @@ Trong đó:
     );
 
     setActiveSpaceId(spaceId);
+    setSelectedItemId(newItem.id);
+
+    // Lưu vào cloud database nếu đã đăng nhập
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.upsertItems(spaceId, [newItem]).catch(() => {});
+    }
   };
 
   const addExamSheet = (

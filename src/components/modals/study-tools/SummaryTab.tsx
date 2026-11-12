@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { summarizeWithTextRank } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
 import { askAi } from '@/lib/aiClient';
 import { Sparkles, Copy, Check, StickyNote } from 'lucide-react';
 import { MathRenderer } from '@/components/common/MathRenderer';
+import { getStudyCache, setStudyCache } from '@/lib/studyToolsCache';
 
 interface SummaryTabProps {
   fullText: string;
@@ -19,10 +20,19 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
   const { addStickyNote } = useStudySpace();
   const { aiConfig, spendTokens } = useViToken();
 
-  const [summaryResult, setSummaryResult] = useState<string>('');
+  const cacheKey = documentTitle || 'default-doc';
+  const cachedData = getStudyCache(cacheKey);
+
+  const [summaryResult, setSummaryResult] = useState<string>(cachedData.summaryResult || '');
   const [useAi, setUseAi] = useState(aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected));
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (summaryResult) {
+      setStudyCache(cacheKey, { summaryResult });
+    }
+  }, [summaryResult, cacheKey]);
 
   const handleGenerateSummary = async () => {
     if (!fullText) return;
@@ -30,7 +40,9 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
     if (!useAi) {
       // Non-AI TextRank + TF-IDF summarization (Client-side, 0 ViToken)
       const res = summarizeWithTextRank(fullText, 4);
-      setSummaryResult(res.join('\n\n'));
+      const text = res.join('\n\n');
+      setSummaryResult(text);
+      setStudyCache(cacheKey, { summaryResult: text });
       return;
     }
 
@@ -41,7 +53,9 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
         alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang động cơ Non-AI miễn phí.');
         setUseAi(false);
         const res = summarizeWithTextRank(fullText, 4);
-        setSummaryResult(res.join('\n\n'));
+        const text = res.join('\n\n');
+        setSummaryResult(text);
+        setStudyCache(cacheKey, { summaryResult: text });
         return;
       }
     }
@@ -58,12 +72,17 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
 
       if (data.reply) {
         setSummaryResult(data.reply);
+        setStudyCache(cacheKey, { summaryResult: data.reply });
       } else {
-        setSummaryResult(summarizeWithTextRank(fullText, 4).join('\n\n'));
+        const text = summarizeWithTextRank(fullText, 4).join('\n\n');
+        setSummaryResult(text);
+        setStudyCache(cacheKey, { summaryResult: text });
       }
     } catch (err: any) {
       const nonAiFallback = summarizeWithTextRank(fullText, 4).join('\n\n');
-      setSummaryResult(`[Thông báo AI: ${err.message || 'Lỗi kết nối'} - Đã chuyển sang trích xuất TextRank]:\n\n${nonAiFallback}`);
+      const text = `[Thông báo AI: ${err.message || 'Lỗi kết nối'} - Đã chuyển sang trích xuất TextRank]:\n\n${nonAiFallback}`;
+      setSummaryResult(text);
+      setStudyCache(cacheKey, { summaryResult: text });
     } finally {
       setLoading(false);
     }
@@ -165,20 +184,18 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
   }
 
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-y-auto no-scrollbar font-sans text-slate-900 bg-white">
+    <div 
+      data-scrollable="true"
+      className="flex-1 flex flex-col p-4 sm:p-5 overflow-y-auto font-sans text-slate-900 bg-white"
+    >
       {/* Controls Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+      <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Tóm tắt nội dung trọng tâm</h4>
-          <p className="text-xs text-slate-500">
-            {useAi 
-              ? 'Mô hình AI chắt lọc các luận điểm logic cốt lõi kèm dẫn chứng'
-              : 'Động cơ Non-AI TextRank phân tích tần suất câu (Miễn phí 100%)'}
-          </p>
+          <h4 className="text-xs sm:text-sm font-bold text-slate-900">Tóm tắt trọng tâm</h4>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 whitespace-nowrap select-none">
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-full transition-colors border border-slate-300 whitespace-nowrap select-none">
             <input 
               type="checkbox"
               checked={useAi}
@@ -191,25 +208,25 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
           <button
             onClick={handleGenerateSummary}
             disabled={loading}
-            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer active:scale-95 whitespace-nowrap"
+            className="px-3.5 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer active:scale-95 whitespace-nowrap"
           >
-            <span>{loading ? 'Đang trích xuất...' : 'Tạo tóm tắt'}</span>
+            <span>{loading ? 'Đang trích xuất...' : summaryResult ? 'Cập nhật tóm tắt' : 'Tạo tóm tắt'}</span>
           </button>
         </div>
       </div>
 
       {/* Summary Content Body */}
-      <div className="flex-1 mt-4">
+      <div className="flex-1 mt-3">
         {summaryResult ? (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-sm leading-relaxed text-slate-800 whitespace-pre-line">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs sm:text-sm leading-relaxed text-slate-800 whitespace-pre-line">
             <MathRenderer content={summaryResult} />
           </div>
         ) : (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-600 text-xs text-center border-2 border-dashed border-slate-300 rounded-xl p-6">
-            <Sparkles className="w-8 h-8 mb-2 text-[#E0562D]" />
+          <div className="h-56 flex flex-col items-center justify-center text-slate-600 text-xs text-center border-2 border-dashed border-slate-300 rounded-xl p-5">
+            <Sparkles className="w-7 h-7 mb-2 text-[#E0562D]" />
             <span className="font-bold text-slate-800 text-sm mb-1">Chưa có bản tóm tắt</span>
             <span className="text-slate-500 max-w-sm">
-              Nhấn "Tạo tóm tắt" để trích xuất 4-5 luận điểm cốt lõi kèm trích dẫn trang của tài liệu.
+              Nhấn "Tạo tóm tắt" để trích xuất 4-5 luận điểm cốt lõi của tài liệu.
             </span>
           </div>
         )}
@@ -217,7 +234,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
 
       {/* Action Footer */}
       {summaryResult && (
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-between mt-4">
+        <div className="pt-3 border-t border-slate-200 flex items-center justify-between mt-3 flex-shrink-0">
           <button
             onClick={handlePinSummaryToDesk}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors border border-slate-300 cursor-pointer"

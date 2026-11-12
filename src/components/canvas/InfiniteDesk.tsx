@@ -142,12 +142,17 @@ export function InfiniteDesk() {
 
     const onWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
-      // Prevent canvas zoom if scrolling inside an explicit modal dialog or active full overlay
+      // Prevent canvas zoom if scrolling inside an explicit modal dialog, study tools, or scrollable container
       if (
         target.closest('[role="dialog"]') ||
         target.closest('[data-modal="true"]') ||
+        target.closest('[data-overlay="true"]') ||
+        target.closest('[data-study-tools="true"]') ||
         target.closest('.fixed.inset-0') ||
-        target.closest('[data-focus-notice="true"]')
+        target.closest('[data-focus-notice="true"]') ||
+        target.closest('.overflow-y-auto') ||
+        target.closest('.overflow-auto') ||
+        target.closest('[data-scrollable="true"]')
       ) {
         return;
       }

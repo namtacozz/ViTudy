@@ -5,7 +5,24 @@ import { Database, Json } from '@/types/database.types';
 type DeskDocumentRow = Database['public']['Tables']['desk_documents']['Row'];
 type DeskDocumentInsert = Database['public']['Tables']['desk_documents']['Insert'];
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function ensureUUID(id: string): string {
+  if (UUID_REGEX.test(id)) return id;
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInsert {
+  const safeItemId = ensureUUID(item.id);
+  const safeSpaceId = ensureUUID(spaceId);
+
   let sourceDocsJson: Json | null = (item.sourceDocuments as unknown as Json) || null;
   if (item.type === 'mind_map' && item.mindMapParentId) {
     sourceDocsJson = { parentId: item.mindMapParentId } as unknown as Json;
@@ -17,8 +34,8 @@ export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInse
   }
 
   return {
-    id: item.id,
-    space_id: spaceId,
+    id: safeItemId,
+    space_id: safeSpaceId,
     title: item.title,
     item_type: item.type,
     x: item.x,
@@ -175,8 +192,9 @@ export class StudySpaceService {
     if (!supabase || !userId) return;
 
     try {
+      const safeSpaceId = ensureUUID(space.id);
       await supabase.from('study_spaces').upsert({
-        id: space.id,
+        id: safeSpaceId,
         owner_id: userId,
         name: space.name,
         subject: space.subject,
@@ -192,7 +210,8 @@ export class StudySpaceService {
     if (!supabase || !spaceId) return;
 
     try {
-      await supabase.from('study_spaces').delete().eq('id', spaceId);
+      const safeSpaceId = ensureUUID(spaceId);
+      await supabase.from('study_spaces').delete().eq('id', safeSpaceId);
     } catch (err) {
       console.warn('Lỗi deleteSpace:', err);
     }
@@ -203,15 +222,17 @@ export class StudySpaceService {
     if (!supabase || !spaceId || items.length === 0) return;
 
     try {
-      const rows = items.map(item => deskItemToRow(item, spaceId));
+      const safeSpaceId = ensureUUID(spaceId);
+      const rows = items.map(item => deskItemToRow(item, safeSpaceId));
       await supabase.from('desk_documents').upsert(rows);
 
       // Upsert document pages if provided
       for (const item of items) {
         if (item.pages && item.pages.length > 0) {
+          const safeItemId = ensureUUID(item.id);
           const pageRows = item.pages.map(p => ({
             id: p.id.includes('-') && p.id.length === 36 ? p.id : undefined,
-            document_id: item.id,
+            document_id: safeItemId,
             page_number: p.pageNumber,
             title: p.title || null,
             content: p.text || '',
