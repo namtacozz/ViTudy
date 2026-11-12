@@ -24,11 +24,14 @@ import {
   Clock,
   Layers,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  BookmarkCheck
 } from 'lucide-react';
 import { KnowInheritPublishModal } from './KnowInheritPublishModal';
+import { SelectSpaceForDocModal } from './SelectSpaceForDocModal';
 import { ModalErrorBoundary } from '@/components/common/ModalErrorBoundary';
 import { INITIAL_MARKET_ITEMS, MarketItem } from '@/data/marketMockData';
+import { getPurchasedItemIds, recordPurchasedItemId } from '@/services/MarketPurchaseStorage';
 
 interface MarketModalProps {
   isOpen: boolean;
@@ -43,6 +46,17 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
   const [selectedDeskItemId, setSelectedDeskItemId] = useState<string>('');
   const [marketItems, setMarketItems] = useState<MarketItem[]>(INITIAL_MARKET_ITEMS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Tủ tài liệu cá nhân & Modal chọn bàn học
+  const [isCabinetView, setIsCabinetView] = useState(false);
+  const [spaceSelectDoc, setSpaceSelectDoc] = useState<MarketItem | null>(null);
+  const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPurchasedIds(getPurchasedItemIds());
+    }
+  }, [isOpen]);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,9 +119,22 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     setSortBy('newest');
   };
 
+  const isItemPurchased = (item: MarketItem) => {
+    return item.purchased || purchasedIds.includes(item.id);
+  };
+
+  const purchasedCount = useMemo(() => {
+    return marketItems.filter(i => isItemPurchased(i)).length;
+  }, [marketItems, purchasedIds]);
+
   // Filtered & sorted items
   const filteredItems = useMemo(() => {
     return marketItems.filter(item => {
+      // Khi bật Tủ tài liệu cá nhân: chỉ hiển thị tài liệu đã mua
+      if (isCabinetView && !isItemPurchased(item)) {
+        return false;
+      }
+
       // Search query (title, author, summary)
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
@@ -153,31 +180,18 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
       }
       return 0;
     });
-  }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy]);
+  }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy, isCabinetView, purchasedIds]);
 
-  // Action: Add document to the current study desk
+  // Action: Add document to study desk via Space Selection Modal
   const handleAddToDesk = (item: MarketItem) => {
-    if (item.type === 'exam' && item.examQuestions && item.examQuestions.length > 0) {
-      addExamSheet(item.title, item.examQuestions, 20);
-    } else {
-      const rawPages = item.pages && item.pages.length > 0
-        ? item.pages
-        : [
-            {
-              title: item.title,
-              text: `${item.summary}\n\n${item.previewText}\n\n[Tài liệu đã mở từ tác giả ${item.author}]`
-            }
-          ];
-      addUploadedDocument(item.title, rawPages);
-    }
-    onClose();
+    setSpaceSelectDoc(item);
   };
 
   const handleBuyMarketItem = (item: MarketItem) => {
     setErrorMessage(null);
 
-    // If already purchased, simply add to desk
-    if (item.purchased) {
+    // If already purchased, simply open space selector
+    if (isItemPurchased(item)) {
       handleAddToDesk(item);
       return;
     }
@@ -189,10 +203,13 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
     const success = purchaseKnowledgeItem(item.price, item.title, item.author);
     if (success) {
+      recordPurchasedItemId(item.id);
+      setPurchasedIds(prev => [...prev, item.id]);
       setMarketItems(items =>
         items.map(i => (i.id === item.id ? { ...i, purchased: true } : i))
       );
-      handleAddToDesk(item);
+      // Mở modal chọn bàn học để người dùng chọn bàn mở ngay
+      setSpaceSelectDoc(item);
     } else {
       setErrorMessage('Giao dịch không thành công. Vui lòng kiểm tra lại số dư ví.');
     }
@@ -256,6 +273,26 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
           <div className="flex items-center gap-2.5">
             <button
+              type="button"
+              onClick={() => setIsCabinetView(prev => !prev)}
+              className={`flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95 border ${
+                isCabinetView
+                  ? 'bg-[#E0562D] text-white border-[#E0562D]'
+                  : 'bg-white hover:bg-orange-50/50 text-stone-800 border-stone-200'
+              }`}
+              title="Xem các tài liệu bạn đã mở khóa và sở hữu vĩnh viễn"
+            >
+              <BookmarkCheck className={`w-3.5 h-3.5 ${isCabinetView ? 'text-white' : 'text-[#E0562D]'}`} />
+              <span>Tủ tài liệu cá nhân</span>
+              {purchasedCount > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  isCabinetView ? 'bg-white text-[#E0562D]' : 'bg-[#FFF7ED] text-[#9A3412] border border-[#FFEDD5]'
+                }`}>
+                  {purchasedCount}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => {
                 setSelectedDeskItemId(activeSpace.items[0]?.id || '');
                 setIsPublishOpen(true);
@@ -297,6 +334,24 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             <span>Điểm danh hằng ngày hoặc chia sẻ tài liệu hữu ích để nhận thêm ViToken</span>
           </div>
         </div>
+
+        {/* Cabinet Mode Active Notice */}
+        {isCabinetView && (
+          <div className="mt-2.5 bg-[#FFF7ED] border border-[#FFEDD5] text-[#9A3412] px-4 py-2 rounded-2xl text-xs flex items-center justify-between gap-2 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <BookmarkCheck className="w-4 h-4 text-[#E0562D] flex-shrink-0" />
+              <span className="font-bold">Đang xem: Tủ tài liệu cá nhân ({purchasedCount} tài liệu đã sở hữu)</span>
+              <span className="text-slate-500 hidden sm:inline">• Nhấn &ldquo;Mở trên bàn học&rdquo; để chọn bàn học bạn muốn học</span>
+            </div>
+            <button 
+              type="button"
+              onClick={() => setIsCabinetView(false)} 
+              className="text-xs font-bold text-[#E0562D] hover:underline cursor-pointer flex-shrink-0"
+            >
+              Về Chợ chung →
+            </button>
+          </div>
+        )}
 
         {/* Warning / Error notice */}
         {errorMessage && (
@@ -561,15 +616,15 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                       <button
                         onClick={() => handleBuyMarketItem(item)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs ${
-                          item.purchased
+                          isItemPurchased(item)
                             ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
                             : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
                         }`}
                       >
-                        {item.purchased ? (
+                        {isItemPurchased(item) ? (
                           <>
                             <ArrowRight className="w-3.5 h-3.5 text-emerald-700" />
-                            <span>Thêm vào bàn học</span>
+                            <span>Mở ở bàn học</span>
                           </>
                         ) : (
                           <span>Mua {item.price} V</span>
@@ -706,7 +761,7 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                           style={{ width: '16px', height: '16px', maxWidth: '16px', maxHeight: '16px' }}
                         />
                         <span className="text-sm font-black font-mono text-[#E0562D]">{item.price} ViToken</span>
-                        {item.purchased && (
+                        {isItemPurchased(item) && (
                           <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-1">
                             Đã sở hữu
                           </span>
@@ -726,15 +781,15 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                         <button
                           onClick={() => handleBuyMarketItem(item)}
                           className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all text-center cursor-pointer shadow-xs flex items-center gap-1.5 ${
-                            item.purchased
+                            isItemPurchased(item)
                               ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                               : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
                           }`}
                         >
-                          {item.purchased ? (
+                          {isItemPurchased(item) ? (
                             <>
                               <ArrowRight className="w-3.5 h-3.5 text-white" />
-                              <span>Thêm vào bàn học</span>
+                              <span>Mở ở bàn học</span>
                             </>
                           ) : (
                             <span>Mua {item.price} V</span>
@@ -834,15 +889,15 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
                     handleBuyMarketItem(item);
                   }}
                   className={`px-4 py-1.5 rounded-xl text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5 ${
-                    previewItem.purchased
+                    isItemPurchased(previewItem)
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                       : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
                   }`}
                 >
-                  {previewItem.purchased ? (
+                  {isItemPurchased(previewItem) ? (
                     <>
                       <ArrowRight className="w-3.5 h-3.5 text-white" />
-                      <span>Thêm vào bàn học</span>
+                      <span>Mở ở bàn học</span>
                     </>
                   ) : (
                     <span>Mua ngay ({previewItem.price} V)</span>
@@ -885,6 +940,14 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             }}
           />
         </ModalErrorBoundary>
+      )}
+      {/* MODAL: Chọn bàn học để mở tài liệu */}
+      {spaceSelectDoc && (
+        <SelectSpaceForDocModal
+          isOpen={!!spaceSelectDoc}
+          onClose={() => setSpaceSelectDoc(null)}
+          item={spaceSelectDoc}
+        />
       )}
     </div>,
     document.body

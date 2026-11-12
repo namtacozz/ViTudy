@@ -74,6 +74,7 @@ interface StudySpaceContextType {
   updateStickyNoteIsBold?: (id: string, isBold: boolean) => void;
   addStickyNote: (text?: string, x?: number, y?: number, color?: string, width?: number, height?: number) => string;
   addUploadedDocument: (title: string, pages: { title?: string; text: string; image?: string }[]) => void;
+  addMarketItemToSpace: (spaceId: string, marketItem: import('@/data/marketMockData').MarketItem) => void;
   removeDeskItem: (id: string) => void;
   setSearchQuery: (query: string) => void;
   togglePanLock: () => void;
@@ -1845,6 +1846,90 @@ Trong đó:
     );
   };
 
+  const addMarketItemToSpace = (spaceId: string, marketItem: import('@/data/marketMockData').MarketItem) => {
+    let newItem: DeskItem;
+    if (marketItem.type === 'exam' && marketItem.examQuestions && marketItem.examQuestions.length > 0) {
+      newItem = {
+        id: `exam-${Date.now()}`,
+        type: 'paper',
+        title: normalizeNFC(marketItem.title),
+        x: 380 + Math.random() * 40,
+        y: 160 + Math.random() * 40,
+        rotation: 0,
+        scale: 1,
+        zIndex: maxZIndex + 2,
+        pageCount: 1,
+        currentPageIndex: 0,
+        isExamSheet: true,
+        stickyColor: '#bae6fd',
+        width: 380,
+        height: 490,
+        examData: {
+          timeLimitMinutes: 20,
+          remainingSeconds: 20 * 60,
+          questions: marketItem.examQuestions,
+          userAnswers: {},
+          isGraded: false,
+          totalQuestions: marketItem.examQuestions.length
+        },
+        pages: [
+          {
+            id: `p-exam-market-${Date.now()}`,
+            pageNumber: 1,
+            title: normalizeNFC(marketItem.title),
+            text: normalizeNFC(`${marketItem.summary}\n\n${marketItem.previewText}`)
+          }
+        ]
+      };
+    } else {
+      const isBook = marketItem.type === 'book';
+      const rawPages = marketItem.pages && marketItem.pages.length > 0
+        ? marketItem.pages
+        : [
+            {
+              title: marketItem.title,
+              text: `${marketItem.summary}\n\n${marketItem.previewText}\n\n[Tài liệu đã mở từ tác giả ${marketItem.author}]`
+            }
+          ];
+      
+      const pages: PageContent[] = rawPages.map((p: any, idx: number) => ({
+        id: `p-${Date.now()}-${idx}`,
+        pageNumber: idx + 1,
+        title: normalizeNFC(p.title || `Trang ${idx + 1}`),
+        text: normalizeNFC(p.text),
+        image: p.image
+      }));
+
+      newItem = {
+        id: `doc-${Date.now()}`,
+        type: isBook ? 'book' : 'paper',
+        title: normalizeNFC(marketItem.title),
+        x: 320 + Math.random() * 60,
+        y: 180 + Math.random() * 40,
+        rotation: 0,
+        scale: 1,
+        zIndex: maxZIndex + 1,
+        pageCount: pages.length,
+        currentPageIndex: 0,
+        pages,
+        colorTheme: isBook ? '#1e3a8a' : '#047857'
+      };
+    }
+
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== spaceId) return s;
+        return {
+          ...s,
+          lastOpenedAt: new Date().toISOString(),
+          items: [...s.items, newItem]
+        };
+      })
+    );
+
+    setActiveSpaceId(spaceId);
+  };
+
   const addExamSheet = (
     title: string, 
     questions: import('@/types/studyspace').ExamQuestion[], 
@@ -2049,6 +2134,7 @@ Trong đó:
         updateCodeBlock,
         updateMindMapNode,
         addUploadedDocument,
+        addMarketItemToSpace,
         addExamSheet,
         updateExamAnswer,
         gradeExam,

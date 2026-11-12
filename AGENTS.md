@@ -169,7 +169,14 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Bìa da nâu bên trái (Modal):** Thiết kế tối giản, sang trọng với viền dập da, logo ViTudy, icon loại tài liệu dập chìm và ngày chia sẻ. Tuyệt đối không nhồi nhét lặp lại tiêu đề 3 lần lên bìa sách.
     * **Thông tin tin cậy bắt buộc:** Dấu xác thực tác giả (`CheckCircle2 text-sky-600`), số trang, lượt mua, ngày cập nhật, điểm AI có tiền tố `AI: [score]/100` kèm tooltip giải thích tiêu chí.
     * **Triệt tiêu lặp giá:** Khối giá hiển thị 1 lần duy nhất bên trái footer thẻ, bên phải là nút hành động "Xem thử" và "Mua [X] V" (hoặc "Thêm vào bàn học" khi đã sở hữu).
-    * **Trạng thái Đã sở hữu:** Khi tài liệu đã được mua, hiển thị badge `Đã sở hữu` và nút `Thêm vào bàn học` (icon `ArrowRight` / `Plus`), nhấp vào sẽ tự động mount tài liệu lên bàn học đang mở và đóng modal.
+    * **Trạng thái Đã sở hữu & Tủ tài liệu cá nhân:**
+      * Khi tài liệu đã được mua, hiển thị badge `Đã sở hữu` và nút `Mở ở bàn học` (icon `ArrowRight`).
+      * Cung cấp nút **"Tủ tài liệu cá nhân"** nổi bật trên thanh công cụ của cả modal Chợ (`MarketModal.tsx`) lẫn trang Chợ (`/market`) với icon `BookmarkCheck` và số lượng tài liệu đã sở hữu. Khi kích hoạt, hiển thị danh sách toàn bộ các tài liệu đã mở khóa để người dùng tiện tra cứu và mở học lại bất cứ lúc nào.
+      * Dữ liệu tài liệu đã mua được lưu trữ bền vững độc lập (`vitudy_purchased_market_items`) qua `MarketPurchaseStorage.ts`.
+    * **Quy Chuẩn Mở Tài Liệu Vào Bàn Học (`SelectSpaceForDocModal.tsx`):**
+      * Khi người dùng nhấp "Mở ở bàn học" hoặc vừa mua tài liệu thành công: hệ thống mở modal **"Mở tài liệu trên bàn học"**, hiển thị danh sách bàn học của bản thân được **sắp xếp từ ngày gần nhất trở đi** (`lastOpenedAt` giảm dần).
+      * Có ô tìm kiếm theo tên bàn học và môn học; hỗ trợ tùy chọn tạo bàn học mới riêng cho tài liệu này.
+      * Khi ấn **"Mở bàn học"**: hệ thống gọi `addMarketItemToSpace` thêm tài liệu vào bàn học đã chọn (giữ nguyên toàn vẹn những thứ có sẵn trên bàn), cập nhật mốc mở lần cuối, lưu bàn học lên Supabase/localStorage và điều hướng chuyển view vào đúng bàn học đó (`/?view=desk&space=[id]`), triệt tiêu hoàn toàn lỗi bị rơi ngược ra trang chủ.
     * **Bộ lọc trực quan & Nút Đặt lại:** Bộ lọc loại tài liệu, môn học, điểm AI, mức giá dạng chip hoặc dropdown tinh gọn, luôn có nút `Đặt lại` (`RotateCcw`) khi có bất kỳ bộ lọc nào kích hoạt.
     * **Tương phản WCAG AA:** Nhãn và chữ phụ dùng `text-stone-700` hoặc đậm hơn, bảo đảm tỷ lệ tương phản >= 4.5:1.
   * **Quy Chuẩn Trang Tài Khoản (`/profile`) & Quản Lý ViToken Chuẩn Mực:**

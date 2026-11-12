@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-11-12 12:20 — main (Tủ Tài Liệu Cá Nhân & Hộp Thoại Chọn Bàn Học Mở Tài Liệu Chợ)
+- **Task:**
+  1. **Tủ tài liệu cá nhân (Personal Document Cabinet):**
+     - Xây dựng kho lưu trữ tài liệu đã mua `MarketPurchaseStorage.ts` bền vững (`vitudy_purchased_market_items`).
+     - Bổ sung nút **"Tủ tài liệu cá nhân"** nổi bật trên thanh công cụ của cả modal Chợ (`MarketModal.tsx`) và trang Chợ (`/market`) với icon `BookmarkCheck` và huy hiệu đếm số lượng tài liệu đã sở hữu.
+     - Khi chọn, hiển thị danh mục các tài liệu đã mua kèm nút "Mở ở bàn học".
+  2. **Hộp thoại chọn bàn học mở tài liệu (`SelectSpaceForDocModal.tsx`):**
+     - Khắc phục triệt để lỗi bấm "Mở ở bàn học" bị văng ngược ra trang chủ.
+     - Xây dựng modal chọn bàn học: danh sách bàn học của người dùng được **sắp xếp theo thứ tự từ ngày gần nhất trở đi** (`lastOpenedAt` giảm dần).
+     - Hỗ trợ ô tìm kiếm thời gian thực theo tên bàn học hoặc môn học.
+     - Hỗ trợ tùy chọn tạo bàn học mới riêng cho tài liệu.
+     - Nút "Mở bàn học" màu Cam ViT `#E0562D` gọi `addMarketItemToSpace`, lưu không gian bền vững và điều hướng chuyển view vào đúng bàn học đó (`/?view=desk&space=[id]`) với đầy đủ các vật thể có sẵn và tài liệu mới.
+- **Files Modified / Created:**
+  - `src/services/MarketPurchaseStorage.ts`
+  - `src/components/modals/SelectSpaceForDocModal.tsx`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/app/market/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verification:**
+  - `pnpm exec tsc --noEmit`: 0 errors.
+  - `npx vitest run`: 19 test files (65 tests) passed 100%.
+  - `pnpm run build:pages`: Build static export thành công.
+
+---
+
 ## 2026-11-12 11:55 — main (Khắc Phục 5 Lỗi UI Sách, Trình Đọc Cuộn Dọc Liên Tục & Bền Vững Bàn Học)
 - **Task:**
   1. **Khắc phục vỡ layout modal STudy / Tóm tắt sách (`StudyToolsModal.tsx`):**

@@ -9,6 +9,8 @@ import { useViToken } from '@/context/ViTokenContext';
 import { useAuth } from '@/hooks/useAuth';
 import { getAssetPath } from '@/lib/assets';
 import { TopUpModal } from '@/components/payment/TopUpModal';
+import { SelectSpaceForDocModal } from '@/components/modals/SelectSpaceForDocModal';
+import { getPurchasedItemIds, recordPurchasedItemId } from '@/services/MarketPurchaseStorage';
 import { 
   ArrowLeft, 
   Store, 
@@ -26,7 +28,8 @@ import {
   Layers,
   ArrowRight,
   ShoppingBag,
-  Share2
+  Share2,
+  BookmarkCheck
 } from 'lucide-react';
 
 export default function MarketPage() {
@@ -45,8 +48,10 @@ export default function MarketPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
-  // Preview modal state
+  // Preview modal & Select Space modal state
   const [previewItem, setPreviewItem] = useState<MarketItem | null>(null);
+  const [selectSpaceDoc, setSelectSpaceDoc] = useState<MarketItem | null>(null);
+  const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [returnDestination, setReturnDestination] = useState<'desk' | 'home'>('desk');
@@ -60,6 +65,7 @@ export default function MarketPage() {
     } catch {
       // ignore
     }
+    setPurchasedIds(getPurchasedItemIds());
   }, []);
 
   // New shared item form state
@@ -80,7 +86,9 @@ export default function MarketPage() {
       search: searchQuery,
       sort: sortBy,
     }).then((data) => {
-      setItems(data);
+      const pIds = getPurchasedItemIds();
+      setPurchasedIds(pIds);
+      setItems(data.map(i => (pIds.includes(i.id) || i.purchased) ? { ...i, purchased: true } : i));
       setIsLoading(false);
     });
   };
@@ -90,12 +98,7 @@ export default function MarketPage() {
   }, [selectedCategory, selectedType, minScore, maxPrice, searchQuery, sortBy]);
 
   const handleOpenOnDesk = (item: MarketItem) => {
-    try {
-      localStorage.setItem('vitudy_pending_market_item', JSON.stringify(item));
-    } catch {
-      // ignore
-    }
-    router.push('/?view=desk');
+    setSelectSpaceDoc(item);
   };
 
   const handlePurchase = (item: MarketItem) => {
@@ -105,17 +108,15 @@ export default function MarketPage() {
     }
     const success = spendTokens(item.price, `Mua tài liệu Chợ: ${item.title}`);
     if (success) {
+      recordPurchasedItemId(item.id);
+      setPurchasedIds(prev => [...prev, item.id]);
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, purchased: true } : i));
-      try {
-        localStorage.setItem('vitudy_pending_market_item', JSON.stringify(item));
-      } catch {
-        // ignore
-      }
-      setPurchaseSuccess(`Đã mua thành công "${item.title}". Bạn có thể mở tài liệu ngay trên Bàn học!`);
+      setPurchaseSuccess(`Đã mua thành công "${item.title}". Hãy chọn bàn học bạn muốn mở tài liệu!`);
       setTimeout(() => {
         setPurchaseSuccess(null);
         setPreviewItem(null);
-      }, 1500);
+        setSelectSpaceDoc(item);
+      }, 800);
     }
   };
 
@@ -242,6 +243,27 @@ export default function MarketPage() {
 
           <div className="flex items-center gap-2.5">
             <button
+              type="button"
+              onClick={() => setActiveMarketTab(activeMarketTab === 'purchased' ? 'all' : 'purchased')}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 border ${
+                activeMarketTab === 'purchased'
+                  ? 'bg-[#E0562D] text-white border-[#E0562D]'
+                  : 'bg-white hover:bg-orange-50/50 text-stone-800 border-stone-200'
+              }`}
+              title="Xem các tài liệu bạn đã mở khóa và sở hữu vĩnh viễn"
+            >
+              <BookmarkCheck className={`w-3.5 h-3.5 ${activeMarketTab === 'purchased' ? 'text-white' : 'text-[#E0562D]'}`} />
+              <span>Tủ tài liệu cá nhân</span>
+              {items.filter(i => i.purchased).length > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  activeMarketTab === 'purchased' ? 'bg-white text-[#E0562D]' : 'bg-[#FFF7ED] text-[#9A3412] border border-[#FFEDD5]'
+                }`}>
+                  {items.filter(i => i.purchased).length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => setIsShareModalOpen(true)}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-stone-900 hover:bg-black px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
             >
@@ -293,14 +315,14 @@ export default function MarketPage() {
               <button
                 type="button"
                 onClick={() => setActiveMarketTab('purchased')}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeMarketTab === 'purchased'
                     ? 'bg-white text-emerald-800 shadow-xs'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Đã mua ({items.filter(i => i.purchased).length})</span>
+                <BookmarkCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Tủ tài liệu cá nhân ({items.filter(i => i.purchased).length})</span>
               </button>
               <button
                 type="button"
@@ -834,6 +856,15 @@ export default function MarketPage() {
         isOpen={isTopUpOpen} 
         onClose={() => setIsTopUpOpen(false)} 
       />
+
+      {/* Select Space For Document Modal */}
+      {selectSpaceDoc && (
+        <SelectSpaceForDocModal
+          isOpen={!!selectSpaceDoc}
+          onClose={() => setSelectSpaceDoc(null)}
+          item={selectSpaceDoc}
+        />
+      )}
     </div>
   );
 }
