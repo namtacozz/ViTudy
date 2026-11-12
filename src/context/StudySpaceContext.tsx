@@ -425,13 +425,34 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
         let targetId = '';
         if (cloudSpaces && cloudSpaces.length > 0) {
-          // Bảo toàn các bàn học cục bộ vừa tạo chưa kịp sync lên cloud
-          const mergedSpaces = [...cloudSpaces];
+          // Bảo toàn dữ liệu cục bộ: Nếu local có bàn học cùng id mà có tài liệu mới hơn/đầy đủ hơn, giữ local
+          const mergedSpaces = cloudSpaces.map(cs => {
+            const localMatch = localSpaces?.find(ls => ls.id === cs.id);
+            if (!localMatch) return cs;
+            const localTime = new Date(localMatch.updatedAt || localMatch.lastOpenedAt || 0).getTime();
+            const cloudTime = new Date(cs.updatedAt || cs.lastOpenedAt || 0).getTime();
+            // Nếu local có tài liệu mà cloud trống, hoặc local có mốc lưu mới hơn/bằng -> ưu tiên dữ liệu local
+            if (localMatch.items && (cs.items.length === 0 || localTime >= cloudTime || localMatch.items.length >= cs.items.length)) {
+              // Tự động đẩy local items lên cloud để đồng bộ
+              StudySpaceService.saveSpace(localMatch, user.id)
+                .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
+                .catch(() => {});
+              return {
+                ...cs,
+                ...localMatch,
+                items: localMatch.items
+              };
+            }
+            return cs;
+          });
+
           if (localSpaces && localSpaces.length > 0) {
             localSpaces.forEach(ls => {
               if (!mergedSpaces.some(cs => cs.id === ls.id)) {
                 mergedSpaces.push(ls);
-                StudySpaceService.saveSpace(ls, user.id).catch(() => {});
+                StudySpaceService.saveSpace(ls, user.id)
+                  .then(() => StudySpaceService.upsertItems(ls.id, ls.items))
+                  .catch(() => {});
               }
             });
           }
@@ -451,14 +472,20 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
             ? localActiveId
             : localSpaces[0].id;
           setActiveSpaceId(targetId);
-          localSpaces.forEach(s => StudySpaceService.saveSpace(s, user.id).catch(() => {}));
+          localSpaces.forEach(s => {
+            StudySpaceService.saveSpace(s, user.id)
+              .then(() => StudySpaceService.upsertItems(s.id, s.items))
+              .catch(() => {});
+          });
         } else {
           // Tài khoản mới chưa có bàn học -> Khởi tạo bàn học mẫu Demo
           import('@/data/demoSpace').then(({ createDemoStudySpace }) => {
             const demoSpace = createDemoStudySpace(user.id);
             setSpaces([demoSpace]);
             setActiveSpaceId(demoSpace.id);
-            StudySpaceService.saveSpace(demoSpace, user.id).catch(() => {});
+            StudySpaceService.saveSpace(demoSpace, user.id)
+              .then(() => StudySpaceService.upsertItems(demoSpace.id, demoSpace.items))
+              .catch(() => {});
           });
         }
 
@@ -545,8 +572,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     if (status === 'authenticated' && uId) {
       setSaveStatus('saving');
       try {
+        // Lưu space trước để đảm bảo foreign key tồn tại trước khi chèn items
+        await StudySpaceService.saveSpace(curSpace, uId);
         await Promise.all([
-          StudySpaceService.saveSpace(curSpace, uId),
           StudySpaceService.upsertItems(curSpace.id, curSpace.items),
           curSpace.threads && curSpace.threads.length > 0 
             ? StudySpaceService.saveThreads(curSpace.id, curSpace.threads) 

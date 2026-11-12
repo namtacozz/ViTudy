@@ -237,9 +237,9 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
           <div>
             {step === 'select' && (
               <div className="space-y-3.5">
-                {/* Tỷ lệ quy đổi: một dòng chữ xám nhỏ phía trên danh sách gói */}
-                <div className="text-[11px] text-slate-500 font-medium px-0.5">
-                  1.000đ = 1 ViToken. Dùng cho hỏi đáp AI, mở tài liệu trên Chợ và xuất đề thi.
+                {/* Tỷ lệ quy đổi: chữ độ tương phản cao */}
+                <div className="text-xs text-slate-700 font-medium px-0.5">
+                  <strong className="text-slate-900 font-bold">1.000đ = 1 ViToken</strong>. Dùng cho hỏi đáp AI, mở tài liệu trên Chợ và xuất đề thi.
                 </div>
 
                 <PricingTiers

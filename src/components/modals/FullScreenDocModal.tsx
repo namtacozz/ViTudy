@@ -9,16 +9,17 @@ import {
   ChevronRight, 
   ZoomIn, 
   ZoomOut, 
-  RotateCcw, 
+  RotateCw,
+  Maximize2,
   BookOpen, 
   FileText, 
   Clock,
   CheckCircle2,
   XCircle,
   PanelLeft,
-  Printer
+  Printer,
+  ChevronDown
 } from 'lucide-react';
-import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { paginateDocument, PaginatedLeaf } from '@/utils/pagination';
 import { MathRenderer } from '../common/MathRenderer';
 
@@ -40,6 +41,8 @@ export function FullScreenDocModal({
   const [isTwoPageSpread, setIsTwoPageSpread] = useState(item.type === 'book');
   const [pageRotation, setPageRotation] = useState(0); // 0, 90, 180, 270
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false);
+  const [printScope, setPrintScope] = useState<'all' | 'current'>('all');
   const [mounted, setMounted] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -125,8 +128,12 @@ export function FullScreenDocModal({
     setPageRotation(prev => (prev + 90) % 360);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = (scope: 'all' | 'current' = 'all') => {
+    setPrintScope(scope);
+    setIsPrintMenuOpen(false);
+    setTimeout(() => {
+      window.print();
+    }, 120);
   };
 
   useEffect(() => {
@@ -181,9 +188,51 @@ export function FullScreenDocModal({
       className="fixed inset-0 z-[100] bg-[#e8ebf0] flex flex-col select-none text-slate-900 font-sans animate-fade-in"
       onClick={onClose}
     >
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body {
+            background: white !important;
+            overflow: visible !important;
+          }
+          .no-print, [data-fullscreen-modal="true"] > div:first-child, .fullscreen-sidebar {
+            display: none !important;
+          }
+          [data-fullscreen-modal="true"] {
+            position: static !important;
+            background: white !important;
+            inset: auto !important;
+            overflow: visible !important;
+            display: block !important;
+          }
+          .fullscreen-canvas {
+            padding: 0 !important;
+            background: white !important;
+            overflow: visible !important;
+            display: block !important;
+          }
+          .fullscreen-page-item {
+            box-shadow: none !important;
+            border: none !important;
+            break-after: page !important;
+            page-break-after: always !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+          }
+          .print-hide {
+            display: none !important;
+          }
+          @page {
+            size: A4 portrait;
+            margin: 12mm;
+          }
+        }
+      `}} />
+
       {/* ================= 1. BROWSER PDF VIEWER TOP TOOLBAR (HUD White / Monochromatic) ================= */}
       <div 
-        className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-300 flex-shrink-0 z-30 shadow-xs select-none"
+        className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-300 flex-shrink-0 z-30 shadow-xs select-none no-print"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left: Sidebar Toggle & Document Info */}
@@ -283,10 +332,10 @@ export function FullScreenDocModal({
 
               <button
                 onClick={() => setZoomLevel(100)}
-                title="Khôi phục 100%"
+                title="Khôi phục 100% (Chuẩn)"
                 className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-3 h-3 stroke-[2.4]" />
+                <Maximize2 className="w-3.5 h-3.5 stroke-[2.4]" />
               </button>
             </div>
 
@@ -298,7 +347,7 @@ export function FullScreenDocModal({
               title={`Xoay trang (${pageRotation}°) • Bấm để xoay tiếp 90°`}
               className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
             >
-              <RotateTwoWay className="w-3.5 h-3.5 stroke-[2.4]" />
+              <RotateCw className="w-3.5 h-3.5 stroke-[2.4]" />
             </button>
 
             {/* View Mode Toggle: Segmented Control Một trang / Hai trang */}
@@ -334,15 +383,44 @@ export function FullScreenDocModal({
           </div>
         )}
 
-        {/* Right: Print & Close Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handlePrint}
-            title="In tài liệu (Print)"
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200"
-          >
-            <Printer className="w-4 h-4 stroke-[2.2]" />
-          </button>
+        {/* Right: Print Menu & Close Buttons */}
+        <div className="flex items-center gap-2 relative">
+          <div className="relative">
+            <button
+              onClick={() => setIsPrintMenuOpen(prev => !prev)}
+              title="In tài liệu"
+              className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs border border-slate-300 shadow-2xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              <Printer className="w-4 h-4 stroke-[2.2]" />
+              <span className="hidden sm:inline">In</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {isPrintMenuOpen && (
+              <div 
+                className="absolute right-0 top-full mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50 text-xs font-semibold text-slate-800 animate-fade-in"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => handlePrint('current')}
+                  className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                >
+                  <span>In trang hiện tại</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {isTwoPageSpread ? `${leftIndex + 1}-${Math.min(rightIndex + 1, totalLeaves)}` : currentPage + 1}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePrint('all')}
+                  className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between cursor-pointer border-t border-slate-100 text-[#E0562D]"
+                >
+                  <span>In toàn bộ ({totalLeaves} trang)</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={onClose}
@@ -363,7 +441,7 @@ export function FullScreenDocModal({
       >
         {/* Left Thumbnails Sidebar */}
         {!isExam && isSidebarOpen && (
-          <div className="w-56 bg-slate-100/95 border-r border-slate-300 flex flex-col overflow-y-auto p-3 gap-3 select-none flex-shrink-0 no-scrollbar shadow-inner animate-fade-in">
+          <div className="fullscreen-sidebar w-52 bg-slate-100/95 border-r border-slate-300 flex flex-col overflow-y-auto p-2.5 gap-2 select-none flex-shrink-0 no-scrollbar shadow-inner animate-fade-in no-print">
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">
               Danh sách trang ({totalLeaves})
             </div>
@@ -371,7 +449,7 @@ export function FullScreenDocModal({
             {leaves.map((leaf, lIdx) => {
               // Chỉ trang đang xem mới có viền cam 2px
               const isSelectedPage = isTwoPageSpread 
-                ? lIdx === leftIndex 
+                ? (lIdx === leftIndex || (rightIndex < totalLeaves && lIdx === rightIndex))
                 : lIdx === currentPage;
 
               // Làm sạch text hiển thị trên thumbnail (bỏ ký tự ##, $$, \)
@@ -396,16 +474,16 @@ export function FullScreenDocModal({
                   onClick={() => scrollToPage(lIdx)}
                   className="flex flex-col items-center group cursor-pointer"
                 >
-                  {/* Miniature Page Card */}
+                  {/* Miniature Page Card with height ~92px */}
                   <div 
-                    className={`w-full aspect-[1/1.3] bg-white rounded-md p-2.5 flex flex-col justify-between transition-all overflow-hidden relative ${
+                    className={`w-full h-24 bg-white rounded-lg p-2 flex flex-col justify-between transition-all overflow-hidden relative ${
                       isSelectedPage
                         ? 'border-2 border-[#E0562D] ring-1 ring-[#E0562D]/50 shadow-md'
-                        : 'border border-slate-300 hover:border-slate-400 shadow-2xs hover:shadow-sm'
+                        : 'border border-slate-300 hover:border-slate-400 shadow-2xs hover:shadow-xs'
                     }`}
                   >
-                    {/* Số trang gộp ở góc trên bên phải thumbnail */}
-                    <div className="absolute top-1.5 right-2 text-[9px] font-mono font-bold text-slate-400 bg-slate-100 px-1 py-0.2 rounded">
+                    {/* Số trang ở góc trên bên phải thumbnail */}
+                    <div className="absolute top-1.5 right-1.5 text-[9px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
                       {leaf.pageNumber}
                     </div>
 
@@ -418,20 +496,14 @@ export function FullScreenDocModal({
                         />
                       </div>
                     ) : (
-                      <>
-                        <div className="pr-6">
-                          <div className="text-[9px] font-bold text-slate-900 line-clamp-2 border-b border-slate-100 pb-1 mb-1 leading-tight">
-                            {cleanTitle}
-                          </div>
-                          <div className="text-[8px] leading-relaxed text-slate-500 line-clamp-5 select-none pointer-events-none">
-                            {cleanPreviewText}
-                          </div>
+                      <div className="pr-6">
+                        <div className="text-[9px] font-bold text-slate-900 line-clamp-1 border-b border-slate-100 pb-0.5 mb-1 leading-tight text-left">
+                          {cleanTitle}
                         </div>
-                        <div className="w-full flex items-center justify-between text-[8px] text-slate-400 border-t border-slate-50 pt-1">
-                          <span className="truncate max-w-[120px]">{item.title}</span>
-                          <span className="font-mono">{leaf.pageNumber}/{totalLeaves}</span>
+                        <div className="text-[8px] leading-snug text-slate-500 line-clamp-3 select-none pointer-events-none text-left">
+                          {cleanPreviewText}
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -444,7 +516,7 @@ export function FullScreenDocModal({
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-auto flex flex-col items-center p-8 bg-[#e8ebf0] cursor-default relative"
+          className="fullscreen-canvas flex-1 overflow-auto flex flex-col items-center p-8 bg-[#e8ebf0] cursor-default relative"
           onClick={(e) => e.stopPropagation()}
         >
           <div 
@@ -459,8 +531,15 @@ export function FullScreenDocModal({
               /* ================= FULL SCREEN EXAM SHEET ================= */
               <div 
                 style={{ width: 680, minHeight: 900, backgroundColor: '#ffffff', color: '#0f172a' }}
-                className="rounded-sm p-8 shadow-2xl border border-slate-300 font-sans flex flex-col justify-between"
+                className="fullscreen-page-item rounded-sm p-8 shadow-2xl border border-slate-300 font-sans flex flex-col justify-between relative"
               >
+                {item.purchased && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-10 opacity-[0.04] select-none">
+                    <span className="text-4xl font-black font-sans uppercase -rotate-45 tracking-widest whitespace-nowrap text-slate-900">
+                      Bản quyền ViTudy • {item.author || 'ViTudy Education'}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <div className="border-b-2 border-slate-900 pb-3 mb-5 text-center">
                     <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-600 mb-1">
@@ -489,7 +568,7 @@ export function FullScreenDocModal({
                         <div key={q.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
                           <div className="font-bold text-slate-900 mb-3 flex items-start gap-2">
                             <span className="text-slate-500 font-mono">Câu {qIdx + 1}:</span>
-                            <span className="flex-1">
+                            <span className="flex-1 text-left">
                               <MathRenderer content={q.question} />
                             </span>
                             {exam.isGraded && (
@@ -527,7 +606,7 @@ export function FullScreenDocModal({
                                   <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center font-bold text-[10px]">
                                     {String.fromCharCode(65 + optIdx)}
                                   </span>
-                                  <span className="flex-1">
+                                  <span className="flex-1 text-left">
                                     <MathRenderer content={opt} />
                                   </span>
                                 </div>
@@ -560,20 +639,31 @@ export function FullScreenDocModal({
                 {spreads.map((spread, sIdx) => {
                   const leftLeafItem = leaves[spread[0]] || null;
                   const rightLeafItem = spread[1] !== undefined ? leaves[spread[1]] : null;
+                  const isCurrentSpread = sIdx === Math.floor(currentPage / 2);
+                  const printHideClass = printScope === 'current' && !isCurrentSpread ? 'print-hide' : '';
+
                   return (
                     <div 
                       key={sIdx}
                       id={`fullscreen-spread-${sIdx}`}
                       style={{ width: 1040, minHeight: 700 }}
-                      className="flex rounded-md shadow-2xl overflow-hidden border border-slate-300 bg-white text-slate-900 flex-shrink-0"
+                      className={`fullscreen-page-item flex rounded-md shadow-2xl overflow-hidden border border-slate-300 bg-white text-slate-900 flex-shrink-0 relative ${printHideClass}`}
                     >
+                      {item.purchased && (
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-10 opacity-[0.04] select-none">
+                          <span className="text-4xl font-black font-sans uppercase -rotate-45 tracking-widest whitespace-nowrap text-slate-900">
+                            Bản quyền ViTudy • {item.author || 'ViTudy Education'}
+                          </span>
+                        </div>
+                      )}
+
                       {/* Left Page */}
                       <div className="flex-1 p-10 flex flex-col justify-between border-r border-slate-200 relative bg-[#fdfbf7]">
                         {leftLeafItem ? (
                           <div className="flex-1 flex flex-col justify-between overflow-hidden">
                             <div className="flex-1 flex flex-col overflow-hidden">
                               <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                                <span className="text-xs font-bold text-slate-600 truncate">
+                                <span className="text-xs font-bold text-slate-700 text-left truncate flex-1">
                                   {leftLeafItem.chapterTitle}
                                 </span>
                               </div>
@@ -591,7 +681,7 @@ export function FullScreenDocModal({
                                 </div>
                               )}
                             </div>
-                            <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
+                            <div className="text-center text-xs font-mono text-slate-500 pt-3 pb-1 border-t border-slate-200 flex-shrink-0">
                               {leftLeafItem.pageNumber}
                             </div>
                           </div>
@@ -603,7 +693,7 @@ export function FullScreenDocModal({
                       </div>
 
                       {/* Central Spine Seam Shadow */}
-                      <div className="w-[3px] bg-gradient-to-r from-stone-400/30 via-stone-500/40 to-stone-400/30 shadow-inner flex-shrink-0" />
+                      <div className="w-[3px] bg-gradient-to-r from-stone-400/30 via-stone-500/40 to-stone-400/30 shadow-inner flex-shrink-0 no-print" />
 
                       {/* Right Page */}
                       <div className="flex-1 p-10 flex flex-col justify-between relative bg-[#fdfbf7]">
@@ -611,7 +701,7 @@ export function FullScreenDocModal({
                           <div className="flex-1 flex flex-col justify-between overflow-hidden">
                             <div className="flex-1 flex flex-col overflow-hidden">
                               <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                                <span className="text-xs font-bold text-slate-600 truncate">
+                                <span className="text-xs font-bold text-slate-700 text-left truncate flex-1">
                                   {rightLeafItem.chapterTitle}
                                 </span>
                               </div>
@@ -629,7 +719,7 @@ export function FullScreenDocModal({
                                 </div>
                               )}
                             </div>
-                            <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
+                            <div className="text-center text-xs font-mono text-slate-500 pt-3 pb-1 border-t border-slate-200 flex-shrink-0">
                               {rightLeafItem.pageNumber}
                             </div>
                           </div>
@@ -646,40 +736,53 @@ export function FullScreenDocModal({
             ) : (
               /* ================= FULL SCREEN SINGLE PAGES (CONTINUOUS STREAM) ================= */
               <div className="flex flex-col items-center gap-8 pb-16">
-                {leaves.map((leafItem, lIdx) => (
-                  <div 
-                    key={lIdx}
-                    id={`fullscreen-page-${lIdx}`}
-                    style={{ width: 640, minHeight: 840 }}
-                    className="rounded-sm shadow-2xl p-10 border border-slate-300 bg-white text-slate-900 flex flex-col justify-between flex-shrink-0"
-                  >
-                    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                      <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                          <span className="text-xs font-bold text-slate-600 truncate">
-                            {leafItem.chapterTitle}
+                {leaves.map((leafItem, lIdx) => {
+                  const isCurrentLeaf = lIdx === currentPage;
+                  const printHideClass = printScope === 'current' && !isCurrentLeaf ? 'print-hide' : '';
+
+                  return (
+                    <div 
+                      key={lIdx}
+                      id={`fullscreen-page-${lIdx}`}
+                      style={{ width: 640, minHeight: 840 }}
+                      className={`fullscreen-page-item rounded-sm shadow-2xl p-10 border border-slate-300 bg-white text-slate-900 flex flex-col justify-between flex-shrink-0 mx-auto relative ${printHideClass}`}
+                    >
+                      {item.purchased && (
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-10 opacity-[0.04] select-none">
+                          <span className="text-4xl font-black font-sans uppercase -rotate-45 tracking-widest whitespace-nowrap text-slate-900">
+                            Bản quyền ViTudy • {item.author || 'ViTudy Education'}
                           </span>
                         </div>
-                        {leafItem.image ? (
-                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
-                            <img
-                              src={leafItem.image}
-                              alt={`Trang ${leafItem.pageNumber}`}
-                              className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
-                            />
+                      )}
+
+                      <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                          <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                            <span className="text-xs font-bold text-slate-700 text-left truncate flex-1">
+                              {leafItem.chapterTitle}
+                            </span>
                           </div>
-                        ) : (
-                          <div className="text-[16px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
-                            <MathRenderer content={leafItem.text} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
-                        {leafItem.pageNumber}
+                          {leafItem.image ? (
+                            <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                              <img
+                                src={leafItem.image}
+                                alt={`Trang ${leafItem.pageNumber}`}
+                                className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-[16px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
+                              <MathRenderer content={leafItem.text} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center text-xs font-mono text-slate-500 pt-3 pb-1 border-t border-slate-200 flex-shrink-0">
+                          {leafItem.pageNumber}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

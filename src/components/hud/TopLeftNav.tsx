@@ -134,6 +134,7 @@ export function TopLeftNav() {
           <Link
             href="/?view=home"
             onClick={() => {
+              saveCurrentSpaceImmediately();
               if (typeof window !== 'undefined') {
                 try { localStorage.setItem('vitudy_current_view', 'home'); } catch (e) {}
               }

@@ -70,6 +70,9 @@ export interface DeskItem {
     url?: string;
     isSvg?: boolean;
   };
+  author?: string;
+  purchased?: boolean;
+  marketItemId?: string;
 }
 
 export interface IntelineThread {

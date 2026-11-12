@@ -334,7 +334,7 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
           <span className="font-mono font-bold text-slate-900">{wallet?.balance ?? 50} ViToken</span>
         </div>
 
-        <form onSubmit={handleSaveAiConfig} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
+        <form onSubmit={handleSaveAiConfig} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1 pb-6">
           {/* 1. Chọn Nhà Cung Cấp */}
           <div>
             <label className="text-xs font-bold text-slate-900 block mb-2">
@@ -571,7 +571,7 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                       <optgroup key={group.group} label={group.group}>
                         {group.models.map((m) => (
                           <option key={m.id} value={m.id}>
-                            {m.name} — {m.desc} ({m.id})
+                            {m.name}
                           </option>
                         ))}
                       </optgroup>
@@ -580,14 +580,14 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                     <optgroup label="Mô hình hệ thống ViTudy">
                       {SYSTEM_MODEL_LIST.map((m) => (
                         <option key={m.id} value={m.id}>
-                          {m.name} — {m.desc} ({m.id})
+                          {m.name}
                         </option>
                       ))}
                     </optgroup>
                   ) : (
                     (PROVIDER_MODELS[selectedProvider] || []).map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} — {m.desc} ({m.id})
+                        {m.name}
                       </option>
                     ))
                   )}

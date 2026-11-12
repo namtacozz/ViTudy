@@ -20,8 +20,8 @@ const BONUS_MAP: Record<string, string> = {
 const USAGE_MAP: Record<string, string> = {
   starter: 'Đủ cho 1 lượt hỏi đáp chuyên sâu',
   midterm: '~5 lượt AI hoặc tải đề thi',
-  semester: '15 lượt AI hoặc 2 tài liệu Chợ · Tiết kiệm 10%',
-  project: '~50 lượt AI hoặc cả học kỳ',
+  semester: '15 lượt AI hoặc 2 tài liệu Chợ · Tặng 11% so với giá gốc',
+  project: '~50 lượt AI hoặc cả học kỳ · Tiết kiệm lớn',
   team: 'Phù hợp nhóm học và đồ án lớn',
 };
 
@@ -56,7 +56,7 @@ export function PricingTiers({
       <div 
         role="radiogroup" 
         aria-label="Chọn gói nạp ViToken"
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 items-stretch"
       >
         {packages.map((pkg, idx) => {
           const isSelected = selectedPackageId === pkg.id;
@@ -73,7 +73,7 @@ export function PricingTiers({
               aria-label={`Gói ${pkg.label}, ${pkg.priceVnd.toLocaleString('vi-VN')} đồng, nhận ${pkg.tokenAmount} ViToken. ${usageDesc}`}
               onClick={() => onSelectPackage(pkg)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              className={`relative rounded-xl p-3 bg-white transition-all cursor-pointer flex flex-col justify-between text-left outline-none ${
+              className={`relative rounded-xl p-3 bg-white transition-all cursor-pointer flex flex-col justify-between text-left outline-none min-h-[170px] ${
                 isSelected
                   ? 'border-[1.5px] border-[#E0562D]'
                   : 'border border-slate-200 hover:border-slate-300'
@@ -81,20 +81,15 @@ export function PricingTiers({
             >
               {/* Huy hiệu Phổ biến - Chỉ gắn duy nhất gói học kỳ */}
               {isPopular && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#E0562D] text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#E0562D] text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-2xs">
                   Phổ biến
                 </div>
               )}
 
-              <div>
-                {/* Dòng 1: Tên gói & Nhãn +N ViToken */}
+              <div className="flex-1 flex flex-col justify-between">
+                {/* Dòng 1: Tên gói */}
                 <div className="flex items-center justify-between gap-1 mb-1 min-h-[20px]">
                   <span className="text-xs font-bold text-slate-900 whitespace-nowrap">{pkg.label}</span>
-                  {bonus && (
-                    <span className="text-[10px] font-bold text-[#E0562D] whitespace-nowrap">
-                      {bonus}
-                    </span>
-                  )}
                 </div>
 
                 {/* Dòng 2 & 3: Giá to nhất & Số ViToken nhận được */}
@@ -103,8 +98,21 @@ export function PricingTiers({
                     {pkg.priceVnd.toLocaleString('vi-VN')}{' '}
                     <span className="text-[11px] font-bold text-slate-800">đ</span>
                   </div>
+
+                  {bonus ? (
+                    <div className="mt-1.5">
+                      <span className="text-[10px] font-bold text-[#E0562D] bg-[#FFF7ED] border border-[#FFEDD5] px-1.5 py-0.5 rounded-md whitespace-nowrap inline-block">
+                        Tặng {bonus}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-1.5 h-[21px]" />
+                  )}
+
                   <div className="text-[11px] font-medium text-slate-700 mt-1.5 whitespace-nowrap">
-                    Nhận {pkg.tokenAmount.toLocaleString('vi-VN')} ViToken
+                    {bonus
+                      ? `Nhận ${pkg.tokenAmount.toLocaleString('vi-VN')} ViToken (gồm ${bonus} tặng)`
+                      : `Nhận ${pkg.tokenAmount.toLocaleString('vi-VN')} ViToken`}
                   </div>
                   <div className="text-[10px] text-slate-500 mt-1 leading-snug min-h-[28px]">
                     {usageDesc}

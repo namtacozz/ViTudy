@@ -167,23 +167,23 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
   return (
     <div className="flex-1 flex flex-col p-6 overflow-y-auto no-scrollbar font-sans text-slate-900 bg-white">
       {/* Controls Bar */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
         <div>
           <h4 className="text-sm font-bold text-slate-900">Tóm tắt nội dung trọng tâm</h4>
           <p className="text-xs text-slate-500">
             {useAi 
-              ? 'Mô hình AI chắt lọc các luận điểm logic (không tốn ViToken khi kết nối ChatGPT)'
+              ? 'Mô hình AI chắt lọc các luận điểm logic cốt lõi kèm dẫn chứng'
               : 'Động cơ Non-AI TextRank phân tích tần suất câu (Miễn phí 100%)'}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300">
+        <div className="flex items-center gap-2.5">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 whitespace-nowrap select-none">
             <input 
               type="checkbox"
               checked={useAi}
               onChange={(e) => setUseAi(e.target.checked)}
-              className="rounded accent-slate-900"
+              className="rounded accent-[#E0562D]"
             />
             <span>Dùng AI chuyên sâu</span>
           </label>
@@ -191,7 +191,7 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
           <button
             onClick={handleGenerateSummary}
             disabled={loading}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer"
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer active:scale-95 whitespace-nowrap"
           >
             <span>{loading ? 'Đang trích xuất...' : 'Tạo tóm tắt'}</span>
           </button>
@@ -205,9 +205,12 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
             <MathRenderer content={summaryResult} />
           </div>
         ) : (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs text-center border-2 border-dashed border-slate-200 rounded-xl">
-            <Sparkles className="w-8 h-8 mb-2 text-slate-300" />
-            <span>Nhấn "Tạo tóm tắt" để bắt đầu trích xuất các ý chính của tài liệu</span>
+          <div className="h-64 flex flex-col items-center justify-center text-slate-600 text-xs text-center border-2 border-dashed border-slate-300 rounded-xl p-6">
+            <Sparkles className="w-8 h-8 mb-2 text-[#E0562D]" />
+            <span className="font-bold text-slate-800 text-sm mb-1">Chưa có bản tóm tắt</span>
+            <span className="text-slate-500 max-w-sm">
+              Nhấn "Tạo tóm tắt" để trích xuất 4-5 luận điểm cốt lõi kèm trích dẫn trang của tài liệu.
+            </span>
           </div>
         )}
       </div>

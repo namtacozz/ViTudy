@@ -108,7 +108,7 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
       {rawBlocks.map((block, bIdx) => {
         if (!block) return null;
 
-        // Block Display Math ($$...$$ or \[...\]) with minimum 16px vertical margins
+        // Block Display Math ($$...$$ or \[...\]) with ergonomic vertical margins
         if ((block.startsWith('$$') && block.endsWith('$$')) || (block.startsWith('\\[') && block.endsWith('\\]'))) {
           const rawMath = block.slice(2, -2).trim();
           const html = renderKatexWithCache(rawMath, true);
@@ -116,12 +116,12 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
             return (
               <div 
                 key={bIdx} 
-                className="my-4 py-1.5 overflow-x-auto no-scrollbar text-center"
+                className="my-2.5 py-1 overflow-x-auto no-scrollbar text-center"
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
           }
-          return <code key={bIdx} className="block my-4 font-mono text-xs text-center">{rawMath}</code>;
+          return <code key={bIdx} className="block my-2.5 font-mono text-xs text-center">{rawMath}</code>;
         }
 
         // 2. Parse lines for Headings, Lists, and Paragraphs

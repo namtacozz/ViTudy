@@ -44,7 +44,7 @@ export function KnowInheritPublishModal({
   const { addTokens } = useViToken();
   const { user, profile } = useAuth();
 
-  const defaultAuthor = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Tác giả ViTudy';
+  const defaultAuthor = profile?.display_name || user?.email?.split('@')[0] || 'Tác giả ViTudy';
   const initialType: 'book' | 'paper' | 'exam' = item?.isExamSheet ? 'exam' : item?.type === 'book' ? 'book' : 'paper';
 
   const [authorName, setAuthorName] = useState(defaultAuthor);
@@ -150,21 +150,16 @@ export function KnowInheritPublishModal({
         </button>
 
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-1 flex-shrink-0">
+        <div className="flex items-center gap-2.5 mb-2 flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#FFF7ED] border border-orange-200 flex items-center justify-center text-[#E0562D]">
             <Store className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 leading-tight">Chia sẻ lên Chợ tài liệu</h3>
             <p className="text-xs text-slate-500">
-              Chia sẻ tài liệu học tập cho cộng đồng sinh viên. Bạn nhận 85% ViToken cho mỗi lượt mở khóa.
+              Chia sẻ tài liệu học tập cùng cộng đồng. Bạn nhận 85% ViToken cho mỗi lượt mở khóa.
             </p>
           </div>
-        </div>
-
-        {/* 85% Concrete Example Pill */}
-        <div className="bg-orange-50/70 border border-orange-200/80 rounded-xl p-2.5 my-2.5 text-xs text-slate-700 flex-shrink-0 leading-relaxed">
-          <strong className="text-[#E0562D]">Chính sách chia sẻ 85/15:</strong> Bạn nhận 85% giá bán (Ví dụ: giá 50 ViToken, bạn nhận <strong>42,5 ViToken</strong> mỗi lượt mở khóa). ViToken tích lũy dùng để mở khóa tài liệu khác hoặc hỏi đáp AI.
         </div>
 
         <div className="overflow-y-auto pr-1 flex-1">
@@ -203,14 +198,19 @@ export function KnowInheritPublishModal({
 
               {/* 1. Loại tài liệu (Sách, Tờ tóm tắt, Đề thi) */}
               <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1.5">
-                  1. Loại tài liệu niêm yết
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-800">
+                    1. Loại tài liệu & Giá niêm yết
+                  </label>
+                  <span className="text-[11px] text-slate-500">
+                    Chính sách: Bạn nhận <strong className="text-[#E0562D]">85%</strong> ViToken
+                  </span>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: 'book' as const, label: 'Sách', price: '50 V', icon: <BookOpen className="w-3.5 h-3.5" /> },
-                    { id: 'paper' as const, label: 'Tờ tóm tắt', price: '15 V', icon: <FileText className="w-3.5 h-3.5" /> },
-                    { id: 'exam' as const, label: 'Đề thi', price: '30 V', icon: <HelpCircle className="w-3.5 h-3.5" /> },
+                    { id: 'book' as const, label: 'Sách', price: '50 ViToken', icon: <BookOpen className="w-3.5 h-3.5" /> },
+                    { id: 'paper' as const, label: 'Tờ tóm tắt', price: '15 ViToken', icon: <FileText className="w-3.5 h-3.5" /> },
+                    { id: 'exam' as const, label: 'Đề thi', price: '30 ViToken', icon: <HelpCircle className="w-3.5 h-3.5" /> },
                   ].map(t => (
                     <button
                       key={t.id}
@@ -282,9 +282,11 @@ export function KnowInheritPublishModal({
                   <label htmlFor="publish-desc-input" className="text-xs font-bold text-slate-800">
                     4. Mô tả tóm tắt tài liệu
                   </label>
-                  <span className={`text-[10px] font-mono ${description.length < 20 ? 'text-amber-600' : 'text-slate-400'}`}>
-                    {description.length}/300 ký tự {description.length < 20 && '(khuyến khích ≥ 20)'}
-                  </span>
+                  {description.length > 0 && (
+                    <span className={`text-[10px] font-mono ${description.length < 20 ? 'text-amber-600' : 'text-slate-400'}`}>
+                      {description.length}/300 ký tự {description.length < 20 && '(khuyến khích ≥ 20)'}
+                    </span>
+                  )}
                 </div>
                 <textarea
                   id="publish-desc-input"

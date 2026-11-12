@@ -169,18 +169,18 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
   return (
     <div className="flex-1 flex flex-col p-6 overflow-y-auto no-scrollbar font-sans text-slate-900 bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
         <div>
           <h4 className="text-sm font-bold text-slate-900">Thẻ ghi nhớ ôn ngắt quãng</h4>
           <p className="text-xs text-slate-500">
             {useAi 
-              ? 'Mô hình AI chắt lọc các khái niệm, định nghĩa và công thức cốt lõi thành flashcard'
-              : 'Động cơ Non-AI phát hiện cấu trúc định nghĩa "là", "gồm có", "tập trung vào" (chạy 100% offline)'}
+              ? 'Mô hình AI chắt lọc các khái niệm, định nghĩa và công thức cốt lõi'
+              : 'Động cơ Non-AI phát hiện cấu trúc định nghĩa (chạy 100% offline)'}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 select-none">
+        <div className="flex items-center gap-2.5">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors border border-slate-300 select-none whitespace-nowrap shrink-0">
             <input 
               type="checkbox"
               checked={useAi}
@@ -193,7 +193,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
           {user && (
             <button
               onClick={handleLoadDueCards}
-              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center cursor-pointer"
+              className="px-3 py-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center cursor-pointer whitespace-nowrap shrink-0"
             >
               <span>Ôn tập hôm nay</span>
             </button>
@@ -202,9 +202,9 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
           <button
             onClick={handleGenerateFlashcards}
             disabled={loading}
-            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 flex items-center justify-center"
+            className="px-4 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 flex items-center justify-center whitespace-nowrap shrink-0"
           >
-            <span>{loading ? 'Đang tạo thẻ...' : flashcards.length > 0 ? 'Tạo lại thẻ' : 'Trích xuất thẻ ghi nhớ'}</span>
+            <span>{loading ? 'Đang tạo thẻ...' : flashcards.length > 0 ? 'Tạo lại thẻ' : 'Trích xuất thẻ'}</span>
           </button>
         </div>
       </div>
@@ -306,9 +306,12 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
             </div>
           </div>
         ) : (
-          <div className="h-64 w-full flex flex-col items-center justify-center text-slate-400 text-xs text-center border-2 border-dashed border-slate-200 rounded-xl">
-            <Layers className="w-8 h-8 mb-2 text-slate-300" />
-            <span>Nhấn "Trích xuất thẻ ghi nhớ" để tạo bộ thẻ ghi nhớ thông minh</span>
+          <div className="h-64 w-full flex flex-col items-center justify-center text-slate-600 text-xs text-center border-2 border-dashed border-slate-300 rounded-xl p-6">
+            <Layers className="w-8 h-8 mb-2 text-[#E0562D]" />
+            <span className="font-bold text-slate-800 text-sm mb-1">Chưa có thẻ ghi nhớ</span>
+            <span className="text-slate-500 max-w-sm">
+              Nhấn "Trích xuất thẻ" để tạo 6-8 thẻ ôn ngắt quãng SM-2 hai mặt có công thức toán học.
+            </span>
           </div>
         )}
       </div>

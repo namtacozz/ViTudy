@@ -350,7 +350,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
           <h4 className="text-sm font-bold text-slate-900">Trắc nghiệm ôn tập kiến thức</h4>
           <p className="text-xs text-slate-500 mt-0.5">
             {useAi 
-              ? 'Mô hình AI phân tích câu hỏi logic kèm lời giải chi tiết (không tốn ViToken khi kết nối ChatGPT)'
+              ? 'Mô hình AI phân tích câu hỏi logic kèm lời giải chi tiết và công thức'
               : 'Động cơ Non-AI bóc tách thuật ngữ sinh phương án lựa chọn, chạy 100% offline miễn phí'}
           </p>
         </div>
@@ -641,28 +641,28 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
               </div>
             </div>
 
-            {/* Khung mô phỏng câu hỏi mẫu mờ với độ tương phản cao */}
-            <div className="p-4 rounded-xl border border-slate-300 bg-white shadow-2xs opacity-75">
+            {/* Khung mô phỏng câu hỏi mẫu minh họa với KaTeX MathRenderer */}
+            <div className="p-4 rounded-xl border border-slate-300 bg-white shadow-2xs">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-[#E0562D] border border-orange-200 px-2 py-0.5 rounded">
                   Câu hỏi mẫu minh họa
                 </span>
                 <span className="text-xs font-bold text-slate-800">
-                  Đạo hàm riêng của hàm số f(x, y) = x^2 + 3y theo biến x là:
+                  <MathRenderer content="Đạo hàm riêng của hàm số $f(x, y) = x^2 + 3y$ theo biến $x$ là:" />
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
-                  <span className="font-bold mr-1.5">A.</span> 2x
+                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-medium flex items-center">
+                  <span className="font-bold mr-1.5 text-slate-600">A.</span> <MathRenderer content="$2x$" />
                 </div>
-                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
-                  <span className="font-bold mr-1.5">B.</span> 2x + 3
+                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-medium flex items-center">
+                  <span className="font-bold mr-1.5 text-slate-600">B.</span> <MathRenderer content="$2x + 3$" />
                 </div>
-                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
-                  <span className="font-bold mr-1.5">C.</span> 3
+                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-medium flex items-center">
+                  <span className="font-bold mr-1.5 text-slate-600">C.</span> <MathRenderer content="$3$" />
                 </div>
-                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
-                  <span className="font-bold mr-1.5">D.</span> x^2
+                <div className="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-medium flex items-center">
+                  <span className="font-bold mr-1.5 text-slate-600">D.</span> <MathRenderer content="$x^2$" />
                 </div>
               </div>
             </div>

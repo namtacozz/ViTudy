@@ -218,7 +218,7 @@ export function MultiplayerBar() {
                   type="text"
                   readOnly
                   value={typeof window !== 'undefined' ? window.location.href : ''}
-                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all"
+                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all truncate"
                 />
                 <button
                   type="button"
@@ -228,6 +228,10 @@ export function MultiplayerBar() {
                   {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Đã sao chép' : 'Sao chép'}</span>
                 </button>
+              </div>
+              <div className="text-[11px] text-slate-600 mt-1.5 flex items-center justify-between px-0.5">
+                <span>Hạn liên kết: 24 giờ</span>
+                <span className="text-slate-500">Tự động đồng bộ nét vẽ & tài liệu</span>
               </div>
             </div>
 
@@ -245,7 +249,7 @@ export function MultiplayerBar() {
                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
                     <span className="font-medium">Bạn (Chủ bàn học)</span>
                   </div>
-                  <span className="text-[11px] text-slate-400">Trực tuyến</span>
+                  <span className="text-[11px] text-slate-600 font-medium">Trực tuyến</span>
                 </div>
                 {peers.map((peer) => (
                   <div key={peer.id} className="flex items-center justify-between text-slate-700">
@@ -253,21 +257,10 @@ export function MultiplayerBar() {
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: peer.avatarColor || '#3b82f6' }} />
                       <span className="font-medium">{peer.name}</span>
                     </div>
-                    <span className="text-[11px] text-emerald-600 font-medium">Đang học cùng</span>
+                    <span className="text-[11px] text-emerald-600 font-semibold">Đang học cùng</span>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Advanced Settings Link */}
-            <div className="pt-2 border-t border-slate-100 mb-3">
-              <button
-                type="button"
-                onClick={() => setIsDbConfigOpen(true)}
-                className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-              >
-                + Cài đặt kết nối máy chủ nâng cao
-              </button>
             </div>
 
             {/* Footer Buttons */}
@@ -275,7 +268,7 @@ export function MultiplayerBar() {
               <button
                 type="button"
                 onClick={toggleSimulation}
-                className="text-xs text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
+                className="text-xs text-slate-600 hover:text-slate-900 font-medium cursor-pointer"
               >
                 {!hasPeers ? 'Mô phỏng bạn học demo' : 'Tắt mô phỏng'}
               </button>

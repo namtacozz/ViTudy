@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { DeskItem } from '@/types/studyspace';
+import { useViToken } from '@/context/ViTokenContext';
 import { 
   Sparkles, 
   FileText, 
@@ -35,6 +36,8 @@ export function StudyToolsModal({
   totalPages,
   activePageText 
 }: StudyToolsModalProps) {
+  const { aiConfig } = useViToken();
+  const isOauth = aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected);
   const targetPos = explicitTargetPos || { x: item.x + (isPaper ? 390 : 1010), y: item.y };
   const [activeTab, setActiveTab] = useState<'summary' | 'quiz' | 'flashcards' | 'roadmap'>('summary');
 
@@ -66,7 +69,7 @@ export function StudyToolsModal({
         isPaper ? "absolute inset-0 z-40" : "absolute top-3 bottom-3 left-[42px] right-[42px]"
       )}
     >
-      {/* Header Bar: In-situ cockpit header */}
+      {/* Header Bar: In-situ cockpit header với trạng thái AI duy nhất */}
       <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-white text-slate-900 select-none">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center text-[#E0562D] border border-orange-200 flex-shrink-0">
@@ -79,6 +82,14 @@ export function StudyToolsModal({
               </h3>
               <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 flex-shrink-0">
                 Sách · {pageCountDisplay} trang
+              </span>
+              <span className={clsx(
+                "text-[10px] font-bold px-2 py-0.5 rounded border flex-shrink-0",
+                isOauth 
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                  : "bg-orange-50 text-[#B8431A] border-orange-200"
+              )}>
+                {isOauth ? "Đang dùng ChatGPT · miễn phí" : "AI ViTudy · 2 ViToken/lượt"}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 truncate">

@@ -4,6 +4,59 @@
 
 ---
 
+## 2026-11-12 17:45 — main (Khắc Phục P0 Lưu Trữ Bàn Học, Tinh Chỉnh STudy Sách, Chuẩn Hóa Toàn Diện Các Modal & Chế Độ In Phóng To)
+- **Task:**
+  1. **Khắc phục lỗi P0 Bàn học mất dữ liệu khi đổi trang / F5:**
+     - Tối ưu thuật toán đồng bộ thông minh trong `StudySpaceContext.tsx`: bảo toàn 100% các vật thể local khi dữ liệu cloud chưa kịp cập nhật hoặc rỗng.
+     - Tuần tự hóa tiến trình lưu bàn học (`await saveSpace(...)` trước khi gọi `upsertItems`) triệt tiêu lỗi vi phạm khóa ngoại `desk_documents_space_id_fkey`.
+     - Tự động gọi `saveCurrentSpaceImmediately()` ngay khi người dùng nhấn Logo ViTudy / Home trên `TopLeftNav.tsx`.
+  2. **Chuẩn hóa STudy của Sách (`StudyToolsModal.tsx` & Các Tab):**
+     - Đưa thông báo AI thành một dòng trạng thái thống nhất duy nhất ở header modal (`Đang dùng ChatGPT · miễn phí` vs `AI ViTudy · 2 ViToken/lượt`), loại bỏ các nhãn phụ lặp lại ở cả 3 tab.
+     - Thống nhất toàn bộ nút hành động chính sang màu Cam ViT `#E0562D` (`bg-[#E0562D] hover:bg-[#c9451e]`).
+     - Ngăn ngừa xuống dòng chữ trên nút (`whitespace-nowrap shrink-0`) ở tab Thẻ ghi nhớ ("Trích xuất thẻ") và Lộ trình học ("Dựng lộ trình").
+     - Biên dịch công thức toán học trong câu hỏi trắc nghiệm mẫu qua KaTeX `MathRenderer` (`$f(x, y) = x^2 + 3y$`, `$2x$`, `$2x+3$`, `$3$`, `$x^2$`).
+     - Nâng độ tương phản trạng thái rỗng đạt chuẩn WCAG AA (`text-slate-600`) kèm mô tả kết quả cụ thể.
+     - Bookmark tab "Tóm tắt" (STudy) tự động thu gọn về trạng thái chuẩn (`w-[48px]`, hover mở rộng) khi overlay đang mở để tránh hiểu lầm giao diện.
+  3. **Chuẩn hóa các Modal (Chợ Tài Liệu, Nạp ViToken, Chia Sẻ, Multiplayer, AI Config):**
+     - `MarketModal.tsx`: Nút "Chia sẻ tài liệu" đổi sang nút thứ cấp viền xám (`bg-white border-stone-200 text-stone-700`); nút "Tủ tài liệu cá nhân" dùng nền nhẹ + viền cam khi active (`bg-orange-50 border-[#E0562D] text-[#E0562D]`); đưa bộ đếm tài liệu sang cạnh thanh tìm kiếm; chuẩn hóa màu active của chip Khoa học dữ liệu; tinh giản bìa sách thanh lịch; thống nhất giá và nút "Mua"; trạng thái rỗng tủ tài liệu với nút "Khám phá Chợ".
+     - `TopUpModal.tsx` & `PricingTiers.tsx`: Đưa huy hiệu tặng ViToken xuống dưới giá thành chip riêng biệt; hiển thị rõ "Nhận 30 ViToken (gồm +3 tặng)"; cân bằng chiều cao 4 thẻ gói; ghi chú tỷ lệ quy đổi tương phản cao; đồng bộ phần trăm "Tặng 11% so với giá gốc".
+     - `KnowInheritPublishModal.tsx`: Rút gọn chính sách 85/15 thành một dòng cạnh mức giá; đổi nhãn giá sang "50 ViToken"; bộ đếm ký tự chỉ hiện khi bắt đầu nhập; tác giả mặc định theo tên tài khoản.
+     - `MultiplayerBar.tsx`: Link phòng hiển thị gọn gàng; thời hạn 24h tách dòng riêng; ẩn cấu hình server kỹ thuật khỏi modal mời bạn học; tăng tương phản trạng thái trực tuyến.
+     - `AiConfigModal.tsx` & `TopRightWallet.tsx`: Dropdown chọn mô hình AI chỉ hiển thị tên mô hình (mô tả và mã model nằm ở dòng riêng bên dưới); bổ sung `pb-6` cho container cuộn.
+  4. **Nâng cấp Trình Phóng To & In Ấn Sách (`FullScreenDocModal.tsx` & `MathRenderer.tsx`):**
+     - Tích hợp stylesheet `@media print` chuyên nghiệp: ẩn hoàn toàn thanh công cụ, sidebar thumbnail, nền tối; xuất từng trang sách chuẩn khổ A4 (`page-break-after: always`); hỗ trợ "In trang hiện tại" và "In toàn bộ"; đóng dấu chìm DRM tinh tế cho tài liệu có bản quyền.
+     - Thu gọn chiều cao thumbnail sidebar xuống ~92-96px giúp hiển thị 5-6 trang cùng lúc; loại bỏ text tiêu đề và số trang lặp lại ở chân thumbnail.
+     - Thay đổi icon thanh công cụ: Xoay trang dùng `RotateCw`, khôi phục zoom 100% dùng `Maximize2`.
+     - Tiêu đề chương/mục canh lề trái (`text-left`), nội dung văn bản canh đều 2 bên (`text-justify`), trang phải không bị cắt số trang chân trang.
+     - Giảm lề trên dưới của công thức hiển thị KaTeX trong `MathRenderer` xuống `my-2.5 py-1`.
+- **Files Modified:**
+  - `src/components/modals/StudyToolsModal.tsx`
+  - `src/components/modals/study-tools/SummaryTab.tsx`
+  - `src/components/modals/study-tools/QuizTab.tsx`
+  - `src/components/modals/study-tools/FlashcardTab.tsx`
+  - `src/components/modals/study-tools/RoadmapTab.tsx`
+  - `src/components/objects/BookSpread.tsx`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/components/payment/PricingTiers.tsx`
+  - `src/components/payment/TopUpModal.tsx`
+  - `src/components/modals/KnowInheritPublishModal.tsx`
+  - `src/components/hud/MultiplayerBar.tsx`
+  - `src/components/modals/AiConfigModal.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/modals/FullScreenDocModal.tsx`
+  - `src/components/common/MathRenderer.tsx`
+  - `src/types/studyspace.ts`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verification:**
+  - `pnpm exec tsc --noEmit`: 0 errors.
+  - `npx vitest run`: 19 test files (65 tests) passed 100%.
+  - `pnpm run build:pages`: Static export pages generated successfully with `.nojekyll`.
+
+---
+
 ## 2026-11-12 16:20 — main (Cố Định Khung Trang Chủ, Tinh Giản Giao Diện, Menu Avatar Miro & Bố Cục Profile Chuẩn Mẫu)
 - **Task:**
   1. **Cố định lại trang chủ trong một khung nhìn không cuộn toàn trang:**

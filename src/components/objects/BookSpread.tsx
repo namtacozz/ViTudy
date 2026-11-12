@@ -400,23 +400,17 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               <button
                 type="button"
                 onClick={() => setIsStudyOpen(prev => !prev)}
-                title={isStudyOpen ? "Đóng tóm tắt & ôn tập" : "STudy: Tóm tắt thông minh & Ôn tập trắc nghiệm"}
+                title={isStudyOpen ? "Đóng công cụ học STudy" : "STudy: Công cụ học thông minh"}
                 className={clsx(
                   "h-8 flex items-center justify-between pl-[16px] pr-4 gap-0 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden",
-                  isStudyOpen
-                    ? "w-[106px] bg-emerald-700 text-white ring-2 ring-emerald-400/60"
-                    : "w-[48px] group-hover/tab:w-[106px] bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white group-hover/tab:gap-2"
+                  "w-[48px] group-hover/tab:w-[106px] bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white group-hover/tab:gap-2",
+                  isStudyOpen && "ring-2 ring-emerald-400/60"
                 )}
                 style={{
                   clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%)'
                 }}
               >
-                <span className={clsx(
-                  "text-xs font-bold text-white tracking-wide whitespace-nowrap transition-all duration-200 overflow-hidden",
-                  isStudyOpen
-                    ? "max-w-[60px] opacity-100 mr-2"
-                    : "max-w-0 opacity-0 group-hover/tab:max-w-[60px] group-hover/tab:opacity-100"
-                )}>
+                <span className="text-xs font-bold text-white tracking-wide whitespace-nowrap transition-all duration-200 overflow-hidden max-w-0 opacity-0 group-hover/tab:max-w-[60px] group-hover/tab:opacity-100">
                   Tóm tắt
                 </span>
                 <Sparkles className="w-4 h-4 text-emerald-100 flex-shrink-0" />
