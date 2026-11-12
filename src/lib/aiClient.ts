@@ -21,6 +21,7 @@ export interface AskAiRequest {
   context?: string;
   apiKey?: string;
   accessToken?: string;
+  maxTokens?: number;
 }
 
 export interface AskAiResult {
@@ -322,6 +323,7 @@ Giải đáp:
       apiKey: resolvedApiKey || '',
       accessToken: resolvedOAuthToken,
       accountId: resolvedAccountId,
+      maxTokens: req.maxTokens,
     }),
   });
 
@@ -533,4 +535,66 @@ export async function testAiConnection(params: {
       message: err.message || 'Kiểm tra thất bại.',
     };
   }
+}
+
+/**
+ * Trích xuất an toàn mảng câu hỏi JSON từ chuỗi kết quả AI,
+ * hỗ trợ khôi phục các câu hỏi hoàn chỉnh kể cả khi đầu ra bị cắt ngắn (partial JSON)
+ */
+export function parseQuizJsonSafely(rawText: string): any[] {
+  if (!rawText) return [];
+
+  // 1. Thử parse toàn bộ khối [ ... ]
+  const match = rawText.match(/\[[\s\S]*\]/);
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch {}
+  }
+
+  // 2. Nếu chuỗi bị cắt cụt (partial JSON), trích xuất từng object {...} hoàn chỉnh
+  const questionObjects: any[] = [];
+  let depth = 0;
+  let startIndex = -1;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = 0; i < rawText.length; i++) {
+    const ch = rawText[i];
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (ch === '{') {
+      if (depth === 0) startIndex = i;
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0 && startIndex !== -1) {
+        const jsonBlock = rawText.slice(startIndex, i + 1);
+        try {
+          const candidate = JSON.parse(jsonBlock);
+          if (candidate.question && Array.isArray(candidate.options)) {
+            questionObjects.push(candidate);
+          }
+        } catch {}
+        startIndex = -1;
+      }
+    }
+  }
+
+  return questionObjects;
 }

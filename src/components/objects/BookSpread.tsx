@@ -460,8 +460,15 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             <div className="relative group/tab flex items-center">
               <button
                 onClick={() => {
-                  const targetPage = rightPageIndex < totalPages ? rightPageIndex : leftPageIndex;
-                  detachPageFromBinder(item.id, targetPage);
+                  if (item.pages.length <= 1) {
+                    alert('Cuốn sách chỉ còn 1 trang duy nhất, không thể tách thêm.');
+                    return;
+                  }
+                  // Xác định trang nguồn thực tế từ leaf đang hiển thị
+                  const targetLeaf = rightLeaf || leftLeaf;
+                  const targetPageNumber = targetLeaf ? targetLeaf.pageNumber : 1;
+                  const pageIdxInDoc = Math.max(0, Math.min(item.pages.length - 1, targetPageNumber - 1));
+                  detachPageFromBinder(item.id, pageIdxInDoc);
                 }}
                 className="h-8 w-[48px] group-hover/tab:w-[124px] bg-sky-700 hover:bg-sky-600 active:scale-95 text-white flex items-center justify-between pl-[16px] pr-4 gap-0 group-hover/tab:gap-2 transition-[width] duration-200 ease-out shadow-md cursor-pointer overflow-hidden"
                 style={{

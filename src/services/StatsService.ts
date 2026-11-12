@@ -1,4 +1,5 @@
 import { getSupabase } from '@/lib/supabase';
+import { getLast28DaysGrid, todayKey } from '@/lib/dateVN';
 
 export interface DayStudyTime {
   day: string; // e.g. "T2", "T3"
@@ -81,60 +82,37 @@ export class StatsService {
     }
   }
 
-  static async getMonthlyActivityGrid(userId: string): Promise<{ date: string; minutes: number; isToday?: boolean; isMonthStart?: boolean; monthLabel?: string }[]> {
+  static async getMonthlyActivityGrid(userId: string): Promise<{ date: string; minutes: number; isToday?: boolean; isMonthStart?: boolean; monthLabel?: string; leadingEmpty?: number }[]> {
     const supabase = getSupabase();
-    const grid: { date: string; minutes: number; isToday?: boolean; isMonthStart?: boolean; monthLabel?: string }[] = [];
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const activityMap: Record<string, number> = {};
 
-    // Căn chuẩn lưới 28 ngày (4 tuần đầy đủ từ T2 đến CN):
-    // JS getDay(): 0 = CN, 1 = T2, 2 = T3, ..., 6 = T7
-    const dayOfWeek = today.getDay();
-    const distanceToMonday = (dayOfWeek + 6) % 7; // Số ngày từ Thứ Hai tuần này
-    const currentMonday = new Date(today);
-    currentMonday.setDate(today.getDate() - distanceToMonday);
+    if (supabase) {
+      try {
+        const { days } = getLast28DaysGrid();
+        const startDate = days[0].dateStr;
+        const { data, error } = await supabase
+          .from('study_sessions')
+          .select('day, seconds')
+          .eq('user_id', userId)
+          .gte('day', startDate);
 
-    // Lùi thêm 3 tuần (21 ngày) để có đúng 4 tuần tròn (28 ngày)
-    const startMonday = new Date(currentMonday);
-    startMonday.setDate(currentMonday.getDate() - 21);
-
-    for (let i = 0; i < 28; i++) {
-      const d = new Date(startMonday);
-      d.setDate(startMonday.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
-      const isToday = dateStr === todayStr;
-      const isMonthStart = d.getDate() === 1 || i === 0;
-      const monthLabel = isMonthStart ? `Th${d.getMonth() + 1}` : undefined;
-
-      grid.push({
-        date: dateStr,
-        minutes: 0,
-        isToday,
-        isMonthStart,
-        monthLabel,
-      });
+        if (!error && data) {
+          data.forEach((row) => {
+            activityMap[row.day] = Math.round(row.seconds / 60);
+          });
+        }
+      } catch {}
     }
 
-    if (!supabase) return grid;
+    const { days, leadingEmptyCells } = getLast28DaysGrid(activityMap);
 
-    try {
-      const startDate = grid[0].date;
-      const { data, error } = await supabase
-        .from('study_sessions')
-        .select('day, seconds')
-        .eq('user_id', userId)
-        .gte('day', startDate);
-
-      if (!error && data) {
-        data.forEach((row) => {
-          const matched = grid.find((r) => r.date === row.day);
-          if (matched) {
-            matched.minutes = Math.round(row.seconds / 60);
-          }
-        });
-      }
-    } catch {}
-
-    return grid;
+    return days.map((d, idx) => ({
+      date: d.dateStr,
+      minutes: d.minutes,
+      isToday: d.isToday,
+      isMonthStart: d.dayNumber === 1 || idx === 0,
+      monthLabel: d.dayNumber === 1 ? `Th${parseInt(d.dateStr.slice(5, 7), 10)}` : undefined,
+      leadingEmpty: idx === 0 ? leadingEmptyCells : 0,
+    }));
   }
 }

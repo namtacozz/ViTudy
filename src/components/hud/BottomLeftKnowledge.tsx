@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
 import { parsePdfFile } from '@/services/PdfParserService';
+import { parseDocxFile, parsePptxFile, isBinaryOrCorrupted } from '@/services/OfficeParserService';
 
 interface PendingDocument {
   file: File;
@@ -180,11 +181,14 @@ export function BottomLeftKnowledge() {
     setIsSetupModalOpen(false);
 
     try {
-      // 1. Capture screen with display audio if available
+      // 1. Capture screen with display audio if available (prioritizing current tab)
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: 'browser' },
-        audio: true
-      });
+        audio: true,
+        preferCurrentTab: true,
+        selfBrowserSurface: 'include',
+        systemAudio: 'include',
+      } as DisplayMediaStreamOptions);
 
       let combinedStream = displayStream;
 
@@ -310,16 +314,28 @@ export function BottomLeftKnowledge() {
     if (!file) return;
 
     const rawName = file.name.replace(/\.[^/.]+$/, '');
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const isPdf = file.type === 'application/pdf' || ext === 'pdf';
+    const isDocx = ext === 'docx' || file.type.includes('wordprocessingml');
+    const isPptx = ext === 'pptx' || file.type.includes('presentationml');
     const isImage = file.type.startsWith('image/');
-    const isText = file.type.includes('text') || file.name.endsWith('.md') || file.name.endsWith('.txt');
+    const isText = file.type.includes('text') || ext === 'md' || ext === 'txt';
 
     let parsedPages: { title?: string; text: string; image?: string }[] = [];
     setIsParsingDoc(true);
 
     try {
+      if (ext === 'doc') {
+        alert('Định dạng Word .doc cũ (97-2003) chưa được hỗ trợ trực tiếp. Vui lòng lưu sang .docx hoặc .pdf rồi tải lại.');
+        return;
+      }
+
       if (isPdf) {
         parsedPages = await parsePdfFile(file);
+      } else if (isDocx) {
+        parsedPages = await parseDocxFile(file);
+      } else if (isPptx) {
+        parsedPages = await parsePptxFile(file);
       } else if (isImage) {
         const reader = new FileReader();
         const dataUrl = await new Promise<string>((resolve) => {
@@ -333,17 +349,25 @@ export function BottomLeftKnowledge() {
         }];
       } else if (isText) {
         const content = await file.text();
+        const buffer = await file.arrayBuffer();
+        const check = isBinaryOrCorrupted(buffer, content);
+        if (check.isCorrupted) {
+          alert(check.reason || 'Tệp chứa dữ liệu nhị phân không hợp lệ.');
+          return;
+        }
         const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
         parsedPages = paragraphs.length > 0
           ? paragraphs.map((p, idx) => ({ title: `Trang ${idx + 1}`, text: p.trim() }))
           : [{ title: rawName, text: content.trim() }];
       } else {
-        try {
-          const content = await file.text();
-          parsedPages = [{ title: rawName, text: content.trim() }];
-        } catch {
-          parsedPages = [{ title: rawName, text: `Tệp ${file.name}` }];
+        const buffer = await file.arrayBuffer();
+        const check = isBinaryOrCorrupted(buffer);
+        if (check.isCorrupted) {
+          alert(check.reason || 'Định dạng tệp không được hỗ trợ.');
+          return;
         }
+        const content = await file.text();
+        parsedPages = [{ title: rawName, text: content.trim() }];
       }
 
       setPendingDoc({
@@ -356,9 +380,9 @@ export function BottomLeftKnowledge() {
       });
 
       setIsConfirmModalOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi nạp tệp:', err);
-      alert('Không thể trích xuất nội dung tệp. Vui lòng thử lại với file PDF hoặc hình ảnh khác.');
+      alert(err?.message || 'Không thể trích xuất nội dung tệp. Vui lòng kiểm tra lại định dạng tài liệu.');
     } finally {
       setIsParsingDoc(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -442,7 +466,7 @@ export function BottomLeftKnowledge() {
       {/* 3. Button: Mời bạn bè & Supabase (Có đèn tín hiệu trạng thái) */}
       <button
         onClick={() => setIsShareModalOpen(true)}
-        title="Phòng học nhóm & Cơ sở dữ liệu Supabase"
+        title="Phòng học nhóm trực tuyến"
         className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group relative"
       >
         <Share2 className="w-4.5 h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />

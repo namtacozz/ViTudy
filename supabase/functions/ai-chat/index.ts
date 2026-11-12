@@ -214,6 +214,7 @@ serve(async (req: Request) => {
       apiKey = '',
       accessToken = '',
       accountId: clientAccountId = '',
+      maxTokens,
     } = body;
 
     // 1. Authenticate user via JWT (Strictly required for 'system' provider that debits ViToken)
@@ -406,6 +407,10 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
         const geminiModel = model.includes('gemini') ? model : 'gemini-1.5-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
 
+        const calculatedTokens = typeof maxTokens === 'number' && maxTokens > 0 
+          ? Math.min(maxTokens, 4000) 
+          : 2500;
+
         const geminiRes = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -417,7 +422,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
               },
             ],
             generationConfig: {
-              maxOutputTokens: 800,
+              maxOutputTokens: calculatedTokens,
             },
           }),
         });
@@ -437,6 +442,10 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
           // Simulation fallback if system key not yet provisioned in environment
           reply = `[ViTudy AI Assistant]\nDựa trên tài liệu bạn cung cấp:\n${cleanContext ? `"${cleanContext.slice(0, 150)}..."` : 'Chủ đề: ' + cleanPrompt}\n\n1. Trọng tâm: Câu hỏi thuộc nội dung cốt lõi của bài học.\n2. Hướng dẫn: Đọc kỹ định nghĩa và chú ý các trường hợp đặc biệt để làm bài chính xác.`;
         } else {
+          const calculatedTokens = typeof maxTokens === 'number' && maxTokens > 0 
+            ? Math.min(maxTokens, 4000) 
+            : 2500;
+
           const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -447,9 +456,9 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
               model: model || 'gpt-4o-mini',
               messages: [
                 { role: 'system', content: systemInstruction },
-                { role: 'user', content: cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\nCÂU HỎI:\n${cleanPrompt}` : cleanPrompt },
+                { role: 'user', content: cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : '' + `CÂU HỎI:\n${cleanPrompt}` },
               ],
-              max_tokens: 800,
+              max_tokens: calculatedTokens,
               temperature: 0.7,
             }),
           });

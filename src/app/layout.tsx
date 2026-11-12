@@ -4,6 +4,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { ViTokenProvider } from '@/context/ViTokenContext';
 import { StudySpaceProvider } from '@/context/StudySpaceContext';
+import { PomodoroProvider } from '@/context/PomodoroContext';
 
 const openSans = Open_Sans({
   subsets: ['latin', 'latin-ext', 'vietnamese'],
@@ -60,9 +61,11 @@ export default function RootLayout({
       >
         <AuthProvider>
           <ViTokenProvider>
-            <StudySpaceProvider>
-              {children}
-            </StudySpaceProvider>
+            <PomodoroProvider>
+              <StudySpaceProvider>
+                {children}
+              </StudySpaceProvider>
+            </PomodoroProvider>
           </ViTokenProvider>
         </AuthProvider>
       </body>

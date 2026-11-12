@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 interface KnowInheritPublishModalProps {
-  item: DeskItem;
+  item?: DeskItem;
   isOpen: boolean;
   onClose: () => void;
   onPublished?: (listing: any) => void;
@@ -45,14 +45,14 @@ export function KnowInheritPublishModal({
   const { user, profile } = useAuth();
 
   const defaultAuthor = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Tác giả ViTudy';
-  const initialType: 'book' | 'paper' | 'exam' = item.isExamSheet ? 'exam' : item.type === 'book' ? 'book' : 'paper';
+  const initialType: 'book' | 'paper' | 'exam' = item?.isExamSheet ? 'exam' : item?.type === 'book' ? 'book' : 'paper';
 
   const [authorName, setAuthorName] = useState(defaultAuthor);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [docType, setDocType] = useState<'book' | 'paper' | 'exam'>(initialType);
   const [subject, setSubject] = useState<string>('Toán học & Giải tích');
   const [description, setDescription] = useState('');
-  const [previewExcerpt, setPreviewExcerpt] = useState(item.pages[0]?.text?.slice(0, 220) || '');
+  const [previewExcerpt, setPreviewExcerpt] = useState(item?.pages?.[0]?.text?.slice(0, 220) || '');
   const [hasCopyrightConsent, setHasCopyrightConsent] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -95,8 +95,8 @@ export function KnowInheritPublishModal({
 
     await new Promise(resolve => setTimeout(resolve, 1100));
 
-    const totalWords = item.pages.reduce((acc, p) => acc + (p.text || '').split(/\s+/).length, 0);
-    const calculatedScore = Math.min(98, Math.max(72, Math.floor(70 + (item.pageCount * 3) + (totalWords / 250))));
+    const totalWords = (item?.pages || []).reduce((acc, p) => acc + (p.text || '').split(/\s+/).length, 0);
+    const calculatedScore = Math.min(98, Math.max(72, Math.floor(70 + ((item?.pageCount || 1) * 3) + (totalWords / 250))));
     
     // Set fixed standard price based on document type
     let price = 50;
@@ -121,7 +121,7 @@ export function KnowInheritPublishModal({
     
     const newListing = {
       id: `mkt-${Date.now()}`,
-      title: item.title,
+      title: item?.title || 'Tài liệu học tập',
       author: authorName,
       type: docType,
       subject,
@@ -129,8 +129,8 @@ export function KnowInheritPublishModal({
       price: auditResult.price,
       authorEarn: auditResult.authorEarn,
       purchased: true,
-      summary: description || `Bộ tài liệu ${item.title} gồm ${item.pageCount} trang, thuộc môn ${subject}.`,
-      previewText: previewExcerpt || item.pages[0]?.text?.slice(0, 300) || 'Xem trước tài liệu...'
+      summary: description || `Bộ tài liệu ${item?.title || 'tổng hợp'} gồm ${item?.pageCount || 1} trang, thuộc môn ${subject}.`,
+      previewText: previewExcerpt || item?.pages?.[0]?.text?.slice(0, 300) || 'Xem trước tài liệu...'
     };
 
     onPublished?.(newListing);
@@ -168,7 +168,24 @@ export function KnowInheritPublishModal({
         </div>
 
         <div className="overflow-y-auto pr-1 flex-1">
-          {!auditResult ? (
+          {!item ? (
+            <div className="py-8 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 mb-1">Chưa có tài liệu trên bàn học</h4>
+              <p className="text-xs text-slate-500 max-w-sm mb-4 leading-relaxed">
+                Hãy tải lên một tài liệu PDF/Word hoặc tạo đề thi trên bàn học trước khi chia sẻ lên Chợ tài liệu.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors"
+              >
+                Đóng hộp thoại
+              </button>
+            </div>
+          ) : !auditResult ? (
             <form onSubmit={handleStartAudit} className="space-y-3.5 pt-1">
               {/* Document Overview Pill */}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs flex items-center justify-between">
@@ -176,11 +193,11 @@ export function KnowInheritPublishModal({
                   <span className="text-slate-500">Tài liệu: </span>
                   <strong className="text-slate-900">{item.title}</strong>
                   <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                    {item.pageCount} trang • Định dạng {item.type === 'book' ? 'Sách' : 'Tờ giấy'}
+                    {item.pageCount || 1} trang • Định dạng {item.type === 'book' ? 'Sách' : 'Tờ giấy'}
                   </div>
                 </div>
                 <div className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700">
-                  {item.pageCount} trang
+                  {item.pageCount || 1} trang
                 </div>
               </div>
 

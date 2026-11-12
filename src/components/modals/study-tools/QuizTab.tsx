@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { generateClozeQuestions, QuizQuestion } from '@/lib/nonAiEngine';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
-import { askAi } from '@/lib/aiClient';
+import { askAi, parseQuizJsonSafely } from '@/lib/aiClient';
 import { 
   HelpCircle, 
   CheckCircle2, 
@@ -49,6 +49,8 @@ export function QuizTab({
   const [isGraded, setIsGraded] = useState(false);
   const [timeLimit, setTimeLimit] = useState<number>(15);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [aiErrorNotice, setAiErrorNotice] = useState<string | null>(null);
+  const [creationSource, setCreationSource] = useState<'ai' | 'offline' | null>(null);
   const [expandedExplanations, setExpandedExplanations] = useState<Record<string, boolean>>({});
 
   const isOauth = aiConfig.provider === 'oauth_chatgpt' || Boolean(aiConfig.isOauthConnected);
@@ -66,28 +68,16 @@ export function QuizTab({
 
   const handleGenerateQuestions = async () => {
     if (!textToUse) return;
-    setSavedNotice(null);
+    setAiErrorNotice(null);
 
     if (!useAi) {
       const generated = generateClozeQuestions(textToUse, questionCount);
       setQuestions(generated);
+      setCreationSource('offline');
       setUserAnswers({});
       setIsGraded(false);
       setExpandedExplanations({});
       return;
-    }
-
-    if (isSystemAi) {
-      const ok = spendTokens(2, `Tạo trắc nghiệm AI: ${documentTitle.slice(0, 30)}`);
-      if (!ok) {
-        alert('Số dư ViToken không đủ để dùng AI hệ thống. Chuyển sang động cơ Non-AI miễn phí.');
-        setUseAi(false);
-        setQuestions(generateClozeQuestions(textToUse, questionCount));
-        setUserAnswers({});
-        setIsGraded(false);
-        setExpandedExplanations({});
-        return;
-      }
     }
 
     setLoading(true);
@@ -103,41 +93,46 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
   }
 ]`;
 
+      const estimatedTokens = Math.min(3800, questionCount * 320 + 400);
+
       const data = await askAi({
         provider: aiConfig.provider,
         model: aiConfig.model,
         apiKey: aiConfig.apiKey,
         prompt,
         context: textToUse.slice(0, 4500),
+        maxTokens: estimatedTokens,
       });
 
       const rawText = data.reply || '';
-      const match = rawText.match(/\[[\s\S]*\]/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setQuestions(parsed.map((q: any, idx: number) => ({
-            id: `ai-q-${idx}-${Date.now()}`,
-            question: q.question,
-            options: q.options || [],
-            correctIndex: typeof q.correctIndex === 'number' ? q.correctIndex : 0,
-            explanation: q.explanation || ''
-          })));
-          setUserAnswers({});
-          setIsGraded(false);
-          setExpandedExplanations({});
-          return;
+      const parsedList = parseQuizJsonSafely(rawText);
+
+      if (parsedList.length > 0) {
+        // Chỉ trừ ViToken khi sinh thành công từ AI hệ thống
+        if (isSystemAi) {
+          spendTokens(2, `Tạo trắc nghiệm AI (${parsedList.length} câu): ${documentTitle.slice(0, 25)}`);
         }
+
+        setQuestions(parsedList.slice(0, questionCount).map((q: any, idx: number) => ({
+          id: `ai-q-${idx}-${Date.now()}`,
+          question: q.question,
+          options: Array.isArray(q.options) ? q.options : ['A', 'B', 'C', 'D'],
+          correctIndex: typeof q.correctIndex === 'number' ? q.correctIndex : 0,
+          explanation: q.explanation || ''
+        })));
+        setCreationSource('ai');
+        setUserAnswers({});
+        setIsGraded(false);
+        setExpandedExplanations({});
+        return;
       }
-      setQuestions(generateClozeQuestions(textToUse, questionCount));
-    } catch (err) {
-      console.warn('Lỗi AI Quiz, fallback Non-AI:', err);
-      setQuestions(generateClozeQuestions(textToUse, questionCount));
+
+      throw new Error('AI không trả về cấu trúc câu hỏi JSON hợp lệ.');
+    } catch (err: any) {
+      console.warn('Lỗi AI Quiz:', err);
+      setAiErrorNotice(err?.message || 'Không thể sinh câu hỏi bằng AI. Bạn có thể thử lại hoặc dùng chế độ Offline miễn phí.');
     } finally {
       setLoading(false);
-      setUserAnswers({});
-      setIsGraded(false);
-      setExpandedExplanations({});
     }
   };
 
@@ -456,9 +451,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
             <div className="flex flex-col text-left">
               <span className="text-xs font-bold leading-tight">Dùng AI chuyên sâu</span>
               <span className="text-[10px] text-slate-500 leading-tight">
-                {useAi 
-                  ? (isOauth ? 'Có lời giải · Miễn phí' : 'Có lời giải · 2 ViToken') 
-                  : 'Nhanh, miễn phí'}
+                {isOauth ? 'Có lời giải · Miễn phí (ChatGPT)' : 'Có lời giải · 2 ViToken'}
               </span>
             </div>
           </label>
@@ -479,6 +472,37 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
           </button>
         </div>
       </div>
+
+      {/* Thông báo lỗi AI nếu có */}
+      {aiErrorNotice && (
+        <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center justify-between gap-2 animate-fade-in">
+          <span>{aiErrorNotice}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setAiErrorNotice(null);
+              setUseAi(false);
+              const generated = generateClozeQuestions(textToUse, questionCount);
+              setQuestions(generated);
+              setCreationSource('offline');
+            }}
+            className="px-2.5 py-1 bg-white border border-rose-300 hover:bg-rose-100 text-rose-900 rounded-lg text-xs font-bold cursor-pointer shrink-0"
+          >
+            Dùng bản Offline
+          </button>
+        </div>
+      )}
+
+      {/* Huy hiệu nguồn câu hỏi */}
+      {questions.length > 0 && creationSource && (
+        <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${creationSource === 'ai' ? 'bg-[#E0562D]' : 'bg-slate-400'}`} />
+            <span>Nguồn đề: <strong className="text-slate-800">{creationSource === 'ai' ? 'Tạo bằng AI chuyên sâu' : 'Tạo bằng động cơ Offline'}</strong></span>
+          </span>
+          <span>Tổng số câu: <strong className="text-slate-800">{questions.length}</strong></span>
+        </div>
+      )}
 
       {/* Thông báo đã lưu thẻ ghi nhớ */}
       {savedNotice && (

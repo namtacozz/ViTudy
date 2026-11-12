@@ -371,15 +371,16 @@ export function FullScreenDocModal({
 
         {/* Center Document Canvas Pane */}
         <div 
-          className="flex-1 overflow-auto flex items-center justify-center p-8 bg-[#e8ebf0] cursor-default relative"
+          className="flex-1 overflow-auto flex flex-col items-center p-8 bg-[#e8ebf0] cursor-default relative"
           onClick={(e) => e.stopPropagation()}
         >
           <div 
             style={{ 
               transform: `scale(${zoomLevel / 100}) rotate(${pageRotation}deg)`, 
-              transformOrigin: 'center center' 
+              transformOrigin: 'top center',
+              margin: 'auto 0'
             }}
-            className="transition-transform duration-200 ease-out flex items-center justify-center"
+            className="transition-transform duration-200 ease-out flex items-center justify-center shrink-0"
           >
             {isExam && exam ? (
               /* ================= FULL SCREEN EXAM SHEET ================= */

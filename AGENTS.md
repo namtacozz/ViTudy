@@ -792,4 +792,29 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * Nhãn danh mục dùng `text-[11px] font-bold text-[#9A3412] bg-[#FFF7ED] border border-[#FFEDD5]`.
     * Chữ nội dung trả lời dùng `text-slate-700` đạt tỷ lệ tương phản >= 4.5:1.
 
+* **Quy Chuẩn Bóc Tách Văn Bản Office & Phòng Ngừa Ký Tự Rác (Office Document Parsing Standards):**
+  * Hỗ trợ tệp Word `.docx` qua `mammoth` và slide PowerPoint `.pptx` qua `JSZip` trích xuất `ppt/slides/slideN.xml`.
+  * Bộ lọc `isBinaryOrCorrupted` phát hiện chữ ký nhị phân Compound File Binary Format (`0xD0 0xCF 0x11 0xE0` của file `.doc` cũ) và mật độ ký tự rác `\uFFFD`, tự động từ chối và hướng dẫn chuyển sang `.docx` hoặc `.pdf`, ngăn chặn 100% việc tạo trang giấy rác `PK`.
+
+* **Quy Chuẩn Quản Lý Đồng Hồ Pomodoro Toàn Cục (Global Pomodoro Context Standards):**
+  * Lưu mốc kết thúc `endsAt` trên `localStorage('vitudy_pomodoro_state')` để bảo toàn tiến độ qua các lần tải lại trang hoặc đổi tab/view.
+  * Hiển thị chip thời gian thu nhỏ ở `TopLeftNav` khi đang trong phiên (kèm nút tạm dừng, tiếp tục, kết thúc) và tự động ẩn khi không chạy để giữ HUD gọn gàng.
+  * Tự động ghi nhận nhịp tim học tập (`record_heartbeat`) khi hoàn thành phiên 25 phút.
+
+* **Quy Chuẩn Thống Kê & Lưới 28 Ngày Chuẩn Giờ Việt Nam (Vietnam Timezone Activity Grid):**
+  * Sử dụng múi giờ chuẩn `Asia/Ho_Chi_Minh` (`dateVN.ts`) cho toàn bộ việc tính toán ngày chuỗi streak và hoạt động học tập.
+  * Lưới 28 ngày (`getLast28DaysGrid`) kết thúc đúng ngày hôm nay giờ VN, tính toán số ô đệm trống đầu lưới (leading empty cells) khớp chính xác cột Thứ Hai..Chủ Nhật, loại bỏ hoàn toàn số liệu tương lai cho người dùng khách.
+
+* **Quy Chuẩn Sinh Trắc Nghiệm AI & Khôi Phục Partial JSON (Resilient AI Quiz Generation):**
+  * Tăng token phản hồi lên 4000 token; hàm `parseQuizJsonSafely` tự động phục hồi các câu hỏi hoàn chỉnh kể cả khi đầu ra bị cắt ngắn.
+  * Chỉ trừ ViToken sau khi AI sinh câu hỏi thành công; loại bỏ hoàn toàn fallback Cloze ngầm; hiển thị nguồn câu hỏi ("Tạo bằng AI chuyên sâu" vs "Tạo bằng động cơ Offline").
+  * Động cơ Cloze offline loại bỏ toàn bộ từ khóa LaTeX khỏi chỗ trống (`LATEX_COMMAND_BLACKLIST`), giữ nguyên công thức math.
+
+* **Quy Chuẩn Thao Tác Bìa Sách & Đóng Sách (Book Cover & Binder Integrity):**
+  * Bảo toàn `type: 'book'` và style bìa da ban đầu khi cắt trang (`detachPageFromBinder`), không tự động giáng cấp xuống tờ giấy rời.
+  * Bổ sung nút "Đóng thành sách: Thêm bìa da bảo vệ tài liệu" (`convertPaperToBook`) trên thanh công cụ của tờ giấy rời `PaperSheet`.
+
+* **Quy Chuẩn Bộ Gõ Tiếng Việt Trong Ghi Chú (IME Safe Vietnamese Input):**
+  * Theo dõi `isComposingRef` qua `onCompositionStart` và `onCompositionEnd` để không làm mất dấu cách hoặc ngắt bộ gõ Telex/VNI trong quá trình gõ, dời việc chuẩn hóa `normalizeNFC` về sự kiện `onBlur`.
+
 

@@ -4,6 +4,72 @@
 
 ---
 
+## 2026-11-12 11:00 — main (Khắc Phục Toàn Diện 19 Lỗi Kiểm Thử Từ 3 Báo Cáo BC1, BC2, BC3)
+- **Task:**
+  1. **Khắc phục lỗi sập trang khi chia sẻ từ bàn học (P0):** Bọc modal chia sẻ bằng `ModalErrorBoundary`, xử lý an toàn khi bàn học trống hoặc người dùng là khách, hiển thị `EmptyState` thân thiện thay vì crash.
+  2. **Đọc tệp văn phòng Word (.docx) & PowerPoint (.pptx) (P0):** Xây dựng `OfficeParserService` sử dụng `mammoth` và `jszip`, kiểm tra chữ ký nhị phân CFBF (.doc cũ) và ký tự lỗi `\uFFFD` để chặn hiển thị ký tự rác PK.
+  3. **Tạo bàn trống không rơi vào bàn Demo (P0):** Bảo đảm `createSpaceFromTemplate('blank')` khởi tạo `items: []`, nạp đúng `spaceId` sau khi `isLoaded` hoàn tất, triệt tiêu fallback ngoài ý muốn.
+  4. **AI chuyên sâu & Khôi phục câu hỏi partial JSON (P0):** Tăng giới hạn `maxOutputTokens` lên 4000 token, xây dựng bộ phân tích `parseQuizJsonSafely` tự động phục hồi các câu hỏi hoàn chỉnh kể cả khi đầu ra bị cắt ngắn, trừ ViToken chỉ sau khi sinh thành công, loại bỏ fallback Cloze ngầm và báo lỗi chi tiết kèm nút thử lại.
+  5. **Bộ đếm Pomodoro toàn cục (P1):** Xây dựng `PomodoroContext` lưu mốc `endsAt` trên `localStorage`, chip HUD trên `TopLeftNav` hiển thị thời gian đếm lùi, tạm dừng/tiếp tục/kết thúc, nút "Bắt đầu phiên 25p" ở Trang chủ kích hoạt tự động.
+  6. **Bàn học mới hiển thị số liệu thật (P1):** Thêm trường `lastOpenedAt`, hàm `getSpaceSummary` đếm chính xác số lượng sách, vở, ghi chú, định dạng thời gian tương đối `formatRelativeTimeVN`.
+  7. **Lưới học tập 28 ngày chuẩn giờ Việt Nam (P1):** Xây dựng `dateVN.ts` (`getLast28DaysGrid`) khóa múi giờ `Asia/Ho_Chi_Minh`, bù ô đệm trống đầu lưới khớp đúng thứ trong tuần, triệt tiêu số liệu tương lai cho khách.
+  8. **Trắc nghiệm offline & KaTeX đáp án chọn (P1):** Đưa danh sách từ khóa LaTeX vào `LATEX_COMMAND_BLACKLIST`, tách câu theo gạch đầu dòng/xuống dòng, giữ chỗ công thức math khi sinh cloze; xóa override màu đen để đáp án chọn C trắng sáng rõ nét (`[&_.katex]:text-inherit`).
+  9. **Hiển thị công thức trong ghi chú (P1):** Kích hoạt `<MathRenderer />` cho `StickyNoteItem` khi nội dung chứa công thức LaTeX hoặc Markdown.
+  10. **Bảo toàn bìa sách khi cắt trang & Nút đóng thành sách (P1):** Bảo toàn `type: 'book'` và style bìa ban đầu trong `detachPageFromBinder`; thêm hàm `convertPaperToBook` và nút "Đóng thành sách: Thêm bìa da bảo vệ tài liệu" trên thanh công cụ `PaperSheet`.
+  11. **Cuộn xem toàn bộ trang khi phóng to (P1):** Căn giữa `flex flex-col items-center` với `transformOrigin: 'top center'` và `margin: 'auto 0'`, cuộn xem trọn vẹn toàn bộ đầu trang và chương sách.
+  12. **Bộ gõ tiếng Việt trong ghi chú (P1):** Sử dụng `isComposingRef` (onCompositionStart/End) để không ngắt bộ gõ IME Telex/VNI, chuyển `normalizeNFC` về sự kiện `onBlur`.
+  13. **Mục "Đã gắn dấu sao" (P2):** Thêm hàm `toggleStarSpace`, lọc bàn học theo `starred` kèm `EmptyState` khi chưa có bàn nào.
+  14. **Khôi phục mật khẩu (P2):** Bổ sung form "Quên mật khẩu?" trên `AuthForm` gọi `resetPasswordForEmail`, xây dựng trang `/auth/reset` tiếp nhận sự kiện recovery từ Supabase Auth.
+  15. **Kết nối ChatGPT Plus (P2):** Bổ sung hướng dẫn chi tiết về chuyển hướng callback `localhost:1455`.
+  16. **Ghi hình màn hình (P2):** Tùy chọn `getDisplayMedia` với `preferCurrentTab: true`, `selfBrowserSurface: 'include'`, `systemAudio: 'include'`.
+  17. **Đồng bộ học nhóm trực tuyến (P2):** Kênh Realtime broadcast sự kiện `desk_sync`, `StudySpaceContext` tự động lắng nghe và đồng bộ `items` và `strokes`.
+  18. **Công thức trang Giới thiệu (P3):** Thay thế chuỗi LaTeX thô bằng `<MathRenderer />`, lược bỏ thuật ngữ biến nội bộ.
+  19. **Trạng thái rỗng & Dọn dữ liệu mẫu (P2-P3):** Tạo component dùng chung `EmptyState.tsx`, dọn sạch số liệu giả.
+- **Files Modified / Created:**
+  - `src/components/common/ModalErrorBoundary.tsx`
+  - `src/components/common/EmptyState.tsx`
+  - `src/lib/dateVN.ts`
+  - `src/lib/dateVN.test.ts`
+  - `src/services/OfficeParserService.ts`
+  - `src/services/OfficeParserService.test.ts`
+  - `src/context/PomodoroContext.tsx`
+  - `src/app/auth/reset/page.tsx`
+  - `src/app/layout.tsx`
+  - `src/types/studyspace.ts`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `src/components/modals/KnowInheritPublishModal.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `supabase/functions/ai-chat/index.ts`
+  - `src/lib/aiClient.ts`
+  - `src/lib/aiClient.test.ts`
+  - `src/components/modals/study-tools/QuizTab.tsx`
+  - `src/components/common/MathRenderer.tsx`
+  - `src/lib/nonAiEngine.ts`
+  - `src/components/objects/StickyNoteItem.tsx`
+  - `src/components/objects/BookSpread.tsx`
+  - `src/components/objects/PaperSheet.tsx`
+  - `src/components/modals/FullScreenDocModal.tsx`
+  - `src/components/dashboard/StreakCalendar.tsx`
+  - `src/services/StatsService.ts`
+  - `src/app/dashboard/page.tsx`
+  - `src/components/auth/AuthForm.tsx`
+  - `src/context/AuthContext.tsx`
+  - `src/hooks/useRealtimeMultiplayer.ts`
+  - `src/app/about/page.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verified by:**
+  - `pnpm exec tsc --noEmit` (0 errors)
+  - `npx vitest run` (19 test files, 65 tests passed)
+  - `npm run build` (Next.js production build succeeded)
+- **Docs updated:** `AGENTS.md`, `11_CHANGELOG.md`.
+
+---
+
 ## 2026-11-10 22:45 — main (Tối Ưu Modal Nạp ViToken, Trình Đọc 2 Trang, Dữ Liệu Chợ Thật & Bền Vững Không Gian Bàn Học)
 - **Task:**
   1. **Tối ưu Modal Nạp ViToken (`TopUpModal.tsx` & `PricingTiers.tsx`):**

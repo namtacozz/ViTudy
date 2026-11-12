@@ -79,7 +79,7 @@ function renderInlineContent(text: string): React.ReactNode {
         {textSegments.map((seg, sIdx) => {
           if (seg.startsWith('**') && seg.endsWith('**')) {
             return (
-              <strong key={sIdx} className="font-bold text-slate-900">
+              <strong key={sIdx} className="font-bold">
                 {seg.slice(2, -2)}
               </strong>
             );
@@ -104,7 +104,7 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
   const rawBlocks = content.split(blockMathRegex);
 
   return (
-    <div className={`math-rendered-document leading-[1.6] text-justify ${className}`}>
+    <div className={`math-rendered-document leading-[1.6] text-justify ${className} [&_.katex]:text-inherit`}>
       {rawBlocks.map((block, bIdx) => {
         if (!block) return null;
 
@@ -160,7 +160,7 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
             elements.push(
               <div 
                 key={`h2-${i}`} 
-                className="text-base md:text-lg font-bold text-slate-900 my-3.5 block border-b border-slate-200/70 pb-1"
+                className="text-base md:text-lg font-bold my-3.5 block border-b border-slate-200/70 pb-1"
               >
                 {renderInlineContent(headingText)}
               </div>
@@ -175,7 +175,7 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
             elements.push(
               <div 
                 key={`h3-${i}`} 
-                className="text-sm md:text-base font-bold text-slate-900 my-2.5 block"
+                className="text-sm md:text-base font-bold my-2.5 block"
               >
                 {renderInlineContent(headingText)}
               </div>
@@ -197,7 +197,7 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
             if (prefix) {
               flushList();
               elements.push(
-                <p key={`p-${i}`} className="my-1.5 text-slate-800 leading-[1.6]">
+                <p key={`p-${i}`} className="my-1.5 leading-[1.6]">
                   {renderInlineContent(prefix)}
                 </p>
               );
@@ -214,7 +214,7 @@ export const MathRenderer = React.memo(function MathRenderer({ content, classNam
           // Normal Paragraph
           flushList();
           elements.push(
-            <p key={`p-${i}`} className="my-2 text-slate-800 leading-[1.6]">
+            <p key={`p-${i}`} className="my-2 leading-[1.6]">
               {renderInlineContent(line)}
             </p>
           );

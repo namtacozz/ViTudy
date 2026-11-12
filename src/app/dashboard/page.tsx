@@ -6,6 +6,7 @@ import { useViToken } from '@/context/ViTokenContext';
 import { StatsService, DayStudyTime, ExamStats } from '@/services/StatsService';
 import { StudyStats } from '@/components/dashboard/StudyStats';
 import { StreakCalendar } from '@/components/dashboard/StreakCalendar';
+import { getLast28DaysGrid } from '@/lib/dateVN';
 import { TokenHistory } from '@/components/dashboard/TokenHistory';
 import { ArrowLeft, BarChart2, Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
@@ -70,37 +71,16 @@ export default function DashboardPage() {
       setWeeklyData(weekly);
       setExamStats({ averageScore: 8.5, totalExams: 3 });
 
-      // Lưới 28 ngày chuẩn tuần (T2 -> CN)
-      const dayOfWeek = now.getDay();
-      const distanceToMonday = (dayOfWeek + 6) % 7;
-      const currentMonday = new Date(now);
-      currentMonday.setDate(now.getDate() - distanceToMonday);
-
-      const startMonday = new Date(currentMonday);
-      startMonday.setDate(currentMonday.getDate() - 21);
-
-      const grid = [];
-      const todayStr = now.toISOString().split('T')[0];
-
-      for (let i = 0; i < 28; i++) {
-        const d = new Date(startMonday);
-        d.setDate(startMonday.getDate() + i);
-        const dStr = d.toISOString().split('T')[0];
-        const isToday = dStr === todayStr;
-        let mins = 0;
-        if (isToday) mins = 27;
-        else if (i % 5 === 0) mins = 45;
-        else if (i % 3 === 0) mins = 25;
-        else if (i % 2 === 0) mins = 10;
-
-        grid.push({
-          date: dStr,
-          minutes: mins,
-          isToday,
-          isMonthStart: d.getDate() === 1 || i === 0,
-          monthLabel: d.getDate() === 1 ? `Th${d.getMonth() + 1}` : undefined,
-        });
-      }
+      // Lưới 28 ngày chuẩn múi giờ Việt Nam (không số liệu giả tương lai)
+      const { days, leadingEmptyCells } = getLast28DaysGrid();
+      const grid = days.map((d, idx) => ({
+        date: d.dateStr,
+        minutes: 0,
+        isToday: d.isToday,
+        isMonthStart: d.dayNumber === 1 || idx === 0,
+        monthLabel: d.dayNumber === 1 ? `Th${parseInt(d.dateStr.slice(5, 7), 10)}` : undefined,
+        leadingEmpty: idx === 0 ? leadingEmptyCells : 0,
+      }));
 
       setActivityGrid(grid);
       setIsLoading(false);

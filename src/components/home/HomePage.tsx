@@ -16,14 +16,18 @@ import {
   Target,
   FileText,
   MousePointer2,
-  LogIn
+  LogIn,
+  Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useViToken } from '@/context/ViTokenContext';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { usePomodoroContext } from '@/context/PomodoroContext';
 import { TopUpModal } from '@/components/payment/TopUpModal';
 import { getAssetPath } from '@/lib/assets';
 import { StudySpace } from '@/types/studyspace';
+import { formatRelativeTimeVN } from '@/lib/dateVN';
+import { EmptyState } from '@/components/common/EmptyState';
 
 interface HomePageProps {
   onEnterDesk: (spaceId?: string) => void;
@@ -33,7 +37,8 @@ interface HomePageProps {
 export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const { user, profile, status } = useAuth();
   const { wallet, claimDailyStreak } = useViToken();
-  const { spaces, switchSpace, createSpaceFromTemplate } = useStudySpace();
+  const { spaces, switchSpace, createSpaceFromTemplate, toggleStarSpace } = useStudySpace();
+  const { startSession: startPomodoroSession } = usePomodoroContext();
   const router = useRouter();
 
   const balance = wallet?.balance ?? 50;
@@ -95,36 +100,29 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   };
 
   // Helper tính số tài liệu thực tế của bàn học
-  const getSpaceSummary = (space: StudySpace, index: number) => {
+  const getSpaceSummary = (space: StudySpace) => {
     if (space.items && space.items.length > 0) {
       const books = space.items.filter(i => i.type === 'book').length;
       const papers = space.items.filter(i => i.type === 'paper').length;
       const notes = space.items.filter(i => i.type === 'sticky_note').length;
-      const quizzes = space.items.filter(i => i.type === 'exam_sheet').length;
       
       const parts: string[] = [];
       if (books > 0) parts.push(`${books} giáo trình`);
-      if (papers > 0) parts.push(`${papers} đề thi`);
+      if (papers > 0) parts.push(`${papers} tờ rời`);
       if (notes > 0) parts.push(`${notes} ghi chú`);
-      if (quizzes > 0) parts.push(`${quizzes} trắc nghiệm`);
       if (parts.length > 0) return parts.join(' · ');
     }
-    // Fallback theo index
-    if (index === 0) return '1 giáo trình · 3 ghi chú';
-    if (index === 1) return '1 slide · 1 đề thi trắc nghiệm';
-    return '2 giáo trình · 1 vở nháp';
+    return 'Chưa có tài liệu';
   };
 
   // Helper hiển thị thời gian mở cụ thể
-  const getRecentTimeString = (index: number) => {
-    if (index === 0) return '14:20 hôm nay';
-    if (index === 1) return '2 giờ trước';
-    if (index === 2) return 'Hôm qua 21:15';
-    return `${index + 1} ngày trước`;
+  const getRecentTimeString = (space: StudySpace) => {
+    return formatRelativeTimeVN(space.lastOpenedAt || space.updatedAt || space.createdAt);
   };
 
-  // Filter spaces based on search
+  // Filter spaces based on search and activeNav
   const filteredSpaces = spaces.filter((s) => {
+    if (activeNav === 'starred' && !s.starred) return false;
     if (!searchFilter.trim()) return true;
     const query = searchFilter.toLowerCase().trim();
     return (
@@ -258,7 +256,10 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             </p>
             <button
               type="button"
-              onClick={() => onEnterDesk()}
+              onClick={() => {
+                startPomodoroSession(25);
+                onEnterDesk();
+              }}
               className="w-full py-1.5 bg-white hover:bg-orange-50 border border-stone-200 hover:border-[#E0562D] text-[#E0562D] text-[11px] font-bold rounded-lg transition-colors text-center cursor-pointer active:scale-98"
             >
               Bắt đầu phiên 25p
@@ -561,8 +562,12 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             {/* Table Rows */}
             <div className="divide-y divide-stone-100">
               {displayedSpaces.length === 0 ? (
-                <div className="py-8 text-center text-xs text-stone-500 italic">
-                  Chưa có bàn học nào phù hợp với tìm kiếm
+                <div className="py-8">
+                  <EmptyState
+                    title={activeNav === 'starred' ? 'Chưa có bàn học nào được gắn dấu sao' : 'Không tìm thấy bàn học phù hợp'}
+                    description={activeNav === 'starred' ? 'Nhấp vào biểu tượng ngôi sao ở bàn học để ghim vào mục yêu thích.' : 'Hãy thử tìm kiếm với từ khóa khác hoặc tạo bàn học mới.'}
+                    action={activeNav === 'starred' ? { label: 'Xem tất cả bàn học', onClick: () => setActiveNav('my_desks') } : undefined}
+                  />
                 </div>
               ) : (
                 displayedSpaces.map((space, idx) => {
@@ -577,6 +582,23 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                     >
                       {/* Name & Subtitle kèm Thumbnail nhỏ 56x40px */}
                       <div className="col-span-6 pr-3 flex items-center gap-3">
+                        {/* Nút gắn dấu sao */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStarSpace?.(space.id);
+                          }}
+                          title={space.starred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao'}
+                          className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                            space.starred 
+                              ? 'text-amber-500 hover:text-amber-600' 
+                              : 'text-stone-300 hover:text-stone-500 opacity-0 group-hover:opacity-100'
+                          }`}
+                        >
+                          <Star className={`w-4 h-4 ${space.starred ? 'fill-amber-400' : ''}`} />
+                        </button>
+
                         {/* Ảnh thu nhỏ bàn học 56x40px */}
                         <div className="w-14 h-10 rounded-lg bg-[#f1ede6] border border-stone-300/80 shadow-2xs flex-shrink-0 flex items-center justify-center relative overflow-hidden group-hover:border-[#E0562D]/60 transition-colors">
                           {idx % 2 === 0 ? (
@@ -613,12 +635,12 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
                       {/* Summary of Items */}
                       <div className="col-span-3 text-xs text-stone-700 font-medium">
-                        {getSpaceSummary(space, idx)}
+                        {getSpaceSummary(space)}
                       </div>
 
                       {/* Specific Last Opened Time */}
                       <div className="col-span-3 text-xs text-stone-600 text-right pr-2">
-                        {getRecentTimeString(idx)}
+                        {getRecentTimeString(space)}
                       </div>
                     </div>
                   );

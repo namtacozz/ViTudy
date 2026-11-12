@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { askAi, exchangeOpenAiCode, ensureValidOpenAiSession } from './aiClient';
+import { askAi, exchangeOpenAiCode, ensureValidOpenAiSession, parseQuizJsonSafely } from './aiClient';
 import { savePendingPkce, saveOpenAiOAuthSession, getOpenAiOAuthSession } from './openaiOAuth';
 
 function createFakeJwt(payloadObj: Record<string, unknown>): string {
@@ -105,5 +105,48 @@ describe('aiClient', () => {
     const updated = await ensureValidOpenAiSession();
     expect(updated?.accessToken).toBe(freshJwt);
     expect(updated?.refreshToken).toBe('rt_rotated_token');
+  });
+
+  describe('parseQuizJsonSafely', () => {
+    it('parses clean JSON array of questions', () => {
+      const raw = JSON.stringify([
+        {
+          question: 'Hàm kích hoạt ReLU có công thức là gì?',
+          options: ['f(x) = max(0, x)', 'f(x) = min(0, x)', 'f(x) = 1/(1+e^-x)', 'f(x) = tanh(x)'],
+          correctAnswer: 0,
+          explanation: 'ReLU trả về 0 nếu x < 0 và trả về x nếu x >= 0.'
+        }
+      ]);
+      const res = parseQuizJsonSafely(raw);
+      expect(res).toHaveLength(1);
+      expect(res[0].question).toContain('ReLU');
+      expect(res[0].correctAnswer).toBe(0);
+    });
+
+    it('extracts complete questions from truncated output string', () => {
+      const truncated = `[
+        {
+          "question": "Câu 1: SGD là viết tắt của?",
+          "options": ["Stochastic Gradient Descent", "Simple Gradient Data", "Standard Group Decay", "Static Graph Distribution"],
+          "correctAnswer": 0,
+          "explanation": "Stochastic Gradient Descent là thuật toán tối ưu phổ biến."
+        },
+        {
+          "question": "Câu 2: Ma trận chuyển vị của A kí hiệu là?",
+          "options": ["A^T", "A^-1", "det(A)", "rank(A)"],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Câu 3: Đang viết dở thì bị cắt...`;
+
+      const res = parseQuizJsonSafely(truncated);
+      expect(res).toHaveLength(2);
+      expect(res[0].question).toContain('Câu 1');
+      expect(res[1].question).toContain('Câu 2');
+    });
+
+    it('returns empty array if no valid questions found', () => {
+      expect(parseQuizJsonSafely('Không có JSON ở đây')).toEqual([]);
+    });
   });
 });

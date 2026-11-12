@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useAuth } from '@/hooks/useAuth';
+import { usePomodoroContext } from '@/context/PomodoroContext';
 import { 
   Compass, 
   Search, 
@@ -20,7 +21,11 @@ import {
   LogIn,
   User as UserIcon,
   BarChart2,
-  Info
+  Info,
+  Clock,
+  Play,
+  Pause,
+  Square
 } from 'lucide-react';
 import { getAssetPath } from '@/lib/assets';
 
@@ -40,6 +45,7 @@ export function TopLeftNav() {
   } = useStudySpace();
 
   const { user, profile } = useAuth();
+  const { state: pomodoroState, pauseSession, resumeSession, stopSession, formattedTime: pomodoroTime } = usePomodoroContext();
   const router = useRouter();
 
   const [isSpaceMenuOpen, setIsSpaceMenuOpen] = useState(false);
@@ -270,6 +276,51 @@ export function TopLeftNav() {
             </div>
           )}
         </div>
+
+        {/* Pomodoro Timer HUD Chip */}
+        {pomodoroState.status !== 'idle' && (
+          <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+            <div className={`px-2 py-0.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 border shadow-2xs ${
+              pomodoroState.status === 'running'
+                ? 'bg-orange-50 border-[#E0562D]/60 text-[#E0562D] animate-pulse'
+                : pomodoroState.status === 'completed'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : 'bg-slate-100 border-slate-300 text-slate-700'
+            }`}>
+              <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
+              <span>{pomodoroTime}</span>
+            </div>
+
+            {pomodoroState.status === 'running' ? (
+              <button
+                type="button"
+                onClick={pauseSession}
+                title="Tạm dừng phiên học"
+                className="w-6 h-6 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 cursor-pointer"
+              >
+                <Pause className="w-3 h-3 stroke-[2.4]" />
+              </button>
+            ) : pomodoroState.status === 'paused' ? (
+              <button
+                type="button"
+                onClick={resumeSession}
+                title="Tiếp tục phiên học"
+                className="w-6 h-6 rounded-md hover:bg-orange-50 text-[#E0562D] flex items-center justify-center cursor-pointer"
+              >
+                <Play className="w-3 h-3 stroke-[2.4]" />
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={stopSession}
+              title="Kết thúc phiên học"
+              className="w-6 h-6 rounded-md hover:bg-rose-50 flex items-center justify-center text-slate-400 hover:text-rose-600 cursor-pointer"
+            >
+              <Square className="w-2.5 h-2.5 fill-current" />
+            </button>
+          </div>
+        )}
 
         {/* Dashboard & User Account / Login Button */}
         <div className="pl-2 border-l border-slate-200 flex items-center gap-1.5">

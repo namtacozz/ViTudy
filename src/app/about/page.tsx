@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Cpu, Sparkles, Zap, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import { SiteFooter } from '@/components/common/SiteFooter';
+import { MathRenderer } from '@/components/common/MathRenderer';
 import { getAssetPath } from '@/lib/assets';
 
 export default function AboutPage() {
@@ -99,9 +100,9 @@ export default function AboutPage() {
               <div>
                 <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Chương 1</span>
                 <h4 className="text-xs font-bold text-stone-900 mt-1">Đạo hàm & Gradient Descent</h4>
-                <p className="text-[11px] text-stone-600 mt-2 font-mono leading-relaxed">
-                  {'$$\\nabla f(x) = [\\partial f / \\partial x_1, \\dots, \\partial f / \\partial x_n]^T$$'}
-                </p>
+                <div className="mt-2 text-stone-800 text-xs">
+                  <MathRenderer content={String.raw`$$\nabla f(x) = \left[\frac{\partial f}{\partial x_1}, \dots, \frac{\partial f}{\partial x_n}\right]^T$$`} />
+                </div>
               </div>
               <span className="text-[9px] text-stone-400 font-mono">Trang 1</span>
             </div>
@@ -141,9 +142,9 @@ export default function AboutPage() {
               <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E0562D] mb-4">
                 <Cpu className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <h3 className="text-sm font-bold text-stone-900 mb-1">KaTeX Math Rendering</h3>
+              <h3 className="text-sm font-bold text-stone-900 mb-1">Biên dịch công thức toán học KaTeX</h3>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Biên dịch công thức toán học và biểu thức LaTeX thời gian thực với bộ đệm toàn cục <code className="text-[11px] bg-stone-100 px-1 py-0.5 rounded font-mono">katexHtmlCache</code>. Chi phí biên dịch 0ms trên các lần xem tiếp theo.
+                Biên dịch công thức toán học và biểu thức LaTeX thời gian thực với bộ đệm tăng tốc tức thì. Mọi công thức hiển thị sắc nét, chuẩn xác và không có độ trễ khi lật trang.
               </p>
             </div>
 
@@ -163,9 +164,9 @@ export default function AboutPage() {
               <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 mb-4">
                 <Layers className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <h3 className="text-sm font-bold text-stone-900 mb-1">Smooth 60 FPS & Zero-Blur Vector</h3>
+              <h3 className="text-sm font-bold text-stone-900 mb-1">Trải nghiệm tương tác 60 FPS</h3>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Gom sự kiện cuộn chuột qua <code className="text-[11px] bg-stone-100 px-1 py-0.5 rounded font-mono">requestAnimationFrame</code> mượt mà 60fps. Phông chữ vector <code className="text-[11px] bg-stone-100 px-1 py-0.5 rounded font-mono">geometricPrecision</code> sắc nét 100% ở mọi tỷ lệ thu phóng 200% - 400%.
+                Tối ưu hóa vòng lặp render trên trình duyệt đạt chuẩn 60 khung hình/giây. Chữ viết và vector sắc nét ở mọi góc xoay và tỷ lệ thu phóng, mang lại cảm giác học tự nhiên như trên bàn học thực tế.
               </p>
             </div>
           </div>

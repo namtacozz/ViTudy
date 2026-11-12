@@ -44,6 +44,7 @@ interface StudySpaceContextType {
   exitFocusMode: () => void;
   triggerFocusNotice: () => void;
   switchSpace: (spaceId: string) => void;
+  toggleStarSpace: (spaceId: string) => void;
   createSpace: (name: string, subject: string) => void;
   createSpaceFromTemplate?: (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string) => string;
   setTransform: React.Dispatch<React.SetStateAction<CanvasTransform>>;
@@ -63,6 +64,7 @@ interface StudySpaceContextType {
   setBookPage: (id: string, pageIndex: number) => void;
   combineIntoBinder: (targetId: string, draggedId: string) => boolean;
   detachPageFromBinder: (bookId: string, pageIndex: number) => void;
+  convertPaperToBook?: (paperId: string, coverColor?: string) => void;
   tidyUpDesk?: () => void;
   fitAllToScreen?: () => void;
   updateStickyNoteColor?: (id: string, color: string) => void;
@@ -409,12 +411,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     if (status === 'authenticated' && user?.id) {
       StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
         if (cloudSpaces && cloudSpaces.length > 0) {
-          setSpaces(cloudSpaces);
-          const targetId = (urlSpaceId && cloudSpaces.some(s => s.id === urlSpaceId))
+          // Bảo toàn các bàn học cục bộ vừa tạo chưa kịp sync lên cloud
+          const mergedSpaces = [...cloudSpaces];
+          if (localSpaces && localSpaces.length > 0) {
+            localSpaces.forEach(ls => {
+              if (!mergedSpaces.some(cs => cs.id === ls.id)) {
+                mergedSpaces.push(ls);
+                StudySpaceService.saveSpace(ls, user.id).catch(() => {});
+              }
+            });
+          }
+          setSpaces(mergedSpaces);
+          const targetId = (urlSpaceId && mergedSpaces.some(s => s.id === urlSpaceId))
             ? urlSpaceId
-            : (localActiveId && cloudSpaces.some(s => s.id === localActiveId))
+            : (localActiveId && mergedSpaces.some(s => s.id === localActiveId))
             ? localActiveId
-            : cloudSpaces[0].id;
+            : mergedSpaces[0].id;
           setActiveSpaceId(targetId);
         } else if (localSpaces && localSpaces.length > 0) {
           // Chưa có trên cloud nhưng có local -> sync local lên cloud
@@ -514,6 +526,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     }
   }, [spaces, strokes, status, user?.id, activeSpaceId, isLoaded]);
 
+  // Lắng nghe đồng bộ realtime bàn học khi học nhóm multiplayer
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleMultiplayerSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{ type: string; data: any }>;
+      const { type, data } = customEvent.detail || {};
+      if (type === 'items' && Array.isArray(data)) {
+        setSpaces(prev => prev.map(s => s.id === activeSpaceId ? { ...s, items: data } : s));
+      } else if (type === 'strokes' && Array.isArray(data)) {
+        setStrokes(data);
+      }
+    };
+    window.addEventListener('vitudy:multiplayer-sync', handleMultiplayerSync);
+    return () => window.removeEventListener('vitudy:multiplayer-sync', handleMultiplayerSync);
+  }, [activeSpaceId]);
+
   const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
 
   const switchSpace = (spaceId: string) => {
@@ -521,7 +549,20 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       setActiveSpaceId(spaceId);
       setSelectedItemId(null);
       resetView();
+      // Cập nhật mốc mở lần cuối
+      setSpaces(prev => prev.map(s => s.id === spaceId ? { ...s, lastOpenedAt: new Date().toISOString() } : s));
     }
+  };
+
+  const toggleStarSpace = (spaceId: string) => {
+    setSpaces(prev => prev.map(s => {
+      if (s.id !== spaceId) return s;
+      const nextStar = !s.starred;
+      if (status === 'authenticated' && user?.id) {
+        StudySpaceService.saveSpace({ ...s, starred: nextStar }, user.id).catch(() => {});
+      }
+      return { ...s, starred: nextStar };
+    }));
   };
 
   const createSpace = (name: string, subject: string) => {
@@ -533,6 +574,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       description: `Không gian học tập bộ môn ${subject}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      starred: false,
       items: []
     };
     if (status === 'authenticated' && user?.id) {
@@ -844,9 +887,11 @@ Trong đó:
       id: newSpaceId,
       name,
       subject,
-      description: `Bàn học ${name}`,
+      description: templateType === 'blank' ? 'Không gian bàn học trống' : `Bàn học ${name}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      starred: false,
       items
     };
 
@@ -1340,7 +1385,8 @@ Trong đó:
               const nextCount = remainingPages.length;
               return {
                 ...item,
-                type: nextCount < 5 ? ('paper' as const) : ('book' as const),
+                // Bảo toàn loại sách và bìa da ban đầu kể cả khi số trang < 5
+                type: item.type === 'book' ? ('book' as const) : nextCount < 5 ? ('paper' as const) : ('book' as const),
                 pageCount: nextCount,
                 currentPageIndex: Math.min(item.currentPageIndex, Math.max(0, nextCount - 1)),
                 pages: remainingPages
@@ -1348,6 +1394,27 @@ Trong đó:
             }),
             newPaperSheet
           ]
+        };
+      })
+    );
+  };
+
+  // Convert a loose paper sheet into a bound book with a cover
+  const convertPaperToBook = (paperId: string, coverColor = 'brown') => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item => {
+            if (item.id !== paperId) return item;
+            return {
+              ...item,
+              type: 'book' as const,
+              coverColor,
+              colorTheme: coverColor
+            };
+          })
         };
       })
     );
@@ -1837,6 +1904,7 @@ Trong đó:
         exitFocusMode,
         triggerFocusNotice,
         switchSpace,
+        toggleStarSpace,
         createSpace,
         createSpaceFromTemplate,
         setTransform,
@@ -1856,6 +1924,7 @@ Trong đó:
         setBookPage,
         combineIntoBinder,
         detachPageFromBinder,
+        convertPaperToBook,
         updateStickyNoteText,
         updateStickyNoteColor,
         updateBookCoverColor,

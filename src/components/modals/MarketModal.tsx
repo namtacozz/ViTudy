@@ -27,6 +27,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { KnowInheritPublishModal } from './KnowInheritPublishModal';
+import { ModalErrorBoundary } from '@/components/common/ModalErrorBoundary';
 import { INITIAL_MARKET_ITEMS, MarketItem } from '@/data/marketMockData';
 
 interface MarketModalProps {
@@ -855,33 +856,35 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
 
       {/* MODAL: Đăng tài liệu lên Chợ */}
       {isPublishOpen && (
-        <KnowInheritPublishModal
-          item={activeSpace.items.find(i => i.id === selectedDeskItemId) || activeSpace.items[0]}
-          isOpen={isPublishOpen}
-          onClose={() => setIsPublishOpen(false)}
-          onPublished={(newListing) => {
-            const formattedListing: MarketItem = {
-              id: newListing.id,
-              title: newListing.title,
-              author: newListing.author,
-              aiScore: newListing.aiScore,
-              price: newListing.price,
-              type: newListing.type || 'paper',
-              category: 'cs',
-              date: new Date().toLocaleDateString('vi-VN'),
-              purchased: true,
-              summary: newListing.summary,
-              previewText: newListing.previewText,
-              pageCount: 1,
-              downloadsCount: 1,
-              updatedDate: new Date().toLocaleDateString('vi-VN'),
-              isAuthorVerified: true,
-              aiReviewCount: 1
-            };
-            setMarketItems(prev => [formattedListing, ...prev]);
-            addTokens(2, `Chia sẻ tài liệu lên Chợ: ${newListing.title}`);
-          }}
-        />
+        <ModalErrorBoundary fallbackTitle="Không thể mở hộp thoại chia sẻ tài liệu" onReset={() => setIsPublishOpen(false)}>
+          <KnowInheritPublishModal
+            item={activeSpace.items.find(i => i.id === selectedDeskItemId) || activeSpace.items[0]}
+            isOpen={isPublishOpen}
+            onClose={() => setIsPublishOpen(false)}
+            onPublished={(newListing) => {
+              const formattedListing: MarketItem = {
+                id: newListing.id,
+                title: newListing.title,
+                author: newListing.author,
+                aiScore: newListing.aiScore,
+                price: newListing.price,
+                type: newListing.type || 'paper',
+                category: 'cs',
+                date: new Date().toLocaleDateString('vi-VN'),
+                purchased: true,
+                summary: newListing.summary,
+                previewText: newListing.previewText,
+                pageCount: 1,
+                downloadsCount: 1,
+                updatedDate: new Date().toLocaleDateString('vi-VN'),
+                isAuthorVerified: true,
+                aiReviewCount: 1
+              };
+              setMarketItems(prev => [formattedListing, ...prev]);
+              addTokens(2, `Chia sẻ tài liệu lên Chợ: ${newListing.title}`);
+            }}
+          />
+        </ModalErrorBoundary>
       )}
     </div>,
     document.body

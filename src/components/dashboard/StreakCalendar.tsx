@@ -10,6 +10,7 @@ interface StreakCalendarProps {
     isToday?: boolean; 
     isMonthStart?: boolean; 
     monthLabel?: string;
+    leadingEmpty?: number;
   }[];
 }
 
@@ -61,6 +62,11 @@ export function StreakCalendar({ activityGrid }: StreakCalendarProps) {
 
         {/* 28 Day cells */}
         <div className="grid grid-cols-7 gap-2">
+          {activityGrid[0]?.leadingEmpty && activityGrid[0].leadingEmpty > 0
+            ? Array.from({ length: activityGrid[0].leadingEmpty }).map((_, emptyIdx) => (
+                <div key={`empty-${emptyIdx}`} className="h-12 rounded-xl border border-transparent opacity-0 pointer-events-none" />
+              ))
+            : null}
           {activityGrid.map((item, idx) => {
             const isToday = item.isToday || item.date === todayStr;
             const dayNum = item.date.slice(8);

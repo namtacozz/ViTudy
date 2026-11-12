@@ -1000,8 +1000,16 @@ export function TopRightWallet() {
                         </div>
 
                         {hasOpenedPkceWindow && (
-                          <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
-                            Sau khi đăng nhập xong trên tab mới, trình duyệt sẽ chuyển sang địa chỉ <code className="font-mono font-bold">http://localhost:1455/auth/callback?code=...</code>. Hãy sao chép toàn bộ thanh địa chỉ đó rồi bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
+                          <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-[11px] text-amber-900 leading-relaxed space-y-1">
+                            <div className="font-bold flex items-center gap-1 text-amber-950">
+                              <span>Lưu ý quan trọng:</span>
+                            </div>
+                            <p>
+                              Trình duyệt báo <code className="font-mono bg-white px-1 py-0.5 rounded border border-amber-200 text-slate-800">Trang web này hiện không truy cập được (localhost:1455)</code> là <strong>hoàn toàn bình thường</strong>.
+                            </p>
+                            <p>
+                              Bạn chỉ cần <strong>sao chép toàn bộ dòng địa chỉ đó</strong> trên trình duyệt, quay lại đây và bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
+                            </p>
                           </div>
                         )}
 

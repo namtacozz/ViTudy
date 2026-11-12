@@ -112,6 +112,14 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
       }
     });
 
+    // 3. Desk Objects Sync Broadcast (Tài liệu, ghi chú và nét vẽ)
+    channel.on('broadcast', { event: 'desk_sync' }, (payload) => {
+      const { senderId, type, data } = payload.payload;
+      if (senderId !== userId && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vitudy:multiplayer-sync', { detail: { type, data } }));
+      }
+    });
+
     // Subscribe to channel and track local user presence
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
@@ -146,7 +154,15 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     });
   }, [isConnected, userId]);
 
-  // Broadcast camera transform for presenter follow
+  // Broadcast desk objects/strokes updates to peers
+  const broadcastDeskUpdate = useCallback((type: 'items' | 'strokes', data: any) => {
+    if (!channelRef.current || !isConnected) return;
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'desk_sync',
+      payload: { senderId: userId, type, data }
+    });
+  }, [isConnected, userId]);
   const broadcastCamera = useCallback((camera: { x: number; y: number; scale: number; rotation: number }) => {
     if (!channelRef.current || !isConnected) return;
     channelRef.current.send({
@@ -205,6 +221,7 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     setIsFollowPresenter,
     broadcastCursor,
     broadcastCamera,
+    broadcastDeskUpdate,
     toggleSimulation,
     leaveRoom
   };

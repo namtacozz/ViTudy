@@ -30,6 +30,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string, displayName?: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   signInWithOAuth: (provider: 'google' | 'discord') => Promise<AuthResult>;
+  resetPasswordForEmail: (email: string) => Promise<AuthResult>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -204,6 +205,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('guest');
   };
 
+  const resetPasswordForEmail = async (email: string): Promise<AuthResult> => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      return { success: false, error: 'Chưa thể kết nối tới máy chủ xác thực.' };
+    }
+
+    try {
+      setIsLoading(true);
+      let basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+      if (!basePath && typeof window !== 'undefined' && window.location.pathname.startsWith('/ViTudy')) {
+        basePath = '/ViTudy';
+      }
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl = `${origin}${basePath}/auth/reset`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Lỗi gửi yêu cầu khôi phục mật khẩu.' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const signInWithOAuth = async (provider: 'google' | 'discord'): Promise<AuthResult> => {
     const supabase = getSupabase();
     if (!supabase) {
@@ -264,6 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         signInWithOAuth,
+        resetPasswordForEmail,
         refreshProfile,
       }}
     >
@@ -282,4 +315,8 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+export function useOptionalAuth() {
+  return useContext(AuthContext);
 }

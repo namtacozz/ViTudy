@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { ItemDrawingOverlay } from '../canvas/ItemDrawingOverlay';
+import { MathRenderer } from '../common/MathRenderer';
 
 interface StickyNoteItemProps {
   item: DeskItem;
@@ -133,8 +134,27 @@ export function StickyNoteItemComponent({ item, isSelected }: StickyNoteItemProp
     height: item.height || 200,
   });
 
+  const isComposingRef = useRef(false);
+
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = normalizeNFC(e.target.value);
+    const val = e.target.value;
+    setText(val);
+    if (!isComposingRef.current && updateStickyNoteText) {
+      updateStickyNoteText(item.id, val);
+    }
+  };
+
+  const handleBlur = () => {
+    const normalized = normalizeNFC(text);
+    setText(normalized);
+    if (updateStickyNoteText) {
+      updateStickyNoteText(item.id, normalized);
+    }
+  };
+
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLTextAreaElement>) => {
+    isComposingRef.current = false;
+    const val = (e.target as HTMLTextAreaElement).value;
     setText(val);
     if (updateStickyNoteText) {
       updateStickyNoteText(item.id, val);
@@ -256,7 +276,8 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
   const isMindMap = trimmedText.includes('[SƠ ĐỒ TƯ DUY]') || trimmedText.includes('├──') || trimmedText.includes('└──');
   const isSticker = trimmedText.includes('[STICKER');
   const isIllustration = trimmedText.includes('[MINH HỌA');
-  const hasRichView = isCodeBlock || isTable || isMindMap || isSticker || isIllustration;
+  const hasMathOrMarkdown = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^\$\n]+?\$|\\\([\s\S]+?\\\)|^#{1,3}\s)/m.test(trimmedText);
+  const hasRichView = isCodeBlock || isTable || isMindMap || isSticker || isIllustration || hasMathOrMarkdown;
 
   const handleCopyCode = async (codeStr: string) => {
     try {
@@ -732,11 +753,22 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
           isTable ? renderTable() :
           isMindMap ? renderMindMap() :
           isSticker ? renderSticker() :
-          renderIllustration()
+          isIllustration ? renderIllustration() : (
+            <div 
+              onDoubleClick={() => setIsEditingContent(true)}
+              className="w-full flex-1 overflow-y-auto no-scrollbar text-stone-900 select-text p-1 text-xs leading-relaxed"
+              title="Nhấn đúp để chỉnh sửa nội dung"
+            >
+              <MathRenderer content={text} />
+            </div>
+          )
         ) : (
           <textarea
             value={text}
             onChange={handleTextChange}
+            onBlur={handleBlur}
+            onCompositionStart={() => { isComposingRef.current = true; }}
+            onCompositionEnd={handleCompositionEnd}
             onMouseUp={handleTextMouseUp}
             placeholder="Ghi chú..."
             spellCheck={false}
