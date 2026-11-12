@@ -117,6 +117,9 @@ export interface DrawingStroke {
   width: number;
   isHighlighter?: boolean;
   attachedToItemId?: string;
+  originalPoints?: { x: number; y: number }[];
+  isSmartShape?: boolean;
+  shapeType?: string;
 }
 
 export interface CanvasTransform {

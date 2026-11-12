@@ -27,6 +27,11 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Lược bỏ nút Home trên thanh TopLeftNav:** Do nhấp vào logo hoặc chữ "ViTudy" ở đầu thanh đã điều hướng về trang chủ (`/?view=home`), nút Home riêng biệt được lược bỏ để giữ thanh điều hướng tinh gọn và thanh thoát.
     * **Quy Chuẩn Cố Định Không Gian Trang Chủ & Tinh Giản Giao Diện (Fixed Viewport & Miro-Style Standards):**
       * **Trang chủ cố định 100vh không cuộn toàn trang:** Container chính dùng `h-screen overflow-hidden flex`. Danh sách bàn học "Mở lại gần đây" có container cuộn độc lập (`flex-1 min-h-0 flex flex-col overflow-hidden` với table body `flex-1 overflow-y-auto no-scrollbar`), chỉ cuộn riêng danh sách bàn học mà không làm trôi toàn bộ trang.
+      * **Bố cục Cockpit 3 cột Hero:** Phía trên danh sách mở lại gồm 3 khối:
+        * Khối trái (5 cột): Châm ngôn/Quote truyền động lực ngẫu nhiên từ danh sách 9 câu chuẩn hóa kèm tên gọi ngắn người dùng (`shortName`).
+        * Khối giữa (4 cột): Thẻ "Tiếp tục học" mở rộng hiển thị bàn học gần nhất, thời gian mở, số lượng tài liệu và nút "Vào bàn học" màu Cam ViT.
+        * Khối phải (3 cột): Thẻ "Bàn học trống" viền nét đứt với nút tạo nhanh bàn học trắng (`handleSelectTemplate('blank')`).
+      * **Loại bỏ toàn bộ bàn học giả demo:** Danh sách "Mở lại gần đây" chỉ hiển thị các bàn học thật sự do người dùng tạo hoặc mở; khi chưa có bàn học, hiển thị Empty State sạch kèm nút "Tạo bàn học trống", tuyệt đối không chèn các bàn học giả (`Ôn thi giữa kỳ`, `Giáo trình + đề thi`, `Học nhóm`).
       * **Loại bỏ hoàn toàn dải Chợ tài liệu ở đáy trang chủ:** Chuyển "Chợ tài liệu" thành 1 khối nổi bật ở cột thanh bên trái, nằm ngay dưới "Mục tiêu hôm nay" và ngay trên "Số dư khả dụng", khi bấm mở trực tiếp modal `MarketModal`.
       * **Loại bỏ liên kết thừa ở thanh bên:** Bỏ hẳn liên kết `/about` (Giới thiệu & Kỹ thuật) và `/faq` (Hỏi đáp) khỏi thanh điều hướng của app để giao diện luôn thanh thoát, tập trung vào học tập.
       * **Header trang chủ sát viền trên & Logo nhận diện:** Header đưa sát lề trên (`py-2 mb-2`), thay thế dòng chữ tiêu đề dài bằng icon logo `vitudy.png` cùng text "ViTudy" màu Cam ViT in đậm, đẩy toàn bộ nội dung học tập lên cao nhất.
@@ -85,10 +90,19 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Quy Chuẩn Chọn Gói Nạp ViToken & Modal Nạp (`TopUpModal` & `PricingTiers`):**
       * Tiêu đề chuẩn: **"Nạp ViToken"**, phụ đề: *"Quét mã ngân hàng. Số dư được cộng ngay sau khi chuyển khoản thành công."*
       * Banner quy đổi: Rút gọn thành một dòng chữ có độ tương phản cao phía trên danh sách gói: `<strong className="text-slate-900 font-bold">1.000đ = 1 ViToken</strong>. Dùng cho hỏi đáp AI, mở tài liệu trên Chợ và xuất đề thi.`
-      * Thẻ gói có cấu trúc đồng nhất: Hàng 1 gồm tên gói; Hàng 2 gồm giá to nhất font sans đậm; Chip tặng đặt dưới giá dạng badge riêng biệt (`Tặng +N ViToken`), không chèn ép tiêu đề; Hàng 3 gồm số ViToken nhận được (`Nhận X ViToken (gồm +N tặng)` chữ xám đậm `text-slate-700`). Phía dưới là mô tả ứng dụng thực tế. Cân bằng đồng đều chiều cao của toàn bộ các thẻ gói.
-      * Nhãn nổi bật: Chỉ dùng duy nhất nhãn **"Phổ biến"** cho gói Học kỳ.
+      * **Bỏ toàn bộ tag/chip "Tặng" lặp thừa:** Giá tiền đã được chiết khấu trực tiếp, không hiển thị các badge tặng gây tràn chữ.
+      * **4 gói nạp chuẩn xác:**
+        1. **Nhẹ nhàng**: 20.000đ - `• 20 ViToken` - `~10 lượt AI hoặc tải đề thi.`
+        2. **Chăm chỉ**: 45.000đ - `• 50 ViToken` - `~25 lượt AI hoặc vài tài liệu Chợ.`
+        3. **Try hard**: 85.000đ - `• 100 ViToken` - `~50 lượt AI. Siêu tiết kiệm.`
+        4. **Nhóm**: 255.000đ - `• 300 ViToken` - `Phù hợp cho học nhóm và đồ án.`
+      * **Cấu trúc mỗi ô thẻ gói:**
+        * Dòng 1: Tên gói (`text-xs font-bold text-slate-900`).
+        * Dòng 2: Giá tiền to nhất font sans (`text-xl font-black text-slate-900`).
+        * Dòng 3: `• X ViToken` nổi bật màu Cam ViT (`text-sm font-black text-[#E0562D]`).
+        * Dòng 4: Miêu tả ứng dụng thực tế ngắn gọn, không tràn dòng.
       * Trạng thái chọn: Viền cam 1.5px (`border-[1.5px] border-[#E0562D]`) và dấu tích tròn. Không dùng đổ bóng và không đổi màu nền cả thẻ (giữ nền trắng).
-      * Khối thanh toán chân modal: Bên trái hiển thị `Số dư: X → Y ViToken` (số dư sau nạp dùng màu xanh lá `text-emerald-600 font-bold`, bỏ chip lặp `+NV`); Bên phải là nút thanh toán Cam ViT (`Thanh toán [Giá]đ`).
+      * Khối thanh toán chân modal: Bên trái hiển thị `Số dư: X → Y ViToken` (số dư sau nạp dùng màu xanh lá `text-emerald-600 font-bold`); Bên phải là nút thanh toán Cam ViT (`Thanh toán [Giá]đ`).
     * **Quy Chuẩn Nút Hành Động & Trạng Thái Chọn Trong Mọi Modal (Modal Action & Tab Selection Standards):**
       * **Nút hành động chính (Primary Action):** Bắt buộc dùng màu **Cam ViT `#E0562D`** (`bg-[#E0562D] hover:bg-[#c9451e] text-white`).
       * **Nút thứ cấp (Secondary Action):** Dùng nền trắng viền xám mảnh (`bg-white border border-stone-200 text-stone-700 hover:bg-stone-50`), triệt tiêu việc dùng nút đen chiếm thị giác của nút chính (như nút "Chia sẻ tài liệu" trên header Chợ).
@@ -238,6 +252,12 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Quy Chuẩn Nạp & Kéo Thả Tệp Thực Tế Lên Bàn Học (Zero-Simulated Text Policy):**
     * Khi người dùng kéo thả hoặc tải tệp `.pdf`, hình ảnh hoặc văn bản lên mặt bàn học, hệ thống **tuyệt đối không sinh văn bản giả lập định sẵn** (như `"Nội dung trích xuất từ tệp 'TenFile.pdf'..."`).
     * Bắt buộc sử dụng `parsePdfFile` trích xuất đầy đủ văn bản thực tế của từng trang tài liệu và đồng thời render canvas hình ảnh độ phân giải cao của trang gốc vào từng trang sách/tài liệu (`leaf.image`), đảm bảo trải nghiệm đọc tài liệu trung thực 100%.
+  * **Quy Chuẩn Nhận Diện Hình Học Thông Minh & Nắn Nét Bằng Giữ Bút (Smart Shape Model-Fitting & Pen-Hold Snapping Standards):**
+    * **Phương pháp Model-Fitting thuần túy:** Tuyệt đối không dùng các ngưỡng heuristic cứng hay bounding box trục thẳng để nhận diện hình. Toàn bộ hình được khớp qua mô hình toán học: Total Least Squares (TLS) cho đường thẳng, Đại số Kåsa/Pratt cho đường tròn, Ma trận Hiệp phương sai 2D (PCA) cho elip, Minimum Bounding Box đa góc (36 góc) cho hình chữ nhật/vuông xoay tự do, và RDP thích ứng cho tam giác.
+    * **Hệ số lấp đầy Bounding Box (Isoperimetric / Fill Ratio):** Diện tích thực tế của nét vẽ (Shoelace) chia cho diện tích hộp bao tối thiểu ($Area_{stroke} / Area_{bbox}$) được dùng làm bất biến hình học: Tỷ lệ $\pi/4 \approx 0.785$ phân định dứt khoát elip/hình tròn khỏi hình chữ nhật ($1.000$) và tam giác ($0.500$), triệt tiêu hoàn toàn lỗi nhầm lẫn khi nét vẽ bị xoay nghiêng hoặc rung tay.
+    * **Trải nghiệm Giữ bút để nắn hình (Pen-Hold Snapping with Hysteresis):** Khi đang vẽ bằng công cụ bút thường (`pen`) và dừng yên ngòi bút trong 400ms (350-500ms), nét vẽ tự động nắn thành hình học hoàn hảo. Cơ chế trễ (Hysteresis): nếu người dùng kéo ngòi bút tiếp tục quá 18px sau khi snap, hình tự động hoàn trả lại nét tự do ban đầu.
+    * **Bảo tồn nét gốc & Hoàn tác hai cấp (Dual-Stage Ctrl+Z Undo):** Lưu `originalPoints` trong `DrawingStroke`. Khi người dùng bấm Ctrl+Z lần đầu trên một nét vẽ đã nắn thông minh, hệ thống hoàn nguyên nét vẽ về lại nét tự do vẽ tay ban đầu thay vì xóa hẳn. Bấm Ctrl+Z lần 2 mới xóa nét vào redo stack.
+    * **Đồng bộ toàn bộ:** Áp dụng đồng bộ cho cả nét vẽ trên mặt bàn học (`DeskDrawingCanvas`) lẫn nét vẽ trên tài liệu sách/vở (`ItemDrawingOverlay`).
 
 ---
 

@@ -11,18 +11,11 @@ interface PricingTiersProps {
   isLoading?: boolean;
 }
 
-const BONUS_MAP: Record<string, string> = {
-  semester: '+3 ViToken',
-  project: '+15 ViToken',
-  team: '+45 ViToken',
-};
-
 const USAGE_MAP: Record<string, string> = {
-  starter: 'Đủ cho 1 lượt hỏi đáp chuyên sâu',
-  midterm: '~5 lượt AI hoặc tải đề thi',
-  semester: '15 lượt AI hoặc 2 tài liệu Chợ · Tặng 11% so với giá gốc',
-  project: '~50 lượt AI hoặc cả học kỳ · Tiết kiệm lớn',
-  team: 'Phù hợp nhóm học và đồ án lớn',
+  light: '~10 lượt AI hoặc tải đề thi.',
+  diligent: '~25 lượt AI hoặc vài tài liệu Chợ.',
+  tryhard: '~50 lượt AI. Siêu tiết kiệm.',
+  group: 'Phù hợp cho học nhóm và đồ án.',
 };
 
 export function PricingTiers({
@@ -56,13 +49,12 @@ export function PricingTiers({
       <div 
         role="radiogroup" 
         aria-label="Chọn gói nạp ViToken"
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 items-stretch"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-stretch"
       >
         {packages.map((pkg, idx) => {
           const isSelected = selectedPackageId === pkg.id;
-          const isPopular = pkg.id === 'semester';
-          const bonus = BONUS_MAP[pkg.id];
-          const usageDesc = USAGE_MAP[pkg.id] || 'Áp dụng cho mọi tính năng học tập';
+          const isPopular = pkg.id === 'diligent' || pkg.id === 'tryhard';
+          const usageDesc = USAGE_MAP[pkg.id] || 'Áp dụng cho mọi tính năng học tập.';
 
           return (
             <div
@@ -73,55 +65,44 @@ export function PricingTiers({
               aria-label={`Gói ${pkg.label}, ${pkg.priceVnd.toLocaleString('vi-VN')} đồng, nhận ${pkg.tokenAmount} ViToken. ${usageDesc}`}
               onClick={() => onSelectPackage(pkg)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              className={`relative rounded-xl p-3 bg-white transition-all cursor-pointer flex flex-col justify-between text-left outline-none min-h-[170px] ${
+              className={`relative rounded-xl p-3.5 bg-white transition-all cursor-pointer flex flex-col justify-between text-left outline-none min-h-[160px] ${
                 isSelected
-                  ? 'border-[1.5px] border-[#E0562D]'
+                  ? 'border-[1.5px] border-[#E0562D] shadow-2xs'
                   : 'border border-slate-200 hover:border-slate-300'
               }`}
             >
-              {/* Huy hiệu Phổ biến - Chỉ gắn duy nhất gói học kỳ */}
-              {isPopular && (
+              {isPopular && pkg.id === 'diligent' && (
                 <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#E0562D] text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-2xs">
                   Phổ biến
                 </div>
               )}
 
-              <div className="flex-1 flex flex-col justify-between">
-                {/* Dòng 1: Tên gói */}
-                <div className="flex items-center justify-between gap-1 mb-1 min-h-[20px]">
-                  <span className="text-xs font-bold text-slate-900 whitespace-nowrap">{pkg.label}</span>
+              <div className="flex-1 flex flex-col">
+                {/* 1. Tên gói */}
+                <div className="text-xs font-bold text-slate-900 tracking-tight">
+                  {pkg.label}
                 </div>
 
-                {/* Dòng 2 & 3: Giá to nhất & Số ViToken nhận được */}
-                <div className="mt-1">
-                  <div className="text-lg font-black text-slate-900 leading-none">
-                    {pkg.priceVnd.toLocaleString('vi-VN')}{' '}
-                    <span className="text-[11px] font-bold text-slate-800">đ</span>
-                  </div>
+                {/* 2. Giá tiền */}
+                <div className="text-xl font-black text-slate-900 leading-none mt-1.5">
+                  {pkg.priceVnd.toLocaleString('vi-VN')}{' '}
+                  <span className="text-xs font-bold text-slate-700">đ</span>
+                </div>
 
-                  {bonus ? (
-                    <div className="mt-1.5">
-                      <span className="text-[10px] font-bold text-[#E0562D] bg-[#FFF7ED] border border-[#FFEDD5] px-1.5 py-0.5 rounded-md whitespace-nowrap inline-block">
-                        Tặng {bonus}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="mt-1.5 h-[21px]" />
-                  )}
+                {/* 3. Số ViToken (to lên chút) */}
+                <div className="text-sm font-black text-[#E0562D] mt-2 flex items-center gap-1.5">
+                  <span className="text-base leading-none">•</span>
+                  <span>{pkg.tokenAmount.toLocaleString('vi-VN')} ViToken</span>
+                </div>
 
-                  <div className="text-[11px] font-medium text-slate-700 mt-1.5 whitespace-nowrap">
-                    {bonus
-                      ? `Nhận ${pkg.tokenAmount.toLocaleString('vi-VN')} ViToken (gồm ${bonus} tặng)`
-                      : `Nhận ${pkg.tokenAmount.toLocaleString('vi-VN')} ViToken`}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-1 leading-snug min-h-[28px]">
-                    {usageDesc}
-                  </div>
+                {/* 4. Miêu tả */}
+                <div className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                  {usageDesc}
                 </div>
               </div>
 
               {/* Dấu tích chọn */}
-              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-end text-[11px]">
+              <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-end text-[11px]">
                 <div
                   className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                     isSelected

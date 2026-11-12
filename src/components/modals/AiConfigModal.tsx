@@ -23,6 +23,7 @@ import {
   clearOpenAiOAuthSession,
   OpenAiOAuthSession,
 } from '@/lib/openaiOAuth';
+import { ByokStore } from '@/lib/byokStore';
 
 export interface ModelItem {
   id: string;
@@ -42,20 +43,13 @@ export const CHATGPT_MODEL_GROUPS: ModelGroup[] = [
       { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', desc: 'Mạnh nhất, phù hợp bài toán nhiều bước' },
       { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', desc: 'Phản hồi sâu, xử lý tài liệu dài' },
       { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', desc: 'Phân tích cấu trúc và tổng hợp' },
-      { id: 'o3-mini', name: 'o3-mini', desc: 'Tối ưu cho Toán và lập trình' },
-      { id: 'o1', name: 'o1', desc: 'Suy luận từng bước chi tiết' },
     ]
   },
   {
-    group: 'Toàn diện & Cân bằng',
+    group: 'Toàn diện & Tốc độ cao',
     models: [
-      { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest', desc: 'Bản cập nhật thường xuyên' },
+      { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest', desc: 'Bản cập nhật thường xuyên nhất' },
       { id: 'gpt-4o', name: 'GPT-4o', desc: 'Xử lý hình ảnh và văn bản đa phương thức' },
-    ]
-  },
-  {
-    group: 'Tốc độ cao & Hàng ngày',
-    models: [
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Tốc độ cao, phản hồi tức thì' },
     ]
   }
@@ -75,7 +69,11 @@ export const BYOK_GEMINI_MODELS: ModelItem[] = [
 export const BYOK_OPENAI_MODELS: ModelItem[] = [
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Nhanh & tiết kiệm chi phí' },
   { id: 'gpt-4o', name: 'GPT-4o', desc: 'Toàn diện cao cấp' },
-  { id: 'o3-mini', name: 'o3-mini', desc: 'Suy luận STEM xuất sắc' },
+];
+
+export const BYOK_CLAUDE_MODELS: ModelItem[] = [
+  { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', desc: 'Suy luận lai đa phương thức hàng đầu' },
+  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', desc: 'Tốc độ cực nhanh và tiết kiệm' },
 ];
 
 export const PROVIDER_MODELS: Record<AiProvider, ModelItem[]> = {
@@ -83,6 +81,7 @@ export const PROVIDER_MODELS: Record<AiProvider, ModelItem[]> = {
   oauth_chatgpt: CHATGPT_MODEL_GROUPS.flatMap(g => g.models),
   byok_gemini: BYOK_GEMINI_MODELS,
   byok_openai: BYOK_OPENAI_MODELS,
+  byok_claude: BYOK_CLAUDE_MODELS,
   oauth_gemini: []
 };
 
@@ -127,7 +126,15 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
     if (isOpen) {
       setSelectedProvider(aiConfig.provider);
       setSelectedModel(aiConfig.model || 'gpt-4o-mini');
-      setApiKeyInput((aiConfig as any).apiKey || '');
+      if (aiConfig.provider === 'byok_gemini') {
+        setApiKeyInput(ByokStore.get('gemini') || '');
+      } else if (aiConfig.provider === 'byok_openai') {
+        setApiKeyInput(ByokStore.get('openai') || '');
+      } else if (aiConfig.provider === 'byok_claude') {
+        setApiKeyInput(ByokStore.get('claude') || '');
+      } else {
+        setApiKeyInput((aiConfig as any).apiKey || '');
+      }
       setOauthSession(getOpenAiOAuthSession());
       setTestConnectionStatus('idle');
       setTestResultMessage(null);
@@ -145,11 +152,25 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  const isPlusOrHigher = Boolean(
+    oauthSession?.planType &&
+    ['plus', 'pro', 'team', 'enterprise'].includes(oauthSession.planType.toLowerCase())
+  );
+  const FREE_ALLOWED_MODELS = ['gpt-5.6-terra', 'gpt-5.6-luna'];
+
+  useEffect(() => {
+    if (selectedProvider === 'oauth_chatgpt' && !isPlusOrHigher) {
+      if (!FREE_ALLOWED_MODELS.includes(selectedModel)) {
+        setSelectedModel('gpt-5.6-terra');
+      }
+    }
+  }, [selectedProvider, isPlusOrHigher, selectedModel]);
+
   const hasAiChanges = useMemo(() => {
     if (selectedProvider !== aiConfig.provider) return true;
     if (selectedModel !== (aiConfig.model || 'gpt-4o-mini')) return true;
     if (selectedProvider === 'oauth_chatgpt' && (chatGptCodeInput.trim() !== '' || Boolean(oauthSession) !== Boolean(aiConfig.isOauthConnected))) return true;
-    if ((selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') && apiKeyInput.trim() !== ((aiConfig as any).apiKey || '')) return true;
+    if (selectedProvider.startsWith('byok_') && apiKeyInput.trim() !== ((aiConfig as any).apiKey || '')) return true;
     return false;
   }, [selectedProvider, selectedModel, chatGptCodeInput, oauthSession, aiConfig, apiKeyInput]);
 
@@ -157,6 +178,13 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
     setSelectedProvider(provider);
     setTestConnectionStatus('idle');
     setTestResultMessage(null);
+    if (provider === 'byok_gemini') {
+      setApiKeyInput(ByokStore.get('gemini') || '');
+    } else if (provider === 'byok_openai') {
+      setApiKeyInput(ByokStore.get('openai') || '');
+    } else if (provider === 'byok_claude') {
+      setApiKeyInput(ByokStore.get('claude') || '');
+    }
     const models = PROVIDER_MODELS[provider] || [];
     if (models.length > 0) {
       setSelectedModel(models[0].id);
@@ -279,10 +307,18 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
     if (selectedProvider === 'oauth_chatgpt' && chatGptCodeInput.trim() && !oauthSession) {
       await handleConnectOpenAiInput(chatGptCodeInput);
     }
+    if (selectedProvider === 'byok_gemini') {
+      ByokStore.set('gemini', apiKeyInput.trim());
+    } else if (selectedProvider === 'byok_openai') {
+      ByokStore.set('openai', apiKeyInput.trim());
+    } else if (selectedProvider === 'byok_claude') {
+      ByokStore.set('claude', apiKeyInput.trim());
+    }
     updateAiConfig({
       provider: selectedProvider,
       model: selectedModel,
       isOauthConnected: selectedProvider === 'oauth_chatgpt' ? Boolean(getOpenAiOAuthSession()) : false,
+      apiKey: selectedProvider.startsWith('byok_') ? apiKeyInput.trim() : undefined,
     });
     setSaveSuccessMessage('Đã lưu cấu hình AI thành công.');
     setTimeout(() => {
@@ -299,12 +335,14 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white border border-slate-200 rounded-xl w-full max-w-lg p-6 shadow-xl relative text-slate-900 animate-fade-in font-sans"
+        className="bg-white border border-slate-200 rounded-t-2xl sm:rounded-xl w-full max-w-lg p-5 sm:p-6 shadow-xl relative text-slate-900 animate-slide-up sm:animate-fade-in font-sans max-h-[92vh] flex flex-col"
       >
+        {/* Mobile Drag Indicator Handle */}
+        <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3 sm:hidden shrink-0" />
         {/* Close Button */}
         <button
           id="close-ai-modal"
@@ -322,9 +360,6 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900 leading-tight">Cài đặt kết nối AI</h3>
-            <p className="text-xs text-slate-500">
-              Chọn nhà cung cấp trí tuệ nhân tạo để phân tích, tóm tắt và sinh đề thi.
-            </p>
           </div>
         </div>
 
@@ -348,14 +383,14 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
               {[
                 {
                   id: 'system' as AiProvider,
-                  name: 'ViTudy (Hệ thống)',
-                  desc: '2 ViToken / lượt thao tác chuyên sâu (nhận miễn phí khi điểm danh).',
+                  name: 'ViTAI bởi ViTudy',
+                  desc: 'Tối ưu chuyên sâu cho mọi thứ.',
                   icon: <Sparkles className="w-3.5 h-3.5 text-slate-600" />
                 },
                 {
                   id: 'oauth_chatgpt' as AiProvider,
-                  name: 'Đăng nhập ChatGPT',
-                  desc: 'Dùng tài khoản ChatGPT của bạn, không tốn ViToken.',
+                  name: 'ChatGPT bởi OpenAI',
+                  desc: 'Dùng của bạn, không tốn ViToken',
                   icon: <OpenAILogo className="w-3.5 h-3.5 text-slate-600" />
                 }
               ].map(opt => {
@@ -394,6 +429,47 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Tùy chọn: Khóa API cá nhân */}
+            <div className="mt-3 pt-2.5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedByok(!showAdvancedByok)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 cursor-pointer transition-colors"
+              >
+                {showAdvancedByok ? <ChevronUp className="w-3.5 h-3.5 text-[#E0562D]" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                <span>Tùy chọn: Khóa API cá nhân</span>
+              </button>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Dành cho người dùng muốn sử dụng trực tiếp API Key riêng. Khóa lưu trên trình duyệt của bạn.
+              </p>
+
+              {showAdvancedByok && (
+                <div className="mt-2.5 flex flex-wrap gap-2 animate-fade-in">
+                  {[
+                    { id: 'byok_gemini' as AiProvider, label: 'Gemini API' },
+                    { id: 'byok_openai' as AiProvider, label: 'OpenAI API' },
+                    { id: 'byok_claude' as AiProvider, label: 'Claude API' },
+                  ].map(btn => {
+                    const isSelected = selectedProvider === btn.id;
+                    return (
+                      <button
+                        key={btn.id}
+                        type="button"
+                        onClick={() => handleSelectProvider(btn.id)}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-2 border-[#E0562D] bg-[#FFF7ED]/30 text-[#E0562D] shadow-2xs'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        {btn.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -458,11 +534,11 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                         onChange={(e) => setAutoFallbackToSystem(e.target.checked)}
                         className="w-3.5 h-3.5 rounded accent-[#E0562D] cursor-pointer"
                       />
-                      <span>Khi ChatGPT hết lượt, tự chuyển sang ViTudy (trừ ViToken).</span>
+                      <span>Tự động chuyển sang ViTAI khi hết lượt</span>
                     </label>
 
                     <p className="text-[11px] text-slate-400 leading-normal">
-                      Quyền riêng tư: Câu hỏi và tài liệu gửi trực tiếp từ trình duyệt đến OpenAI. ViTudy không lưu trữ tài liệu hay phiên đăng nhập.
+                      Phiên đăng nhập được lưu trữ trên trình duyệt của bạn.
                     </p>
                   </div>
                 ) : (
@@ -541,6 +617,29 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                 )}
               </div>
             )}
+            {selectedProvider.startsWith('byok_') && (
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[11px] font-semibold text-slate-700 block">
+                  Nhập API Key {selectedProvider === 'byok_gemini' ? 'Google Gemini' : selectedProvider === 'byok_claude' ? 'Anthropic Claude' : 'OpenAI'}:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder={selectedProvider === 'byok_gemini' ? 'AIzaSy...' : selectedProvider === 'byok_claude' ? 'sk-ant-api03-...' : 'sk-proj-...'}
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono pr-8"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  >
+                    {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 3. Chọn Mô Hình AI & Kiểm tra kết nối */}
@@ -569,11 +668,14 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                   {selectedProvider === 'oauth_chatgpt' ? (
                     CHATGPT_MODEL_GROUPS.map((group) => (
                       <optgroup key={group.group} label={group.group}>
-                        {group.models.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
+                        {group.models.map((m) => {
+                          const isLocked = !isPlusOrHigher && !FREE_ALLOWED_MODELS.includes(m.id);
+                          return (
+                            <option key={m.id} value={m.id} disabled={isLocked}>
+                              {m.name} {isLocked ? ' · (Yêu cầu Plus)' : ''}
+                            </option>
+                          );
+                        })}
                       </optgroup>
                     ))
                   ) : selectedProvider === 'system' ? (
@@ -609,10 +711,19 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
             {(() => {
               const allModels = PROVIDER_MODELS[selectedProvider] || [];
               const activeModelInfo = allModels.find(m => m.id === selectedModel) || allModels[0];
+              const isLocked = selectedProvider === 'oauth_chatgpt' && !isPlusOrHigher && !FREE_ALLOWED_MODELS.includes(selectedModel);
+
               return (
                 <div className="text-xs pt-1 border-t border-slate-100">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-800">{activeModelInfo?.name || selectedModel}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-800">{activeModelInfo?.name || selectedModel}</span>
+                      {isLocked && (
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                          Yêu cầu Plus
+                        </span>
+                      )}
+                    </div>
                     <span className="font-mono text-[11px] text-slate-400">{selectedModel}</span>
                   </div>
                   <p className="text-slate-500 text-[11px] mt-0.5">{activeModelInfo?.desc}</p>
@@ -635,74 +746,6 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Advanced BYOK Options */}
-          <div className="pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setShowAdvancedByok(!showAdvancedByok)}
-              className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              {showAdvancedByok ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              <span>Tùy chọn nâng cao: Khóa API riêng (Gemini, OpenAI)</span>
-            </button>
-
-            {showAdvancedByok && (
-              <div className="mt-2 p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2 animate-fade-in text-xs">
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Dành cho người dùng muốn sử dụng trực tiếp API Key riêng của Google Gemini hoặc OpenAI (không tốn ViToken).
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectProvider('byok_gemini')}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
-                      selectedProvider === 'byok_gemini'
-                        ? 'bg-white border-[#E0562D] text-[#E0562D] shadow-2xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    Google Gemini API
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectProvider('byok_openai')}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
-                      selectedProvider === 'byok_openai'
-                        ? 'bg-white border-[#E0562D] text-[#E0562D] shadow-2xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    OpenAI API Key
-                  </button>
-                </div>
-
-                {(selectedProvider === 'byok_gemini' || selectedProvider === 'byok_openai') && (
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-[11px] font-semibold text-slate-700 block">
-                      Nhập API Key {selectedProvider === 'byok_gemini' ? 'Google Gemini' : 'OpenAI'}:
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showApiKey ? 'text' : 'password'}
-                        value={apiKeyInput}
-                        onChange={(e) => setApiKeyInput(e.target.value)}
-                        placeholder={selectedProvider === 'byok_gemini' ? 'AIzaSy...' : 'sk-proj-...'}
-                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono pr-8"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                      >
-                        {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {saveSuccessMessage && (

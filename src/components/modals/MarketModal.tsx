@@ -278,12 +278,14 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white border border-stone-300 rounded-3xl w-full max-w-5xl p-6 shadow-2xl relative max-h-[92vh] flex flex-col text-stone-900 animate-fade-in font-sans"
+        className="bg-white border border-stone-300 rounded-t-3xl sm:rounded-3xl w-full max-w-5xl p-5 sm:p-6 shadow-2xl relative max-h-[94vh] flex flex-col text-stone-900 animate-slide-up sm:animate-fade-in font-sans"
       >
+        {/* Mobile Drag Indicator Handle */}
+        <div className="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-3 sm:hidden shrink-0" />
         
         {/* Header bar */}
         <div className="flex items-center justify-between pb-3 border-b border-stone-100">

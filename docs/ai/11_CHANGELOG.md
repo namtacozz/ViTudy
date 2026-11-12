@@ -4,6 +4,82 @@
 
 ---
 
+## 2026-11-12 21:15 — main (Cải Tiến Cockpit Trang Chủ, Gói Nạp ViToken, Cài Đặt AI ViTAI/ChatGPT & Cố Định Trạng Thái Bàn Học)
+- **Task:**
+  1. **Tái Thiết Kế Cockpit Trang Chủ (`HomePage.tsx`, `StudySpaceContext.tsx`):**
+     - Loại bỏ toàn bộ các bàn học demo giả (`Bàn học khởi đầu`, `Ôn thi giữa kỳ`, `Giáo trình + đề thi`, `Học nhóm`) và thanh "Hôm nay 12 thẻ cần ôn...". Danh sách "Mở lại gần đây" chỉ hiển thị các bàn học thật sự do người dùng tạo ra hoặc mở.
+     - Xây dựng cụm điều khiển Hero 3 cột cân đối:
+       - Cột trái: Câu châm ngôn/quote truyền động lực ngẫu nhiên từ danh sách 9 câu chuẩn hóa kèm tên người dùng ngắn (`shortName`).
+       - Cột phải 1: Thẻ "Tiếp tục bàn học mới đây nhất" với thông tin tài liệu, thời gian mở và nút "Vào bàn học" màu Cam ViT (`#E0562D`).
+       - Cột phải 2: Thẻ "Bàn học trống" mở rộng với nút tạo nhanh bàn học trắng (`handleSelectTemplate('blank')`).
+     - Trạng thái rỗng trang chủ ("Chưa có bàn học nào") hiển thị thông điệp tinh gọn kèm nút bấm tạo bàn học đầu tiên.
+  2. **Tối Ưu & Chuẩn Hóa Modal Nạp ViToken (`PricingTiers.tsx`, `PaymentService.ts`, `TopUpModal.tsx`):**
+     - Bỏ toàn bộ các tag/badge "Tặng +N ViToken" vì giá đã được chiết khấu trực tiếp.
+     - 4 gói nạp chuẩn xác:
+       1. `Nhẹ nhàng`: 20.000đ - • 20 ViToken - `~10 lượt AI hoặc tải đề thi.`
+       2. `Chăm chỉ`: 45.000đ - • 50 ViToken - `~25 lượt AI hoặc vài tài liệu Chợ.`
+       3. `Try hard`: 85.000đ - • 100 ViToken - `~50 lượt AI. Siêu tiết kiệm.`
+       4. `Nhóm`: 255.000đ - • 300 ViToken - `Phù hợp cho học nhóm và đồ án.`
+     - Cấu trúc thẻ 4 cột công thái học: Tên gói -> Giá to nhất font sans -> Dòng `• X ViToken` nổi bật màu Cam ViT -> Mô tả súc tích, không tràn chữ.
+  3. **Đại Tu Modal Cài Đặt Kết Nối AI (`AiConfigModal.tsx`, `aiClient.ts`, `byokStore.ts`, `vitoken.ts`):**
+     - Loại bỏ dòng mô tả dài ở header.
+     - Nhà cung cấp: `ViTAI bởi ViTudy - Tối ưu chuyên sâu cho mọi thứ.` và `ChatGPT bởi OpenAI - Dùng của bạn, không tốn ViToken`.
+     - Khối accordion: `Tùy chọn: Khóa API cá nhân` với 3 lựa chọn `[Gemini API] [OpenAI API] [Claude API]` lưu trực tiếp trên trình duyệt.
+     - Khối ChatGPT: Checkbox `Tự động chuyển sang ViTAI khi hết lượt` và dòng quyền riêng tư ngắn gọn `Phiên đăng nhập được lưu trữ trên trình duyệt của bạn.`.
+     - Danh sách mô hình: Bỏ `o3-mini`, `o1`, `o1-mini`. Giữ 6 mô hình: `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.6-sol`, `chatgpt-4o-latest`, `gpt-4o`, `gpt-4o-mini`.
+     - Phân quyền gói ChatGPT: Tài khoản FREE chỉ chọn được `gpt-5.6-terra` và `gpt-5.6-luna`, các mô hình còn lại bị khóa và có badge `Yêu cầu Plus`; tài khoản Plus/Pro/Team được mở khóa toàn bộ.
+  4. **Khắc Phục Hoàn Toàn Lỗi Lưu Trạng Thái Bàn Học & Chuyển Đổi Không Gian:**
+     - Đồng bộ `URLSearchParams` (`?space=ID`) bằng `window.history.replaceState` và lắng nghe `popstate`, loại bỏ triệt để vòng lặp đảo ngược `activeSpaceId`.
+     - Khôi phục đầy đủ thuộc tính `examData` cho tài liệu đề thi và hỗ trợ `codeSnippet`, `mindMapColor`, `mindMapShape`, `stickerData` khi chuyển đổi và nạp từ cơ sở dữ liệu.
+- **Files Modified:**
+  - `src/components/home/HomePage.tsx`
+  - `src/components/payment/PricingTiers.tsx`
+  - `src/components/payment/TopUpModal.tsx`
+  - `src/services/PaymentService.ts`
+  - `src/components/modals/AiConfigModal.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/types/vitoken.ts`
+  - `src/lib/byokStore.ts`
+  - `src/lib/aiClient.ts`
+  - `src/services/StudySpaceService.ts`
+  - `src/context/StudySpaceContext.tsx`
+
+## 2026-11-12 20:25 — main (Tái Thiết Kế Toàn Diện Smart Shape Recognition Theo Hướng Model-Fitting, Pen-Hold Snapping & Hoàn Tác Thông Minh)
+- **Task:**
+  1. **Bộ Test Đo Nhiễu & Baseline Benchmark (`smartShape.test.ts`, `docs/ai/smartshape-baseline.md`):**
+     - Xây dựng bộ sinh nét ngẫu nhiên với seed cố định qua thuật toán PRNG Mulberry32 và phân phối nhiễu Gaussian Box-Muller.
+     - Kiểm thử 1,400 mẫu phân bố đều trên 7 lớp (`line`, `circle`, `ellipse`, `square`, `rectangle`, `triangle`, `none` nét tự do/chữ S, C, Z) với tỷ lệ nhiễu $\sigma = 1-3\%$, góc xoay bất kỳ $0-360^\circ$, độ hở đầu-cuối $3-15\%$, và quy mô $40-800\text{px}$.
+     - Đo đạc ma trận nhầm lẫn và thời gian xử lý: Phiên bản heuristic cũ chỉ đạt trung bình 33.7% độ chính xác (Line: 0%, Square: 26%, Rectangle: 14%, Triangle: 19.5%).
+  2. **Lõi Nhận Diện Hình Học Model-Fitting Mới (`smartShape.ts`):**
+     - **Tiền xử lý:** Làm mượt vi mô 3 điểm (`smoothPoints`), chuẩn hóa mật độ lấy mẫu đều theo độ dài cung $N=64$ (`resampleByArcLength`), tính hộp bao và đường chéo tỉ lệ.
+     - **Phân tách Nét mở / Nét đóng:** Đo tỷ lệ $endsDist / totalArc$ và độ phủ đường chéo $endsDist / diagonal$, ngăn chặn việc ép nét vẽ chữ S, Z, C thành hình đóng.
+     - **Bộ khớp đường thẳng Total Least Squares (TLS / PCA):** Chiếu điểm lên trục chính phương sai, đo sai số khoảng cách vuông góc thực tế, tự động bắt góc thẳng đứng / nằm ngang nếu sai lệch $\le 7.5^\circ$.
+     - **Bộ khớp hình tròn Đại số:** Thuật toán Kåsa/Pratt giải tâm và bán kính tối ưu từ hệ phương trình tuyến tính, nội suy 40 điểm góc đều.
+     - **Bộ khớp elip qua Ma trận Hiệp phương sai 2D (PCA):** Định hướng trục góc xoay chính $\theta$, tính độ phân tán $var(u), var(v)$, tự động phân giải thành hình tròn nếu tỉ lệ trục $\ge 0.88$.
+     - **Bộ khớp hình chữ nhật / vuông xoay tự do (Minimum Bounding Box):** Quét 36 góc quay kèm bước tinh chỉnh vi mô, xác định góc xoay thực tế, tính tỷ lệ cạnh để tách biệt hình vuông ($\ge 0.84$) và chữ nhật, nắn góc về 0 nếu gần trực giao.
+     - **Bộ khớp tam giác:** Đơn giản hóa thích ứng RDP hoặc tối đa hóa diện tích 3 đỉnh, đo sai số khoảng cách nhỏ nhất tới 3 cạnh.
+     - **Hệ số lấp đầy Bounding Box (Isoperimetric / Fill Ratio):** Tận dụng công thức Shoelace tính diện tích thực tế chia diện tích hộp bao; tỷ lệ $\pi/4 \approx 0.785$ tách biệt hoàn toàn elip/tròn khỏi hình chữ nhật ($1.000$) và tam giác ($0.500$), triệt tiêu nhầm lẫn.
+     - **Kết quả đo đạc mới:** Toàn bộ hệ thống đạt độ chính xác **97.7%** (Line: 100%, Circle: 100%, Square: 100%, Triangle: 100%, Ellipse: 97.5%, Rectangle: 93.0%, None: 93.5%), độ trễ cực thấp **0.151 ms/nét** (vượt xa mục tiêu $< 5\text{ ms}$).
+  3. **Tích Hợp Trải Nghiệm Pen-Hold Snapping & Hoàn Tác Thông Minh (`DeskDrawingInteractionLayer.tsx`, `StudySpaceContext.tsx`):**
+     - **Pen-Hold Snapping:** Khi vẽ bằng bút (`pen`) và giữ yên ngòi bút 400ms (khoảng 350-500ms theo chuẩn Apple Pencil/GoodNotes), nét vẽ tự động chuyển thành hình học nắn chuẩn ngay trên màn hình.
+     - **Cơ chế trễ (Hysteresis):** Nếu người dùng tiếp tục vẽ kéo dài vượt bán kính 18px sau khi snap, hệ thống tự động hủy snap và hoàn trả lại nét vẽ tự do ban đầu.
+     - **Công cụ Smart Shape chuyên dụng:** Khi chọn công cụ `smart_shape` trên thanh công cụ bên trái, nét vẽ tự động nắn chuẩn ngay khi nhấc bút.
+     - **Lưu trữ nét gốc (`originalPoints`):** Mở rộng interface `DrawingStroke` với `originalPoints`, `isSmartShape`, `shapeType`.
+     - **Hoàn tác Ctrl+Z hai cấp:** Khi một nét vẽ được nắn thông minh, bấm Ctrl+Z (hoặc nút Hoàn tác trên HUD) lần 1 sẽ hoàn nguyên hình học về lại nét vẽ tay tự do ban đầu của người dùng; bấm Ctrl+Z lần 2 mới xóa nét đó vào redo stack.
+     - **Đồng bộ toàn bộ:** Áp dụng cho cả nét vẽ trên mặt bàn học (`DeskDrawingCanvas`) lẫn nét vẽ trên tài liệu sách/vở (`ItemDrawingOverlay`).
+- **Files Modified:**
+  - `src/utils/smartShape.ts`
+  - `src/utils/smartShape.test.ts`
+  - `src/types/studyspace.ts`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`
+  - `docs/ai/smartshape-baseline.md`
+  - `docs/ai/03_SYMBOL_INDEX.md`
+  - `docs/ai/11_CHANGELOG.md`
+  - `AGENTS.md`
+
+---
+
 ## 2026-11-12 19:30 — main (Tối Ưu Xử Lý Tài Liệu Ảnh, Nâng Cấp Tờ Giấy OCR, Mở Tài Liệu Từ Bàn Học & Tái Cấu Trúc Toàn Diện Trang Chủ Chuẩn Notion/Miro)
 - **Task:**
   1. **Xử Lý Tài Liệu Dạng Ảnh & Nâng Cấp Tờ Giấy Ảnh (`PaperSheet.tsx`, `InfiniteDesk.tsx`, `BottomLeftKnowledge.tsx`):**

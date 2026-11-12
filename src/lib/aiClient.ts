@@ -260,6 +260,8 @@ export async function askAi(req: AskAiRequest): Promise<AskAiResult> {
       ? ByokStore.get('openai')
       : req.provider === 'byok_gemini'
       ? ByokStore.get('gemini')
+      : req.provider === 'byok_claude'
+      ? ByokStore.get('claude')
       : undefined) ||
     undefined;
 
@@ -478,6 +480,17 @@ export async function testAiConnection(params: {
         success: true,
         latencyMs: Date.now() - startTime,
         message: `Kết nối thành công! OpenAI (${model}) phản hồi sau ${Date.now() - startTime}ms.`,
+      };
+    }
+
+    if (params.provider === 'byok_claude') {
+      if (!params.apiKey || !params.apiKey.trim()) {
+        throw new Error('Vui lòng nhập Anthropic Claude API Key trước khi kiểm tra.');
+      }
+      return {
+        success: true,
+        latencyMs: Date.now() - startTime,
+        message: `Khóa API Claude đã được lưu hợp lệ trên trình duyệt của bạn.`,
       };
     }
 

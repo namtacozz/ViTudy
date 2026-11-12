@@ -1,4 +1,4 @@
-export type ByokProvider = 'openai' | 'gemini' | 'chatgpt_oauth';
+export type ByokProvider = 'openai' | 'gemini' | 'claude' | 'chatgpt_oauth';
 
 const STORAGE_PREFIX = 'vitudy_byok_';
 

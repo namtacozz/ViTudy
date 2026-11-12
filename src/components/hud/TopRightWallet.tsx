@@ -120,6 +120,7 @@ const PROVIDER_MODELS: Record<AiProvider, ModelItem[]> = {
   oauth_chatgpt: CHATGPT_MODEL_GROUPS.flatMap(g => g.models),
   byok_gemini: BYOK_GEMINI_MODELS,
   byok_openai: BYOK_OPENAI_MODELS,
+  byok_claude: [],
   oauth_gemini: []
 };
 

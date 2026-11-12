@@ -21,7 +21,10 @@ export function DeskDrawingInteractionLayer() {
     addSticker,
     startStroke, 
     appendPoint, 
+    snapCurrentStroke,
+    revertCurrentStroke,
     finishStroke,
+    undoStroke,
     removeStrokesInBox
   } = useStudySpace();
 
@@ -31,6 +34,9 @@ export function DeskDrawingInteractionLayer() {
   const [dragBox, setDragBox] = useState<{ startX: number; startY: number; currentX: number; currentY: number } | null>(null);
   const [showTooltip, setShowTooltip] = useState(true);
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPointRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  const isHoldSnappedRef = useRef<boolean>(false);
 
   const isHighlighter = activeTool === 'highlighter';
   const isPen = activeTool === 'pen' || activeTool === 'smart_shape';
@@ -71,6 +77,19 @@ export function DeskDrawingInteractionLayer() {
         setActiveTool('cursor');
         setStickyCreationColor(null);
         setStickyCreationTemplate?.(null);
+      }
+      // Ctrl+Z / Cmd+Z shortcut to undo or revert smart shape
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        const activeEl = document.activeElement;
+        const isEditingText = activeEl && (
+          activeEl.tagName === 'INPUT' || 
+          activeEl.tagName === 'TEXTAREA' || 
+          (activeEl as HTMLElement).isContentEditable
+        );
+        if (!isEditingText) {
+          e.preventDefault();
+          undoStroke();
+        }
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -133,6 +152,13 @@ export function DeskDrawingInteractionLayer() {
     }
 
     // Pen / Highlighter / Smart Shape
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    isHoldSnappedRef.current = false;
+    lastPointRef.current = { clientX: e.clientX, clientY: e.clientY };
+
     startStroke(
       { x: worldX, y: worldY },
       isHighlighter ? (penColor || '#facc15') : penColor,
@@ -181,11 +207,46 @@ export function DeskDrawingInteractionLayer() {
       const { x: wx, y: wy } = screenToWorld(ev.clientX, ev.clientY);
       appendPoint({ x: wx, y: wy });
     }
+
+    // Pen-Hold Snapping Detection with Hysteresis
+    if (lastPointRef.current) {
+      const moveDist = Math.hypot(e.clientX - lastPointRef.current.clientX, e.clientY - lastPointRef.current.clientY);
+
+      if (isHoldSnappedRef.current) {
+        // Hysteresis: if user drags past 18px from the snap point, cancel the snap and resume freehand drawing
+        if (moveDist > 18) {
+          isHoldSnappedRef.current = false;
+          revertCurrentStroke();
+          lastPointRef.current = { clientX: e.clientX, clientY: e.clientY };
+        }
+      } else {
+        // If moving actively, reset the hold timer
+        if (moveDist > 6) {
+          if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+          lastPointRef.current = { clientX: e.clientX, clientY: e.clientY };
+
+          // Start 400ms hold timer (within 350-500ms specification)
+          holdTimerRef.current = setTimeout(() => {
+            const res = snapCurrentStroke();
+            if (res && res.shape !== 'none') {
+              isHoldSnappedRef.current = true;
+            }
+          }, 400);
+        }
+      }
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    isHoldSnappedRef.current = false;
+    lastPointRef.current = null;
 
     try {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);

@@ -35,7 +35,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
   const { wallet, refreshWallet, addTokens } = useViToken();
   const [activeTab, setActiveTab] = useState<'topup' | 'history'>('topup');
   const [packages, setPackages] = useState<PaymentPackage[]>([]);
-  const [selectedPackageId, setSelectedPackageId] = useState<string>('semester');
+  const [selectedPackageId, setSelectedPackageId] = useState<string>('diligent');
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [demoNotice, setDemoNotice] = useState<string | null>(null);
 
@@ -65,8 +65,10 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
     PaymentService.listPackages().then((pkgs) => {
       if (isMounted) {
         setPackages(pkgs);
-        if (pkgs.length > 0 && !selectedPackageId) {
-          setSelectedPackageId(pkgs[0].id);
+        if (pkgs.length > 0) {
+          if (!selectedPackageId || !pkgs.some(p => p.id === selectedPackageId)) {
+            setSelectedPackageId(pkgs[0].id);
+          }
         }
         setIsLoadingPackages(false);
       }
@@ -140,12 +142,14 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white border border-slate-300 rounded-3xl w-full max-w-3xl p-6 sm:p-7 shadow-2xl relative text-slate-900 animate-fade-in font-sans"
+        className="bg-white border border-slate-300 rounded-t-3xl sm:rounded-3xl w-full max-w-3xl p-5 sm:p-7 shadow-2xl relative text-slate-900 animate-slide-up sm:animate-fade-in font-sans max-h-[92vh] overflow-y-auto"
       >
+        {/* Mobile Drag Indicator Handle */}
+        <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3 sm:hidden shrink-0" />
         {/* Close Button */}
         <button
           id="close-topup-modal"

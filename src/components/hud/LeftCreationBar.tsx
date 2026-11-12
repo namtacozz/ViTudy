@@ -198,9 +198,9 @@ export function LeftCreationBar() {
   })();
 
   return (
-    <div className="relative flex flex-col items-center gap-1.5 pointer-events-auto select-none">
-      {/* Miro-style Vertical Tool Island (Optimized compact spacing) */}
-      <div className="bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-lg backdrop-blur-md flex flex-col items-center gap-1 relative">
+    <div className="relative flex flex-row md:flex-col items-center gap-1.5 pointer-events-auto select-none">
+      {/* Tool Island: Horizontal on mobile, Vertical on desktop */}
+      <div className="bg-white/95 border border-slate-300 rounded-2xl p-1 md:p-1.5 shadow-lg backdrop-blur-md flex flex-row md:flex-col items-center gap-1 relative">
         {/* Select (Cursor) Tool */}
         <button
           title="Con trỏ điều hướng (Kéo di chuyển bàn / Chọn vật thể)"

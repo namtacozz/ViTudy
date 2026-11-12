@@ -120,11 +120,16 @@ export default function StudySpaceDeskView() {
         )}
       </div>
 
-      {/* ================= 3. LEFT TOOL CREATION BAR ================= */}
+      {/* ================= 3. LEFT TOOL CREATION BAR (Responsive Floating Dock on Mobile) ================= */}
       <div 
         className={clsx(
-          "fixed left-1 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          isFocusMode && !showLeftInFocus ? "-translate-x-[calc(100%+12px)]" : "translate-x-0"
+          "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
+          // Desktop & Tablet (Left centered)
+          "md:left-1 md:top-1/2 md:-translate-y-1/2",
+          isFocusMode && !showLeftInFocus ? "md:-translate-x-[calc(100%+12px)]" : "md:translate-x-0",
+          // Mobile (< 768px): Bottom floating dock
+          "max-md:bottom-2 max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-auto",
+          isFocusMode && !showLeftInFocus ? "max-md:translate-y-[calc(100%+24px)]" : "max-md:translate-y-0"
         )}
       >
         <LeftCreationBar />
@@ -134,8 +139,8 @@ export default function StudySpaceDeskView() {
           <button
             type="button"
             onClick={() => setShowLeftInFocus(prev => !prev)}
-            title={showLeftInFocus ? "Thu gọn thanh công cụ vào vách" : "Mở thanh công cụ vẽ & ghi chú"}
-            className="absolute left-full top-1/2 -translate-y-1/2 ml-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-r-xl p-1 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+            title={showLeftInFocus ? "Thu gọn thanh công cụ" : "Mở thanh công cụ"}
+            className="hidden md:flex absolute left-full top-1/2 -translate-y-1/2 ml-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-r-xl p-1 shadow-md cursor-pointer transition-all active:scale-95 items-center justify-center pointer-events-auto"
           >
             {showLeftInFocus ? (
               <ChevronLeft className="w-3.5 h-3.5 stroke-[2.4]" />

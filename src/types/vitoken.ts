@@ -16,7 +16,7 @@ export interface ViTokenTransaction {
   modelUsed?: string;
 }
 
-export type AiProvider = 'system' | 'byok_openai' | 'byok_gemini' | 'oauth_chatgpt' | 'oauth_gemini';
+export type AiProvider = 'system' | 'byok_openai' | 'byok_gemini' | 'byok_claude' | 'oauth_chatgpt' | 'oauth_gemini';
 
 export interface AiConfig {
   provider: AiProvider;

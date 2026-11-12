@@ -19,6 +19,7 @@ function StudySpacePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMode, setMobileMode] = useState<'companion' | 'canvas'>('companion');
 
   useEffect(() => {
     const checkMobile = () => {
@@ -66,19 +67,28 @@ function StudySpacePageContent() {
     return <HomePage onEnterDesk={handleEnterDesk} />;
   }
 
-  // Mobile Companion Mode (<768px)
-  if (isMobile) {
+  // Mobile Mode (<768px): Mặc định mở Mobile Companion, có thể chuyển sang Canvas 2.5D
+  if (isMobile && mobileMode === 'companion') {
     return (
       <div className="w-full min-h-screen bg-white overflow-y-auto">
-        <MobileCompanionView />
+        <MobileCompanionView onSwitchToCanvas={() => setMobileMode('canvas')} />
         <GuestBanner user={user} />
       </div>
     );
   }
 
-  // Desktop & Tablet 2.5D Infinite Workspace
+  // Desktop & Tablet (hoặc Mobile khi chọn chuyển sang Canvas 2.5D)
   return (
     <>
+      {isMobile && mobileMode === 'canvas' && (
+        <button
+          type="button"
+          onClick={() => setMobileMode('companion')}
+          className="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 bg-[#0f172a]/95 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all border border-slate-700 hover:bg-[#E0562D]"
+        >
+          <span>Chế độ đọc</span>
+        </button>
+      )}
       <StudySpaceDeskView />
       <GuestBanner user={user} />
       <MigrationDialog />

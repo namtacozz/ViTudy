@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { DeskItem, StudySpace, CanvasTransform, PageContent, IntelineThread } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
-import { recognizeSmartShape } from '@/utils/smartShape';
+import { recognizeSmartShape, recognizeSmartShapeDetailed } from '@/utils/smartShape';
 import { useAuth } from '@/hooks/useAuth';
 import { StudySpaceService } from '@/services/StudySpaceService';
 import { OfflineQueue } from '@/services/OfflineQueue';
@@ -45,7 +45,7 @@ interface StudySpaceContextType {
   triggerFocusNotice: () => void;
   switchSpace: (spaceId: string) => void;
   toggleStarSpace: (spaceId: string) => void;
-  createSpace: (name: string, subject: string) => void;
+  createSpace: (name: string, subject: string) => string;
   createSpaceFromTemplate?: (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string) => string;
   deleteSpace?: (spaceId: string) => void;
   renameSpace?: (spaceId: string, newName: string) => void;
@@ -108,6 +108,8 @@ interface StudySpaceContextType {
   currentStroke: import('@/types/studyspace').DrawingStroke | null;
   startStroke: (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => void;
   appendPoint: (point: { x: number; y: number }) => void;
+  snapCurrentStroke: () => import('@/utils/smartShape').RecognizedShapeResult | null;
+  revertCurrentStroke: () => void;
   finishStroke: () => void;
   addStroke: (stroke: import('@/types/studyspace').DrawingStroke) => void;
   undoStroke: () => void;
@@ -147,12 +149,22 @@ const DEFAULT_TRANSFORM: CanvasTransform = {
   rotation: 0
 };
 
+const DEFAULT_EMPTY_SPACE: StudySpace = {
+  id: 'space-blank-default',
+  name: 'Bàn học trống',
+  subject: 'Tổng hợp',
+  description: 'Không gian bàn học trống',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  items: []
+};
+
 const StudySpaceContext = createContext<StudySpaceContextType | null>(null);
 
 export function StudySpaceProvider({ children }: { children: React.ReactNode }) {
   const { user, status } = useAuth();
-  const [spaces, setSpaces] = useState<StudySpace[]>(INITIAL_SPACES);
-  const [activeSpaceId, setActiveSpaceId] = useState<string>(INITIAL_SPACES[0].id);
+  const [spaces, setSpaces] = useState<StudySpace[]>([]);
+  const [activeSpaceId, setActiveSpaceId] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [transform, setTransform] = useState<CanvasTransform>(DEFAULT_TRANSFORM);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -250,12 +262,55 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     });
   };
 
+  const snapCurrentStroke = (): import('@/utils/smartShape').RecognizedShapeResult | null => {
+    let result: import('@/utils/smartShape').RecognizedShapeResult | null = null;
+    setCurrentStroke(prev => {
+      if (!prev || prev.points.length < 5) return prev;
+      const res = recognizeSmartShapeDetailed(prev.points);
+      if (res.shape !== 'none') {
+        result = res;
+        return {
+          ...prev,
+          points: res.points,
+          originalPoints: prev.originalPoints || [...prev.points],
+          isSmartShape: true,
+          shapeType: res.shape
+        };
+      }
+      return prev;
+    });
+    return result;
+  };
+
+  const revertCurrentStroke = () => {
+    setCurrentStroke(prev => {
+      if (!prev || !prev.originalPoints) return prev;
+      return {
+        ...prev,
+        points: prev.originalPoints,
+        originalPoints: undefined,
+        isSmartShape: false,
+        shapeType: undefined
+      };
+    });
+  };
+
   const finishStroke = () => {
     setCurrentStroke(prev => {
       if (prev && prev.points.length > 1) {
         let finalPoints = prev.points;
-        if (activeTool === 'smart_shape') {
-          finalPoints = recognizeSmartShape(prev.points);
+        let isSmart = prev.isSmartShape ?? false;
+        let origPts = prev.originalPoints;
+        let sType = prev.shapeType;
+
+        if (activeTool === 'smart_shape' && !isSmart) {
+          const res = recognizeSmartShapeDetailed(prev.points);
+          if (res.shape !== 'none') {
+            finalPoints = res.points;
+            isSmart = true;
+            origPts = [...prev.points];
+            sType = res.shape;
+          }
         }
 
         // Check if stroke started over a desk document (book, paper, or sticky note)
@@ -265,6 +320,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
         let targetItem: import('@/types/studyspace').DeskItem | null = null;
         let localPoints = finalPoints;
+        let localOriginalPoints = origPts;
 
         for (const item of sortedItems) {
           const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 380 : 360) : (item.width || 220);
@@ -286,15 +342,30 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
                 y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
               };
             });
+            if (origPts) {
+              localOriginalPoints = origPts.map(p => {
+                const pdx = p.x - item.x;
+                const pdy = p.y - item.y;
+                return {
+                  x: Math.round((pdx * Math.cos(rad) - pdy * Math.sin(rad)) * 10) / 10,
+                  y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
+                };
+              });
+            }
             break;
           }
         }
 
-        if (targetItem) {
-          setStrokes(s => [...s, { ...prev, points: localPoints, attachedToItemId: targetItem.id }]);
-        } else {
-          setStrokes(s => [...s, { ...prev, points: finalPoints, attachedToItemId: undefined }]);
-        }
+        const newStroke: import('@/types/studyspace').DrawingStroke = {
+          ...prev,
+          points: targetItem ? localPoints : finalPoints,
+          attachedToItemId: targetItem ? targetItem.id : undefined,
+          isSmartShape: isSmart,
+          originalPoints: targetItem ? localOriginalPoints : origPts,
+          shapeType: sType
+        };
+
+        setStrokes(s => [...s, newStroke]);
       }
       return null;
     });
@@ -311,6 +382,17 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     setStrokes(prev => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1];
+      // If the last stroke was beautified by smart shape, restore its original hand-drawn stroke on first undo
+      if (last.isSmartShape && last.originalPoints && last.originalPoints.length > 0) {
+        const revertedStroke: import('@/types/studyspace').DrawingStroke = {
+          ...last,
+          points: last.originalPoints,
+          isSmartShape: false,
+          originalPoints: undefined,
+          shapeType: undefined
+        };
+        return [...prev.slice(0, -1), revertedStroke];
+      }
       setRedoStack(r => [...r, last]);
       return prev.slice(0, -1);
     });
@@ -482,15 +564,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
               .catch(() => {});
           });
         } else {
-          // Tài khoản mới chưa có bàn học -> Khởi tạo bàn học mẫu Demo
-          import('@/data/demoSpace').then(({ createDemoStudySpace }) => {
-            const demoSpace = createDemoStudySpace(user.id);
-            setSpaces([demoSpace]);
-            setActiveSpaceId(demoSpace.id);
-            StudySpaceService.saveSpace(demoSpace, user.id)
-              .then(() => StudySpaceService.upsertItems(demoSpace.id, demoSpace.items))
-              .catch(() => {});
-          });
+          // Tài khoản mới chưa tạo bàn học: giữ danh sách trống để chỉ hiện khi người dùng tạo mới
+          setSpaces([]);
+          setActiveSpaceId('');
         }
 
         if (targetId) {
@@ -520,16 +596,19 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     setIsLoaded(true);
   }, [status, user?.id]);
 
-  // Kiểm tra liên tục nếu URL thay đổi ?space=XYZ
+  // Lắng nghe điều hướng Lịch sử trình duyệt (Back/Forward)
   useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
+    if (typeof window === 'undefined') return;
+    const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const urlSpaceId = params.get('space');
-      if (urlSpaceId && spaces.some(s => s.id === urlSpaceId) && activeSpaceId !== urlSpaceId) {
+      if (urlSpaceId && spaces.some(s => s.id === urlSpaceId)) {
         setActiveSpaceId(urlSpaceId);
       }
-    }
-  }, [isLoaded, spaces, activeSpaceId]);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [spaces]);
 
   // Kiểm tra nếu có tài liệu Chợ vừa mua cần mở trên bàn học
   useEffect(() => {
@@ -663,7 +742,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('vitudy:multiplayer-sync', handleMultiplayerSync);
   }, [activeSpaceId]);
 
-  const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
+  const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0] || DEFAULT_EMPTY_SPACE;
 
   const switchSpace = (spaceId: string) => {
     if (spaces.some(s => s.id === spaceId)) {
@@ -671,11 +750,28 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       setActiveSpaceId(spaceId);
       setSelectedItemId(null);
       resetView();
+
+      // Cập nhật URL đồng bộ tức thì
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('space', spaceId);
+        window.history.replaceState({}, '', url.toString());
+      }
+
       // Cập nhật mốc mở lần cuối
-      setSpaces(prev => prev.map(s => s.id === spaceId ? { ...s, lastOpenedAt: new Date().toISOString() } : s));
+      const nextSpaces = spaces.map(s => s.id === spaceId ? { ...s, lastOpenedAt: new Date().toISOString() } : s);
+      setSpaces(nextSpaces);
+
+      // Lưu ngay vào localStorage
+      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
+      try {
+        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(nextSpaces));
+        localStorage.setItem(`${userPrefix}vitudy_active_space_id`, spaceId);
+        localStorage.setItem('vitudy_spaces', JSON.stringify(nextSpaces));
+        localStorage.setItem('vitudy_active_space_id', spaceId);
+      } catch {}
 
       // Nạp nét vẽ của bàn học mới
-      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
       try {
         const savedStrokes = localStorage.getItem(`${userPrefix}vitudy_strokes_${spaceId}`) || localStorage.getItem(`vitudy_strokes_${spaceId}`);
         if (savedStrokes) {
@@ -708,7 +804,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     }));
   };
 
-  const createSpace = (name: string, subject: string) => {
+  const createSpace = (name: string, subject: string): string => {
     const newSpaceId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`;
     const newSpace: StudySpace = {
       id: newSpaceId,
@@ -721,11 +817,34 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       starred: false,
       items: []
     };
+
+    const nextSpaces = [...spaces, newSpace];
+    setSpaces(nextSpaces);
+    setActiveSpaceId(newSpace.id);
+    setSelectedItemId(null);
+    resetView();
+    setStrokes([]);
+
+    // Cập nhật URL đồng bộ tức thì
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('space', newSpace.id);
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    // Lưu ngay vào localStorage
+    const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
+    try {
+      localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(nextSpaces));
+      localStorage.setItem(`${userPrefix}vitudy_active_space_id`, newSpace.id);
+      localStorage.setItem('vitudy_spaces', JSON.stringify(nextSpaces));
+      localStorage.setItem('vitudy_active_space_id', newSpace.id);
+    } catch {}
+
     if (status === 'authenticated' && user?.id) {
       StudySpaceService.saveSpace(newSpace, user.id);
     }
-    setSpaces(prev => [...prev, newSpace]);
-    setActiveSpaceId(newSpace.id);
+    return newSpace.id;
   };
 
   const createSpaceFromTemplate = (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string): string => {
@@ -1038,9 +1157,25 @@ Trong đó:
       items
     };
 
+    const updatedSpaces = [...spaces, newSpace];
+    setSpaces(updatedSpaces);
+    setActiveSpaceId(newSpace.id);
+    setSelectedItemId(null);
+    resetView();
+    setStrokes([]);
+
+    // Cập nhật URL đồng bộ tức thì
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('space', newSpace.id);
+      window.history.replaceState({}, '', url.toString());
+    }
+
     // Lưu ngay lập tức vào localStorage để chống mất dữ liệu khi reload
+    const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
     try {
-      const updatedSpaces = [...spaces, newSpace];
+      localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updatedSpaces));
+      localStorage.setItem(`${userPrefix}vitudy_active_space_id`, newSpaceId);
       localStorage.setItem('vitudy_spaces', JSON.stringify(updatedSpaces));
       localStorage.setItem('vitudy_active_space_id', newSpaceId);
     } catch {
@@ -1049,10 +1184,10 @@ Trong đó:
 
     if (status === 'authenticated' && user?.id) {
       StudySpaceService.saveSpace(newSpace, user.id);
+      if (items.length > 0) {
+        StudySpaceService.upsertItems(newSpace.id, items).catch(() => {});
+      }
     }
-    setSpaces(prev => [...prev, newSpace]);
-    setActiveSpaceId(newSpace.id);
-    resetView();
     return newSpaceId;
   };
 
@@ -2280,6 +2415,8 @@ Trong đó:
         currentStroke,
         startStroke,
         appendPoint,
+        snapCurrentStroke,
+        revertCurrentStroke,
         finishStroke,
         addStroke,
         undoStroke,

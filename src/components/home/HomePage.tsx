@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -28,7 +28,9 @@ import {
   ArrowRight,
   Layers,
   Clock,
-  MousePointer2
+  MousePointer2,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useViToken } from '@/context/ViTokenContext';
@@ -65,6 +67,22 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const balance = wallet?.balance ?? 50;
   const streakDays = wallet?.streakDays ?? 1;
 
+  const isAuthenticated = status === 'authenticated';
+  const userName = profile?.display_name || user?.user_metadata?.full_name || user?.email || 'Bạn';
+
+  const getShortGreetingName = (fullName: string) => {
+    if (typeof window !== 'undefined') {
+      const storedNick = localStorage.getItem('vitudy_user_nickname');
+      if (storedNick && storedNick.trim()) return storedNick.trim();
+    }
+    if (!fullName) return 'Bạn';
+    const trimmed = fullName.trim();
+    if (trimmed.includes('@')) return trimmed.split('@')[0];
+    const words = trimmed.split(/\s+/);
+    return words[0] || 'Bạn';
+  };
+  const shortName = isAuthenticated ? getShortGreetingName(userName) : 'Bạn';
+
   // Streak status
   const todayStr = new Date().toISOString().split('T')[0];
   const isClaimedToday = wallet?.lastClaimDate === todayStr;
@@ -75,6 +93,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const [isMarketOpen, setIsMarketOpen] = useState(false);
   const [isAiConfigOpen, setIsAiConfigOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [showAllSpaces, setShowAllSpaces] = useState(false);
   const [activeNav, setActiveNav] = useState<'home' | 'my_desks' | 'starred'>('home');
   const [ownershipTab, setOwnershipTab] = useState<'mine' | 'shared'>('mine');
@@ -102,22 +121,23 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     };
   }, []);
 
-  // Username display
-  const isAuthenticated = Boolean(user);
-  const userName = profile?.display_name || user?.email?.split('@')[0] || '';
+  // Random motivational quote for daily cockpit
+  const MOTIVATIONAL_QUOTES = useMemo(() => [
+    (name: string) => `Ôn bài thôi, ${name}`,
+    (name: string) => `${name} à, đến lúc học rồi!!!`,
+    (name: string) => `Một ngày đẹp trời để học hành, ${name}`,
+    (name: string) => `Sẵn sàng rồi chứ, ${name}`,
+    (name: string) => `Vào bàn học ngay thôi, ${name}`,
+    (name: string) => `Tập trung, chăm chỉ, phấn đấu, cố lên ${name}`,
+    (name: string) => `Tương lai tươi sáng phía xa, đang chờ ${name} đó!`,
+    (name: string) => `Chúc học tốt, ${name} ~ Vịt`,
+    (name: string) => `Ngần ngại gì mà không bắt đầu cơ chứ đúng không ${name}.`,
+  ], []);
 
-  const getShortGreetingName = (fullName: string) => {
-    if (typeof window !== 'undefined') {
-      const storedNick = localStorage.getItem('vitudy_user_nickname');
-      if (storedNick && storedNick.trim()) return storedNick.trim();
-    }
-    if (!fullName) return 'Bạn';
-    const trimmed = fullName.trim();
-    if (trimmed.includes('@')) return trimmed.split('@')[0];
-    const words = trimmed.split(/\s+/);
-    return words[0] || 'Bạn';
-  };
-  const shortName = isAuthenticated ? getShortGreetingName(userName) : 'Bạn';
+  const randomQuote = useMemo(() => {
+    const fn = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+    return fn(shortName);
+  }, [shortName, MOTIVATIONAL_QUOTES]);
 
   // Handle streak claim
   const handleClaimStreak = () => {
@@ -184,6 +204,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
   const displayedSpaces = showAllSpaces ? filteredSpaces : filteredSpaces.slice(0, 6);
   const latestSpace = spaces[0] || null;
+  const starredSpaces = useMemo(() => spaces.filter((s) => s.starred), [spaces]);
 
   const handleSignOut = async () => {
     setIsProfileDropdownOpen(false);
@@ -225,8 +246,8 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
   return (
     <div className="w-full h-screen overflow-hidden bg-[#faf8f5] text-stone-900 flex font-sans selection:bg-orange-100 selection:text-[#E0562D]">
-      {/* ================= LEFT SIDEBAR (Notion/Miro Style) ================= */}
-      <aside className="w-60 md:w-64 flex-shrink-0 border-r border-[#ece7e1] bg-[#faf8f5] p-4 flex flex-col justify-between h-screen overflow-y-auto no-scrollbar select-none">
+      {/* ================= LEFT SIDEBAR (Notion/Miro Style - Desktop Only) ================= */}
+      <aside className="hidden md:flex w-60 md:w-64 flex-shrink-0 border-r border-[#ece7e1] bg-[#faf8f5] p-4 flex-col justify-between h-screen overflow-y-auto no-scrollbar select-none">
         <div className="flex flex-col">
           {/* Logo Brand: Duy nhất 1 logo ViTudy trên thanh bên */}
           <div className="flex items-center gap-2.5 mb-4 px-1">
@@ -362,10 +383,168 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         </div>
       </aside>
 
+      {/* ================= MOBILE DRAWER BACKDROP & PANEL ================= */}
+      {isMobileDrawerOpen && (
+        <div 
+          onClick={() => setIsMobileDrawerOpen(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-2xs z-50 md:hidden flex"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-72 max-w-[85vw] bg-[#faf8f5] h-full p-4 flex flex-col justify-between shadow-2xl animate-fade-in select-none"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getAssetPath('/icons/vitudy.png')}
+                    alt="ViTudy"
+                    width={26}
+                    height={26}
+                    className="w-6 h-6 rounded-md object-contain"
+                  />
+                  <span className="text-base font-black tracking-tight text-[#E0562D]">ViTudy</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="p-1 rounded-lg text-stone-500 hover:bg-stone-200 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Navigation in Drawer */}
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveNav('home');
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                    activeNav === 'home' ? 'bg-[#f3eee8] text-stone-900 font-bold' : 'text-stone-600 hover:bg-stone-100'
+                  }`}
+                >
+                  <Home className="w-4 h-4 text-[#E0562D]" />
+                  <span>Trang chủ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveNav('my_desks');
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                    activeNav === 'my_desks' ? 'bg-[#f3eee8] text-stone-900 font-bold' : 'text-stone-600 hover:bg-stone-100'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4 text-stone-600" />
+                  <span>Tất cả bàn học ({spaces.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveNav('starred');
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                    activeNav === 'starred' ? 'bg-[#f3eee8] text-stone-900 font-bold' : 'text-stone-600 hover:bg-stone-100'
+                  }`}
+                >
+                  <Star className="w-4 h-4 text-amber-500" />
+                  <span>Đã gắn dấu sao ({starredSpaces.length})</span>
+                </button>
+              </div>
+
+              {/* Chợ tài liệu button in Drawer */}
+              <div className="mt-4 pt-3 border-t border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMarketOpen(true);
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="w-full bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl p-3 flex items-center justify-between text-xs font-bold cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Store className="w-4 h-4 text-[#E0562D]" />
+                    <span>Chợ tài liệu</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom info in Drawer */}
+            <div className="pt-3 border-t border-stone-200 text-xs">
+              <div className="flex items-center justify-between text-stone-600 mb-2">
+                <span>Số dư:</span>
+                <span className="font-bold text-stone-900">{balance.toLocaleString('vi-VN')} ViToken</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTopUpOpen(true);
+                  setIsMobileDrawerOpen(false);
+                }}
+                className="w-full py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>Nạp ViToken</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ================= MAIN CONTENT (Fixed Viewport, No Page Scroll) ================= */}
-      <main className="flex-1 h-screen overflow-hidden flex flex-col max-w-6xl mx-auto p-4 md:p-6 w-full">
-        {/* Top Header Bar: Clean Single Header (No Duplicate Logo) */}
-        <header className="py-1.5 mb-2.5 border-b border-[#ece7e1] flex items-center justify-between flex-shrink-0">
+      <main className="flex-1 h-screen overflow-hidden flex flex-col max-w-6xl mx-auto p-3 sm:p-4 md:p-6 w-full pb-16 md:pb-6">
+        {/* Mobile Header Bar (< md) */}
+        <div className="flex md:hidden items-center justify-between py-1 mb-2 border-b border-[#ece7e1] flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer"
+              title="Mở danh bạ bàn học"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getAssetPath('/icons/vitudy.png')}
+                alt="ViTudy"
+                width={22}
+                height={22}
+                className="w-5.5 h-5.5 rounded-md object-contain"
+              />
+              <span className="text-base font-black tracking-tight text-[#E0562D]">ViTudy</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsTopUpOpen(true)}
+              className="flex items-center gap-1 bg-[#FFF7ED] border border-[#FFEDD5] px-2 py-0.5 rounded-full text-xs font-mono font-bold text-[#B8431A]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getAssetPath('/icons/vitoken.svg')}
+                alt="V"
+                width={13}
+                height={13}
+                className="w-3 h-3 object-contain"
+              />
+              <span>{balance}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Top Header Bar: Clean Single Header */}
+        <header className="hidden md:flex py-1.5 mb-2.5 border-b border-[#ece7e1] items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-stone-500 uppercase tracking-wider font-mono">
               Không gian học tập cá nhân
@@ -514,159 +693,100 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           </div>
         )}
 
-        {/* Top Section 1: Hero Continue Recent Desk Card (Large Prominent) */}
-        {latestSpace && (
-          <div className="mb-2.5 bg-white border border-stone-200/90 rounded-2xl p-3.5 shadow-2xs flex items-center justify-between flex-shrink-0 hover:border-[#E0562D]/60 transition-all">
-            <div className="flex items-center gap-3 min-w-0 pr-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/70 flex items-center justify-center flex-shrink-0 text-[#E0562D]">
-                <BookOpen className="w-5 h-5 stroke-[2.2]" />
+        {/* Top Cockpit Section: [Quote] [Thẻ tiếp tục học] [Tạo bàn trống mới] */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3 flex-shrink-0">
+          {/* Card 1: Câu quote random tạo động lực (Bên trái) */}
+          <div className="md:col-span-5 bg-gradient-to-br from-white via-orange-50/25 to-amber-50/35 border border-stone-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-[#E0562D]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8431A]">Động lực mỗi ngày</span>
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8431A] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60">
-                    Tiếp tục học
-                  </span>
-                  <span className="text-xs font-bold text-stone-900 truncate">
+              <h1 className="text-base md:text-lg font-serif font-semibold text-stone-900 leading-snug tracking-tight">
+                “{randomQuote}”
+              </h1>
+            </div>
+            <div className="text-[11px] text-stone-600 mt-3 flex items-center justify-between pt-2 border-t border-stone-100">
+              <span>Không gian học tập ViTudy</span>
+              <span className="text-stone-500 font-medium">Sẵn sàng bứt phá</span>
+            </div>
+          </div>
+
+          {/* Card 2: Tiếp tục bàn học mới đây nhất (Bên phải - Thẻ 1) */}
+          <div className="md:col-span-4 bg-white border border-stone-200/90 hover:border-[#E0562D]/60 rounded-2xl p-4 shadow-2xs flex flex-col justify-between transition-all">
+            {latestSpace ? (
+              <>
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8431A] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60">
+                      Tiếp tục học
+                    </span>
+                    <span className="text-[10px] text-stone-600">
+                      {getRecentTimeString(latestSpace)}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-stone-900 truncate mt-1">
                     {latestSpace.name.replace(/\(Demo\)/i, '').trim()}
-                  </span>
+                  </h3>
+                  <p className="text-[11px] text-stone-600 mt-1 truncate">
+                    {getSpaceSummary(latestSpace)}
+                  </p>
                 </div>
-                <div className="text-[11px] text-stone-500 mt-0.5 truncate flex items-center gap-2">
-                  <span>Mở {getRecentTimeString(latestSpace)}</span>
-                  <span>•</span>
-                  <span>{getSpaceSummary(latestSpace)}</span>
+                <button
+                  type="button"
+                  onClick={() => handleOpenSpace(latestSpace.id)}
+                  className="w-full mt-3 px-3 py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <span>Vào bàn học</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">
+                      Bàn học gần đây
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-stone-700 mt-1">
+                    Chưa có bàn học gần đây
+                  </h3>
+                  <p className="text-[11px] text-stone-600 mt-1">
+                    Bàn học bạn mở sẽ tự động xuất hiện tại đây
+                  </p>
                 </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleOpenSpace(latestSpace.id)}
-              className="px-4 py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 active:scale-95"
-            >
-              <span>Vào bàn học</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTemplate('blank')}
+                  className="w-full mt-3 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <span>Mở bàn học đầu tiên</span>
+                </button>
+              </>
+            )}
           </div>
-        )}
 
-        {/* Top Section 2: Learning Core Strip (Quizlet/Anki Style Hook) */}
-        <div className="mb-2.5 bg-[#FFF7ED]/70 border border-[#FFEDD5] rounded-xl px-3.5 py-2 flex items-center justify-between flex-shrink-0 shadow-2xs">
-          <div className="flex items-center gap-2 text-xs text-stone-800">
-            <Layers className="w-4 h-4 text-[#E0562D]" />
-            <span>
-              Hôm nay: <strong className="text-stone-900 font-bold">12 thẻ cần ôn</strong> · 1 đề luyện tập chưa làm
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => onEnterDesk()}
-            className="text-xs font-bold text-[#E0562D] hover:text-[#c9451e] hover:underline cursor-pointer flex items-center gap-1"
-          >
-            <span>Ôn ngay</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        {/* Greeting & Create Desk Button */}
-        <div className="mb-2.5 flex items-center justify-between flex-shrink-0">
-          <div>
-            <h1 className="text-xl md:text-2xl font-serif text-stone-900 tracking-tight">
-              {isAuthenticated ? (
-                <>
-                  Ôn bài thôi, <span className="text-[#B8431A] font-serif font-normal">{shortName}</span>
-                </>
-              ) : (
-                <>
-                  Chào mừng đến với <span className="text-[#B8431A] font-serif font-normal">ViTudy</span>
-                </>
-              )}
-            </h1>
-            <p className="text-xs text-stone-500 mt-0.5">
-              Bạn đã hoàn thành 1 phiên hôm nay (25 phút)
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleSelectTemplate('blank')}
-            className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.4]" />
-            <span>Tạo bàn học</span>
-          </button>
-        </div>
-
-        {/* 4 Template Quick Start Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 flex-shrink-0">
-          {/* Card 1: Bàn học trống (Dashed style preserved) */}
+          {/* Card 3: Bàn học trống (Bên phải - Thẻ 2) */}
           <div
             onClick={() => handleSelectTemplate('blank')}
-            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
+            className="md:col-span-3 bg-white border border-dashed border-stone-300 hover:border-[#E0562D] hover:bg-orange-50/20 rounded-2xl p-4 shadow-2xs flex flex-col justify-between transition-all cursor-pointer group"
           >
-            <div className="h-10 w-full rounded-lg border border-dashed border-stone-300 flex items-center justify-center bg-stone-50 group-hover:border-[#E0562D]/60 transition-colors">
-              <Plus className="w-4 h-4 text-stone-400 group-hover:text-[#E0562D] stroke-[2]" />
-            </div>
-            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
-              Bàn học trống
-            </span>
-            <p className="text-[10px] text-stone-600 truncate">
-              Kéo thả tài liệu tùy ý
-            </p>
-          </div>
-
-          {/* Card 2: Ôn thi giữa kỳ */}
-          <div
-            onClick={() => handleSelectTemplate('midterm')}
-            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <div className="h-10 w-full rounded-lg bg-[#eef1f5] flex items-center justify-center gap-1.5 group-hover:bg-[#e8ebf0] transition-colors">
-              <div className="w-10 h-7 rounded-xs border border-[#5c3920] bg-white flex overflow-hidden">
-                <div className="w-1/2 border-r border-stone-200 p-0.5" />
-                <div className="w-1/2 p-0.5 bg-[#FFF7ED]" />
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#E0562D] group-hover:scale-105 transition-transform">
+                <Plus className="w-4 h-4 stroke-[2.5]" />
               </div>
-              <div className="w-4 h-6 rounded-2xs bg-[#fef08a] border border-amber-200/80" />
+              <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#B8431A] mt-2.5">
+                Bàn học trống
+              </h3>
+              <p className="text-[11px] text-stone-600 mt-1">
+                Không gian mở tự do kéo thả tài liệu
+              </p>
             </div>
-            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
-              Ôn thi giữa kỳ
-            </span>
-            <p className="text-[10px] text-stone-600 truncate">
-              Giáo trình + ghi chú vàng
-            </p>
-          </div>
-
-          {/* Card 3: Giáo trình + đề thi */}
-          <div
-            onClick={() => handleSelectTemplate('curriculum_exam')}
-            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <div className="h-10 w-full rounded-lg bg-[#eef1f5] flex items-center justify-center gap-1.5 group-hover:bg-[#e8ebf0] transition-colors">
-              <div className="w-6 h-8 rounded-xs bg-white border border-stone-300 p-0.5" />
-              <div className="w-6 h-8 rounded-xs bg-white border border-stone-300 p-0.5" />
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-[#E0562D] group-hover:underline">
+              <span>Tạo bàn mới</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </div>
-            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
-              Giáo trình + đề thi
-            </span>
-            <p className="text-[10px] text-stone-600 truncate">
-              Mở song song 2 tài liệu
-            </p>
-          </div>
-
-          {/* Card 4: Học nhóm */}
-          <div
-            onClick={() => handleSelectTemplate('group_study')}
-            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <div className="h-10 w-full rounded-lg bg-[#eef1f5] flex items-center justify-center relative overflow-hidden group-hover:bg-[#e8ebf0] transition-colors">
-              <div className="w-10 h-6 rounded-xs bg-[#5c3920] flex items-center justify-center text-[7px] font-bold text-amber-100">
-                Phòng
-              </div>
-              <MousePointer2 className="w-2.5 h-2.5 text-[#E0562D] fill-[#E0562D] absolute top-1 left-2" />
-              <MousePointer2 className="w-2.5 h-2.5 text-purple-600 fill-purple-600 absolute bottom-1 right-2" />
-            </div>
-            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
-              Học nhóm
-            </span>
-            <p className="text-[10px] text-stone-600 truncate">
-              Ôn bài trực tuyến cùng bạn
-            </p>
           </div>
         </div>
 
@@ -756,9 +876,27 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                   {displayedSpaces.length === 0 ? (
                     <div className="py-8">
                       <EmptyState
-                        title={activeNav === 'starred' ? 'Chưa có bàn học nào được gắn dấu sao' : 'Không tìm thấy bàn học phù hợp'}
-                        description={activeNav === 'starred' ? 'Nhấp vào biểu tượng ngôi sao ở bàn học để ghim.' : 'Hãy thử tìm kiếm với từ khóa khác.'}
-                        action={activeNav === 'starred' ? { label: 'Xem tất cả bàn học', onClick: () => setActiveNav('my_desks') } : undefined}
+                        title={
+                          activeNav === 'starred'
+                            ? 'Chưa có bàn học nào được gắn dấu sao'
+                            : searchFilter
+                            ? 'Không tìm thấy bàn học phù hợp'
+                            : 'Chưa có bàn học nào'
+                        }
+                        description={
+                          activeNav === 'starred'
+                            ? 'Nhấp vào biểu tượng ngôi sao ở bàn học để ghim.'
+                            : searchFilter
+                            ? 'Hãy thử tìm kiếm với từ khóa khác.'
+                            : 'Tạo bàn học đầu tiên để bắt đầu học tập và sắp xếp tài liệu.'
+                        }
+                        action={
+                          activeNav === 'starred'
+                            ? { label: 'Xem tất cả bàn học', onClick: () => setActiveNav('my_desks') }
+                            : searchFilter
+                            ? undefined
+                            : { label: 'Tạo bàn học trống', onClick: () => handleSelectTemplate('blank') }
+                        }
                       />
                     </div>
                   ) : (
@@ -957,6 +1095,54 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           </div>
         </section>
       </main>
+
+      {/* ================= MOBILE BOTTOM NAVIGATION BAR (4 Tabs: Trang chủ, Bàn học, Chợ, Hồ sơ) ================= */}
+      <nav 
+        aria-label="Điều hướng di động"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 py-1.5 px-4 flex items-center justify-around shadow-lg select-none"
+      >
+        {/* Tab 1: Trang chủ */}
+        <button
+          type="button"
+          onClick={() => setActiveNav('home')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${
+            activeNav === 'home' ? 'text-[#E0562D]' : 'text-stone-500 hover:text-stone-800'
+          }`}
+        >
+          <Home className="w-4 h-4" />
+          <span>Trang chủ</span>
+        </button>
+
+        {/* Tab 2: Bàn học */}
+        <button
+          type="button"
+          onClick={() => onEnterDesk(latestSpace?.id)}
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Bàn học</span>
+        </button>
+
+        {/* Tab 3: Chợ tài liệu */}
+        <button
+          type="button"
+          onClick={() => setIsMarketOpen(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer transition-colors"
+        >
+          <Store className="w-4 h-4" />
+          <span>Chợ</span>
+        </button>
+
+        {/* Tab 4: Hồ sơ */}
+        <button
+          type="button"
+          onClick={() => router.push('/profile')}
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer transition-colors"
+        >
+          <User className="w-4 h-4" />
+          <span>Hồ sơ</span>
+        </button>
+      </nav>
 
       {/* ================= MODALS ================= */}
       <TopUpModal isOpen={isTopUpOpen} onClose={() => setIsTopUpOpen(false)} />
