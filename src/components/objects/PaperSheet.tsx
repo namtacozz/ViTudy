@@ -541,13 +541,6 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                     className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
                     draggable={false}
                   />
-                  <div 
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-2 text-xs overflow-y-auto no-scrollbar cursor-text select-text"
-                    title="Bôi đen văn bản để hỏi Inteline / STudy"
-                  >
-                    <MathRenderer content={activePage.text} />
-                  </div>
                 </div>
               ) : (
                 <div 

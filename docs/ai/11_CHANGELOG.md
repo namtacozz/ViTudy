@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-11-12 11:55 — main (Khắc Phục 5 Lỗi UI Sách, Trình Đọc Cuộn Dọc Liên Tục & Bền Vững Bàn Học)
+- **Task:**
+  1. **Khắc phục vỡ layout modal STudy / Tóm tắt sách (`StudyToolsModal.tsx`):**
+     - Thu nhỏ modal nằm gọn trong ruột 2 trang sách (`absolute top-3 bottom-3 left-[42px] right-[42px] z-30 rounded-xl`), không phủ kín `inset-0` làm mất bìa da 4 phía và không che khuất các thẻ bookmark tabs bên phải.
+  2. **Thanh nhắc Bookmark Tabs mở rộng cứng khi chọn Tóm tắt (`BookSpread.tsx`):**
+     - Khi chọn tab Tóm tắt (`isStudyOpen === true`), tab giữ trạng thái kéo dài ra (`w-[106px]`) kèm viền sáng emerald, ấn lại lần nữa thì tắt modal và thu tab về 48px tương tự tab Tập trung.
+  3. **Tự động xoay view sách về 0° khi bật chế độ Tập trung (`BookSpread.tsx`):**
+     - Sách tự động xoay về `rotate(0deg)` khi `isFocusReading === true` kèm transition mượt mà, loại bỏ hoàn toàn độ nghiêng bàn học để người dùng đọc sách thoải mái nhất.
+  4. **Chế độ phóng to cuộn đọc liên tục nối đuôi nhau (`FullScreenDocModal.tsx`):**
+     - Chuyển đổi từ render 1 trang/cặp trang cô lập sang chuỗi cuộn dọc liên tục (Continuous Vertical Reading Stream) cho cả chế độ một trang và hai trang (`gap-8 pb-16`).
+     - Tự động theo dõi vị trí cuộn để đồng bộ số trang hiển thị trên thanh công cụ và highlight thumbnail bên trái.
+     - Hỗ trợ click thumbnail cuộn mượt (`scrollIntoView`) tới trang tương ứng.
+  5. **Loại bỏ bóng chữ mờ khi hover chuột vào ảnh PDF (`BookSpread.tsx`, `PaperSheet.tsx`, `FullScreenDocModal.tsx`):**
+     - Triệt tiêu hoàn toàn lớp phủ text `opacity-0 hover:opacity-10` và tooltip đè lên hình ảnh trang PDF.
+  6. **Bền vững không gian học tập & Tự động lưu theo tài khoản (`StudySpaceContext.tsx`, `StudySpaceService.ts`, `TopLeftNav.tsx`):**
+     - Tự động lưu lên Supabase Cloud định kỳ 10 phút/lần.
+     - Tự động lưu tức thì khi thoát trang (`beforeunload`, `pagehide`, `visibilitychange`).
+     - Bổ sung nút lưu thủ công trực quan trên HUD (`TopLeftNav`) với trạng thái hiển thị động ("Lưu", "Đang lưu...", "Đã lưu").
+     - Phân lập key lưu trữ độc lập theo tài khoản (`user_${userId}_` vs `guest_`) chống ghi đè dữ liệu giữa các tài khoản.
+     - Triển khai `loadStrokes` và lưu `strokes` vào `localStorage` theo từng không gian, bảo toàn vẹn 100% các nét vẽ bút và chú thích.
+- **Files Modified / Created:**
+  - `src/components/modals/StudyToolsModal.tsx`
+  - `src/components/objects/BookSpread.tsx`
+  - `src/components/objects/PaperSheet.tsx`
+  - `src/components/modals/FullScreenDocModal.tsx`
+  - `src/services/StudySpaceService.ts`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verification:**
+  - `pnpm exec tsc --noEmit`: 0 errors.
+  - `npx vitest run`: 19 test files (65 tests) passed 100%.
+  - `pnpm run build:pages`: Build static export thành công.
+
+---
+
 ## 2026-11-12 11:00 — main (Khắc Phục Toàn Diện 19 Lỗi Kiểm Thử Từ 3 Báo Cáo BC1, BC2, BC3)
 - **Task:**
   1. **Khắc phục lỗi sập trang khi chia sẻ từ bàn học (P0):** Bọc modal chia sẻ bằng `ModalErrorBoundary`, xử lý an toàn khi bàn học trống hoặc người dùng là khách, hiển thị `EmptyState` thân thiện thay vì crash.

@@ -25,7 +25,10 @@ import {
   Clock,
   Play,
   Pause,
-  Square
+  Square,
+  Cloud,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { getAssetPath } from '@/lib/assets';
 
@@ -41,7 +44,9 @@ export function TopLeftNav() {
     selectItem,
     transform,
     resetDeskRotation,
-    setTransform
+    setTransform,
+    saveStatus,
+    saveCurrentSpaceImmediately
   } = useStudySpace();
 
   const { user, profile } = useAuth();
@@ -205,6 +210,44 @@ export function TopLeftNav() {
             </div>
           )}
         </div>
+
+        {/* Nút lưu thủ công & Trạng thái lưu (Tự động lưu mỗi 10 phút hoặc khi thoát trang) */}
+        <button
+          type="button"
+          onClick={() => saveCurrentSpaceImmediately()}
+          disabled={saveStatus === 'saving'}
+          title={
+            saveStatus === 'saving'
+              ? 'Đang lưu bàn học lên Supabase Cloud...'
+              : saveStatus === 'saved'
+              ? 'Toàn bộ bàn học đã được lưu an toàn'
+              : 'Lưu bàn học lên máy chủ (Tự động lưu mỗi 10 phút)'
+          }
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer select-none ${
+            saveStatus === 'saving'
+              ? 'bg-orange-50 border-orange-200 text-[#E0562D]'
+              : saveStatus === 'saved'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
+          }`}
+        >
+          {saveStatus === 'saving' ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E0562D]" />
+              <span className="hidden md:inline text-[11px]">Đang lưu</span>
+            </>
+          ) : saveStatus === 'saved' ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.8]" />
+              <span className="hidden md:inline text-[11px]">Đã lưu</span>
+            </>
+          ) : (
+            <>
+              <Cloud className="w-3.5 h-3.5 text-slate-500 stroke-[2.2]" />
+              <span className="hidden md:inline text-[11px]">Lưu</span>
+            </>
+          )}
+        </button>
 
         {/* Slide-out Search Bar (Chỉ hiện icon kính lúp, hover trượt sang phải, ấn vào list tối đa 3 tài liệu) */}
         <div 

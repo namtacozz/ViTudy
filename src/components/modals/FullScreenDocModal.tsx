@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { DeskItem } from '@/types/studyspace';
 import { 
@@ -41,6 +41,7 @@ export function FullScreenDocModal({
   const [pageRotation, setPageRotation] = useState(0); // 0, 90, 180, 270
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isExam = !!item.isExamSheet && !!item.examData;
   const exam = item.examData;
@@ -49,20 +50,75 @@ export function FullScreenDocModal({
   const leaves: PaginatedLeaf[] = paginateDocument(item.pages);
   const totalLeaves = Math.max(leaves.length, 1);
 
+  // Group pages into two-page spreads when in book view
+  const spreads: [number, number?][] = [];
+  for (let i = 0; i < totalLeaves; i += 2) {
+    if (i + 1 < totalLeaves) {
+      spreads.push([i, i + 1]);
+    } else {
+      spreads.push([i]);
+    }
+  }
+
   const leftIndex = isTwoPageSpread ? (currentPage % 2 === 0 ? currentPage : currentPage - 1) : currentPage;
   const rightIndex = leftIndex + 1;
 
-  const leftLeaf = leaves[leftIndex] || null;
-  const rightLeaf = isTwoPageSpread ? (leaves[rightIndex] || null) : null;
+  const scrollToPage = (pageIdx: number) => {
+    setCurrentPage(pageIdx);
+    const elementId = isTwoPageSpread 
+      ? `fullscreen-spread-${Math.floor(pageIdx / 2)}`
+      : `fullscreen-page-${pageIdx}`;
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const handlePrev = () => {
     const step = isTwoPageSpread ? 2 : 1;
-    setCurrentPage(prev => Math.max(0, prev - step));
+    const target = Math.max(0, currentPage - step);
+    scrollToPage(target);
   };
 
   const handleNext = () => {
     const step = isTwoPageSpread ? 2 : 1;
-    setCurrentPage(prev => Math.min(totalLeaves - 1, prev + step));
+    const target = Math.min(totalLeaves - 1, currentPage + step);
+    scrollToPage(target);
+  };
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current || isExam) return;
+    const container = scrollContainerRef.current;
+    const containerTop = container.getBoundingClientRect().top;
+
+    if (isTwoPageSpread) {
+      for (let sIdx = 0; sIdx < spreads.length; sIdx++) {
+        const el = document.getElementById(`fullscreen-spread-${sIdx}`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.bottom >= containerTop + 140) {
+            const pageIndex = spreads[sIdx][0];
+            if (pageIndex !== currentPage) {
+              setCurrentPage(pageIndex);
+            }
+            break;
+          }
+        }
+      }
+    } else {
+      for (let lIdx = 0; lIdx < leaves.length; lIdx++) {
+        const el = document.getElementById(`fullscreen-page-${lIdx}`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.bottom >= containerTop + 140) {
+            if (lIdx !== currentPage) {
+              setCurrentPage(lIdx);
+            }
+            break;
+          }
+        }
+      }
+    }
   };
 
   const handleRotatePage = () => {
@@ -80,6 +136,21 @@ export function FullScreenDocModal({
   useEffect(() => {
     setCurrentPage(initialPageIndex);
   }, [initialPageIndex, isOpen]);
+
+  useEffect(() => {
+    if (isOpen && mounted) {
+      const timer = setTimeout(() => {
+        const elementId = isTwoPageSpread 
+          ? `fullscreen-spread-${Math.floor(initialPageIndex / 2)}`
+          : `fullscreen-page-${initialPageIndex}`;
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, mounted, isTwoPageSpread, initialPageIndex]);
 
   // Handle ESC and Arrow keys
   useEffect(() => {
@@ -171,7 +242,7 @@ export function FullScreenDocModal({
               </button>
 
               <div className="flex items-center gap-1 text-xs font-mono font-bold px-1.5">
-                <span className="text-[#E0562D]">{isTwoPageSpread ? `${leftIndex + 1}${rightLeaf ? `-${Math.min(rightIndex + 1, totalLeaves)}` : ''}` : currentPage + 1}</span>
+                <span className="text-[#E0562D]">{isTwoPageSpread ? `${leftIndex + 1}${rightIndex < totalLeaves ? `-${Math.min(rightIndex + 1, totalLeaves)}` : ''}` : currentPage + 1}</span>
                 <span className="text-slate-400">/</span>
                 <span className="text-slate-700">{totalLeaves}</span>
               </div>
@@ -322,7 +393,7 @@ export function FullScreenDocModal({
               return (
                 <div 
                   key={leaf.pageNumber || lIdx}
-                  onClick={() => setCurrentPage(lIdx)}
+                  onClick={() => scrollToPage(lIdx)}
                   className="flex flex-col items-center group cursor-pointer"
                 >
                   {/* Miniature Page Card */}
@@ -371,6 +442,8 @@ export function FullScreenDocModal({
 
         {/* Center Document Canvas Pane */}
         <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
           className="flex-1 overflow-auto flex flex-col items-center p-8 bg-[#e8ebf0] cursor-default relative"
           onClick={(e) => e.stopPropagation()}
         >
@@ -378,7 +451,7 @@ export function FullScreenDocModal({
             style={{ 
               transform: `scale(${zoomLevel / 100}) rotate(${pageRotation}deg)`, 
               transformOrigin: 'top center',
-              margin: 'auto 0'
+              margin: '0 auto'
             }}
             className="transition-transform duration-200 ease-out flex items-center justify-center shrink-0"
           >
@@ -482,130 +555,131 @@ export function FullScreenDocModal({
                 )}
               </div>
             ) : isTwoPageSpread ? (
-              /* ================= FULL SCREEN 2-PAGE SPREAD ================= */
-              <div 
-                style={{ width: 1040, minHeight: 700 }}
-                className="flex rounded-md shadow-2xl overflow-hidden border border-slate-300 bg-white text-slate-900"
-              >
-                {/* Left Page */}
-                <div className="flex-1 p-10 flex flex-col justify-between border-r border-slate-200 relative bg-[#fdfbf7]">
-                  {leftLeaf ? (
-                    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                      <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                          <span className="text-xs font-bold text-slate-600 truncate">
-                            {leftLeaf.chapterTitle}
-                          </span>
-                        </div>
-                        {leftLeaf.image ? (
-                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
-                            <img
-                              src={leftLeaf.image}
-                              alt={`Trang ${leftLeaf.pageNumber}`}
-                              className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
-                            />
-                            <div className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-3 text-xs leading-relaxed overflow-y-auto cursor-text select-text">
-                              <MathRenderer content={leftLeaf.text} />
+              /* ================= FULL SCREEN 2-PAGE SPREADS (CONTINUOUS STREAM) ================= */
+              <div className="flex flex-col items-center gap-8 pb-16">
+                {spreads.map((spread, sIdx) => {
+                  const leftLeafItem = leaves[spread[0]] || null;
+                  const rightLeafItem = spread[1] !== undefined ? leaves[spread[1]] : null;
+                  return (
+                    <div 
+                      key={sIdx}
+                      id={`fullscreen-spread-${sIdx}`}
+                      style={{ width: 1040, minHeight: 700 }}
+                      className="flex rounded-md shadow-2xl overflow-hidden border border-slate-300 bg-white text-slate-900 flex-shrink-0"
+                    >
+                      {/* Left Page */}
+                      <div className="flex-1 p-10 flex flex-col justify-between border-r border-slate-200 relative bg-[#fdfbf7]">
+                        {leftLeafItem ? (
+                          <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <div className="flex-1 flex flex-col overflow-hidden">
+                              <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                                <span className="text-xs font-bold text-slate-600 truncate">
+                                  {leftLeafItem.chapterTitle}
+                                </span>
+                              </div>
+                              {leftLeafItem.image ? (
+                                <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                                  <img
+                                    src={leftLeafItem.image}
+                                    alt={`Trang ${leftLeafItem.pageNumber}`}
+                                    className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="text-[15.5px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
+                                  <MathRenderer content={leftLeafItem.text} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
+                              {leftLeafItem.pageNumber}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-[15.5px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
-                            <MathRenderer content={leftLeaf.text} />
+                          <div className="flex items-center justify-center h-full text-slate-400 italic text-sm">
+                            Trang trống
                           </div>
                         )}
                       </div>
-                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
-                        {leftLeaf.pageNumber}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-slate-400 italic text-sm">
-                      Trang trống
-                    </div>
-                  )}
-                </div>
 
-                {/* Central Spine Seam Shadow */}
-                <div className="w-[3px] bg-gradient-to-r from-stone-400/30 via-stone-500/40 to-stone-400/30 shadow-inner" />
+                      {/* Central Spine Seam Shadow */}
+                      <div className="w-[3px] bg-gradient-to-r from-stone-400/30 via-stone-500/40 to-stone-400/30 shadow-inner flex-shrink-0" />
 
-                {/* Right Page */}
-                <div className="flex-1 p-10 flex flex-col justify-between relative bg-[#fdfbf7]">
-                  {rightLeaf ? (
-                    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                      <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                          <span className="text-xs font-bold text-slate-600 truncate">
-                            {rightLeaf.chapterTitle}
-                          </span>
-                        </div>
-                        {rightLeaf.image ? (
-                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
-                            <img
-                              src={rightLeaf.image}
-                              alt={`Trang ${rightLeaf.pageNumber}`}
-                              className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
-                            />
-                            <div className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-3 text-xs leading-relaxed overflow-y-auto cursor-text select-text">
-                              <MathRenderer content={rightLeaf.text} />
+                      {/* Right Page */}
+                      <div className="flex-1 p-10 flex flex-col justify-between relative bg-[#fdfbf7]">
+                        {rightLeafItem ? (
+                          <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <div className="flex-1 flex flex-col overflow-hidden">
+                              <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                                <span className="text-xs font-bold text-slate-600 truncate">
+                                  {rightLeafItem.chapterTitle}
+                                </span>
+                              </div>
+                              {rightLeafItem.image ? (
+                                <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                                  <img
+                                    src={rightLeafItem.image}
+                                    alt={`Trang ${rightLeafItem.pageNumber}`}
+                                    className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="text-[15.5px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
+                                  <MathRenderer content={rightLeafItem.text} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
+                              {rightLeafItem.pageNumber}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-[15.5px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
-                            <MathRenderer content={rightLeaf.text} />
+                          <div className="flex items-center justify-center h-full text-slate-400 italic text-sm">
+                            (Hết tài liệu)
                           </div>
                         )}
                       </div>
-                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
-                        {rightLeaf.pageNumber}
-                      </div>
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-slate-400 italic text-sm">
-                      (Hết tài liệu)
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             ) : (
-              /* ================= FULL SCREEN SINGLE PAGE (A4 Document) ================= */
-              <div 
-                style={{ width: 640, minHeight: 840 }}
-                className="rounded-sm shadow-2xl p-10 border border-slate-300 bg-white text-slate-900 flex flex-col justify-between"
-              >
-                {leftLeaf ? (
-                  <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                      <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                        <span className="text-xs font-bold text-slate-600 truncate">
-                          {leftLeaf.chapterTitle}
-                        </span>
-                      </div>
-                      {leftLeaf.image ? (
-                        <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
-                          <img
-                            src={leftLeaf.image}
-                            alt={`Trang ${leftLeaf.pageNumber}`}
-                            className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
-                          />
-                          <div className="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity p-3 text-xs leading-relaxed overflow-y-auto cursor-text select-text">
-                            <MathRenderer content={leftLeaf.text} />
+              /* ================= FULL SCREEN SINGLE PAGES (CONTINUOUS STREAM) ================= */
+              <div className="flex flex-col items-center gap-8 pb-16">
+                {leaves.map((leafItem, lIdx) => (
+                  <div 
+                    key={lIdx}
+                    id={`fullscreen-page-${lIdx}`}
+                    style={{ width: 640, minHeight: 840 }}
+                    className="rounded-sm shadow-2xl p-10 border border-slate-300 bg-white text-slate-900 flex flex-col justify-between flex-shrink-0"
+                  >
+                    <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                      <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="pb-2 mb-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                          <span className="text-xs font-bold text-slate-600 truncate">
+                            {leafItem.chapterTitle}
+                          </span>
+                        </div>
+                        {leafItem.image ? (
+                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                            <img
+                              src={leafItem.image}
+                              alt={`Trang ${leafItem.pageNumber}`}
+                              className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                            />
                           </div>
-                        </div>
-                      ) : (
-                        <div className="text-[16px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
-                          <MathRenderer content={leftLeaf.text} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
-                      {leftLeaf.pageNumber}
+                        ) : (
+                          <div className="text-[16px] leading-[1.6] text-slate-900 font-sans selection:bg-orange-100 flex-1 overflow-y-auto no-scrollbar text-justify pr-2">
+                            <MathRenderer content={leafItem.text} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center text-xs font-mono text-slate-500 pt-4 border-t border-slate-200 flex-shrink-0">
+                        {leafItem.pageNumber}
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-slate-400 italic text-sm">
-                    Trang trống
-                  </div>
-                )}
+                ))}
               </div>
             )}
           </div>

@@ -234,11 +234,52 @@ export class StudySpaceService {
     }
   }
 
+  static async loadStrokes(spaceId: string): Promise<DrawingStroke[]> {
+    const supabase = getSupabase();
+    if (!supabase || !spaceId) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('desk_drawings')
+        .select('*')
+        .eq('space_id', spaceId);
+
+      if (error || !data) return [];
+
+      return data.map(row => ({
+        id: row.id,
+        color: row.color,
+        width: row.width,
+        isHighlighter: row.is_highlighter,
+        points: (row.points as any) || [],
+        attachedToItemId: row.attached_to_item_id || undefined,
+      }));
+    } catch (err) {
+      console.warn('Lỗi loadStrokes:', err);
+      return [];
+    }
+  }
+
+  static async clearStrokes(spaceId: string): Promise<void> {
+    const supabase = getSupabase();
+    if (!supabase || !spaceId) return;
+    try {
+      await supabase.from('desk_drawings').delete().eq('space_id', spaceId);
+    } catch (err) {
+      console.warn('Lỗi clearStrokes:', err);
+    }
+  }
+
   static async saveStrokes(spaceId: string, strokes: DrawingStroke[], authorId?: string): Promise<void> {
     const supabase = getSupabase();
     if (!supabase || !spaceId) return;
 
     try {
+      if (strokes.length === 0) {
+        await supabase.from('desk_drawings').delete().eq('space_id', spaceId);
+        return;
+      }
+
       const rows = strokes.map(s => ({
         id: s.id.includes('-') && s.id.length === 36 ? s.id : undefined,
         space_id: spaceId,
@@ -247,7 +288,7 @@ export class StudySpaceService {
         width: s.width,
         is_highlighter: s.isHighlighter ?? false,
         points: s.points as unknown as Json,
-        attached_to_item_id: s.attachedToItemId || null,
+        attachedToItemId: s.attachedToItemId || null,
       }));
       await supabase.from('desk_drawings').upsert(rows);
     } catch (err) {
