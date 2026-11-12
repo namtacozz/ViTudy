@@ -16,6 +16,7 @@ import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
 import { isItemVisible } from '@/lib/viewportCulling';
 import { parsePdfFile } from '@/services/PdfParserService';
+import { formatUploadedDocTitle } from '@/utils/documentNaming';
 
 export function InfiniteDesk() {
   const { 
@@ -332,16 +333,16 @@ export function InfiniteDesk() {
 
     for (const file of files) {
       const fileName = file.name;
-      const rawName = fileName.replace(/\.[^/.]+$/, '');
       const isPdf = file.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
       const isImage = file.type.startsWith('image/');
       const isText = file.type.includes('text') || fileName.endsWith('.md') || fileName.endsWith('.txt');
+      const docTitle = formatUploadedDocTitle(fileName, isImage);
 
       try {
         if (isPdf) {
           const parsedPages = await parsePdfFile(file);
           if (parsedPages.length > 0) {
-            addUploadedDocument(rawName, parsedPages);
+            addUploadedDocument(docTitle, parsedPages);
             continue;
           }
         } else if (isImage) {
@@ -350,8 +351,8 @@ export function InfiniteDesk() {
             reader.onload = () => resolve(reader.result as string);
             reader.readAsDataURL(file);
           });
-          addUploadedDocument(rawName, [{
-            title: rawName,
+          addUploadedDocument(docTitle, [{
+            title: docTitle,
             text: '',
             image: dataUrl,
           }]);
@@ -361,17 +362,17 @@ export function InfiniteDesk() {
           const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
           const pages = paragraphs.length > 0 
             ? paragraphs.map((para, i) => ({ title: `Trang ${i + 1}`, text: para }))
-            : [{ title: fileName, text }];
-          addUploadedDocument(fileName, pages);
+            : [{ title: docTitle, text }];
+          addUploadedDocument(docTitle, pages);
           continue;
         }
 
         // Fallback: try reading as text
         try {
           const text = await file.text();
-          addUploadedDocument(fileName, [{ title: fileName, text }]);
+          addUploadedDocument(docTitle, [{ title: docTitle, text }]);
         } catch {
-          addUploadedDocument(fileName, [{ title: fileName, text: `Tệp ${fileName}` }]);
+          addUploadedDocument(docTitle, [{ title: docTitle, text: `Tệp ${docTitle}` }]);
         }
       } catch (err) {
         console.error('Lỗi nạp tệp kéo thả vào bàn học:', err);

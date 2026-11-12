@@ -37,7 +37,6 @@ export function FullScreenDocModal({
   initialPageIndex = 0
 }: FullScreenDocModalProps) {
   const [currentPage, setCurrentPage] = useState(initialPageIndex);
-  const [zoomLevel, setZoomLevel] = useState(100);
   const [isTwoPageSpread, setIsTwoPageSpread] = useState(item.type === 'book');
   const [pageRotation, setPageRotation] = useState(0); // 0, 90, 180, 270
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -52,6 +51,33 @@ export function FullScreenDocModal({
   // Use dynamic paginated leaves for books and documents
   const leaves: PaginatedLeaf[] = paginateDocument(item.pages);
   const totalLeaves = Math.max(leaves.length, 1);
+  const isImageDoc = leaves.some(l => !!l.image);
+
+  const calculateFitHeightZoom = () => {
+    if (typeof window === 'undefined') return 100;
+    const availableHeight = window.innerHeight - 140;
+    const pageHeight = isTwoPageSpread ? 700 : 840;
+    const ratio = Math.min(1.4, Math.max(0.4, availableHeight / pageHeight));
+    return Math.round(ratio * 100);
+  };
+
+  const calculateFitWidthZoom = () => {
+    if (typeof window === 'undefined') return 100;
+    const availableWidth = window.innerWidth - (isSidebarOpen ? 260 : 20) - 80;
+    const pageWidth = isTwoPageSpread ? 1040 : 640;
+    const ratio = Math.min(1.6, Math.max(0.4, availableWidth / pageWidth));
+    return Math.round(ratio * 100);
+  };
+
+  const [fitMode, setFitMode] = useState<'fit-height' | 'fit-width' | 'custom'>(isImageDoc ? 'fit-height' : 'custom');
+  const [zoomLevel, setZoomLevel] = useState(isImageDoc ? calculateFitHeightZoom() : 100);
+
+  useEffect(() => {
+    if (isImageDoc) {
+      setFitMode('fit-height');
+      setZoomLevel(calculateFitHeightZoom());
+    }
+  }, [isImageDoc, isTwoPageSpread]);
 
   // Group pages into two-page spreads when in book view
   const spreads: [number, number?][] = [];
@@ -308,10 +334,13 @@ export function FullScreenDocModal({
 
             <div className="w-[1px] h-4 bg-slate-300 mx-0.5" />
 
-            {/* Zoom Controls: [ - ] 100% [ + ] [ Reset ] */}
+            {/* Zoom Controls: [ - ] 100% [ + ] */}
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setZoomLevel(prev => Math.max(60, prev - 10))}
+                onClick={() => {
+                  setFitMode('custom');
+                  setZoomLevel(prev => Math.max(40, prev - 10));
+                }}
                 title="Thu nhỏ"
                 className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
               >
@@ -323,19 +352,63 @@ export function FullScreenDocModal({
               </span>
 
               <button
-                onClick={() => setZoomLevel(prev => Math.min(180, prev + 10))}
+                onClick={() => {
+                  setFitMode('custom');
+                  setZoomLevel(prev => Math.min(180, prev + 10));
+                }}
                 title="Phóng to"
                 className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
               >
                 <ZoomIn className="w-3.5 h-3.5 stroke-[2.4]" />
               </button>
+            </div>
 
+            {/* Fit Mode Switcher: Vừa khung / Vừa rộng / 100% */}
+            <div className="flex items-center bg-slate-200/80 p-0.5 rounded-lg text-[11px] font-semibold text-slate-700">
               <button
-                onClick={() => setZoomLevel(100)}
-                title="Khôi phục 100% (Chuẩn)"
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                type="button"
+                onClick={() => {
+                  setFitMode('fit-height');
+                  setZoomLevel(calculateFitHeightZoom());
+                }}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  fitMode === 'fit-height'
+                    ? 'bg-white text-[#E0562D] font-bold shadow-2xs'
+                    : 'hover:text-slate-900'
+                }`}
+                title="Vừa khung nhìn: Co giãn ảnh để xem trọn trang theo chiều cao"
               >
-                <Maximize2 className="w-3.5 h-3.5 stroke-[2.4]" />
+                Vừa khung
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFitMode('fit-width');
+                  setZoomLevel(calculateFitWidthZoom());
+                }}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  fitMode === 'fit-width'
+                    ? 'bg-white text-[#E0562D] font-bold shadow-2xs'
+                    : 'hover:text-slate-900'
+                }`}
+                title="Vừa chiều rộng màn hình"
+              >
+                Vừa rộng
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFitMode('custom');
+                  setZoomLevel(100);
+                }}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  fitMode === 'custom' && zoomLevel === 100
+                    ? 'bg-white text-[#E0562D] font-bold shadow-2xs'
+                    : 'hover:text-slate-900'
+                }`}
+                title="Kích thước gốc 100%"
+              >
+                100%
               </button>
             </div>
 

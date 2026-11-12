@@ -610,7 +610,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
                     {/* Page Body Text or PDF Rendered Page Image */}
                     {underneathLeftLeaf.image ? (
-                      <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                      <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded p-1 mb-1">
                         <img
                           src={underneathLeftLeaf.image}
                           alt={`Trang ${underneathLeftLeaf.pageNumber}`}
@@ -678,7 +678,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
                     {/* Page Body Text or PDF Rendered Page Image */}
                     {underneathRightLeaf.image ? (
-                      <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
+                      <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded p-1 mb-1">
                         <img
                           src={underneathRightLeaf.image}
                           alt={`Trang ${underneathRightLeaf.pageNumber}`}
@@ -699,14 +699,17 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                   {/* Right Page Footer (Drag handle): Only Page Number in Bottom-Right Corner */}
                   <div 
                     onMouseDown={handleMouseDown}
-                    className="flex-shrink-0 text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200/80 mt-2 pr-2 select-none cursor-grab active:cursor-grabbing"
+                    className="flex-shrink-0 text-right text-xs font-mono font-semibold text-stone-600 pt-2 border-t border-stone-200/80 mt-1 pb-1 pr-2 select-none cursor-grab active:cursor-grabbing"
                   >
                     {underneathRightLeaf.pageNumber}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-stone-400 text-xs italic font-sans">
-                  (Hết cuốn sách)
+                <div className="flex flex-col items-center justify-center h-full text-stone-400 select-none">
+                  <div className="w-10 h-10 rounded-full border border-dashed border-stone-300 flex items-center justify-center mb-1.5 text-stone-300">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-serif italic text-stone-400">Trang ghi chú trắng</span>
                 </div>
               )}
 
@@ -762,7 +765,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                               {rightLeaf.chapterTitle}
                             </div>
                             {rightLeaf.image ? (
-                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden p-1 mb-1">
                                 <img
                                   src={rightLeaf.image}
                                   alt={`Trang ${rightLeaf.pageNumber}`}
@@ -805,7 +808,7 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                               {paginatedLeaves[rightPageIndex + 1].chapterTitle}
                             </div>
                             {paginatedLeaves[rightPageIndex + 1].image ? (
-                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+                              <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden p-1 mb-1">
                                 <img
                                   src={paginatedLeaves[rightPageIndex + 1].image}
                                   alt={`Trang ${paginatedLeaves[rightPageIndex + 1].pageNumber}`}

@@ -39,13 +39,14 @@ interface MarketModalProps {
 }
 
 export function MarketModal({ isOpen, onClose }: MarketModalProps) {
-  const { addUploadedDocument, addExamSheet, activeSpace } = useStudySpace();
+  const { addUploadedDocument, addExamSheet, activeSpace, addMarketItemToSpace } = useStudySpace();
   const { purchaseKnowledgeItem, addTokens, wallet } = useViToken();
 
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [selectedDeskItemId, setSelectedDeskItemId] = useState<string>('');
   const [marketItems, setMarketItems] = useState<MarketItem[]>(INITIAL_MARKET_ITEMS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
 
   // Tủ tài liệu cá nhân & Modal chọn bàn học
   const [isCabinetView, setIsCabinetView] = useState(false);
@@ -182,15 +183,28 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
     });
   }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy, isCabinetView, purchasedIds]);
 
-  // Action: Add document to study desk via Space Selection Modal
+  // Action: Add document to study desk (direct to current desk if open, or via space selector modal)
   const handleAddToDesk = (item: MarketItem) => {
+    // Nếu đang ở view bàn học và có activeSpace hợp lệ
+    if (activeSpace?.id) {
+      if (addMarketItemToSpace) {
+        addMarketItemToSpace(activeSpace.id, item);
+      }
+      setSuccessToast(`Đã thêm "${item.title}" vào bàn học hiện tại!`);
+      setTimeout(() => {
+        setSuccessToast(null);
+        onClose();
+      }, 1100);
+      return;
+    }
+
     setSpaceSelectDoc(item);
   };
 
   const handleBuyMarketItem = (item: MarketItem) => {
     setErrorMessage(null);
 
-    // If already purchased, simply open space selector
+    // If already purchased, simply open space selector or add directly
     if (isItemPurchased(item)) {
       handleAddToDesk(item);
       return;
@@ -208,6 +222,20 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
       setMarketItems(items =>
         items.map(i => (i.id === item.id ? { ...i, purchased: true } : i))
       );
+      
+      // Nếu đang ở bàn học thì thêm ngay vào bàn hiện tại
+      if (activeSpace?.id) {
+        if (addMarketItemToSpace) {
+          addMarketItemToSpace(activeSpace.id, item);
+        }
+        setSuccessToast(`Đã mua và thêm "${item.title}" vào bàn học hiện tại!`);
+        setTimeout(() => {
+          setSuccessToast(null);
+          onClose();
+        }, 1100);
+        return;
+      }
+
       // Mở modal chọn bàn học để người dùng chọn bàn mở ngay
       setSpaceSelectDoc(item);
     } else {
@@ -350,6 +378,16 @@ export function MarketModal({ isOpen, onClose }: MarketModalProps) {
             >
               Về Chợ chung →
             </button>
+          </div>
+        )}
+
+        {/* Success toast notice */}
+        {successToast && (
+          <div className="mt-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in shadow-2xs">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 flex-shrink-0 text-emerald-600 stroke-[2.4]" />
+              <span className="font-semibold">{successToast}</span>
+            </div>
           </div>
         )}
 

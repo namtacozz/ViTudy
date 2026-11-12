@@ -4,6 +4,48 @@
 
 ---
 
+## 2026-11-12 19:30 — main (Tối Ưu Xử Lý Tài Liệu Ảnh, Nâng Cấp Tờ Giấy OCR, Mở Tài Liệu Từ Bàn Học & Tái Cấu Trúc Toàn Diện Trang Chủ Chuẩn Notion/Miro)
+- **Task:**
+  1. **Xử Lý Tài Liệu Dạng Ảnh & Nâng Cấp Tờ Giấy Ảnh (`PaperSheet.tsx`, `InfiniteDesk.tsx`, `BottomLeftKnowledge.tsx`):**
+     - Tạo helper `formatUploadedDocTitle`: tự động phát hiện mã hash máy/camera/facebook thô (`815733508_...`) và đổi tên mặc định thành `Ảnh chụp DD/MM HH:mm` (hoặc `Ảnh chụp DD/MM`).
+     - Cho phép nhấp trực tiếp vào khối tiêu đề tờ giấy để đổi tên (inline editing với input, Enter để lưu, Escape để hủy).
+     - Đổi nhãn chân tờ giấy từ `ViTudy Doc · 1 trang` thành `Ảnh · 1 trang` theo đúng loại tệp.
+     - Khắc phục triệt để việc thanh công cụ đè lên dòng gợi ý "Kéo thả vào sách để gộp trang": tự động ẩn gợi ý khi tờ giấy được chọn hoặc khi thanh công cụ đang hiển thị bên dưới.
+     - Bổ sung tính năng OCR trực tiếp trên thanh công cụ tờ giấy: trích xuất văn bản tiếng Việt & tiếng Anh từ ảnh qua Tesseract.js WebAssembly, cập nhật text vào bàn học và cho phép bật tắt xem chữ/ảnh để bôi đen hỏi Inteline hoặc mở STudy tóm tắt.
+     - Phân nhóm icon trên thanh công cụ rõ ràng bằng vạch chia mảnh: Nhóm Học tập (STudy, OCR, Thẻ ghi nhớ), Nhóm Bố cục & Đọc (Tập trung đọc 0°, Đóng thành sách, Toàn màn hình, Xoay 2 chiều), Nhóm Thao tác (Xóa) kèm tooltip tiếng Việt chi tiết.
+  2. **Hiển Thị Ảnh Trong Sách & Trình Đọc Toàn Màn Hình (`BookSpread.tsx`, `FullScreenDocModal.tsx`):**
+     - `BookSpread.tsx`: Cố định khung ảnh với `object-fit: contain` kèm khoảng đệm đáy `p-1 mb-1` và phân cách chân trang `pt-2 mt-1 pb-1`, triệt tiêu hoàn toàn lỗi ảnh bị cắt đáy ngang đầu người và số trang bị đè.
+     - Sách 1 trang: Thay thế dòng chữ `(Hết cuốn sách)` thô thiển ở trang phải bằng giao diện "Trang ghi chú trắng" sang trọng, thanh lịch.
+     - `FullScreenDocModal.tsx`: Với tài liệu ảnh, mặc định tự động kích hoạt chế độ "Vừa khung" (`fit-to-height`), co giãn hình ảnh vừa khít chiều cao cửa sổ để người học nhìn trọn vẹn toàn bộ slide mà không bị cắt nửa dưới; bổ sung bộ chọn chế độ xem `[Vừa khung | Vừa rộng | 100%]`.
+  3. **Sửa Lỗi Mở Tài Liệu Chợ Từ Bàn Học (`MarketModal.tsx`, `SelectSpaceForDocModal.tsx`):**
+     - Khi người dùng đang ở bàn học (`activeSpace.id` tồn tại): Mua hoặc mở tài liệu trên Chợ sẽ nạp trực tiếp tài liệu vào bàn học hiện tại qua `addMarketItemToSpace`, hiển thị thông báo toast thành công và đóng modal; không bật modal chọn bàn thừa thãi và không chuyển hướng ra trang chủ.
+     - Khi người dùng ở ngoài trang chủ mở `SelectSpaceForDocModal`: Kích hoạt `switchSpace` và điều hướng chuyển view vào bàn học đã chọn kèm tài liệu mới.
+  4. **Tái Cấu Trúc Toàn Diện Trang Chủ Chuẩn Notion / Figma / Miro (`HomePage.tsx` & `StudySpaceContext.tsx`):**
+     - **Thanh bên trái:** Bỏ logo trùng lặp ở đỉnh nội dung, chỉ giữ 1 logo ViTudy duy nhất ở sidebar; bổ sung icon thanh mảnh cho từng mục điều hướng (`Home`, `BookOpen`, `Star`, `Store`, `CalendarCheck`); thêm phím tắt `Ctrl + K` trên ô tìm kiếm; thu gọn số dư khả dụng thành chip thanh lịch `5.000 ViToken [+] Nạp`; bổ sung liên kết "Trợ giúp & Tài liệu" ở chân sidebar.
+     - **Thanh Header trên cùng:** Dòng định vị tinh gọn; đưa widget "Mục tiêu hôm nay" (Duolingo style) lên header cạnh chuỗi Streak; menu Avatar chuẩn Miro chỉ giữ chức năng cá nhân thực tế (Hồ sơ cá nhân, Cài đặt kết nối AI, Đăng xuất).
+     - **Vùng nội dung chính:**
+       - Card lớn Top 1: "Tiếp tục học: [Tên bàn vừa mở]" kèm thời gian, tóm tắt và nút Cam ViT "Vào bàn học".
+       - Dải kết nối học tập: "Hôm nay: 12 thẻ cần ôn · 1 đề luyện tập chưa làm" kèm nút "Ôn ngay" (chuẩn Quizlet/Anki).
+       - Lời chào ngắn gọn: "Ôn bài thôi, [Tên]" kèm dữ liệu thời gian học và nút "+ Tạo bàn học".
+       - 4 mẫu bàn học nhanh dải ngang với subtitle đạt độ tương phản chuẩn WCAG AA.
+       - Danh sách bàn học: Bổ sung 2 tab "Của tôi" & "Được chia sẻ", bộ chuyển đổi chế độ xem "Lưới / Danh sách", menu hành động "⋯" (Đổi tên, Nhân bản, Xóa) và gắn dấu sao (★).
+- **Files Modified:**
+  - `src/utils/documentNaming.ts`
+  - `src/types/studyspace.ts`
+  - `src/context/StudySpaceContext.tsx`
+  - `src/components/canvas/InfiniteDesk.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`
+  - `src/components/objects/PaperSheet.tsx`
+  - `src/components/objects/BookSpread.tsx`
+  - `src/components/modals/FullScreenDocModal.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/components/modals/SelectSpaceForDocModal.tsx`
+  - `src/components/home/HomePage.tsx`
+  - `docs/ai/11_CHANGELOG.md`
+  - `AGENTS.md`
+
+---
+
 ## 2026-11-12 17:45 — main (Khắc Phục P0 Lưu Trữ Bàn Học, Tinh Chỉnh STudy Sách, Chuẩn Hóa Toàn Diện Các Modal & Chế Độ In Phóng To)
 - **Task:**
   1. **Khắc phục lỗi P0 Bàn học mất dữ liệu khi đổi trang / F5:**

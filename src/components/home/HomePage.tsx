@@ -9,16 +9,26 @@ import {
   Flame, 
   CheckCircle2, 
   Target, 
-  MousePointer2, 
   LogIn, 
   Star,
   User,
   Sparkles,
-  BarChart2,
-  CreditCard,
   LogOut,
   Store,
-  ChevronRight
+  Home,
+  BookOpen,
+  CalendarCheck,
+  HelpCircle,
+  LayoutGrid,
+  List,
+  MoreHorizontal,
+  Copy,
+  Pencil,
+  Trash2,
+  ArrowRight,
+  Layers,
+  Clock,
+  MousePointer2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useViToken } from '@/context/ViTokenContext';
@@ -40,7 +50,15 @@ interface HomePageProps {
 export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const { user, profile, status, signOut } = useAuth();
   const { wallet, claimDailyStreak } = useViToken();
-  const { spaces, switchSpace, createSpaceFromTemplate, toggleStarSpace } = useStudySpace();
+  const { 
+    spaces, 
+    switchSpace, 
+    createSpaceFromTemplate, 
+    toggleStarSpace,
+    deleteSpace,
+    renameSpace,
+    duplicateSpace
+  } = useStudySpace();
   const { startSession: startPomodoroSession } = usePomodoroContext();
   const router = useRouter();
 
@@ -59,23 +77,30 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showAllSpaces, setShowAllSpaces] = useState(false);
   const [activeNav, setActiveNav] = useState<'home' | 'my_desks' | 'starred'>('home');
+  const [ownershipTab, setOwnershipTab] = useState<'mine' | 'shared'>('mine');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [menuOpenSpaceId, setMenuOpenSpaceId] = useState<string | null>(null);
+  const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>('');
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const rowMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close profile dropdown on outside click
+  // Close profile dropdown and row menu on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false);
       }
+      if (rowMenuRef.current && !rowMenuRef.current.contains(event.target as Node)) {
+        setMenuOpenSpaceId(null);
+      }
     };
-    if (isProfileDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isProfileDropdownOpen]);
+  }, []);
 
   // Username display
   const isAuthenticated = Boolean(user);
@@ -144,6 +169,10 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   // Filter spaces
   const filteredSpaces = spaces.filter((s) => {
     if (activeNav === 'starred' && !s.starred) return false;
+    if (ownershipTab === 'shared' && !s.isShared) {
+      // Demo: if no shared spaces exist, empty list
+      return false;
+    }
     if (!searchFilter.trim()) return true;
     const query = searchFilter.toLowerCase().trim();
     return (
@@ -153,7 +182,8 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     );
   });
 
-  const displayedSpaces = showAllSpaces ? filteredSpaces : filteredSpaces.slice(0, 8);
+  const displayedSpaces = showAllSpaces ? filteredSpaces : filteredSpaces.slice(0, 6);
+  const latestSpace = spaces[0] || null;
 
   const handleSignOut = async () => {
     setIsProfileDropdownOpen(false);
@@ -161,51 +191,87 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     router.refresh();
   };
 
+  const handleStartRename = (space: StudySpace, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSpaceId(space.id);
+    setEditingName(space.name.replace(/\(Demo\)/i, '').trim());
+    setMenuOpenSpaceId(null);
+  };
+
+  const handleSaveRename = (spaceId: string) => {
+    if (renameSpace && editingName.trim()) {
+      renameSpace(spaceId, editingName.trim());
+    }
+    setEditingSpaceId(null);
+  };
+
+  const handleDuplicate = (spaceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (duplicateSpace) {
+      duplicateSpace(spaceId);
+    }
+    setMenuOpenSpaceId(null);
+  };
+
+  const handleDelete = (spaceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (deleteSpace) {
+      if (window.confirm('Bạn có chắc chắn muốn xóa bàn học này?')) {
+        deleteSpace(spaceId);
+      }
+    }
+    setMenuOpenSpaceId(null);
+  };
+
   return (
     <div className="w-full h-screen overflow-hidden bg-[#faf8f5] text-stone-900 flex font-sans selection:bg-orange-100 selection:text-[#E0562D]">
-      {/* ================= LEFT SIDEBAR ================= */}
-      <aside className="w-60 md:w-64 flex-shrink-0 border-r border-[#ece7e1] bg-[#faf8f5] p-4 md:p-5 flex flex-col justify-between h-screen overflow-y-auto no-scrollbar">
+      {/* ================= LEFT SIDEBAR (Notion/Miro Style) ================= */}
+      <aside className="w-60 md:w-64 flex-shrink-0 border-r border-[#ece7e1] bg-[#faf8f5] p-4 flex flex-col justify-between h-screen overflow-y-auto no-scrollbar select-none">
         <div className="flex flex-col">
-          {/* Logo Brand */}
-          <div className="flex items-center gap-2 mb-4 select-none">
+          {/* Logo Brand: Duy nhất 1 logo ViTudy trên thanh bên */}
+          <div className="flex items-center gap-2.5 mb-4 px-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={getAssetPath('/icons/vitudy.png')}
               alt="ViTudy"
               width={28}
               height={28}
-              className="w-7 h-7 rounded-lg object-contain shadow-xs flex-shrink-0"
+              className="w-7 h-7 rounded-lg object-contain shadow-2xs flex-shrink-0"
               style={{ width: '28px', height: '28px', maxWidth: '28px', maxHeight: '28px' }}
             />
-            <span className="text-lg font-black tracking-tight text-[#E0562D] select-none leading-none">
+            <span className="text-lg font-black tracking-tight text-[#E0562D] leading-none">
               ViTudy
             </span>
           </div>
 
-          {/* Search Input */}
-          <div className="relative mb-4">
-            <div className="flex items-center gap-2 bg-[#f3eee8] border border-stone-200/90 rounded-xl px-3 py-1.5 text-xs text-stone-800 focus-within:border-stone-400 focus-within:bg-white transition-all">
+          {/* Search Input with Ctrl+K Hint */}
+          <div className="relative mb-3.5">
+            <div className="flex items-center gap-2 bg-[#f3eee8] border border-stone-200/90 rounded-xl px-2.5 py-1.5 text-xs text-stone-800 focus-within:border-stone-400 focus-within:bg-white transition-all shadow-2xs">
               <Search className="w-3.5 h-3.5 text-stone-500 flex-shrink-0 stroke-[2.2]" />
               <input
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 placeholder="Tìm bàn học, tài liệu..."
-                className="w-full bg-transparent placeholder:text-stone-500 text-stone-800 focus:outline-none text-xs"
+                className="w-full bg-transparent placeholder:text-stone-400 text-stone-800 focus:outline-none text-xs"
               />
+              <kbd className="hidden sm:inline-block text-[9.5px] text-stone-400 bg-stone-200/80 px-1 py-0.5 rounded font-mono">
+                Ctrl K
+              </kbd>
             </div>
           </div>
 
-          {/* Navigation Links: Tinh gọn, bỏ hẳn /about và /faq */}
+          {/* Navigation Links with Slim Clean Icons */}
           <nav className="space-y-1 text-xs font-semibold">
             <button
               onClick={() => setActiveNav('home')}
-              className={`w-full text-left px-3 py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-between ${
+              className={`w-full text-left px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 ${
                 activeNav === 'home'
-                  ? 'bg-[#eee8df] text-stone-900 font-bold'
+                  ? 'bg-[#eee8df] text-stone-900 font-bold shadow-2xs'
                   : 'text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7]'
               }`}
             >
+              <Home className={`w-4 h-4 ${activeNav === 'home' ? 'text-[#E0562D]' : 'text-stone-500'}`} />
               <span>Trang chủ</span>
             </button>
 
@@ -214,167 +280,138 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                 setActiveNav('my_desks');
                 onEnterDesk();
               }}
-              className={`w-full text-left px-3 py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-between ${
+              className={`w-full text-left px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 ${
                 activeNav === 'my_desks'
-                  ? 'bg-[#eee8df] text-stone-900 font-bold'
+                  ? 'bg-[#eee8df] text-stone-900 font-bold shadow-2xs'
                   : 'text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7]'
               }`}
             >
+              <BookOpen className={`w-4 h-4 ${activeNav === 'my_desks' ? 'text-[#E0562D]' : 'text-stone-500'}`} />
               <span>Bàn học của tôi</span>
             </button>
 
             <button
               onClick={() => setActiveNav('starred')}
-              className={`w-full text-left px-3 py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-between ${
+              className={`w-full text-left px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 ${
                 activeNav === 'starred'
-                  ? 'bg-[#eee8df] text-stone-900 font-bold'
+                  ? 'bg-[#eee8df] text-stone-900 font-bold shadow-2xs'
                   : 'text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7]'
               }`}
             >
+              <Star className={`w-4 h-4 ${activeNav === 'starred' ? 'text-amber-500 fill-amber-400' : 'text-stone-500'}`} />
               <span>Đã gắn dấu sao</span>
             </button>
 
             <button
               onClick={() => setIsMarketOpen(true)}
-              className="w-full text-left px-3 py-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7] transition-colors cursor-pointer flex items-center justify-between"
+              className="w-full text-left px-3 py-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7] transition-all cursor-pointer flex items-center gap-2.5"
             >
+              <Store className="w-4 h-4 text-stone-500" />
               <span>Chợ tài liệu</span>
             </button>
 
             <Link
               href="/dashboard"
-              className="w-full block px-3 py-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7] transition-colors"
+              className="w-full px-3 py-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-[#f3eee7] transition-all flex items-center gap-2.5"
             >
-              Nhật ký học
+              <CalendarCheck className="w-4 h-4 text-stone-500" />
+              <span>Nhật ký học</span>
             </Link>
           </nav>
         </div>
 
-        {/* Sidebar Bottom Section: Thứ tự chuẩn hóa: Mục tiêu -> Chợ tài liệu -> Số dư ví */}
-        <div className="pt-2 space-y-2.5">
-          {/* 1. Widget: Mục tiêu học hôm nay */}
-          <div className="p-3 rounded-2xl bg-[#f5efe6] border border-[#e8dfd3]">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-[#B8431A]" />
-                <span>Mục tiêu hôm nay</span>
+        {/* Sidebar Bottom: Sleek Balance Chip & Help Link */}
+        <div className="pt-3 border-t border-stone-200/70 space-y-2">
+          {/* Compact Balance Chip */}
+          <div className="bg-[#f5efe6] border border-[#e8dfd3] rounded-xl px-2.5 py-1.5 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={getAssetPath('/icons/vitoken.svg')} 
+                alt="ViToken" 
+                width={15}
+                height={15}
+                className="w-3.5 h-3.5 object-contain flex-shrink-0" 
+                style={{ width: '15px', height: '15px', maxWidth: '15px', maxHeight: '15px' }}
+              />
+              <span className="text-xs font-bold text-stone-900 font-sans">
+                {(typeof balance === 'number' ? balance : 50).toLocaleString('vi-VN')} ViToken
               </span>
-              <span className="text-[11px] font-bold text-[#B8431A]">1 / 4 phiên</span>
-            </div>
-            <div className="w-full h-1.5 bg-stone-200/90 rounded-full overflow-hidden mb-1.5">
-              <div className="h-full bg-[#E0562D] rounded-full transition-all" style={{ width: '25%' }} />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                startPomodoroSession(25);
-                onEnterDesk();
-              }}
-              className="w-full py-1.5 bg-white hover:bg-orange-50 border border-stone-200 hover:border-[#E0562D] text-[#E0562D] text-[11px] font-bold rounded-lg transition-colors text-center cursor-pointer active:scale-98"
-            >
-              Bắt đầu phiên 25p
-            </button>
-          </div>
-
-          {/* 2. Thẻ Chợ tài liệu: Nằm ngay dưới mục tiêu, ngay trên số dư ví */}
-          <div className="bg-[#f5efe6] border border-[#e8dfd3] rounded-2xl p-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5 text-[#E0562D]" />
-                <span>Chợ tài liệu</span>
-              </span>
-              <span className="text-[10px] font-bold text-stone-500 bg-white px-1.5 py-0.5 rounded-md border border-stone-200">
-                Cộng đồng
-              </span>
-            </div>
-            <p className="text-[11px] text-stone-600 leading-snug mb-2">
-              Sách, tóm tắt và đề thi do sinh viên chia sẻ.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsMarketOpen(true)}
-              className="w-full py-1.5 bg-white hover:bg-orange-50 border border-stone-200 hover:border-[#E0562D] text-stone-800 hover:text-[#E0562D] text-[11px] font-bold rounded-lg transition-all text-center cursor-pointer flex items-center justify-center gap-1 active:scale-98"
-            >
-              <span>Mở chợ tài liệu</span>
-              <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* 3. Thẻ Số dư ViToken */}
-          <div className="bg-[#f4efe8] border border-[#e8e1d7] rounded-2xl p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-stone-600">Số dư khả dụng</span>
-              <div className="flex items-center gap-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={getAssetPath('/icons/vitoken.svg')} 
-                  alt="ViToken" 
-                  width={16}
-                  height={16}
-                  className="w-4 h-4 object-contain flex-shrink-0" 
-                  style={{ width: '16px', height: '16px', maxWidth: '16px', maxHeight: '16px' }}
-                />
-                <span className="text-base font-black text-stone-900 tracking-tight font-sans">
-                  {typeof balance === 'number' ? balance : 50}
-                </span>
-                <span className="text-[11px] text-stone-600 font-semibold">V</span>
-              </div>
             </div>
             <button
               type="button"
               onClick={() => setIsTopUpOpen(true)}
-              className="w-full mt-2 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white font-bold text-xs rounded-xl shadow-xs transition-colors text-center cursor-pointer active:scale-98"
+              className="px-2 py-0.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer active:scale-95"
             >
-              Nạp ViToken
+              + Nạp
             </button>
+          </div>
+
+          {/* Help & About Footer Link */}
+          <div className="flex items-center justify-between text-[11px] text-stone-500 px-1 pt-1">
+            <button
+              type="button"
+              onClick={() => setIsMarketOpen(true)}
+              className="flex items-center gap-1 hover:text-stone-800 transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
+              <span>Trợ giúp & Tài liệu</span>
+            </button>
+            <span className="text-[10px] text-stone-400 font-mono">v1.2.0</span>
           </div>
         </div>
       </aside>
 
-      {/* ================= MAIN CONTENT (Fixed Viewport) ================= */}
+      {/* ================= MAIN CONTENT (Fixed Viewport, No Page Scroll) ================= */}
       <main className="flex-1 h-screen overflow-hidden flex flex-col max-w-6xl mx-auto p-4 md:p-6 w-full">
-        {/* Top Header Bar: Sát lề trên (Ảnh 2) */}
-        <header className="py-2 mb-2 bg-[#faf8f5]/95 border-b border-[#ece7e1] flex items-center justify-between flex-shrink-0">
-          {/* Logo & Brand text sát lề trên bên trái thay cho text dài */}
-          <div className="flex items-center gap-2 select-none">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={getAssetPath('/icons/vitudy.png')}
-              alt="ViTudy"
-              width={24}
-              height={24}
-              className="w-6 h-6 rounded-lg object-contain flex-shrink-0"
-              style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}
-            />
-            <span className="text-base font-black tracking-tight text-[#E0562D] leading-none">
-              ViTudy
+        {/* Top Header Bar: Clean Single Header (No Duplicate Logo) */}
+        <header className="py-1.5 mb-2.5 border-b border-[#ece7e1] flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider font-mono">
+              Không gian học tập cá nhân
             </span>
           </div>
 
-          {/* Action buttons on the right */}
-          <div className="flex items-center gap-3">
-            {/* Streak Badge */}
+          {/* Right Actions: Daily Goal (Duolingo Style) + Streak + Miro Avatar Dropdown */}
+          <div className="flex items-center gap-2.5">
+            {/* 1. Daily Goal Widget (Duolingo Style) */}
+            <div 
+              onClick={() => {
+                startPomodoroSession(25);
+                onEnterDesk();
+              }}
+              title="Mục tiêu hôm nay: 1/4 phiên 25 phút. Nhấp để bắt đầu học ngay."
+              className="hidden sm:flex items-center gap-2 bg-white border border-stone-200/90 hover:border-[#E0562D] px-2.5 py-1 rounded-full shadow-2xs transition-all cursor-pointer group active:scale-98 select-none"
+            >
+              <Target className="w-3.5 h-3.5 text-[#B8431A]" />
+              <span className="text-xs font-semibold text-stone-700">
+                Mục tiêu: <strong className="text-stone-900 font-bold">1/4</strong>
+              </span>
+              <div className="w-10 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                <div className="h-full bg-[#E0562D] rounded-full" style={{ width: '25%' }} />
+              </div>
+            </div>
+
+            {/* 2. Streak Badge */}
             <button
               type="button"
               onClick={handleClaimStreak}
-              title={isClaimedToday ? "Đã điểm danh hôm nay" : "Nhấp để điểm danh nhận ViToken"}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98 ${
+              title={isClaimedToday ? "Đã điểm danh nhận ViToken hôm nay" : "Nhấp để điểm danh nhận +2 ViToken"}
+              className={`px-3 py-1 rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98 select-none ${
                 isClaimedToday 
-                  ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-800'
-                  : 'bg-white border border-stone-200/90 text-stone-800 hover:border-[#E0562D] hover:shadow-xs'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                  : 'bg-white border border-stone-200/90 text-stone-800 hover:border-[#E0562D]'
               }`}
             >
               {isClaimedToday ? (
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 stroke-[2.4]" />
               ) : (
-                <div className="flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 text-[#E0562D] fill-[#E0562D]" />
-                </div>
+                <Flame className="w-3.5 h-3.5 text-[#E0562D] fill-[#E0562D]" />
               )}
               <span>Chuỗi {streakDays || 1} ngày · {isClaimedToday ? 'Đã điểm danh' : 'Điểm danh'}</span>
             </button>
 
-            {/* Profile Avatar with Miro-style Dropdown (Ảnh 3) */}
+            {/* 3. Profile Avatar with Miro-style Dropdown */}
             {user ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -382,7 +419,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   title={`Tài khoản (${userName})`}
                   aria-label="Menu tài khoản"
-                  className="w-9 h-9 min-w-[36px] rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                  className="w-8 h-8 rounded-full border border-stone-300 hover:border-[#E0562D] bg-white shadow-2xs overflow-hidden flex items-center justify-center transition-all cursor-pointer active:scale-95"
                 >
                   {profile?.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -398,10 +435,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                   )}
                 </button>
 
-                {/* Miro-style Profile Dropdown (Ảnh 3) */}
+                {/* Miro-style Dropdown Menu */}
                 {isProfileDropdownOpen && (
-                  <div className="absolute right-0 top-11 z-50 w-64 bg-white rounded-2xl border border-stone-200 shadow-xl p-2 font-sans animate-fade-in text-xs">
-                    {/* Header info */}
+                  <div className="absolute right-0 top-10 z-50 w-60 bg-white rounded-2xl border border-stone-200 shadow-xl p-2 font-sans animate-fade-in text-xs select-none">
                     <div className="flex items-center gap-2.5 p-2 border-b border-stone-100 mb-1">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#FFF7ED] text-[#B8431A] flex items-center justify-center font-bold text-xs flex-shrink-0 border border-stone-200">
                         {profile?.avatar_url ? (
@@ -421,7 +457,6 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                       </div>
                     </div>
 
-                    {/* Menu items: Chỉ tính năng app đang có */}
                     <div className="space-y-0.5">
                       <Link
                         href="/profile?from=home"
@@ -444,27 +479,6 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                         <span>Cài đặt kết nối AI</span>
                       </button>
 
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-stone-50 font-medium transition-colors"
-                      >
-                        <BarChart2 className="w-4 h-4 text-stone-500" />
-                        <span>Nhật ký học tập</span>
-                      </Link>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileDropdownOpen(false);
-                          setIsTopUpOpen(true);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-stone-50 font-medium transition-colors text-left cursor-pointer"
-                      >
-                        <CreditCard className="w-4 h-4 text-stone-500" />
-                        <span>Nạp ViToken</span>
-                      </button>
-
                       <div className="border-t border-stone-100 my-1" />
 
                       <button
@@ -483,7 +497,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
               <Link
                 href="/auth"
                 title="Đăng nhập tài khoản"
-                className="px-3 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                className="px-3 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <LogIn className="w-3.5 h-3.5 stroke-[2.4]" />
                 <span>Đăng nhập</span>
@@ -494,170 +508,409 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
 
         {/* Feedback alert */}
         {claimFeedback && (
-          <div className="mb-2 p-2.5 rounded-xl bg-orange-50 border border-orange-200 text-xs font-semibold text-[#B8431A] flex items-center justify-between animate-fade-in shadow-xs flex-shrink-0">
+          <div className="mb-2 p-2 rounded-xl bg-orange-50 border border-orange-200 text-xs font-semibold text-[#B8431A] flex items-center justify-between animate-fade-in shadow-xs flex-shrink-0">
             <span>{claimFeedback}</span>
             <button onClick={() => setClaimFeedback(null)} className="text-stone-400 hover:text-stone-600 font-bold px-1.5">✕</button>
           </div>
         )}
 
-        {/* Lời chào: Gọn gàng, đẩy nội dung sát lên */}
-        <div className="mb-3 text-left flex-shrink-0">
-          <h1 className="text-2xl md:text-3xl font-serif text-stone-900 tracking-tight">
-            {isAuthenticated ? (
-              <>
-                Ôn bài thôi, <span className="text-[#B8431A] font-serif font-normal">{shortName}</span>
-              </>
-            ) : (
-              <>
-                Chào mừng đến với <span className="text-[#B8431A] font-serif font-normal">ViTudy</span>
-              </>
-            )}
-          </h1>
-        </div>
-
-        {/* ================= SECTION 1: Bắt đầu bàn học mới ================= */}
-        <section className="mb-3 flex-shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs md:text-sm font-bold text-stone-900">Bắt đầu bàn học mới</h2>
+        {/* Top Section 1: Hero Continue Recent Desk Card (Large Prominent) */}
+        {latestSpace && (
+          <div className="mb-2.5 bg-white border border-stone-200/90 rounded-2xl p-3.5 shadow-2xs flex items-center justify-between flex-shrink-0 hover:border-[#E0562D]/60 transition-all">
+            <div className="flex items-center gap-3 min-w-0 pr-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/70 flex items-center justify-center flex-shrink-0 text-[#E0562D]">
+                <BookOpen className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8431A] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60">
+                    Tiếp tục học
+                  </span>
+                  <span className="text-xs font-bold text-stone-900 truncate">
+                    {latestSpace.name.replace(/\(Demo\)/i, '').trim()}
+                  </span>
+                </div>
+                <div className="text-[11px] text-stone-500 mt-0.5 truncate flex items-center gap-2">
+                  <span>Mở {getRecentTimeString(latestSpace)}</span>
+                  <span>•</span>
+                  <span>{getSpaceSummary(latestSpace)}</span>
+                </div>
+              </div>
+            </div>
             <button
               type="button"
-              onClick={() => handleSelectTemplate('blank')}
-              className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1"
+              onClick={() => handleOpenSpace(latestSpace.id)}
+              className="px-4 py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 active:scale-95"
             >
-              <Plus className="w-3 h-3 stroke-[2.4]" />
-              <span>Tạo bàn học</span>
+              <span>Vào bàn học</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
+        )}
 
-          {/* 4 Template Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {/* Card 1: Bàn học trống */}
-            <div
-              onClick={() => handleSelectTemplate('blank')}
-              className="bg-white border border-stone-200/90 rounded-xl p-2.5 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-            >
-              <div className="aspect-[16/9] w-full rounded-lg border border-dashed border-stone-300 flex flex-col items-center justify-center bg-stone-50/70 group-hover:border-[#E0562D]/60 transition-colors gap-1">
-                <Plus className="w-5 h-5 text-stone-400 group-hover:text-[#E0562D] stroke-[1.8]" />
-              </div>
-              <span className="mt-2 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                Bàn học trống
-              </span>
-              <p className="text-[10px] text-stone-500 mt-0.5 truncate">
-                Kéo thả tài liệu tùy ý
-              </p>
-            </div>
-
-            {/* Card 2: Ôn thi giữa kỳ */}
-            <div
-              onClick={() => handleSelectTemplate('midterm')}
-              className="bg-white border border-stone-200/90 rounded-xl p-2.5 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-            >
-              <div className="aspect-[16/9] w-full rounded-lg bg-[#eef1f5] p-2 flex items-center justify-center gap-2 overflow-hidden group-hover:bg-[#e8ebf0] transition-colors">
-                <div className="w-14 h-10 rounded-xs border border-[#5c3920] bg-white shadow-2xs flex overflow-hidden">
-                  <div className="w-1/2 border-r border-stone-200 p-1 flex flex-col gap-0.5">
-                    <div className="w-4 h-0.5 bg-stone-400 rounded-full" />
-                    <div className="w-3 h-0.5 bg-stone-300 rounded-full" />
-                  </div>
-                  <div className="w-1/2 p-1 flex flex-col gap-0.5">
-                    <div className="w-4 h-0.5 bg-[#B8431A] rounded-full" />
-                    <div className="w-3 h-0.5 bg-stone-300 rounded-full" />
-                  </div>
-                </div>
-                <div className="w-6 h-8 rounded-2xs bg-[#fef08a] border border-amber-200/80 shadow-2xs" />
-              </div>
-              <span className="mt-2 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                Ôn thi giữa kỳ
-              </span>
-              <p className="text-[10px] text-stone-500 mt-0.5 truncate">
-                Giáo trình + ghi chú vàng
-              </p>
-            </div>
-
-            {/* Card 3: Giáo trình + đề thi */}
-            <div
-              onClick={() => handleSelectTemplate('curriculum_exam')}
-              className="bg-white border border-stone-200/90 rounded-xl p-2.5 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-            >
-              <div className="aspect-[16/9] w-full rounded-lg bg-[#eef1f5] p-2 flex items-center justify-center gap-2 overflow-hidden group-hover:bg-[#e8ebf0] transition-colors">
-                <div className="w-8 h-11 rounded-xs bg-white border border-stone-300/90 shadow-2xs p-1 flex flex-col gap-0.5">
-                  <div className="w-4 h-0.5 bg-emerald-500 rounded-full" />
-                  <div className="w-5 h-0.5 bg-stone-200 rounded-full mt-0.5" />
-                </div>
-                <div className="w-8 h-11 rounded-xs bg-white border border-stone-300/90 shadow-2xs p-1 flex flex-col gap-0.5">
-                  <div className="w-4 h-0.5 bg-blue-500 rounded-full" />
-                  <div className="w-5 h-0.5 bg-stone-200 rounded-full mt-0.5" />
-                </div>
-              </div>
-              <span className="mt-2 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                Giáo trình + đề thi
-              </span>
-              <p className="text-[10px] text-stone-500 mt-0.5 truncate">
-                Mở song song 2 tài liệu
-              </p>
-            </div>
-
-            {/* Card 4: Học nhóm */}
-            <div
-              onClick={() => handleSelectTemplate('group_study')}
-              className="bg-white border border-stone-200/90 rounded-xl p-2.5 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
-            >
-              <div className="aspect-[16/9] w-full rounded-lg bg-[#eef1f5] p-2 flex items-center justify-center relative overflow-hidden group-hover:bg-[#e8ebf0] transition-colors">
-                <div className="w-14 h-9 rounded-xs bg-[#5c3920] shadow-2xs flex items-center justify-center opacity-85">
-                  <span className="text-[8px] font-bold text-amber-100">Phòng</span>
-                </div>
-                <div className="absolute top-1 left-2 flex items-start gap-0.5">
-                  <MousePointer2 className="w-3 h-3 text-[#E0562D] fill-[#E0562D]" />
-                </div>
-                <div className="absolute bottom-1 right-2 flex items-start gap-0.5">
-                  <MousePointer2 className="w-3 h-3 text-purple-600 fill-purple-600" />
-                </div>
-              </div>
-              <span className="mt-2 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                Học nhóm
-              </span>
-              <p className="text-[10px] text-stone-500 mt-0.5 truncate">
-                Ôn bài trực tuyến cùng bạn
-              </p>
-            </div>
+        {/* Top Section 2: Learning Core Strip (Quizlet/Anki Style Hook) */}
+        <div className="mb-2.5 bg-[#FFF7ED]/70 border border-[#FFEDD5] rounded-xl px-3.5 py-2 flex items-center justify-between flex-shrink-0 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs text-stone-800">
+            <Layers className="w-4 h-4 text-[#E0562D]" />
+            <span>
+              Hôm nay: <strong className="text-stone-900 font-bold">12 thẻ cần ôn</strong> · 1 đề luyện tập chưa làm
+            </span>
           </div>
-        </section>
+          <button
+            type="button"
+            onClick={() => onEnterDesk()}
+            className="text-xs font-bold text-[#E0562D] hover:text-[#c9451e] hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <span>Ôn ngay</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
 
-        {/* ================= SECTION 2: Mở lại gần đây (Cuộn độc lập trong khung) ================= */}
+        {/* Greeting & Create Desk Button */}
+        <div className="mb-2.5 flex items-center justify-between flex-shrink-0">
+          <div>
+            <h1 className="text-xl md:text-2xl font-serif text-stone-900 tracking-tight">
+              {isAuthenticated ? (
+                <>
+                  Ôn bài thôi, <span className="text-[#B8431A] font-serif font-normal">{shortName}</span>
+                </>
+              ) : (
+                <>
+                  Chào mừng đến với <span className="text-[#B8431A] font-serif font-normal">ViTudy</span>
+                </>
+              )}
+            </h1>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Bạn đã hoàn thành 1 phiên hôm nay (25 phút)
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSelectTemplate('blank')}
+            className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.4]" />
+            <span>Tạo bàn học</span>
+          </button>
+        </div>
+
+        {/* 4 Template Quick Start Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 flex-shrink-0">
+          {/* Card 1: Bàn học trống (Dashed style preserved) */}
+          <div
+            onClick={() => handleSelectTemplate('blank')}
+            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
+          >
+            <div className="h-10 w-full rounded-lg border border-dashed border-stone-300 flex items-center justify-center bg-stone-50 group-hover:border-[#E0562D]/60 transition-colors">
+              <Plus className="w-4 h-4 text-stone-400 group-hover:text-[#E0562D] stroke-[2]" />
+            </div>
+            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
+              Bàn học trống
+            </span>
+            <p className="text-[10px] text-stone-600 truncate">
+              Kéo thả tài liệu tùy ý
+            </p>
+          </div>
+
+          {/* Card 2: Ôn thi giữa kỳ */}
+          <div
+            onClick={() => handleSelectTemplate('midterm')}
+            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
+          >
+            <div className="h-10 w-full rounded-lg bg-[#eef1f5] flex items-center justify-center gap-1.5 group-hover:bg-[#e8ebf0] transition-colors">
+              <div className="w-10 h-7 rounded-xs border border-[#5c3920] bg-white flex overflow-hidden">
+                <div className="w-1/2 border-r border-stone-200 p-0.5" />
+                <div className="w-1/2 p-0.5 bg-[#FFF7ED]" />
+              </div>
+              <div className="w-4 h-6 rounded-2xs bg-[#fef08a] border border-amber-200/80" />
+            </div>
+            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
+              Ôn thi giữa kỳ
+            </span>
+            <p className="text-[10px] text-stone-600 truncate">
+              Giáo trình + ghi chú vàng
+            </p>
+          </div>
+
+          {/* Card 3: Giáo trình + đề thi */}
+          <div
+            onClick={() => handleSelectTemplate('curriculum_exam')}
+            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
+          >
+            <div className="h-10 w-full rounded-lg bg-[#eef1f5] flex items-center justify-center gap-1.5 group-hover:bg-[#e8ebf0] transition-colors">
+              <div className="w-6 h-8 rounded-xs bg-white border border-stone-300 p-0.5" />
+              <div className="w-6 h-8 rounded-xs bg-white border border-stone-300 p-0.5" />
+            </div>
+            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
+              Giáo trình + đề thi
+            </span>
+            <p className="text-[10px] text-stone-600 truncate">
+              Mở song song 2 tài liệu
+            </p>
+          </div>
+
+          {/* Card 4: Học nhóm */}
+          <div
+            onClick={() => handleSelectTemplate('group_study')}
+            className="bg-white border border-stone-200/90 rounded-xl p-2 flex flex-col hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
+          >
+            <div className="h-10 w-full rounded-lg bg-[#eef1f5] flex items-center justify-center relative overflow-hidden group-hover:bg-[#e8ebf0] transition-colors">
+              <div className="w-10 h-6 rounded-xs bg-[#5c3920] flex items-center justify-center text-[7px] font-bold text-amber-100">
+                Phòng
+              </div>
+              <MousePointer2 className="w-2.5 h-2.5 text-[#E0562D] fill-[#E0562D] absolute top-1 left-2" />
+              <MousePointer2 className="w-2.5 h-2.5 text-purple-600 fill-purple-600 absolute bottom-1 right-2" />
+            </div>
+            <span className="mt-1.5 text-xs font-bold text-stone-900 group-hover:text-[#B8431A] truncate">
+              Học nhóm
+            </span>
+            <p className="text-[10px] text-stone-600 truncate">
+              Ôn bài trực tuyến cùng bạn
+            </p>
+          </div>
+        </div>
+
+        {/* Section 3: Recent Desks Table with Tabs & View Toggle (Fixed Inner Scroll) */}
         <section className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          {/* Controls Bar: Tabs [Của tôi | Được chia sẻ] + View Mode [List | Grid] + Show All */}
           <div className="flex items-center justify-between mb-2 flex-shrink-0">
-            <h2 className="text-xs md:text-sm font-bold text-stone-900">Mở lại gần đây</h2>
-            {spaces.length > 5 && (
-              <button
-                type="button"
-                onClick={() => setShowAllSpaces(!showAllSpaces)}
-                className="text-xs font-bold text-[#B8431A] hover:text-[#9A3412] hover:underline cursor-pointer"
-              >
-                {showAllSpaces ? 'Thu gọn' : 'Xem tất cả'}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              <h2 className="text-xs md:text-sm font-bold text-stone-900">Mở lại gần đây</h2>
+              {/* Ownership Tabs */}
+              <div className="flex items-center bg-stone-200/80 p-0.5 rounded-lg text-xs font-semibold text-stone-700">
+                <button
+                  type="button"
+                  onClick={() => setOwnershipTab('mine')}
+                  className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                    ownershipTab === 'mine'
+                      ? 'bg-white text-stone-900 font-bold shadow-2xs'
+                      : 'hover:text-stone-900'
+                  }`}
+                >
+                  Của tôi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOwnershipTab('shared')}
+                  className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                    ownershipTab === 'shared'
+                      ? 'bg-white text-stone-900 font-bold shadow-2xs'
+                      : 'hover:text-stone-900'
+                  }`}
+                >
+                  Được chia sẻ
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* View Toggle */}
+              <div className="flex items-center bg-stone-200/80 p-0.5 rounded-lg text-xs text-stone-700">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  title="Chế độ danh sách"
+                  className={`p-1 rounded-md transition-all cursor-pointer ${
+                    viewMode === 'list' ? 'bg-white text-[#E0562D] shadow-2xs' : 'hover:text-stone-900'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  title="Chế độ lưới"
+                  className={`p-1 rounded-md transition-all cursor-pointer ${
+                    viewMode === 'grid' ? 'bg-white text-[#E0562D] shadow-2xs' : 'hover:text-stone-900'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {filteredSpaces.length > 6 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllSpaces(!showAllSpaces)}
+                  className="text-xs font-bold text-[#B8431A] hover:text-[#9A3412] hover:underline cursor-pointer ml-1"
+                >
+                  {showAllSpaces ? 'Thu gọn' : 'Xem tất cả'}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Table Container với vùng cuộn độc lập */}
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-white border border-stone-200/90 rounded-2xl p-2.5 shadow-2xs">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 text-xs font-semibold text-stone-600 pb-2 border-b border-stone-200 px-3 flex-shrink-0">
-              <div className="col-span-6">Tên bàn học</div>
-              <div className="col-span-3 text-left">Tài liệu</div>
-              <div className="col-span-3 text-right pr-2">Mở lần cuối</div>
-            </div>
-
-            {/* Table Rows - Cuộn độc lập không ảnh hưởng trang */}
-            <div className="flex-1 overflow-y-auto divide-y divide-stone-100 pr-1 no-scrollbar">
-              {displayedSpaces.length === 0 ? (
-                <div className="py-8">
-                  <EmptyState
-                    title={activeNav === 'starred' ? 'Chưa có bàn học nào được gắn dấu sao' : 'Không tìm thấy bàn học phù hợp'}
-                    description={activeNav === 'starred' ? 'Nhấp vào biểu tượng ngôi sao ở bàn học để ghim.' : 'Hãy thử tìm kiếm với từ khóa khác.'}
-                    action={activeNav === 'starred' ? { label: 'Xem tất cả bàn học', onClick: () => setActiveNav('my_desks') } : undefined}
-                  />
+            {viewMode === 'list' ? (
+              <>
+                {/* Table Header */}
+                <div className="grid grid-cols-12 text-xs font-semibold text-stone-600 pb-2 border-b border-stone-200 px-3 flex-shrink-0">
+                  <div className="col-span-6">Tên bàn học</div>
+                  <div className="col-span-3 text-left">Tài liệu & ghi chú</div>
+                  <div className="col-span-3 text-right pr-2">Mở lần cuối</div>
                 </div>
-              ) : (
-                displayedSpaces.map((space, idx) => {
+
+                {/* Table Rows - Cuộn độc lập không ảnh hưởng trang */}
+                <div className="flex-1 overflow-y-auto divide-y divide-stone-100 pr-1 no-scrollbar">
+                  {displayedSpaces.length === 0 ? (
+                    <div className="py-8">
+                      <EmptyState
+                        title={activeNav === 'starred' ? 'Chưa có bàn học nào được gắn dấu sao' : 'Không tìm thấy bàn học phù hợp'}
+                        description={activeNav === 'starred' ? 'Nhấp vào biểu tượng ngôi sao ở bàn học để ghim.' : 'Hãy thử tìm kiếm với từ khóa khác.'}
+                        action={activeNav === 'starred' ? { label: 'Xem tất cả bàn học', onClick: () => setActiveNav('my_desks') } : undefined}
+                      />
+                    </div>
+                  ) : (
+                    displayedSpaces.map((space, idx) => {
+                      const cleanSpaceName = space.name.replace(/\(Demo\)/i, '').trim();
+                      const isDemo = space.name.includes('(Demo)');
+                      const isEditing = editingSpaceId === space.id;
+
+                      return (
+                        <div
+                          key={space.id}
+                          onClick={() => !isEditing && handleOpenSpace(space.id)}
+                          className="grid grid-cols-12 items-center py-2 px-3 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer group relative"
+                        >
+                          {/* Name & Subtitle */}
+                          <div className="col-span-6 pr-3 flex items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStarSpace?.(space.id);
+                              }}
+                              title={space.starred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao'}
+                              className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                                space.starred 
+                                  ? 'text-amber-500 hover:text-amber-600' 
+                                  : 'text-stone-300 hover:text-stone-500 opacity-0 group-hover:opacity-100'
+                              }`}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${space.starred ? 'fill-amber-400' : ''}`} />
+                            </button>
+
+                            {/* Thumbnail nhỏ 40x28px */}
+                            <div className="w-10 h-7 rounded-lg bg-[#f1ede6] border border-stone-300/80 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                              {idx % 2 === 0 ? (
+                                <div className="w-5 h-3.5 rounded-xs border border-[#5c3920] bg-white flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 rounded-2xs bg-[#fef08a]" />
+                                </div>
+                              ) : (
+                                <div className="flex gap-0.5">
+                                  <div className="w-2.5 h-4 rounded-xs bg-white border border-stone-300" />
+                                  <div className="w-2.5 h-4 rounded-xs bg-white border border-stone-300" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Text info & Inline Rename */}
+                            <div className="min-w-0 flex-1">
+                              {isEditing ? (
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={editingName}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  onBlur={() => handleSaveRename(space.id)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveRename(space.id);
+                                    if (e.key === 'Escape') setEditingSpaceId(null);
+                                  }}
+                                  className="w-full text-xs font-bold text-stone-900 bg-white border border-stone-300 rounded px-1.5 py-0.5 outline-none focus:border-[#E0562D]"
+                                />
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
+                                      {cleanSpaceName}
+                                    </span>
+                                    {isDemo && (
+                                      <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0">
+                                        Mẫu
+                                      </span>
+                                    )}
+                                  </div>
+                                  {space.description && (
+                                    <div className="text-[11px] text-stone-500 truncate">
+                                      {space.description}
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Summary */}
+                          <div className="col-span-3 text-xs text-stone-600 font-medium truncate">
+                            {getSpaceSummary(space)}
+                          </div>
+
+                          {/* Last Opened Time & Hover Action Menu "⋯" */}
+                          <div className="col-span-3 text-xs text-stone-500 text-right pr-2 flex items-center justify-end gap-2">
+                            <span>{getRecentTimeString(space)}</span>
+                            
+                            {/* "⋯" Menu Button */}
+                            <div className="relative" ref={rowMenuRef}>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMenuOpenSpaceId(menuOpenSpaceId === space.id ? null : space.id);
+                                }}
+                                title="Tùy chọn bàn học"
+                                className="w-6 h-6 rounded-md hover:bg-stone-200 text-stone-400 hover:text-stone-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                              >
+                                <MoreHorizontal className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Row Action Popover */}
+                              {menuOpenSpaceId === space.id && (
+                                <div 
+                                  className="absolute right-0 top-7 z-30 w-36 bg-white rounded-xl border border-stone-200 shadow-xl p-1 text-xs text-stone-700 animate-fade-in font-sans text-left"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleStartRename(space, e)}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5 text-stone-500" />
+                                    <span>Đổi tên</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDuplicate(space.id, e)}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors"
+                                  >
+                                    <Copy className="w-3.5 h-3.5 text-stone-500" />
+                                    <span>Nhân bản</span>
+                                  </button>
+                                  <div className="border-t border-stone-100 my-0.5" />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDelete(space.id, e)}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Xóa</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Grid View Mode */
+              <div className="flex-1 overflow-y-auto p-2 grid grid-cols-2 sm:grid-cols-3 gap-3 no-scrollbar">
+                {displayedSpaces.map((space) => {
                   const cleanSpaceName = space.name.replace(/\(Demo\)/i, '').trim();
                   const isDemo = space.name.includes('(Demo)');
 
@@ -665,74 +918,42 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                     <div
                       key={space.id}
                       onClick={() => handleOpenSpace(space.id)}
-                      className="grid grid-cols-12 items-center py-2.5 px-3 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer group"
+                      className="bg-stone-50/70 border border-stone-200 rounded-xl p-3 flex flex-col justify-between hover:border-[#E0562D] hover:bg-white hover:shadow-2xs transition-all cursor-pointer group"
                     >
-                      {/* Name & Subtitle */}
-                      <div className="col-span-6 pr-3 flex items-center gap-2.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleStarSpace?.(space.id);
-                          }}
-                          title={space.starred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao'}
-                          className={`p-1 rounded-lg transition-colors cursor-pointer ${
-                            space.starred 
-                              ? 'text-amber-500 hover:text-amber-600' 
-                              : 'text-stone-300 hover:text-stone-500 opacity-0 group-hover:opacity-100'
-                          }`}
-                        >
-                          <Star className={`w-3.5 h-3.5 ${space.starred ? 'fill-amber-400' : ''}`} />
-                        </button>
-
-                        {/* Thumbnail nhỏ 44x32px */}
-                        <div className="w-11 h-8 rounded-lg bg-[#f1ede6] border border-stone-300/80 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                          {idx % 2 === 0 ? (
-                            <div className="w-5 h-4 rounded-xs border border-[#5c3920] bg-white flex items-center justify-center">
-                              <div className="w-1.5 h-1.5 rounded-2xs bg-[#fef08a]" />
-                            </div>
-                          ) : (
-                            <div className="flex gap-0.5">
-                              <div className="w-3 h-5 rounded-xs bg-white border border-stone-300" />
-                              <div className="w-3 h-5 rounded-xs bg-white border border-stone-300" />
-                            </div>
-                          )}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-stone-500 flex items-center gap-1 font-mono">
+                            <Clock className="w-3 h-3" />
+                            {getRecentTimeString(space)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleStarSpace?.(space.id);
+                            }}
+                            className="text-stone-400 hover:text-amber-500 cursor-pointer"
+                          >
+                            <Star className={`w-3.5 h-3.5 ${space.starred ? 'text-amber-500 fill-amber-400' : ''}`} />
+                          </button>
                         </div>
-
-                        {/* Text info */}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                              {cleanSpaceName}
-                            </span>
-                            {isDemo && (
-                              <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0">
-                                Mẫu
-                              </span>
-                            )}
-                          </div>
-                          {space.description && (
-                            <div className="text-[11px] text-stone-500 truncate">
-                              {space.description}
-                            </div>
-                          )}
-                        </div>
+                        <h4 className="text-xs font-bold text-stone-900 group-hover:text-[#E0562D] truncate">
+                          {cleanSpaceName}
+                        </h4>
+                        {isDemo && (
+                          <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0 inline-block mt-0.5">
+                            Mẫu
+                          </span>
+                        )}
                       </div>
-
-                      {/* Summary */}
-                      <div className="col-span-3 text-xs text-stone-600 font-medium truncate">
+                      <div className="text-[11px] text-stone-500 mt-3 pt-2 border-t border-stone-200/80 truncate">
                         {getSpaceSummary(space)}
-                      </div>
-
-                      {/* Last Opened Time */}
-                      <div className="col-span-3 text-xs text-stone-500 text-right pr-2">
-                        {getRecentTimeString(space)}
                       </div>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         </section>
       </main>

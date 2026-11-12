@@ -28,7 +28,7 @@ interface SelectSpaceForDocModalProps {
 
 export function SelectSpaceForDocModal({ isOpen, onClose, item }: SelectSpaceForDocModalProps) {
   const router = useRouter();
-  const { spaces, activeSpaceId, addMarketItemToSpace, createSpace, saveCurrentSpaceImmediately } = useStudySpace();
+  const { spaces, activeSpaceId, addMarketItemToSpace, createSpace, switchSpace, saveCurrentSpaceImmediately } = useStudySpace();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>('');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -118,7 +118,8 @@ export function SelectSpaceForDocModal({ isOpen, onClose, item }: SelectSpaceFor
       // 3. Đóng modal
       onClose();
 
-      // 4. Điều hướng chuyển view sang bàn học đã chọn kèm tham số space
+      // 4. Kích hoạt switchSpace và chuyển view sang bàn học đã chọn
+      switchSpace(targetSpaceId);
       router.push(`/?view=desk&space=${encodeURIComponent(targetSpaceId)}`);
     }
   };

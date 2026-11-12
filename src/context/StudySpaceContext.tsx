@@ -47,6 +47,9 @@ interface StudySpaceContextType {
   toggleStarSpace: (spaceId: string) => void;
   createSpace: (name: string, subject: string) => void;
   createSpaceFromTemplate?: (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string) => string;
+  deleteSpace?: (spaceId: string) => void;
+  renameSpace?: (spaceId: string, newName: string) => void;
+  duplicateSpace?: (spaceId: string) => string;
   setTransform: React.Dispatch<React.SetStateAction<CanvasTransform>>;
   panBy: (dx: number, dy: number) => void;
   zoomBy: (factor: number, originX?: number, originY?: number) => void;
@@ -58,6 +61,7 @@ interface StudySpaceContextType {
   updateItemDimensions?: (id: string, width: number, height: number) => void;
   updateItemRotation: (id: string, deltaAngle: number) => void;
   updateItemTitle?: (id: string, newTitle: string) => void;
+  updateItemPageText?: (id: string, pageIndex: number, text: string) => void;
   setItemRotation: (id: string, rotation: number) => void;
   bringToFront: (id: string) => void;
   turnBookPage: (id: string, direction: 'prev' | 'next', maxPages?: number) => void;
@@ -1052,6 +1056,69 @@ Trong đó:
     return newSpaceId;
   };
 
+  const deleteSpace = (spaceId: string) => {
+    setSpaces(prev => {
+      if (prev.length <= 1) {
+        alert('Cần giữ lại ít nhất một bàn học.');
+        return prev;
+      }
+      const updated = prev.filter(s => s.id !== spaceId);
+      if (activeSpaceId === spaceId && updated.length > 0) {
+        setActiveSpaceId(updated[0].id);
+      }
+      try {
+        localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  const renameSpace = (spaceId: string, newName: string) => {
+    const trimmed = normalizeNFC(newName.trim());
+    if (!trimmed) return;
+    setSpaces(prev => {
+      const updated = prev.map(s => (s.id === spaceId ? { ...s, name: trimmed, updatedAt: new Date().toISOString() } : s));
+      try {
+        localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  const duplicateSpace = (spaceId: string): string => {
+    const source = spaces.find(s => s.id === spaceId);
+    if (!source) return '';
+    const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`;
+    const newSpace: StudySpace = {
+      ...source,
+      id: newId,
+      name: `${source.name} (Bản sao)`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      items: (source.items || []).map(i => ({
+        ...i,
+        id: `${i.id}-dup-${Math.random().toString(36).slice(2, 6)}`,
+        x: i.x + 30,
+        y: i.y + 30
+      }))
+    };
+    setSpaces(prev => {
+      const updated = [newSpace, ...prev];
+      try {
+        localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+    return newId;
+  };
+
   const panBy = (dx: number, dy: number) => {
     if (focusedItemId) {
       triggerFocusNotice();
@@ -1206,6 +1273,31 @@ Trong đó:
           items: s.items.map(item =>
             item.id === id ? { ...item, title: normalizeNFC(newTitle) } : item
           )
+        };
+      })
+    );
+  };
+
+  const updateItemPageText = (id: string, pageIndex: number, text: string) => {
+    setSpaces(sList =>
+      sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          items: s.items.map(item => {
+            if (item.id !== id) return item;
+            const updatedPages = [...item.pages];
+            if (updatedPages[pageIndex]) {
+              updatedPages[pageIndex] = {
+                ...updatedPages[pageIndex],
+                text: normalizeNFC(text)
+              };
+            }
+            return {
+              ...item,
+              pages: updatedPages
+            };
+          })
         };
       })
     );
@@ -2130,6 +2222,9 @@ Trong đó:
         toggleStarSpace,
         createSpace,
         createSpaceFromTemplate,
+        deleteSpace,
+        renameSpace,
+        duplicateSpace,
         setTransform,
         panBy,
         zoomBy,
@@ -2141,6 +2236,7 @@ Trong đó:
         updateItemDimensions,
         updateItemRotation,
         updateItemTitle,
+        updateItemPageText,
         setItemRotation,
         bringToFront,
         turnBookPage,

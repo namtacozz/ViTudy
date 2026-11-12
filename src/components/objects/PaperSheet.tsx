@@ -22,7 +22,12 @@ import {
   FileText,
   HelpCircle,
   BookOpen,
-  BookPlus
+  BookPlus,
+  ScanText,
+  Loader2,
+  FileSearch,
+  Eye,
+  ImageIcon
 } from 'lucide-react';
 import { RotateTwoWay } from '@/components/icons/RotateTwoWay';
 import { MathRenderer } from '../common/MathRenderer';
@@ -51,6 +56,7 @@ export function PaperSheetComponent({ item, isSelected }: PaperSheetProps) {
     gradeExam,
     resetExam,
     updateItemTitle,
+    updateItemPageText,
     addStickyNote,
     focusedItemId,
     enterFocusMode,
@@ -64,6 +70,34 @@ export function PaperSheetComponent({ item, isSelected }: PaperSheetProps) {
   const [paperStudyTab, setPaperStudyTab] = useState<'summary' | 'quiz'>('summary');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isOcrScanning, setIsOcrScanning] = useState(false);
+  const [showOcrText, setShowOcrText] = useState(false);
+
+  // Optical Character Recognition (OCR) directly from image paper sheet
+  const handleRunOcr = async () => {
+    if (!activePage?.image || isOcrScanning) return;
+    setIsOcrScanning(true);
+    try {
+      const Tesseract = await import('tesseract.js');
+      const result = await Tesseract.recognize(activePage.image, 'vie+eng', {
+        logger: () => {}
+      });
+      const extracted = normalizeNFC(result.data.text.trim());
+      if (extracted) {
+        if (updateItemPageText) {
+          updateItemPageText(item.id, 0, extracted);
+        }
+        setShowOcrText(true);
+      } else {
+        alert('Không tìm thấy văn bản rõ ràng trong ảnh.');
+      }
+    } catch (err: any) {
+      console.error('OCR Error:', err);
+      alert(`Không thể trích xuất chữ: ${err?.message || 'Lỗi xử lý ảnh'}`);
+    } finally {
+      setIsOcrScanning(false);
+    }
+  };
 
   const isFocusReading = focusedItemId === item.id;
 
@@ -532,15 +566,47 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
                 </h4>
               )}
 
-              {/* Reading Text Layer (or PDF Rendered Page Image) */}
+              {/* Reading Text Layer (or PDF Rendered Page Image / OCR Layer) */}
               {activePage.image ? (
-                <div className="relative flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-white/70 rounded">
-                  <img
-                    src={activePage.image}
-                    alt={activePage.title || 'Trang tài liệu'}
-                    className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
-                    draggable={false}
-                  />
+                <div className="relative flex-1 w-full h-full min-h-0 flex flex-col items-center justify-center overflow-hidden bg-white/70 rounded">
+                  {/* OCR Mode Toggle if text is available */}
+                  {activePage.text && (
+                    <button
+                      type="button"
+                      onClick={() => setShowOcrText(!showOcrText)}
+                      title={showOcrText ? "Chuyển sang xem ảnh gốc" : "Xem văn bản đã trích xuất (OCR)"}
+                      className="absolute top-1.5 right-1.5 z-10 px-2 py-0.5 rounded-md bg-white/90 border border-slate-200 shadow-2xs text-[10px] font-bold text-slate-700 hover:text-[#E0562D] hover:bg-white flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      {showOcrText ? (
+                        <>
+                          <ImageIcon className="w-3 h-3 text-slate-500" />
+                          <span>Xem ảnh</span>
+                        </>
+                      ) : (
+                        <>
+                          <ScanText className="w-3 h-3 text-[#E0562D]" />
+                          <span>Xem chữ</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {showOcrText && activePage.text ? (
+                    <div 
+                      onMouseDown={(e) => e.stopPropagation()}
+                      style={{ textRendering: 'geometricPrecision', WebkitFontSmoothing: 'antialiased' }}
+                      className={`${dynamicFontSize} text-slate-900 font-medium whitespace-pre-line font-sans selection:bg-slate-200 selection:text-slate-900 overflow-y-auto no-scrollbar p-2 w-full h-full cursor-text select-text`}
+                    >
+                      <MathRenderer content={activePage.text} />
+                    </div>
+                  ) : (
+                    <img
+                      src={activePage.image}
+                      alt={activePage.title || 'Trang tài liệu'}
+                      className="max-w-full max-h-full object-contain pointer-events-none select-none rounded-xs"
+                      draggable={false}
+                    />
+                  )}
                 </div>
               ) : (
                 <div 
@@ -558,8 +624,8 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               onMouseDown={handleMouseDown}
               className="pt-2 border-t border-stone-200 mt-2 flex items-center justify-between text-[10px] text-slate-600 font-semibold font-mono select-none cursor-grab active:cursor-grabbing"
             >
-              <span>ViTudy Doc</span>
-              <span>1 trang</span>
+              <span>{activePage.image ? 'Ảnh · 1 trang' : 'Tài liệu · 1 trang'}</span>
+              <span className="text-[9px] text-slate-400">Trang 1/1</span>
             </div>
           </div>
         )}
@@ -576,35 +642,58 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
       >
         {!isExam && (
           <>
-            {/* Nút STudy: Hiện mỗi icon thôi không kèm text, thêm tooltip thay vào đó */}
+            {/* 1. Nhóm Học tập */}
             <button
-              title="STudy: Tóm tắt & Trắc nghiệm"
+              title="STudy: Tóm tắt & Trắc nghiệm AI"
               onClick={() => setIsStudyOpen(true)}
               className="p-1.5 hover:bg-[#FFF7ED] rounded-lg text-[#E0562D] transition-colors cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-[#E0562D] stroke-[2.4]" />
             </button>
 
-            {/* Thẻ Ghi Nhớ: Ấn là trích xuất ngay ra bàn học cạnh tài liệu không hiện overlay */}
+            {/* Nút Trích văn bản từ ảnh (OCR) nếu là tài liệu ảnh */}
+            {activePage.image && (
+              <button
+                title={isOcrScanning ? "Đang trích xuất chữ qua Tesseract.js..." : "Trích văn bản từ ảnh (OCR)"}
+                disabled={isOcrScanning}
+                onClick={handleRunOcr}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                  isOcrScanning 
+                    ? 'bg-orange-100 text-[#E0562D]' 
+                    : 'hover:bg-orange-50 text-slate-700 hover:text-[#E0562D]'
+                }`}
+              >
+                {isOcrScanning ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-[#E0562D]" />
+                ) : (
+                  <ScanText className="w-4 h-4 stroke-[2.4]" />
+                )}
+              </button>
+            )}
+
+            {/* Thẻ Ghi Nhớ: Trích xuất ngay ra bàn học cạnh tài liệu */}
             <button
-              title="Trích xuất Thẻ Ghi Nhớ ra cạnh tài liệu (Không hiện popup)"
+              title="Trích xuất Thẻ Ghi Nhớ ra bàn học"
               onClick={handleQuickExtractFlashcards}
               className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
             >
               <Layers className="w-4 h-4 stroke-[2.4]" />
             </button>
 
-            {/* 1 gạch phân vùng với 2 icon xoay góc phóng to */}
+            {/* Vạch ngăn cách Nhóm Học tập với Nhóm Bố cục */}
             <div className="w-[1px] h-4 bg-slate-200" />
           </>
         )}
+
+        {/* 2. Nhóm Bố cục & Đọc */}
         <button
-          title="Tập trung đọc: Căn giữa và phóng to tài liệu vừa vặn màn hình"
+          title="Chế độ đọc tập trung (0°)"
           onClick={handleFocusRead}
           className="p-1.5 hover:bg-orange-50 rounded-lg text-slate-700 hover:text-[#E0562D] transition-colors cursor-pointer"
         >
           <BookOpen className="w-4 h-4 stroke-[2.4]" />
         </button>
+
         {!isExam && convertPaperToBook && (
           <button
             title="Đóng thành sách: Thêm bìa da bảo vệ tài liệu"
@@ -614,13 +703,15 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             <BookPlus className="w-4 h-4 stroke-[2.4]" />
           </button>
         )}
+
         <button
-          title="Đọc toàn màn hình (Xem như file PDF)"
+          title="Xem toàn màn hình"
           onClick={() => setIsFullScreen(true)}
           className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
         >
           <Maximize2 className="w-4 h-4 stroke-[2.4]" />
         </button>
+
         <button
           title="Kéo để xoay tài liệu tự do, nhấn đúp để xoay thẳng ngay ngắn (0°)"
           onMouseDown={handleRotateMouseDown}
@@ -629,6 +720,8 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         >
           <RotateTwoWay className="w-4 h-4 stroke-[2.4]" />
         </button>
+
+        {/* 3. Nhóm Thao tác */}
         <div className="w-[1px] h-4 bg-slate-200" />
         <button
           title="Xóa khỏi bàn học"
@@ -760,9 +853,9 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
 
 
 
-      {/* Drag & Merge Hint */}
+      {/* Drag & Merge Hint: Không bị thanh công cụ đè khi hiện */}
       {!isExam && (
-        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap bg-white/90 border border-slate-200 px-2 py-0.5 rounded shadow-2xs">
+        <div className={`absolute ${item.y < 90 ? '-bottom-12' : '-bottom-6'} left-1/2 -translate-x-1/2 text-[10px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap bg-white/95 border border-slate-200 px-2 py-0.5 rounded shadow-2xs z-10 ${isSelected ? 'hidden' : ''}`}>
           Kéo thả vào sách để gộp trang
         </div>
       )}

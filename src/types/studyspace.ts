@@ -96,6 +96,7 @@ export interface StudySpace {
   updatedAt: string;
   lastOpenedAt?: string;
   starred?: boolean;
+  isShared?: boolean;
   items: DeskItem[];
   threads?: IntelineThread[];
 }

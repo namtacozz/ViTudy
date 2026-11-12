@@ -32,6 +32,7 @@ import {
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
 import { parsePdfFile } from '@/services/PdfParserService';
 import { parseDocxFile, parsePptxFile, isBinaryOrCorrupted } from '@/services/OfficeParserService';
+import { formatUploadedDocTitle } from '@/utils/documentNaming';
 
 interface PendingDocument {
   file: File;
@@ -313,12 +314,12 @@ export function BottomLeftKnowledge() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const rawName = file.name.replace(/\.[^/.]+$/, '');
+    const isImage = file.type.startsWith('image/');
+    const rawName = formatUploadedDocTitle(file.name, isImage);
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     const isPdf = file.type === 'application/pdf' || ext === 'pdf';
     const isDocx = ext === 'docx' || file.type.includes('wordprocessingml');
     const isPptx = ext === 'pptx' || file.type.includes('presentationml');
-    const isImage = file.type.startsWith('image/');
     const isText = file.type.includes('text') || ext === 'md' || ext === 'txt';
 
     let parsedPages: { title?: string; text: string; image?: string }[] = [];
