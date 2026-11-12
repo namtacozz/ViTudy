@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-11-12 16:20 — main (Cố Định Khung Trang Chủ, Tinh Giản Giao Diện, Menu Avatar Miro & Bố Cục Profile Chuẩn Mẫu)
+- **Task:**
+  1. **Cố định lại trang chủ trong một khung nhìn không cuộn toàn trang:**
+     - Container chính dùng `h-screen overflow-hidden flex`.
+     - Loại bỏ hoàn toàn dải "Chợ tài liệu" ở đáy trang chủ (Section 3).
+     - Danh sách bàn học "Mở lại gần đây" có container cuộn riêng biệt (`flex-1 min-h-0 flex flex-col overflow-hidden` với table body `flex-1 overflow-y-auto no-scrollbar`), chỉ cuộn riêng danh sách bàn học mà không ảnh hưởng toàn trang.
+  2. **Chợ tài liệu ở sidebar thanh bên trái:**
+     - Thiết kế khối "Chợ tài liệu" nằm ngay dưới widget "Mục tiêu hôm nay" và ngay trên "Số dư khả dụng" để nhấn mạnh Chợ hơn.
+     - Khi bấm nút "Mở chợ tài liệu", mở trực tiếp modal `MarketModal` (thay vì nhảy trang `/market`).
+  3. **Bỏ hẳn link `/about` (Giới thiệu & Kỹ thuật) và `/faq` (Hỏi đáp) khỏi thanh bên trái của app:**
+     - Gỡ bỏ hoàn toàn 2 liên kết này khỏi `<nav>` thanh bên, giúp không gian điều hướng tối giản và sạch sẽ.
+  4. **Header trang chủ sát viền trên & Logo nhận diện thương hiệu:**
+     - Đưa header sát lên viền trên (`py-2 mb-2`), thay thế dòng chữ tiêu đề dài bằng icon logo `vitudy.png` cùng text "ViTudy" màu Cam ViT in đậm, đẩy toàn bộ nội dung học tập lên cao nhất.
+  5. **Menu Dropdown Profile khi click Avatar (Ảnh 3 chuẩn Miro):**
+     - Khi click vào Avatar góc trên bên phải, không chuyển trang ngay mà hiển thị Dropdown Popover chuẩn Miro.
+     - Tích hợp các tính năng app đang có: Hồ sơ cá nhân (`/profile`), Cài đặt kết nối AI (`AiConfigModal`), Nhật ký học tập (`/dashboard`), Nạp ViToken (`TopUpModal`), và Đăng xuất (`signOut`).
+  6. **Tái cấu trúc trang Profile theo chuẩn Miro Profile Settings (Ảnh 4):**
+     - Cột trái: Form thông tin cá nhân gồm Họ và tên, Tên gọi ngắn (Nickname), Email (read-only), Trường học/Tổ chức, Vai trò, nút "Lưu thay đổi".
+     - Cột phải: Avatar to tròn (w-36 h-36) kèm 2 nút "Upload" (Tải ảnh lên) và "Remove" (Gỡ ảnh) bên dưới.
+  7. **Cắt giảm text thừa & Tinh giản toàn ứng dụng:**
+     - Rút gọn toàn bộ các đoạn mô tả dài dòng, lặp thừa; văn phong ngắn gọn, súc tích và trực diện.
+- **Files Modified / Created:**
+  - `src/components/home/HomePage.tsx`
+  - `src/components/modals/AiConfigModal.tsx`
+  - `src/app/profile/page.tsx`
+  - `src/components/profile/AccountSettings.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+- **Verification:**
+  - `pnpm exec tsc --noEmit`: 0 errors.
+  - `npx vitest run`: 19 test files (65 tests) passed 100%.
+  - `pnpm run build:pages`: Build static export thành công.
+
+---
+
 ## 2026-11-12 12:20 — main (Tủ Tài Liệu Cá Nhân & Hộp Thoại Chọn Bàn Học Mở Tài Liệu Chợ)
 - **Task:**
   1. **Tủ tài liệu cá nhân (Personal Document Cabinet):**
