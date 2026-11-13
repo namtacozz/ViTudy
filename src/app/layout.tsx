@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ViTokenProvider } from '@/context/ViTokenContext';
 import { StudySpaceProvider } from '@/context/StudySpaceContext';
 import { PomodoroProvider } from '@/context/PomodoroContext';
+import { FloatingPet } from '@/components/pet/FloatingPet';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -84,6 +85,7 @@ export default function RootLayout({
             <PomodoroProvider>
               <StudySpaceProvider>
                 {children}
+                <FloatingPet />
               </StudySpaceProvider>
             </PomodoroProvider>
           </ViTokenProvider>

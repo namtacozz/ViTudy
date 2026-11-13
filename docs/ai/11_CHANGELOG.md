@@ -4,6 +4,44 @@
 
 ---
 
+## 2026-11-14 00:05 — dev (Xây Dựng Tính Năng Thú Cưng Chuỗi Học Tập - Streak Pet Widget)
+- **Task:** Triển khai hoàn chỉnh tính năng "Streak Pet" (Thú cưng chuỗi học tập) tích hợp trực tiếp vào ViTudy từ bộ assets ảnh trong thư mục `brand/pet/`:
+  1. **Assets & Cấu hình Stage (`public/brand/pet/`, `src/components/pet/stages.ts`):**
+     - Đồng bộ toàn bộ 8 file ảnh PNG 2048x2048 RGBA trong suốt từ `brand/pet/` vào `public/brand/pet/`:
+       - Cấp 1 "Trứng" (0-3 ngày): `stage1.png`, `sleep-stage1.png`
+       - Cấp 2 "Nứt vỏ" (4-10 ngày): `stage2.png`, `sleep-stage2.png`
+       - Cấp 3 "Vịt con" (11-100 ngày): `stage3.png`, `sleep-stage3.png`
+       - Cấp 4 "Trưởng thành" (101+ ngày): `stage4.png`, `sleep-stage4.png`
+     - Bọc đường dẫn qua `getAssetPath` đảm bảo tương thích mọi môi trường (subpath / GitHub Pages).
+  2. **Giao diện & Hiệu ứng (`src/components/pet/FloatingPet.tsx`, `PetGalleryModal.tsx`, `pet.css`):**
+     - Widget di động lơ lửng bám màn hình, hỗ trợ kéo thả bằng Pointer Events (chuột & cảm ứng điện thoại), phân biệt chính xác thao tác kéo vs chạm ($< 6\text{px}$ = tap).
+     - Tự động snap vào mép trái/phải gần nhất, clamp an toàn trong viewport và lưu vị trí vào `localStorage`.
+     - Idle animations chuẩn CSS: Thức thì nhún nhảy nhẹ nhàng (`pet-idle-awake`), ngủ thì thở chậm rãi (`pet-idle-sleep`) kèm bong bóng chữ `Zzz` bay lên mờ dần.
+     - Chạm khi ngủ: bừng tỉnh (`pet-wake-animation`), điểm danh và tăng chuỗi ngày.
+     - Chạm khi thức: mở Bộ sưu tập thú cưng (`PetGalleryModal`) qua React Portal, hỗ trợ xem trước bản lúc ngủ (`sleep-stageX.png`), ẩn silhouette đen cho cấp chưa mở, hiển thị tiến độ ngày đến cấp tiếp theo.
+     - Popup chúc mừng tiến hóa khi người dùng vượt ngưỡng cấp độ mới.
+  3. **Backend & API (`src/app/api/pet/status/route.ts`, `src/app/api/pet/checkin/route.ts`):**
+     - Xử lý ngày theo múi giờ chuẩn server `Asia/Ho_Chi_Minh` (`todayKey()`), đảm bảo tính lũy đẳng (idempotent - không tăng lặp điểm danh trong ngày).
+     - Tự động hẹn giờ cho thú cưng đi ngủ lúc 00:00:02 và tự động đồng bộ khi chuyển tab.
+  4. **Kiểm thử tự động:**
+     - Tạo mới `src/components/pet/FloatingPet.test.tsx` (5 unit tests PASS 100%).
+     - Toàn bộ 28 test files (103/103 tests) PASS.
+- **Changed:**
+  - `src/app/layout.tsx`
+  - `AGENTS.md`
+- **Added:**
+  - `public/brand/pet/*`
+  - `src/components/pet/stages.ts`
+  - `src/components/pet/pet.css`
+  - `src/components/pet/usePet.ts`
+  - `src/components/pet/FloatingPet.tsx`
+  - `src/components/pet/PetGalleryModal.tsx`
+  - `src/components/pet/FloatingPet.test.tsx`
+  - `src/app/api/pet/status/route.ts`
+  - `src/app/api/pet/checkin/route.ts`
+
+---
+
 ## 2026-11-13 23:35 — dev (Khắc Phục Triệt Để Cử Chỉ 2 Ngón Tay Zoom & Pan Bàn Học Trên Điện Thoại)
 - **Task:** Giải quyết triệt để phản hồi của Sếp: "VIÊC TRONG BÀN HỌC KHI DÙNG 2 NGÓN ĐỂ ZOOM VẪN CHƯA ĐƯỢC":
   1. **Khóa cứng Viewport Meta Tag (`src/app/layout.tsx`):**

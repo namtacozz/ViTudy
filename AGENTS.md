@@ -174,6 +174,19 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Biểu Tượng Chuỗi Ngày Học Tập (Streak Flame Icon):**
     * Biểu tượng ngọn lửa (`w-8.5 h-8.5`) màu Cam ViT (`#E0562D`) với phần bụng tròn ôm trọn số ngày chuỗi học tập màu trắng ở bên trong.
     * Tọa độ căn số tuyệt đối: `top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2`, số chuỗi nằm chính xác 100% trong tâm bụng lửa, cân đối 4 phía, không lệch, không che khuất và không tràn ra ngoài viền ngọn lửa.
+  * **Quy Chuẩn Thú Cưng Chuỗi Học Tập (Streak Pet Widget Standards):**
+    * **Thư mục Assets & Tên tệp chuẩn (`/brand/pet/`):**
+      * Bộ ảnh PNG 1:1 nền trong suốt gồm 4 cấp độ: Stage 1 "Trứng" (0-3 ngày: `stage1.png`, `sleep-stage1.png`), Stage 2 "Nứt vỏ" (4-10 ngày: `stage2.png`, `sleep-stage2.png`), Stage 3 "Vịt con" (11-100 ngày: `stage3.png`, `sleep-stage3.png`), và Stage 4 "Trưởng thành" (101+ ngày: `stage4.png`, `sleep-stage4.png`).
+      * Toàn bộ đường dẫn ảnh bắt buộc bọc qua `getAssetPath` để tương thích mọi môi trường triển khai (subpath / GitHub Pages).
+    * **Kéo thả công thái học & Tự động bám viền (Floating & Edge Snapping):**
+      * Sử dụng Pointer Events (`pointerdown`, `pointermove`, `pointerup`), phân biệt chính xác thao tác kéo và chạm: di chuyển $< 6\text{px}$ là Chạm (Tap/Click), $\ge 6\text{px}$ là Kéo (Drag).
+      * Khi thả tay, tự động bám dính (snap) vào mép trái hoặc phải gần nhất với chuyển động mượt mà (`cubic-bezier(0.18, 0.89, 0.32, 1.28)`), luôn giữ khoảng cách an toàn trong viewport và lưu vị trí vào `localStorage`.
+      * Container bao bọc sử dụng `pointer-events: none`, chỉ khối widget thú cưng bật `pointer-events-auto`, triệt tiêu hoàn toàn việc che chặn thao tác click lên giao diện phía sau.
+    * **Nhịp sinh học & Điểm danh chuẩn server (Circadian Cycle & Check-in):**
+      * Trạng thái ngủ (`asleep`): Thở chậm rãi kèm chữ `Zzz` bay lơ lửng khi người dùng chưa điểm danh trong ngày theo múi giờ `Asia/Ho_Chi_Minh`. Chạm vào sẽ bừng tỉnh (`pet-wake-animation`), điểm danh và tăng chuỗi ngày học.
+      * Trạng thái thức (`awake`): Nhún nhảy nhẹ nhàng (`pet-awake-bob`). Chạm vào mở trực tiếp Bộ sưu tập thú cưng (`PetGalleryModal`).
+      * Hẹn giờ tự động đưa thú cưng đi ngủ lúc 00:00:02 (giờ VN) và tự động đồng bộ khi chuyển tab (`visibilitychange` / `focus`).
+      * Điểm danh đảm bảo tính lũy đẳng (idempotent), hỗ trợ chuẩn tiếp cận `prefers-reduced-motion`.
   * **Quy Chuẩn Nút Mở Bản Đồ Khi Ẩn (Minimap Reopen Button):**
     * Đồng bộ hoàn toàn style với Nút Tải lên tài liệu: khung vuông bo góc `rounded-xl`, kích thước chuẩn `w-10 h-10`, nền trắng `bg-white hover:bg-orange-50/80`, viền `border border-slate-300 hover:border-orange-300`, đổ bóng nhẹ `shadow-sm`, icon `Map` SVG màu Cam ViT (`#E0562D`, `stroke-[2.4]`). Tuyệt đối không dùng nút tròn nền cam độc lập.
   * **Hệ thống màu trạng thái ngữ nghĩa (Status Tokens):**
