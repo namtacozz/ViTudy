@@ -1799,7 +1799,13 @@ Trong đó:
   };
 
   // Combine non-destructive binder merging
+  const isViewerSession = () => {
+    if (typeof window === 'undefined' || !window.location.search.includes('room=')) return false;
+    return new URLSearchParams(window.location.search).get('role') === 'viewer';
+  };
+
   const combineIntoBinder = (targetId: string, draggedId: string): boolean => {
+    if (isViewerSession()) return false;
     if (targetId === draggedId) return false;
 
     const targetItem = activeSpace.items.find(i => i.id === targetId);
@@ -2210,6 +2216,7 @@ Trong đó:
   };
 
   const addUploadedDocument = (title: string, rawPages: { title?: string; text: string; image?: string }[]) => {
+    if (isViewerSession()) return;
     const pageCount = rawPages.length;
     const type: 'paper' | 'book' = pageCount < 5 ? 'paper' : 'book';
 
@@ -2476,6 +2483,7 @@ Trong đó:
   };
 
   const removeDeskItem = (id: string) => {
+    if (isViewerSession()) return;
     if (status === 'authenticated') {
       StudySpaceService.deleteItem(id);
     }

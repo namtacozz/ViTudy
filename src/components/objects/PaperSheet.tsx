@@ -61,7 +61,9 @@ export function PaperSheetComponent({ item, isSelected }: PaperSheetProps) {
     focusedItemId,
     enterFocusMode,
     exitFocusMode,
-    convertPaperToBook
+    convertPaperToBook,
+    combineIntoBinder,
+    activeSpace
   } = useStudySpace();
 
   const { spendTokens, aiConfig } = useViToken();
@@ -701,6 +703,23 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
             className="p-1.5 hover:bg-amber-50 rounded-lg text-slate-700 hover:text-amber-800 transition-colors cursor-pointer"
           >
             <BookPlus className="w-4 h-4 stroke-[2.4]" />
+          </button>
+        )}
+
+        {!isExam && combineIntoBinder && activeSpace?.items.some(i => i.id !== item.id && (i.type === 'book' || i.type === 'paper') && !i.isExamSheet) && (
+          <button
+            title="Gộp nhanh vào sách hoặc tài liệu khác trên bàn"
+            onClick={() => {
+              const target =
+                activeSpace.items.find(i => i.id !== item.id && i.type === 'book' && !i.isExamSheet) ||
+                activeSpace.items.find(i => i.id !== item.id && i.type === 'paper' && !i.isExamSheet);
+              if (target) {
+                combineIntoBinder(target.id, item.id);
+              }
+            }}
+            className="p-1.5 hover:bg-orange-50 rounded-lg text-slate-700 hover:text-[#E0562D] transition-colors cursor-pointer"
+          >
+            <Layers className="w-4 h-4 stroke-[2.4]" />
           </button>
         )}
 

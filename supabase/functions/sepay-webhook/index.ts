@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getServiceRoleClient } from '../_shared/auth.ts';
 
-const EXPECTED_API_KEY = Deno.env.get('SEPAY_API_KEY') || '';
+const EXPECTED_API_KEY = Deno.env.get('SEPAY_API_KEY') || Deno.env.get('SEPAY_API_TOKEN') || '';
 
 function timingSafeEqualStr(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
