@@ -111,6 +111,9 @@ interface StudySpaceContextType {
   snapCurrentStroke: () => import('@/utils/smartShape').RecognizedShapeResult | null;
   revertCurrentStroke: () => void;
   finishStroke: () => void;
+  cancelStroke: () => void;
+  isFingerDrawingEnabled: boolean;
+  setIsFingerDrawingEnabled: (enabled: boolean) => void;
   addStroke: (stroke: import('@/types/studyspace').DrawingStroke) => void;
   undoStroke: () => void;
   redoStroke: () => void;
@@ -408,6 +411,25 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       }
       return null;
     });
+  };
+
+  const cancelStroke = () => {
+    setCurrentStroke(null);
+  };
+
+  const [isFingerDrawingEnabled, setIsFingerDrawingEnabledState] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vitudy_finger_drawing_enabled') || localStorage.getItem('greenlearn_finger_drawing_enabled');
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+
+  const setIsFingerDrawingEnabled = (enabled: boolean) => {
+    setIsFingerDrawingEnabledState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vitudy_finger_drawing_enabled', String(enabled));
+    }
   };
 
   const [redoStack, setRedoStack] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
@@ -2588,6 +2610,9 @@ Trong đó:
         snapCurrentStroke,
         revertCurrentStroke,
         finishStroke,
+        cancelStroke,
+        isFingerDrawingEnabled,
+        setIsFingerDrawingEnabled,
         addStroke,
         undoStroke,
         redoStroke,

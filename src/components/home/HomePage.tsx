@@ -43,6 +43,7 @@ import { getAssetPath } from '@/lib/assets';
 import { StudySpace } from '@/types/studyspace';
 import { formatRelativeTimeVN } from '@/lib/dateVN';
 import { EmptyState } from '@/components/common/EmptyState';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 interface HomePageProps {
   onEnterDesk: (spaceId?: string) => void;
@@ -63,6 +64,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   } = useStudySpace();
   const { startSession: startPomodoroSession } = usePomodoroContext();
   const router = useRouter();
+  const { isMobile, isTablet, isDesktop } = useResponsiveLayout();
 
   const balance = wallet?.balance ?? 50;
   const streakDays = wallet?.streakDays ?? 1;
@@ -503,14 +505,14 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
       )}
 
       {/* ================= MAIN CONTENT (Fixed Viewport, No Page Scroll) ================= */}
-      <main className="flex-1 h-screen overflow-hidden flex flex-col max-w-6xl mx-auto p-3 sm:p-4 md:p-6 w-full pb-16 md:pb-6">
+      <main className="flex-1 h-screen overflow-hidden flex flex-col max-w-6xl mx-auto p-2.5 sm:p-4 md:p-6 w-full pb-20 md:pb-6 responsive-mobile-pb">
         {/* Mobile Header Bar (< md) */}
         <div className="flex md:hidden items-center justify-between py-1 mb-2 border-b border-[#ece7e1] flex-shrink-0">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
-              className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer"
+              className="responsive-mobile-menu-btn p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer touch-target flex items-center justify-center"
               title="Mở danh bạ bàn học"
             >
               <Menu className="w-4 h-4" />
@@ -532,7 +534,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <button
               type="button"
               onClick={() => setIsTopUpOpen(true)}
-              className="flex items-center gap-1 bg-[#FFF7ED] border border-[#FFEDD5] px-2 py-0.5 rounded-full text-xs font-mono font-bold text-[#B8431A]"
+              className="flex items-center gap-1 bg-[#FFF7ED] border border-[#FFEDD5] px-2 py-0.5 rounded-full text-xs font-mono font-bold text-[#B8431A] touch-target"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -868,15 +870,15 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-white border border-stone-200/90 rounded-2xl p-2.5 shadow-2xs">
             {viewMode === 'list' ? (
               <>
-                {/* Table Header */}
-                <div className="grid grid-cols-12 text-xs font-semibold text-stone-600 pb-2 border-b border-stone-200 px-3 flex-shrink-0">
+                {/* Table Header (Desktop Only) */}
+                <div className="hidden sm:grid grid-cols-12 text-xs font-semibold text-stone-600 pb-2 border-b border-stone-200 px-3 flex-shrink-0">
                   <div className="col-span-6">Tên bàn học</div>
                   <div className="col-span-3 text-left">Tài liệu & ghi chú</div>
                   <div className="col-span-3 text-right pr-2">Mở lần cuối</div>
                 </div>
 
                 {/* Table Rows - Cuộn độc lập không ảnh hưởng trang */}
-                <div className="flex-1 overflow-y-auto divide-y divide-stone-100 pr-1 no-scrollbar">
+                <div className="flex-1 overflow-y-auto divide-y divide-stone-100 sm:divide-y pr-1 no-scrollbar space-y-1 sm:space-y-0">
                   {displayedSpaces.length === 0 ? (
                     <div className="py-8">
                       <EmptyState
@@ -910,141 +912,244 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                       const isEditing = editingSpaceId === space.id;
 
                       return (
-                        <div
-                          key={space.id}
-                          onClick={() => !isEditing && handleOpenSpace(space.id)}
-                          className="grid grid-cols-12 items-center py-2 px-3 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer group relative"
-                        >
-                          {/* Name & Subtitle */}
-                          <div className="col-span-6 pr-3 flex items-center gap-2.5">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStarSpace?.(space.id);
-                              }}
-                              title={space.starred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao'}
-                              className={`p-1 rounded-lg transition-colors cursor-pointer ${
-                                space.starred 
-                                  ? 'text-amber-500 hover:text-amber-600' 
-                                  : 'text-stone-300 hover:text-stone-500 opacity-0 group-hover:opacity-100'
-                              }`}
-                            >
-                              <Star className={`w-3.5 h-3.5 ${space.starred ? 'fill-amber-400' : ''}`} />
-                            </button>
-
-                            {/* Thumbnail nhỏ 40x28px */}
-                            <div className="w-10 h-7 rounded-lg bg-[#f1ede6] border border-stone-300/80 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                              {idx % 2 === 0 ? (
-                                <div className="w-5 h-3.5 rounded-xs border border-[#5c3920] bg-white flex items-center justify-center">
-                                  <div className="w-1.5 h-1.5 rounded-2xs bg-[#fef08a]" />
-                                </div>
-                              ) : (
-                                <div className="flex gap-0.5">
-                                  <div className="w-2.5 h-4 rounded-xs bg-white border border-stone-300" />
-                                  <div className="w-2.5 h-4 rounded-xs bg-white border border-stone-300" />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Text info & Inline Rename */}
-                            <div className="min-w-0 flex-1">
-                              {isEditing ? (
-                                <input
-                                  autoFocus
-                                  type="text"
-                                  value={editingName}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onChange={(e) => setEditingName(e.target.value)}
-                                  onBlur={() => handleSaveRename(space.id)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleSaveRename(space.id);
-                                    if (e.key === 'Escape') setEditingSpaceId(null);
-                                  }}
-                                  className="w-full text-xs font-bold text-stone-900 bg-white border border-stone-300 rounded px-1.5 py-0.5 outline-none focus:border-[#E0562D]"
-                                />
-                              ) : (
-                                <>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
-                                      {cleanSpaceName}
-                                    </span>
-                                    {isDemo && (
-                                      <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0">
-                                        Mẫu
-                                      </span>
-                                    )}
-                                  </div>
-                                  {space.description && (
-                                    <div className="text-[11px] text-stone-500 truncate">
-                                      {space.description}
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Summary */}
-                          <div className="col-span-3 text-xs text-stone-600 font-medium truncate">
-                            {getSpaceSummary(space)}
-                          </div>
-
-                          {/* Last Opened Time & Hover Action Menu "⋯" */}
-                          <div className="col-span-3 text-xs text-stone-500 text-right pr-2 flex items-center justify-end gap-2">
-                            <span>{getRecentTimeString(space)}</span>
-                            
-                            {/* "⋯" Menu Button */}
-                            <div className="relative" data-row-menu="true">
+                        <React.Fragment key={space.id}>
+                          {/* Desktop Table Row (>= sm) */}
+                          <div
+                            onClick={() => !isEditing && handleOpenSpace(space.id)}
+                            className="hidden sm:grid grid-cols-12 items-center py-2 px-3 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer group relative"
+                          >
+                            {/* Name & Subtitle */}
+                            <div className="col-span-6 pr-3 flex items-center gap-2.5">
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setMenuOpenSpaceId(menuOpenSpaceId === space.id ? null : space.id);
+                                  toggleStarSpace?.(space.id);
                                 }}
-                                title="Tùy chọn bàn học"
-                                className="w-6 h-6 rounded-md hover:bg-stone-200 text-stone-400 hover:text-stone-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                                title={space.starred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao'}
+                                className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                                  space.starred 
+                                    ? 'text-amber-500 hover:text-amber-600' 
+                                    : 'text-stone-300 hover:text-stone-500 opacity-0 group-hover:opacity-100'
+                                }`}
                               >
-                                <MoreHorizontal className="w-3.5 h-3.5" />
+                                <Star className={`w-3.5 h-3.5 ${space.starred ? 'fill-amber-400' : ''}`} />
                               </button>
 
-                              {/* Row Action Popover */}
-                              {menuOpenSpaceId === space.id && (
-                                <div 
-                                  className="absolute right-0 top-7 z-30 w-36 bg-white rounded-xl border border-stone-200 shadow-xl p-1 text-xs text-stone-700 animate-fade-in font-sans text-left"
-                                  onMouseDown={(e) => e.stopPropagation()}
-                                  onClick={(e) => e.stopPropagation()}
+                              {/* Thumbnail nhỏ 40x28px */}
+                              <div className="w-10 h-7 rounded-lg bg-[#f1ede6] border border-stone-300/80 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                {idx % 2 === 0 ? (
+                                  <div className="w-5 h-3.5 rounded-xs border border-[#5c3920] bg-white flex items-center justify-center">
+                                    <div className="w-1.5 h-1.5 rounded-2xs bg-[#fef08a]" />
+                                  </div>
+                                ) : (
+                                  <div className="flex gap-0.5">
+                                    <div className="w-2.5 h-4 rounded-xs bg-white border border-stone-300" />
+                                    <div className="w-2.5 h-4 rounded-xs bg-white border border-stone-300" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Text info & Inline Rename */}
+                              <div className="min-w-0 flex-1">
+                                {isEditing ? (
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    value={editingName}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    onBlur={() => handleSaveRename(space.id)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveRename(space.id);
+                                      if (e.key === 'Escape') setEditingSpaceId(null);
+                                    }}
+                                    className="w-full text-xs font-bold text-stone-900 bg-white border border-stone-300 rounded px-1.5 py-0.5 outline-none focus:border-[#E0562D]"
+                                  />
+                                ) : (
+                                  <>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-bold text-stone-900 group-hover:text-[#B8431A] transition-colors truncate">
+                                        {cleanSpaceName}
+                                      </span>
+                                      {isDemo && (
+                                        <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0">
+                                          Mẫu
+                                        </span>
+                                      )}
+                                    </div>
+                                    {space.description && (
+                                      <div className="text-[11px] text-stone-500 truncate">
+                                        {space.description}
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Summary */}
+                            <div className="col-span-3 text-xs text-stone-600 font-medium truncate">
+                              {getSpaceSummary(space)}
+                            </div>
+
+                            {/* Last Opened Time & Hover Action Menu "⋯" */}
+                            <div className="col-span-3 text-xs text-stone-500 text-right pr-2 flex items-center justify-end gap-2">
+                              <span>{getRecentTimeString(space)}</span>
+                              
+                              {/* "⋯" Menu Button */}
+                              <div className="relative" data-row-menu="true">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMenuOpenSpaceId(menuOpenSpaceId === space.id ? null : space.id);
+                                  }}
+                                  title="Tùy chọn bàn học"
+                                  className="w-6 h-6 rounded-md hover:bg-stone-200 text-stone-400 hover:text-stone-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                                 >
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleStartRename(space, e)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
+                                  <MoreHorizontal className="w-3.5 h-3.5" />
+                                </button>
+
+                                {/* Row Action Popover */}
+                                {menuOpenSpaceId === space.id && (
+                                  <div 
+                                    className="absolute right-0 top-7 z-30 w-36 bg-white rounded-xl border border-stone-200 shadow-xl p-1 text-xs text-stone-700 animate-fade-in font-sans text-left"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
-                                    <Pencil className="w-3.5 h-3.5 text-stone-500" />
-                                    <span>Đổi tên</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleDuplicate(space.id, e)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
-                                  >
-                                    <Copy className="w-3.5 h-3.5 text-stone-500" />
-                                    <span>Nhân bản</span>
-                                  </button>
-                                  <div className="border-t border-stone-100 my-0.5" />
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleDelete(space.id, e)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Xóa</span>
-                                  </button>
-                                </div>
-                              )}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleStartRename(space, e)}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5 text-stone-500" />
+                                      <span>Đổi tên</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDuplicate(space.id, e)}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
+                                    >
+                                      <Copy className="w-3.5 h-3.5 text-stone-500" />
+                                      <span>Nhân bản</span>
+                                    </button>
+                                    <div className="border-t border-stone-100 my-0.5" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDelete(space.id, e)}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Xóa</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
+
+                          {/* Mobile Card Row (< sm) */}
+                          <div
+                            onClick={() => !isEditing && handleOpenSpace(space.id)}
+                            className="sm:hidden flex flex-col p-2.5 rounded-xl border border-stone-200/80 bg-stone-50/50 hover:bg-stone-100 transition-colors cursor-pointer relative"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleStarSpace?.(space.id);
+                                  }}
+                                  className="text-stone-400 hover:text-amber-500 shrink-0 p-0.5"
+                                >
+                                  <Star className={`w-3.5 h-3.5 ${space.starred ? 'text-amber-500 fill-amber-400' : ''}`} />
+                                </button>
+                                <div className="min-w-0 flex-1">
+                                  {isEditing ? (
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      value={editingName}
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={(e) => setEditingName(e.target.value)}
+                                      onBlur={() => handleSaveRename(space.id)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSaveRename(space.id);
+                                        if (e.key === 'Escape') setEditingSpaceId(null);
+                                      }}
+                                      className="w-full text-xs font-bold text-stone-900 bg-white border border-stone-300 rounded px-1.5 py-0.5 outline-none focus:border-[#E0562D]"
+                                    />
+                                  ) : (
+                                    <div className="flex items-center gap-1.5 truncate">
+                                      <span className="text-xs font-bold text-stone-900 truncate">
+                                        {cleanSpaceName}
+                                      </span>
+                                      {isDemo && (
+                                        <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0">
+                                          Mẫu
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="relative shrink-0" data-row-menu="true">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMenuOpenSpaceId(menuOpenSpaceId === space.id ? null : space.id);
+                                  }}
+                                  className="w-7 h-7 rounded-lg text-stone-400 hover:text-stone-700 flex items-center justify-center cursor-pointer"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+
+                                {menuOpenSpaceId === space.id && (
+                                  <div 
+                                    className="absolute right-0 top-7 z-30 w-36 bg-white rounded-xl border border-stone-200 shadow-xl p-1 text-xs text-stone-700 animate-fade-in font-sans text-left"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleStartRename(space, e)}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 transition-colors"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5 text-stone-500" />
+                                      <span>Đổi tên</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDuplicate(space.id, e)}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 transition-colors"
+                                    >
+                                      <Copy className="w-3.5 h-3.5 text-stone-500" />
+                                      <span>Nhân bản</span>
+                                    </button>
+                                    <div className="border-t border-stone-100 my-0.5" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDelete(space.id, e)}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition-colors"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Xóa</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] text-stone-500 mt-2 pt-1.5 border-t border-stone-200/60">
+                              <span className="truncate">{getSpaceSummary(space)}</span>
+                              <span className="shrink-0 font-mono text-[10px] text-stone-400">{getRecentTimeString(space)}</span>
+                            </div>
+                          </div>
+                        </React.Fragment>
                       );
                     })
                   )}
@@ -1101,52 +1206,62 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         </section>
       </main>
 
-      {/* ================= MOBILE BOTTOM NAVIGATION BAR (4 Tabs: Trang chủ, Bàn học, Chợ, Hồ sơ) ================= */}
+      {/* ================= FIXED BOTTOM NAVIGATION BAR (<640px & Touch Mobile) ================= */}
       <nav 
         aria-label="Điều hướng di động"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 py-1.5 px-4 flex items-center justify-around shadow-lg select-none"
+        className={`responsive-bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 pb-safe ${
+          isMobile ? 'flex' : 'hidden sm:hidden'
+        } items-center justify-around h-16 shadow-lg select-none`}
       >
         {/* Tab 1: Trang chủ */}
         <button
           type="button"
           onClick={() => setActiveNav('home')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${
-            activeNav === 'home' ? 'text-[#E0562D]' : 'text-stone-500 hover:text-stone-800'
+          className={`flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors ${
+            activeNav === 'home' ? 'text-[#E0562D] font-bold' : 'text-stone-500 hover:text-stone-800'
           }`}
         >
-          <Home className="w-4 h-4" />
-          <span>Trang chủ</span>
+          <Home className={`w-5 h-5 ${activeNav === 'home' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+          <span className="text-[10px] mt-0.5">Trang chủ</span>
         </button>
 
         {/* Tab 2: Bàn học */}
         <button
           type="button"
           onClick={() => onEnterDesk(latestSpace?.id)}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer transition-colors"
+          className="flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors text-stone-500 hover:text-stone-800"
         >
-          <BookOpen className="w-4 h-4" />
-          <span>Bàn học</span>
+          <BookOpen className="w-5 h-5 stroke-[1.8]" />
+          <span className="text-[10px] mt-0.5">Bàn học</span>
         </button>
 
         {/* Tab 3: Chợ tài liệu */}
         <button
           type="button"
           onClick={() => setIsMarketOpen(true)}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer transition-colors"
+          className="flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors text-stone-500 hover:text-stone-800"
         >
-          <Store className="w-4 h-4" />
-          <span>Chợ</span>
+          <Store className="w-5 h-5 stroke-[1.8]" />
+          <span className="text-[10px] mt-0.5">Chợ</span>
         </button>
 
-        {/* Tab 4: Hồ sơ */}
-        <button
-          type="button"
-          onClick={() => router.push('/profile')}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer transition-colors"
+        {/* Tab 4: Nhật ký */}
+        <Link
+          href="/dashboard"
+          className="flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors text-stone-500 hover:text-stone-800"
         >
-          <User className="w-4 h-4" />
-          <span>Hồ sơ</span>
-        </button>
+          <CalendarCheck className="w-5 h-5 stroke-[1.8]" />
+          <span className="text-[10px] mt-0.5">Nhật ký</span>
+        </Link>
+
+        {/* Tab 5: Hồ sơ */}
+        <Link
+          href="/profile"
+          className="flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors text-stone-500 hover:text-stone-800"
+        >
+          <User className="w-5 h-5 stroke-[1.8]" />
+          <span className="text-[10px] mt-0.5">Hồ sơ</span>
+        </Link>
       </nav>
 
       {/* ================= MODALS ================= */}

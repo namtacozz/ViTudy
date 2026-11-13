@@ -127,10 +127,10 @@ export function TopLeftNav() {
 
   return (
     <div className="relative flex flex-col gap-2 pointer-events-auto">
-      {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size, bold strokes) */}
-      <div className="flex items-center gap-2.5 bg-white/95 border border-slate-300 rounded-2xl px-4 py-2.5 shadow-sm backdrop-blur-md text-slate-900">
-        {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.svg */}
-        <div className="flex items-center gap-1.5 pr-3 border-r border-slate-200">
+      {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size on desktop, compact on mobile) */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 shadow-sm backdrop-blur-md text-slate-900">
+        {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.png */}
+        <div className="flex items-center gap-1 sm:gap-1.5 pr-2 sm:pr-3 border-r border-slate-200">
           <Link
             href="/?view=home"
             onClick={() => {
@@ -148,11 +148,11 @@ export function TopLeftNav() {
               alt="ViTudy" 
               width={24}
               height={24}
-              className="w-6 h-6 object-contain flex-shrink-0" 
+              className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0" 
               style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}
             />
             <span 
-              className="text-lg font-black tracking-tight text-[#E0562D] select-none leading-none"
+              className="text-sm sm:text-lg font-black tracking-tight text-[#E0562D] select-none leading-none hidden md:inline landscape-phone:hidden"
             >
               ViTudy
             </span>
@@ -163,10 +163,10 @@ export function TopLeftNav() {
         <div className="relative">
           <button
             onClick={() => setIsSpaceMenuOpen(!isSpaceMenuOpen)}
-            className="flex items-center gap-1.5 text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
           >
-            <BookMarked className="w-4 h-4 text-slate-800 stroke-[2.4]" />
-            <span className="max-w-[220px] truncate">{activeSpace.name}</span>
+            <BookMarked className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-800 stroke-[2.4]" />
+            <span className="max-w-[120px] sm:max-w-[220px] truncate">{activeSpace.name}</span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
           </button>
 
@@ -267,15 +267,15 @@ export function TopLeftNav() {
 
           {/* Slide-out Input container */}
           <div className={`transition-all duration-300 ease-out flex items-center overflow-hidden ${
-            isSearchExpanded ? 'w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
+            isSearchExpanded ? 'w-36 sm:w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
           }`}>
             <input
               type="text"
-              placeholder="Tìm tài liệu trên bàn..."
+              placeholder="Tìm tài liệu..."
               value={searchQuery}
               onFocus={() => setIsSearchFocused(true)}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none pr-1"
+              className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none pr-1"
             />
             {searchQuery && (
               <button
@@ -380,14 +380,18 @@ export function TopLeftNav() {
             <Link
               href="/profile?from=desk"
               title={`Hồ sơ cá nhân (${profile?.display_name || user.email})`}
-              className="w-7 h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs"
+              className="w-7 h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs shrink-0"
+              style={{ width: '28px', height: '28px', minWidth: '28px', minHeight: '28px', maxWidth: '28px', maxHeight: '28px' }}
             >
               {profile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
                   alt={profile?.display_name || 'Avatar'}
+                  width={28}
+                  height={28}
                   className="w-full h-full object-cover"
+                  style={{ width: '100%', height: '100%', maxWidth: '28px', maxHeight: '28px', objectFit: 'cover' }}
                 />
               ) : (
                 <span>{(profile?.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>

@@ -1,8 +1,8 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
-> **Commit Hash:** `Current Working Tree`  
-> **Cập nhật lần cuối:** `2026-11-08`  
-> **Trạng thái Codebase:** Đã hoàn thành toàn bộ E2E CDP Testing qua cổng 9222, sửa lỗi TopUpModal bằng createPortal, Dashboard Guest Mode, đồng bộ hóa 5 gói ViToken, 14/14 test suites pass, docs:check pass.
+> **Commit Hash:** `Current Working Tree (dev)`  
+> **Cập nhật lần cuối:** `2026-11-13`  
+> **Trạng thái Codebase:** Hoàn thành tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Mobile/Tablet Responsiveness, Pinch-to-zoom 2 ngón, Palm Rejection, Compact HUD, Mobile Bottom Nav 5 tab, Mobile Desk Cards), 25/25 test files pass (91 tests), Next.js 15.1.7 build clean 16/16 pages pass.
 
 ---
 

@@ -199,3 +199,27 @@
   4. **Thanh công cụ ngữ cảnh nổi trên Sticky Note (`StickyNoteItem`):** Tích hợp bảng đổi 5 màu giấy note pastel (Vàng ấm, Cam đào, Xanh mint, Lam nhạt, Hồng phấn) và nút phóng to cỡ chữ (A/A+) một chạm.
   5. **Dây nối tư duy 2.5D phong cách Chỉ Ghim Thám Tử (`VisualLinkThreads`):** Chuyển từ dây laser phát sáng sang sợi chỉ đỏ vật lý có bóng đổ tự nhiên, độ chùng võng trọng lực (gravity sag) và hai đầu đinh ghim tròn kim loại đỏ kết nối từ Sách sang Ghi chú.
 * **Lý do:** Tối ưu hóa không gian hiển thị, tăng cường tính trực quan học tập và kế thừa những tinh hoa công thái học tốt nhất từ Miro.
+
+---
+
+### ADR-020 — Tối Ưu Hóa Trải Nghiệm Di Động & Máy Tính Bảng: Hard-Locked Responsive Engine, Cử Chỉ Cảm Ứng Đa Điểm, Palm Rejection & Mobile Bottom Nav
+* **Ngày quyết định:** `2026-11-13`
+* **Quyết định:**
+  1. **Kiến trúc Hard-Locked Mobile Engine (`useResponsiveLayout` & `globals.css`):**
+     - Phát hiện thiết bị chuẩn xác 3 lớp (UA, `shortestSide < 600px`, `pointer: coarse`), chèn anti-flicker script trong `<head>` đặt `data-device="mobile"`.
+     - Cấu hình viewport `viewportFit: 'cover'`, triệt tiêu hành vi phóng to vô tình của iOS Safari (`touch-action: none`, `overscroll-behavior: none`).
+  2. **Cử chỉ cảm ứng đa điểm InfiniteDesk & Palm Rejection:**
+     - Hỗ trợ Pinch-to-zoom 2 ngón tay quanh trung điểm và 2-finger pan mà không kích hoạt nét vẽ.
+     - Bộ lọc trễ 40ms (`touch delay buffer`) loại bỏ hoàn toàn nét vẽ rác nối giữa 2 ngón tay khi chuyển trạng thái chạm vẽ sang pinch-to-zoom.
+     - Palm Rejection cho bút cảm ứng Stylus (`pointerType === 'pen'`): cho phép chuyển đổi chế độ chỉ vẽ bằng bút (`isFingerDrawingEnabled === false`), khi đó ngón tay chạm màn hình chỉ dùng để pan/zoom bàn học.
+     - Tự động căn chỉnh vừa vặn màn hình (`fitAllToScreen`) khi mở bàn học trên mobile/tablet.
+  3. **HUD Bàn Học Tinh Gọn Trên Màn Hình Nhỏ:**
+     - Minimap tự động ẩn mặc định trên màn hình < 640px, kích thước nhỏ gọn 145x90px, ẩn phím tắt "(Phím M)". Nút mở lại bản đồ đạt touch target 44px.
+     - Thanh công cụ vẽ trái (`LeftCreationBar`) cố định dạng cột dọc mép trái (`landscape-fixed-toolbar`), kích thước nút responsive `w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11`, bổ sung nút toggle vẽ ngón tay `Hand`.
+     - TopLeftNav co giãn tìm kiếm thông minh, TopRightWallet compact token pill, BottomLeftKnowledge compact buttons.
+  4. **Trang Chủ HomePage Mobile:**
+     - Thanh điều hướng đáy 5 tab (`responsive-bottom-nav`) cố định đáy trên mobile (< 640px) gồm: Trang chủ (`Home`), Bàn học (`BookOpen`), Chợ tài liệu (`Store`), Nhật ký (`CalendarCheck`), và Hồ sơ (`User`) với touch target $\ge 44px$ và padding an toàn (`pb-safe`).
+     - Danh sách bàn học dạng Card dọc tinh gọn (`responsive-desk-cards`) thay thế bảng 12 cột khi hiển thị trên mobile.
+     - Nút menu mở drawer di động (`responsive-mobile-menu-btn`) và khoảng đệm đáy an toàn `responsive-mobile-pb`.
+  5. **Bảo tồn thương hiệu:** Duy trì 100% màu Cam ViT `#E0562D` và đồng tiền ViToken của ViTudy.
+* **Lý do:** Đáp ứng trọn vẹn yêu cầu đồng bộ trải nghiệm di động chuẩn mực từ GreenLearn sang ViTudy, giúp người dùng học tập mượt mà trên mọi thiết bị cảm ứng (điện thoại, iPad, máy tính bảng bảng vẽ Stylus) với độ tin cậy tuyệt đối và zero regression cho desktop.

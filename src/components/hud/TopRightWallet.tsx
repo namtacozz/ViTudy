@@ -430,7 +430,7 @@ export function TopRightWallet() {
     <>
       <div 
         data-tour="wallet-market"
-        className="relative flex items-center bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none"
+        className="relative flex items-center bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none gap-0.5 sm:gap-1"
       >
         {/* Daily Streak Button */}
         <button
@@ -440,30 +440,30 @@ export function TopRightWallet() {
             setIsDailyModalOpen(true);
           }}
           title={`Chuỗi học tập: ${wallet.streakDays} ngày liên tiếp (Bấm để điểm danh nhận ViToken)`}
-          className={`relative flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer group ${
+          className={`relative flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer group ${
             isDailyModalOpen ? 'bg-slate-200' : 'hover:bg-slate-100'
           }`}
         >
           {wallet.streakDays > 0 ? (
-            <div className="relative flex items-center justify-center w-10 h-10">
+            <div className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10">
               {/* Ngọn lửa Cam ViT với bụng tròn ôm trọn số chuỗi ngày */}
-              <Flame className="w-8.5 h-8.5 text-[#E0562D] fill-[#E0562D] drop-shadow-xs transition-transform group-hover:scale-105" />
+              <Flame className="w-6.5 h-6.5 sm:w-8.5 sm:h-8.5 text-[#E0562D] fill-[#E0562D] drop-shadow-xs transition-transform group-hover:scale-105" />
               {/* Số chuỗi căn chuẩn xác 100% vào tâm bụng tròn ngọn lửa (x=50%, y=64%) */}
-              <span className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black font-mono text-white select-none pointer-events-none leading-none">
+              <span className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-[11px] font-black font-mono text-white select-none pointer-events-none leading-none">
                 {wallet.streakDays}
               </span>
             </div>
           ) : (
-            <div className="relative flex items-center justify-center w-10 h-10">
-              <Flame className="w-7.5 h-7.5 text-slate-400 stroke-[2] transition-transform group-hover:scale-105" />
-              <span className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10.5px] font-bold font-mono text-slate-500 select-none pointer-events-none leading-none">
+            <div className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10">
+              <Flame className="w-5.5 h-5.5 sm:w-7.5 sm:h-7.5 text-slate-400 stroke-[2] transition-transform group-hover:scale-105" />
+              <span className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[9.5px] sm:text-[10.5px] font-bold font-mono text-slate-500 select-none pointer-events-none leading-none">
                 0
               </span>
             </div>
           )}
         </button>
 
-        <div className="w-[1px] h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
         {/* Chợ Tài Liệu */}
         <button
@@ -475,26 +475,26 @@ export function TopRightWallet() {
           }}
           title="Chợ tài liệu"
           aria-label="Chợ tài liệu"
-          className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer group ${
+          className={`flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer group ${
             isMarketOpen 
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <Store className="w-5 h-5 text-slate-900 stroke-[2.4]" />
+          <Store className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />
         </button>
 
-        <div className="w-[1px] h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
         {/* Credit Balance & Top Up Pill */}
-        <div className="flex items-center bg-slate-100/70 rounded-xl p-0.5 border border-slate-200">
+        <div className="flex items-center bg-slate-100/70 rounded-lg sm:rounded-xl p-0.5 border border-slate-200">
           <button
             id="wallet-history-trigger-btn"
             onClick={() => {
               closeAllModals();
               setIsHistoryModalOpen(true);
             }}
-            className={`flex items-center gap-1.5 px-2.5 h-10 rounded-lg transition-all cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 h-7.5 sm:h-10 rounded-md sm:rounded-lg transition-all cursor-pointer ${
               isHistoryModalOpen ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-800 hover:bg-white/80'
             }`}
             title={`Số dư: ${wallet.balance} ViToken · Bấm để xem lịch sử nạp & trừ điểm`}
@@ -506,8 +506,8 @@ export function TopRightWallet() {
               alt="ViToken" 
               width={20}
               height={20}
-              className="w-5 h-5 rounded-full object-contain shrink-0" 
-              style={{ width: '20px', height: '20px', maxWidth: '20px', maxHeight: '20px' }}
+              className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-contain shrink-0" 
+              style={{ width: '18px', height: '18px', maxWidth: '20px', maxHeight: '20px' }}
             />
             <span className="text-xs font-black font-mono text-slate-900">
               {wallet.balance}
@@ -525,13 +525,13 @@ export function TopRightWallet() {
             }}
             title="Nạp ViToken (VietQR)"
             aria-label="Nạp ViToken qua VietQR"
-            className="flex items-center justify-center w-10 h-10 min-w-[40px] rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-0.5"
+            className="flex items-center justify-center w-7.5 h-7.5 sm:w-10 sm:h-10 min-w-[30px] sm:min-w-[40px] rounded-md sm:rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-0.5"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
           </button>
         </div>
 
-        <div className="w-[1px] h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
         {/* AI Bot Pill */}
         <button
@@ -541,7 +541,7 @@ export function TopRightWallet() {
             closeAllModals();
             setIsAiModalOpen(true);
           }}
-          className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer ${
             isAiModalOpen 
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -549,7 +549,7 @@ export function TopRightWallet() {
           title="Cài đặt AI"
           aria-label="Cài đặt AI"
         >
-          <Bot className="w-5 h-5 text-slate-900 stroke-[2.4]" />
+          <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />
         </button>
       </div>
 

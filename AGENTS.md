@@ -218,6 +218,28 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Quy chuẩn thẻ tài liệu & Chế độ xem:**
     * **Chế độ xem mặc định:** Chế độ lưới thẻ (`grid`) là mặc định, cân xứng 3 cột (`max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5`), triệt tiêu khoảng hở lệch bên phải.
     * **Bìa da nâu bên trái (Modal):** Thiết kế tối giản, sang trọng với viền dập da, logo ViTudy, icon loại tài liệu dập chìm và ngày chia sẻ. Tuyệt đối không nhồi nhét lặp lại tiêu đề 3 lần lên bìa sách.
+  * **Quy Chuẩn Tối Ưu Điện Thoại & Máy Tính Bảng (Mobile & Tablet Ergonomics Standards):**
+    * **Kiến trúc Hard-Locked Mobile Engine (`useResponsiveLayout` & `globals.css`):**
+      * Phát hiện thiết bị chuẩn xác kết hợp 3 lớp: User-Agent (`Mobile|Android|iPhone|iPad`), `shortestSide < 600px`, và Media Query con trỏ `(pointer: coarse)`.
+      * Inline script trong `<head>` đặt thuộc tính `data-device="mobile"` tức thì trước khi React hydrate, ngăn chặn hiện tượng giật giật (layout flicker/shift).
+      * Viewport cố định với `viewportFit: 'cover'`, triệt tiêu hành vi phóng to vô tình của iOS Safari (`touch-action: none`, `overscroll-behavior: none`).
+    * **Cử chỉ cảm ứng đa điểm & Bộ lọc cử chỉ InfiniteDesk (Multi-Touch Gestures):**
+      * **Pinch-to-zoom 2 ngón tay:** Hỗ trợ phóng to thu nhỏ bàn học mượt mà quanh trung điểm 2 ngón tay trên màn hình cảm ứng, vô hiệu hóa cử chỉ gesture mặc định của iOS Safari.
+      * **2-Finger Pan:** Kéo di chuyển bàn học bằng 2 ngón tay đồng thời mà không kích hoạt nét vẽ.
+      * **Bộ lọc trễ 40ms (`touch delay buffer`):** Khi chạm 1 ngón tay, hệ thống giữ độ trễ 40ms để kiểm tra ngón thứ 2; nếu phát hiện $\ge 2$ ngón thì gọi `cancelStroke()` ngay lập tức, ngăn chặn hoàn toàn nét vẽ rác nối giữa 2 ngón tay.
+      * **Chống tì tay thông minh (Palm Rejection):** Khi chế độ chỉ vẽ bằng bút Stylus (`isFingerDrawingEnabled === false`) được kích hoạt, các thao tác chạm bằng ngón tay (`pointerType === 'touch'`) chỉ dùng để di chuyển và phóng to thu nhỏ bàn học, chỉ nhận nét vẽ từ bút cảm ứng (`pointerType === 'pen'`).
+      * **Tự động căn chỉnh mở bàn học (`fitAllToScreen`):** Khi người dùng mở bàn học trên điện thoại hoặc máy tính bảng, hệ thống tự động tính toán bounding box toàn bộ tài liệu và phóng to vừa vặn màn hình mà không cần zoom thủ công.
+    * **Tối ưu HUD Bàn Học Trên Thiết Bị Di Động:**
+      * **Bản đồ thu nhỏ (Minimap):** Tự động ẩn mặc định trên màn hình < 640px, kích thước compact 145x90px, ẩn phím tắt "(Phím M)". Nút mở lại bản đồ đạt touch target 44px (`w-8.5 h-8.5 sm:w-10 sm:h-10`).
+      * **Thanh công cụ vẽ trái (`LeftCreationBar`):** Thiết kế dạng cột dọc tinh gọn cố định mép trái (`landscape-fixed-toolbar`), kích thước nút responsive `w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11`, flyout phụ cuộn độc lập (`landscape-subpanel`), tích hợp nút chuyển đổi vẽ ngón tay/stylus (`Hand`).
+      * **Thanh điều hướng trên trái (`TopLeftNav`):** Thu gọn nhãn chữ thương hiệu trên mobile/landscape phone, ô tìm kiếm co giãn thông minh (`w-36 sm:w-52`), avatar kích thước cố định 28x28px shrink-0.
+      * **Ví & Chuỗi trên phải (`TopRightWallet`):** Container và các nút chức năng responsive `w-8.5 h-8.5 sm:w-11 sm:h-11`, khối token nhỏ gọn không che tràn màn hình.
+      * **Bộ nút tải lên dưới trái (`BottomLeftKnowledge`):** Kích thước nút responsive, lắng nghe sự kiện kích hoạt tải lên/mời bạn từ menu.
+    * **Tối ưu Trang Chủ (`HomePage.tsx`):**
+      * **Thanh điều hướng đáy 5 tab (`responsive-bottom-nav`):** Cố định đáy màn hình trên mobile (< 640px) gồm: Trang chủ (`Home`), Bàn học (`BookOpen`), Chợ tài liệu (`Store`), Nhật ký (`CalendarCheck`), và Hồ sơ (`User`) với touch target $\ge 44px$ và padding an toàn (`pb-safe`).
+      * **Danh sách bàn học dạng Card dọc trên Mobile (`responsive-desk-cards`):** Tự động chuyển đổi từ bảng table 12 cột sang danh sách thẻ card dọc tinh gọn, hiển thị đầy đủ tiêu đề, tóm tắt tài liệu, thời gian mở, dấu sao và menu thao tác nhanh (đổi tên, nhân bản, xóa).
+      * **Nút mở Menu Drawer di động (`responsive-mobile-menu-btn`):** Header mobile hiển thị nút menu mở ngăn kéo bên trái chứa các lối tắt tiện ích.
+      * **Khoảng đệm đáy an toàn (`responsive-mobile-pb`):** Main view có padding đáy `pb-20 md:pb-6`, bảo đảm nội dung học tập không bị che khuất bởi Bottom Navigation Bar.
     * **Thông tin tin cậy bắt buộc:** Dấu xác thực tác giả (`CheckCircle2 text-sky-600`), số trang, lượt mua, ngày cập nhật, điểm AI có tiền tố `AI: [score]/100` kèm tooltip giải thích tiêu chí.
     * **Triệt tiêu lặp giá:** Khối giá hiển thị 1 lần duy nhất bên trái footer thẻ, bên phải là nút hành động "Xem thử" và "Mua [X] V" (hoặc "Thêm vào bàn học" khi đã sở hữu).
     * **Trạng thái Đã sở hữu & Tủ tài liệu cá nhân:**

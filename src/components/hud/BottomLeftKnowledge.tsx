@@ -62,6 +62,25 @@ export function BottomLeftKnowledge() {
   const [showQrCode, setShowQrCode] = useState(false);
   const [peersInRoom, setPeersInRoom] = useState<{ id: string; name: string; avatarColor: string }[]>([]);
 
+  // Lắng nghe sự kiện mở modal mời và upload từ menu khác
+  useEffect(() => {
+    const handleOpenInvite = () => {
+      setIsShareModalOpen(true);
+    };
+    const handleTriggerUpload = () => {
+      fileInputRef.current?.click();
+    };
+
+    window.addEventListener('vitudy:open-invite-modal', handleOpenInvite);
+    window.addEventListener('vitudy:open-share-modal', handleOpenInvite);
+    window.addEventListener('vitudy:trigger-upload', handleTriggerUpload);
+    return () => {
+      window.removeEventListener('vitudy:open-invite-modal', handleOpenInvite);
+      window.removeEventListener('vitudy:open-share-modal', handleOpenInvite);
+      window.removeEventListener('vitudy:trigger-upload', handleTriggerUpload);
+    };
+  }, []);
+
   // Esc listener for ShareModal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -413,7 +432,7 @@ export function BottomLeftKnowledge() {
   };
 
   return (
-    <div className="relative flex items-center gap-2 pointer-events-auto select-none font-sans">
+    <div className="relative flex items-center gap-1.5 sm:gap-2 pointer-events-auto select-none font-sans">
       {/* Hidden Native File Explorer Input */}
       <input
         ref={fileInputRef}
@@ -429,12 +448,12 @@ export function BottomLeftKnowledge() {
         disabled={isParsingDoc}
         onClick={() => fileInputRef.current?.click()}
         title={isParsingDoc ? "Đang trích xuất tài liệu..." : "Tải lên tài liệu (PDF, Word, Text, Ảnh...)"}
-        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
+        className="w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
       >
         {isParsingDoc ? (
-          <Loader2 className="w-4.5 h-4.5 text-[#E0562D] animate-spin" />
+          <Loader2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#E0562D] animate-spin" />
         ) : (
-          <Upload className="w-4.5 h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
+          <Upload className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
         )}
       </button>
 
@@ -449,17 +468,17 @@ export function BottomLeftKnowledge() {
 
       {/* 2. Chỉ hiện khi đang ghi hình buổi học (Kích hoạt từ menu dấu + ở thanh công cụ trái) */}
       {isRecording && (
-        <div className="flex items-center gap-2 bg-white/95 border border-red-300 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md animate-fade-in">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+        <div className="flex items-center gap-2 bg-white/95 border border-red-300 rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 shadow-lg backdrop-blur-md animate-fade-in">
+          <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-red-600 animate-pulse" />
           <span className="text-xs font-mono font-bold text-red-600 select-none">
             {formatRecordingTime(recordingSeconds)}
           </span>
           <button
             onClick={handleStopRecording}
             title="Dừng ghi hình"
-            className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ml-0.5 active:scale-95"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ml-0.5 active:scale-95"
           >
-            <Square className="w-3 h-3 fill-white stroke-none" />
+            <Square className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white stroke-none" />
           </button>
         </div>
       )}
@@ -468,11 +487,11 @@ export function BottomLeftKnowledge() {
       <button
         onClick={() => setIsShareModalOpen(true)}
         title="Phòng học nhóm trực tuyến"
-        className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group relative"
+        className="w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group relative"
       >
-        <Share2 className="w-4.5 h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
+        <Share2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
         {supabaseConfigState.isConfigured && (
-          <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-1.5 right-1.5 ring-1 ring-white" />
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 absolute top-1 sm:top-1.5 right-1 sm:right-1.5 ring-1 ring-white" />
         )}
       </button>
 

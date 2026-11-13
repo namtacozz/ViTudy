@@ -4,6 +4,48 @@
 
 ---
 
+## 2026-11-13 22:35 — dev (Tối Ưu Hóa Trải Nghiệm Di Động & Máy Tính Bảng Giống GreenLearn)
+- **Task:** Triển khai kế hoạch tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Mobile & Tablet Responsiveness) kế thừa từ GreenLearn:
+  1. **Device Detection & CSS Engine (`src/hooks/useResponsiveLayout.ts`, `src/app/layout.tsx`, `src/app/globals.css`):**
+     - Hook `useResponsiveLayout` kết hợp User-Agent, `shortestSide < 600px`, và media query `pointer: coarse`.
+     - Script `<head>` đặt `data-device="mobile"` tức thì chống giật giao diện (anti-flicker).
+     - Viewport `viewportFit: 'cover'`, CSS classes hard-locked mobile engine, landscape phone toolbar & subpanels.
+  2. **Multi-Touch Gestures & InfiniteDesk (`src/components/canvas/InfiniteDesk.tsx`, `src/context/StudySpaceContext.tsx`, `src/components/canvas/StudySpaceDeskView.tsx`):**
+     - Pinch-to-zoom 2 ngón quanh trung điểm, 2-finger pan, chặn zoom mặc định của iOS Safari.
+     - Tự động gọi `fitAllToScreen()` khi mở bàn học trên mobile/tablet để vừa vặn màn hình.
+  3. **Drawing Layer & Palm Rejection (`src/components/canvas/DeskDrawingInteractionLayer.tsx`):**
+     - Bộ lọc 40ms touch delay buffer chuyển đổi êm ái sang pinch-zoom và gọi `cancelStroke()` khi phát hiện $\ge 2$ ngón tay.
+     - Palm Rejection cho Stylus (`pointerType === 'pen'`): cho phép tắt vẽ bằng ngón tay (`isFingerDrawingEnabled === false`), biến thao tác chạm ngón tay thành pan/zoom bàn học.
+  4. **HUD Responsive Bàn Học (`LeftCreationBar.tsx`, `TopLeftNav.tsx`, `TopRightWallet.tsx`, `BottomLeftKnowledge.tsx`, `Minimap.tsx`, `BottomRightToolkit.tsx`):**
+     - Minimap tự động ẩn mặc định trên màn hình < 640px, kích thước compact 145x90px, ẩn phím tắt "(Phím M)". Nút mở map responsive touch target 44px.
+     - `LeftCreationBar`: thanh dọc tinh gọn cố định mép trái (`landscape-fixed-toolbar`), kích thước nút responsive `w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11`, thêm nút toggle vẽ ngón tay `Hand`.
+     - `TopLeftNav`: co giãn tìm kiếm, ẩn bớt text thương hiệu trên mobile/landscape phone, avatar kích thước cố định 28x28px shrink-0.
+     - `TopRightWallet`: co giãn responsive nút chuỗi, chợ, ví token và AI bot.
+     - `BottomLeftKnowledge`: nút upload và share responsive, bổ sung event listeners `vitudy:open-invite-modal`, `vitudy:trigger-upload`.
+  5. **Trang Chủ HomePage Mobile (`src/components/home/HomePage.tsx`):**
+     - Thanh điều hướng đáy 5 tab (`responsive-bottom-nav`) cố định đáy trên mobile (< 640px) với padding an toàn (`pb-safe`).
+     - Danh sách thẻ bàn học dạng card dọc cho màn hình nhỏ (`responsive-desk-cards`) thay thế bảng 12 cột.
+     - Nút menu mở drawer di động (`responsive-mobile-menu-btn`) và khoảng đệm đáy an toàn `responsive-mobile-pb`.
+  6. **Kiểm thử & Xác thực:**
+     - Tạo 3 test suites mới: `useResponsiveLayout.test.ts`, `MobileResponsiveDesk.test.tsx`, `DrawingGestureMultiTouch.test.tsx`, `MobileHomePage.test.tsx`.
+     - Chạy toàn bộ 25 test files: 91/91 tests PASS.
+     - Chạy `pnpm build`: Next.js 15.1.7 compiled successfully, 16/16 static pages generated.
+- **Changed:**
+  - `src/app/globals.css`, `src/app/layout.tsx`
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`, `src/components/canvas/InfiniteDesk.tsx`, `src/components/canvas/Minimap.tsx`, `src/components/canvas/StudySpaceDeskView.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`, `src/components/hud/BottomRightToolkit.tsx`, `src/components/hud/LeftCreationBar.tsx`, `src/components/hud/TopLeftNav.tsx`, `src/components/hud/TopRightWallet.tsx`
+  - `src/components/home/HomePage.tsx`, `src/context/StudySpaceContext.tsx`, `AGENTS.md`
+- **Added:**
+  - `src/hooks/useResponsiveLayout.ts`, `src/hooks/useResponsiveLayout.test.ts`
+  - `src/components/canvas/MobileResponsiveDesk.test.tsx`, `src/components/canvas/DrawingGestureMultiTouch.test.tsx`, `src/components/home/MobileHomePage.test.tsx`
+- **Verified by:**
+  - `pnpm test --run` $\rightarrow$ 25/25 test files passed (91 tests).
+  - `pnpm build` $\rightarrow$ 16/16 pages static compiled successfully.
+  - `pnpm run docs:index && pnpm run docs:check` $\rightarrow$ Check OK (282 symbols).
+- **Open follow-ups:** Không có.
+
+---
+
 ## 2026-11-13 21:05 — main (Thực Thi Kế Hoạch Khắc Phục Toàn Diện 7 Giai Đoạn Từ Audit Flow Report)
 - **Task:** Thực hiện trọn vẹn 7 giai đoạn xử lý toàn bộ các lỗ hổng bảo mật, luồng AI, KnowInherit Market, STudy, StudySpace 2.5D và Mobile Companion:
   1. **Phase 1 — Bảo mật ViToken & RLS (`ViTokenService.ts`, `ViTokenContext.tsx`, `TopUpModal.tsx`, `sepay-webhook/index.ts`, `0018_secure_vitoken_and_rls.sql`):**

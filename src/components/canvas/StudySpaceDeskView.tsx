@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { InfiniteDesk } from './InfiniteDesk';
@@ -16,8 +16,20 @@ import { OnboardingTour } from '../onboarding/OnboardingTour';
 import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function StudySpaceDeskView() {
-  const { focusedItemId } = useStudySpace();
+  const { focusedItemId, fitAllToScreen, activeSpaceId } = useStudySpace();
   const isFocusMode = !!focusedItemId;
+
+  // Auto-fit content to screen and center upon opening the desk
+  const autoFittedSpaceRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeSpaceId && autoFittedSpaceRef.current !== activeSpaceId) {
+      autoFittedSpaceRef.current = activeSpaceId;
+      const timer = setTimeout(() => {
+        fitAllToScreen?.();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSpaceId, fitAllToScreen]);
 
   // Independent drawer states for each of the 5 HUD islands in focus mode
   const [showTopLeftInFocus, setShowTopLeftInFocus] = useState(false);
@@ -71,7 +83,7 @@ export default function StudySpaceDeskView() {
       {/* ================= 1. TOP-LEFT NAV HUD (ViTudy | Tên bàn học | Search) ================= */}
       <div 
         className={clsx(
-          "fixed top-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          "fixed top-1 left-1 landscape-phone:left-[56px] landscape-header-offset z-40 transition-transform duration-300 ease-out pointer-events-auto",
           isFocusMode && !showTopLeftInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >
@@ -120,16 +132,11 @@ export default function StudySpaceDeskView() {
         )}
       </div>
 
-      {/* ================= 3. LEFT TOOL CREATION BAR (Responsive Floating Dock on Mobile) ================= */}
+      {/* ================= 3. LEFT TOOL CREATION BAR ================= */}
       <div 
         className={clsx(
-          "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          // Desktop & Tablet (Left centered)
-          "md:left-1 md:top-1/2 md:-translate-y-1/2",
-          isFocusMode && !showLeftInFocus ? "md:-translate-x-[calc(100%+12px)]" : "md:translate-x-0",
-          // Mobile (< 768px): Bottom floating dock
-          "max-md:bottom-2 max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-auto",
-          isFocusMode && !showLeftInFocus ? "max-md:translate-y-[calc(100%+24px)]" : "max-md:translate-y-0"
+          "fixed left-1 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
+          isFocusMode && !showLeftInFocus ? "-translate-x-[calc(100%+12px)]" : "translate-x-0"
         )}
       >
         <LeftCreationBar />
