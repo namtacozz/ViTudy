@@ -30,8 +30,7 @@ import {
   Send
 } from 'lucide-react';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
-import { parsePdfFile } from '@/services/PdfParserService';
-import { parseDocxFile, parsePptxFile, isBinaryOrCorrupted } from '@/services/OfficeParserService';
+import { parseUploadedDocumentFile } from '@/services/OfficeParserService';
 import { formatUploadedDocTitle } from '@/utils/documentNaming';
 
 interface PendingDocument {
@@ -316,60 +315,11 @@ export function BottomLeftKnowledge() {
 
     const isImage = file.type.startsWith('image/');
     const rawName = formatUploadedDocTitle(file.name, isImage);
-    const ext = (file.name.split('.').pop() || '').toLowerCase();
-    const isPdf = file.type === 'application/pdf' || ext === 'pdf';
-    const isDocx = ext === 'docx' || file.type.includes('wordprocessingml');
-    const isPptx = ext === 'pptx' || file.type.includes('presentationml');
-    const isText = file.type.includes('text') || ext === 'md' || ext === 'txt';
 
-    let parsedPages: { title?: string; text: string; image?: string }[] = [];
     setIsParsingDoc(true);
 
     try {
-      if (ext === 'doc') {
-        alert('Định dạng Word .doc cũ (97-2003) chưa được hỗ trợ trực tiếp. Vui lòng lưu sang .docx hoặc .pdf rồi tải lại.');
-        return;
-      }
-
-      if (isPdf) {
-        parsedPages = await parsePdfFile(file);
-      } else if (isDocx) {
-        parsedPages = await parseDocxFile(file);
-      } else if (isPptx) {
-        parsedPages = await parsePptxFile(file);
-      } else if (isImage) {
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        parsedPages = [{
-          title: rawName,
-          text: '',
-          image: dataUrl
-        }];
-      } else if (isText) {
-        const content = await file.text();
-        const buffer = await file.arrayBuffer();
-        const check = isBinaryOrCorrupted(buffer, content);
-        if (check.isCorrupted) {
-          alert(check.reason || 'Tệp chứa dữ liệu nhị phân không hợp lệ.');
-          return;
-        }
-        const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
-        parsedPages = paragraphs.length > 0
-          ? paragraphs.map((p, idx) => ({ title: `Trang ${idx + 1}`, text: p.trim() }))
-          : [{ title: rawName, text: content.trim() }];
-      } else {
-        const buffer = await file.arrayBuffer();
-        const check = isBinaryOrCorrupted(buffer);
-        if (check.isCorrupted) {
-          alert(check.reason || 'Định dạng tệp không được hỗ trợ.');
-          return;
-        }
-        const content = await file.text();
-        parsedPages = [{ title: rawName, text: content.trim() }];
-      }
+      const parsedPages = await parseUploadedDocumentFile(file, rawName);
 
       setPendingDoc({
         file,

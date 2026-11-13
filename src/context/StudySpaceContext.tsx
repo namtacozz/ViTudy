@@ -6,6 +6,7 @@ import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { recognizeSmartShape, recognizeSmartShapeDetailed } from '@/utils/smartShape';
 import { useAuth } from '@/hooks/useAuth';
 import { StudySpaceService, ensureUUID } from '@/services/StudySpaceService';
+import { sanitizeDocumentText } from '@/services/OfficeParserService';
 import { OfflineQueue } from '@/services/OfflineQueue';
 
 export interface CreationPlacementTemplate {
@@ -518,7 +519,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   // Deep NFC normalization & Zero-Emoji sanitizer for persistent storage safety
   const removeEmojis = (str: string) => str.replace(/([\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u27BF])/g, '').trim();
-  const normalizeNFC = (text: string) => (text ? removeEmojis(text.normalize('NFC')) : '');
+  const normalizeNFC = (text: string) => (text ? removeEmojis(sanitizeDocumentText(text).normalize('NFC')) : '');
 
   // Load spaces on startup from Supabase Cloud (when authenticated) or localStorage (guest)
   useEffect(() => {

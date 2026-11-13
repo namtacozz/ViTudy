@@ -99,6 +99,22 @@ function renderInlineContent(text: string): React.ReactNode {
 export const MathRenderer = React.memo(function MathRenderer({ content, className = '' }: MathRendererProps) {
   if (!content) return null;
 
+  // Guard against raw binary/corrupted text (e.g. from legacy dropped .docx) or huge strings freezing KaTeX
+  if (content.includes('\u0000') || (content.startsWith('PK\x03\x04') && content.length > 500)) {
+    return (
+      <div className={`text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 ${className}`}>
+        Tài liệu này chứa dữ liệu nhị phân bị lỗi khi tải lên trước đây. Vui lòng xóa và tải lại tệp đúng định dạng (.docx, .pdf, .pptx, .txt).
+      </div>
+    );
+  }
+  if (content.length > 80000) {
+    return (
+      <div className={`whitespace-pre-wrap text-sm leading-relaxed ${className}`}>
+        {content.slice(0, 80000)}
+      </div>
+    );
+  }
+
   // 1. First split by Block Math ($$...$$ or \[...\])
   const blockMathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\])/g;
   const rawBlocks = content.split(blockMathRegex);

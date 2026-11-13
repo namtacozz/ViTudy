@@ -1,7 +1,26 @@
 import JSZip from 'jszip';
 // @ts-ignore
 import mammoth from 'mammoth';
-import { ParsedPage } from './PdfParserService';
+import { ParsedPage, parsePdfFile } from './PdfParserService';
+
+const CORRUPTED_BINARY_NOTICE =
+  'Tài liệu này chứa dữ liệu nhị phân bị lỗi khi tải lên trước đây. Vui lòng xóa và tải lại tệp đúng định dạng (.docx, .pdf, .pptx, .txt).';
+
+/**
+ * Kiểm tra xem văn bản đã lưu có bị nhiễm dữ liệu nhị phân (ví dụ đọc nhầm .docx/.zip như text) hay không
+ * và làm sạch ký tự NULL (\u0000) để tránh treo MathRenderer / lỗi PostgreSQL.
+ */
+export function sanitizeDocumentText(text: string): string {
+  if (!text) return '';
+  if (text.includes('\u0000') || (text.startsWith('PK\x03\x04') && text.length > 500)) {
+    return CORRUPTED_BINARY_NOTICE;
+  }
+  const replacementChars = (text.match(/\uFFFD/g) || []).length;
+  if (replacementChars > 30 || (text.length > 200 && replacementChars / text.length > 0.05)) {
+    return CORRUPTED_BINARY_NOTICE;
+  }
+  return text.replace(/\u0000/g, '');
+}
 
 /**
  * Kiểm tra xem tệp có chứa chuỗi byte nhị phân hoặc chữ ký không được hỗ trợ
@@ -17,8 +36,14 @@ export function isBinaryOrCorrupted(buffer: ArrayBuffer, previewText?: string): 
     };
   }
 
-  // Tỷ lệ ký tự Unicode rác \uFFFD nếu đọc nhầm binary
+  // Tỷ lệ ký tự Unicode rác \uFFFD hoặc ký tự NULL \u0000 nếu đọc nhầm binary (như ZIP/.docx)
   if (previewText) {
+    if (previewText.includes('\u0000') || previewText.startsWith('PK\x03\x04')) {
+      return {
+        isCorrupted: true,
+        reason: 'Tệp chứa dữ liệu nhị phân không thể đọc được dưới dạng văn bản.'
+      };
+    }
     const replacementChars = (previewText.match(/\uFFFD/g) || []).length;
     if (replacementChars > 15 || (previewText.length > 50 && replacementChars / previewText.length > 0.05)) {
       return {
@@ -105,7 +130,11 @@ export async function parseDocxFile(file: File): Promise<ParsedPage[]> {
   }
 
   try {
-    const result = await mammoth.extractRawText({ arrayBuffer });
+    const isNodeRuntime = typeof process !== 'undefined' && Boolean(process.versions?.node) && typeof Buffer !== 'undefined';
+    const mammothInput = isNodeRuntime
+      ? { buffer: Buffer.from(arrayBuffer) }
+      : { arrayBuffer };
+    const result = await mammoth.extractRawText(mammothInput);
     const rawText = (result.value || '').trim();
 
     if (!rawText) {
@@ -165,4 +194,62 @@ export async function parsePptxFile(file: File): Promise<ParsedPage[]> {
   }
 
   return pages;
+}
+
+/**
+ * Bộ phân tích tệp tải lên dùng chung cho cả nút Tải lên và thao tác kéo-thả vào bàn học.
+ * Đảm bảo .docx, .pptx, .pdf, ảnh và văn bản được xử lý đồng nhất, chặn tuyệt đối tệp nhị phân đọc nhầm thành text.
+ */
+export async function parseUploadedDocumentFile(file: File, formattedTitle: string): Promise<ParsedPage[]> {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const isPdf = file.type === 'application/pdf' || ext === 'pdf';
+  const isDocx = ext === 'docx' || file.type.includes('wordprocessingml');
+  const isPptx = ext === 'pptx' || file.type.includes('presentationml');
+  const isImage = file.type.startsWith('image/');
+  const isText = file.type.includes('text') || ext === 'md' || ext === 'txt';
+
+  if (ext === 'doc') {
+    throw new Error('Định dạng Word .doc cũ (97-2003) chưa được hỗ trợ trực tiếp. Vui lòng lưu sang .docx hoặc .pdf rồi tải lại.');
+  }
+
+  if (isPdf) {
+    return await parsePdfFile(file);
+  }
+  if (isDocx) {
+    return await parseDocxFile(file);
+  }
+  if (isPptx) {
+    return await parsePptxFile(file);
+  }
+  if (isImage) {
+    const reader = new FileReader();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Không thể đọc tệp hình ảnh.'));
+      reader.readAsDataURL(file);
+    });
+    return [{
+      id: `img-${Date.now()}`,
+      pageNumber: 1,
+      title: formattedTitle,
+      text: '',
+      image: dataUrl,
+    }];
+  }
+
+  const buffer = await file.arrayBuffer();
+  const content = await file.text();
+  const check = isBinaryOrCorrupted(buffer, content.slice(0, 4096));
+  if (check.isCorrupted) {
+    throw new Error(check.reason || 'Định dạng tệp không được hỗ trợ hoặc chứa dữ liệu nhị phân.');
+  }
+
+  if (isText) {
+    const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+    return paragraphs.length > 0
+      ? paragraphs.map((p, idx) => ({ id: `txt-${idx + 1}-${Date.now()}`, pageNumber: idx + 1, title: `Trang ${idx + 1}`, text: p.trim() }))
+      : [{ id: `txt-1-${Date.now()}`, pageNumber: 1, title: formattedTitle, text: content.trim() }];
+  }
+
+  return [{ id: `txt-1-${Date.now()}`, pageNumber: 1, title: formattedTitle, text: content.trim() }];
 }

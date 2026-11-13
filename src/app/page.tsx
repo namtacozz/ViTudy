@@ -9,6 +9,7 @@ import { GuestBanner } from '@/components/auth/GuestBanner';
 import { MigrationDialog } from '@/components/auth/MigrationDialog';
 import { HomePage } from '@/components/home/HomePage';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { ModalErrorBoundary } from '@/components/common/ModalErrorBoundary';
 
 const StudySpaceDeskView = dynamic(
   () => import('@/components/canvas/StudySpaceDeskView'),
@@ -98,7 +99,12 @@ function StudySpacePageContent() {
           <span>Chế độ đọc</span>
         </button>
       )}
-      <StudySpaceDeskView />
+      <ModalErrorBoundary
+        fallbackTitle="Không thể hiển thị bàn học này"
+        onReset={() => router.push('/?view=home')}
+      >
+        <StudySpaceDeskView />
+      </ModalErrorBoundary>
       <GuestBanner user={user} />
       <MigrationDialog />
     </>

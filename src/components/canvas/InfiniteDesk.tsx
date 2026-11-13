@@ -16,7 +16,7 @@ import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
 import { MultiplayerCursorsLayer } from './MultiplayerCursorsLayer';
 import { isItemVisible } from '@/lib/viewportCulling';
-import { parsePdfFile } from '@/services/PdfParserService';
+import { parseUploadedDocumentFile } from '@/services/OfficeParserService';
 import { formatUploadedDocTitle } from '@/utils/documentNaming';
 
 export function InfiniteDesk() {
@@ -338,50 +338,17 @@ export function InfiniteDesk() {
     if (files.length === 0) return;
 
     for (const file of files) {
-      const fileName = file.name;
-      const isPdf = file.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
       const isImage = file.type.startsWith('image/');
-      const isText = file.type.includes('text') || fileName.endsWith('.md') || fileName.endsWith('.txt');
-      const docTitle = formatUploadedDocTitle(fileName, isImage);
+      const docTitle = formatUploadedDocTitle(file.name, isImage);
 
       try {
-        if (isPdf) {
-          const parsedPages = await parsePdfFile(file);
-          if (parsedPages.length > 0) {
-            addUploadedDocument(docTitle, parsedPages);
-            continue;
-          }
-        } else if (isImage) {
-          const reader = new FileReader();
-          const dataUrl = await new Promise<string>((resolve) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          addUploadedDocument(docTitle, [{
-            title: docTitle,
-            text: '',
-            image: dataUrl,
-          }]);
-          continue;
-        } else if (isText) {
-          const text = await file.text();
-          const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
-          const pages = paragraphs.length > 0 
-            ? paragraphs.map((para, i) => ({ title: `Trang ${i + 1}`, text: para }))
-            : [{ title: docTitle, text }];
-          addUploadedDocument(docTitle, pages);
-          continue;
+        const parsedPages = await parseUploadedDocumentFile(file, docTitle);
+        if (parsedPages.length > 0) {
+          addUploadedDocument(docTitle, parsedPages);
         }
-
-        // Fallback: try reading as text
-        try {
-          const text = await file.text();
-          addUploadedDocument(docTitle, [{ title: docTitle, text }]);
-        } catch {
-          addUploadedDocument(docTitle, [{ title: docTitle, text: `Tệp ${docTitle}` }]);
-        }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Lỗi nạp tệp kéo thả vào bàn học:', err);
+        alert(err?.message || 'Không thể đọc tệp này. Vui lòng kiểm tra lại định dạng (.pdf, .docx, .pptx, .txt, ảnh).');
       }
     }
   };
@@ -444,7 +411,7 @@ export function InfiniteDesk() {
         }}
       >
         {/* Render all Desk Items (with Viewport Culling optimization) */}
-        {activeSpace.items.map((item) => {
+        {(activeSpace?.items || []).map((item) => {
           const isSelected = selectedItemId === item.id;
           const isFocused = focusedItemId === item.id;
           const isVisible =

@@ -1,6 +1,7 @@
 import { getSupabase } from '@/lib/supabase';
 import { StudySpace, DeskItem, DrawingStroke, IntelineThread, PageContent } from '@/types/studyspace';
 import { Database, Json } from '@/types/database.types';
+import { sanitizeDocumentText } from './OfficeParserService';
 
 type DeskDocumentRow = Database['public']['Tables']['desk_documents']['Row'];
 type DeskDocumentInsert = Database['public']['Tables']['desk_documents']['Insert'];
@@ -61,10 +62,15 @@ export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInse
 }
 
 export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): DeskItem {
+  const safePages = (pages || []).map(p => ({
+    ...p,
+    title: p.title ? sanitizeDocumentText(p.title) : p.title,
+    text: sanitizeDocumentText(p.text || ''),
+  }));
   return {
     id: row.id,
     type: row.item_type,
-    title: row.title,
+    title: sanitizeDocumentText(row.title || ''),
     x: row.x,
     y: row.y,
     rotation: row.rotation,
@@ -72,7 +78,7 @@ export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): 
     zIndex: row.z_index,
     pageCount: row.page_count,
     currentPageIndex: row.current_page_index,
-    pages,
+    pages: safePages,
     colorTheme: row.color_theme || undefined,
     coverColor: row.cover_color || undefined,
     isBinder: row.is_binder,
@@ -237,8 +243,8 @@ export class StudySpaceService {
             id: p.id.includes('-') && p.id.length === 36 ? p.id : undefined,
             document_id: safeItemId,
             page_number: p.pageNumber,
-            title: p.title || null,
-            content: p.text || '',
+            title: p.title ? sanitizeDocumentText(p.title) : null,
+            content: sanitizeDocumentText(p.text || ''),
           }));
           await supabase.from('document_pages').upsert(pageRows, { onConflict: 'document_id,page_number' });
         }
