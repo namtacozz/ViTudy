@@ -175,6 +175,36 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   // Focus Reading Mode state
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+
+  // Khôi phục vị trí camera theo từng bàn học
+  useEffect(() => {
+    if (!activeSpaceId || typeof window === 'undefined') return;
+    try {
+      const savedCam = localStorage.getItem(`vitudy_cam_${activeSpaceId}`);
+      if (savedCam) {
+        const parsed = JSON.parse(savedCam);
+        if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number' && typeof parsed?.scale === 'number') {
+          setTransform({
+            x: parsed.x,
+            y: parsed.y,
+            scale: parsed.scale,
+            rotation: typeof parsed.rotation === 'number' ? parsed.rotation : 0,
+          });
+        }
+      }
+    } catch {}
+  }, [activeSpaceId]);
+
+  // Tự động lưu vị trí camera khi di chuyển (trừ lúc đang Focus Mode)
+  useEffect(() => {
+    if (!activeSpaceId || !isLoaded || focusedItemId || typeof window === 'undefined') return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(`vitudy_cam_${activeSpaceId}`, JSON.stringify(transform));
+      } catch {}
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [transform, activeSpaceId, isLoaded, focusedItemId]);
   const [preFocusTransform, setPreFocusTransform] = useState<CanvasTransform | null>(null);
   const [isFocusNoticeVisible, setIsFocusNoticeVisible] = useState(false);
   const focusNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -2181,7 +2211,7 @@ Trong đó:
 
   const addUploadedDocument = (title: string, rawPages: { title?: string; text: string; image?: string }[]) => {
     const pageCount = rawPages.length;
-    const type: 'paper' | 'book' = pageCount <= 1 ? 'paper' : 'book';
+    const type: 'paper' | 'book' = pageCount < 5 ? 'paper' : 'book';
 
     const pages: PageContent[] = rawPages.map((p, idx) => ({
       id: `p-${Date.now()}-${idx}`,
@@ -2452,7 +2482,12 @@ Trong đó:
     setSpaces(sList => {
       const nextList = sList.map(s => {
         if (s.id !== activeSpaceId) return s;
-        return { ...s, updatedAt: new Date().toISOString(), items: s.items.filter(item => item.id !== id) };
+        return {
+          ...s,
+          updatedAt: new Date().toISOString(),
+          items: s.items.filter(item => item.id !== id),
+          threads: (s.threads || []).filter(t => t.sourceItemId !== id),
+        };
       });
       syncLocal(nextList);
       return nextList;

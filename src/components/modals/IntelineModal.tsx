@@ -32,7 +32,7 @@ export function IntelineModal({
   onClose
 }: IntelineModalProps) {
   const { activeSpace, addIntelineThread } = useStudySpace();
-  const { wallet, aiConfig, spendTokens } = useViToken();
+  const { wallet, aiConfig, spendTokens, syncBalanceFromServer } = useViToken();
 
   const [question, setQuestion] = useState('');
   const [attachedDocIds, setAttachedDocIds] = useState<string[]>([]);
@@ -63,7 +63,6 @@ export function IntelineModal({
         alert('Số dư ViToken chưa đủ để đặt câu hỏi. Hãy điểm danh hàng ngày hoặc dùng khóa AI cá nhân.');
         return;
       }
-      spendTokens(cost, `Hỏi Inteline: "${q.slice(0, 30)}..."`);
     }
 
     setLoading(true);
@@ -86,6 +85,12 @@ CÂU HỎI: "${q}"
 
 Yêu cầu: Trả lời tự nhiên, chính xác, súc tích và dễ hiểu.`,
       });
+
+      if (typeof data.balanceAfter === 'number') {
+        syncBalanceFromServer(data.balanceAfter);
+      } else if (aiConfig.provider === 'system') {
+        spendTokens(1, `Hỏi Inteline: "${q.slice(0, 30)}..."`);
+      }
 
       if (data.reply) {
         setAnswer(data.reply);

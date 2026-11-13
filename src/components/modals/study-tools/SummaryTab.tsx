@@ -18,7 +18,7 @@ interface SummaryTabProps {
 
 export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: SummaryTabProps) {
   const { addStickyNote } = useStudySpace();
-  const { aiConfig, spendTokens } = useViToken();
+  const { wallet, aiConfig, spendTokens, syncBalanceFromServer } = useViToken();
 
   const cacheKey = documentTitle || 'default-doc';
   const cachedData = getStudyCache(cacheKey);
@@ -47,17 +47,14 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
     }
 
     // AI Enhanced Summarization
-    if (aiConfig.provider === 'system') {
-      const ok = spendTokens(2, `Tóm tắt chuyên sâu: ${documentTitle.slice(0, 30)}`);
-      if (!ok) {
-        alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang động cơ Non-AI miễn phí.');
-        setUseAi(false);
-        const res = summarizeWithTextRank(fullText, 4);
-        const text = res.join('\n\n');
-        setSummaryResult(text);
-        setStudyCache(cacheKey, { summaryResult: text });
-        return;
-      }
+    if (aiConfig.provider === 'system' && wallet.balance < 2) {
+      alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang động cơ Non-AI miễn phí.');
+      setUseAi(false);
+      const res = summarizeWithTextRank(fullText, 4);
+      const text = res.join('\n\n');
+      setSummaryResult(text);
+      setStudyCache(cacheKey, { summaryResult: text });
+      return;
     }
 
     setLoading(true);
@@ -69,6 +66,12 @@ export function SummaryTab({ fullText, documentTitle, isPaper, targetPos }: Summ
         prompt: `Hãy tóm tắt văn bản sau thành 3 đến 5 gạch đầu dòng súc tích, làm nổi bật các khái niệm trọng tâm nhất để ôn thi:`,
         context: fullText.slice(0, 4000),
       });
+
+      if (typeof data.balanceAfter === 'number') {
+        syncBalanceFromServer(data.balanceAfter);
+      } else if (aiConfig.provider === 'system') {
+        spendTokens(2, `Tóm tắt chuyên sâu: ${documentTitle.slice(0, 30)}`);
+      }
 
       if (data.reply) {
         setSummaryResult(data.reply);

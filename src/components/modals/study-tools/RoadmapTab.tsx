@@ -25,7 +25,7 @@ interface RoadmapTabProps {
 
 export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTabProps) {
   const { setBookPage } = useStudySpace();
-  const { aiConfig, spendTokens } = useViToken();
+  const { wallet, aiConfig, spendTokens, syncBalanceFromServer } = useViToken();
 
   const cacheKey = itemId || 'default-doc';
   const cachedData = getStudyCache(cacheKey);
@@ -49,14 +49,11 @@ export function RoadmapTab({ pages, itemType, itemId, onJumpToPage }: RoadmapTab
       return;
     }
 
-    if (aiConfig.provider === 'system') {
-      const ok = spendTokens(2, 'Dựng lộ trình học AI');
-      if (!ok) {
-        alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang dựng lộ trình Non-AI.');
-        setUseAi(false);
-        setRoadmap(extractOutlineAndRoadmap(pages));
-        return;
-      }
+    if (aiConfig.provider === 'system' && wallet.balance < 2) {
+      alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang dựng lộ trình Non-AI.');
+      setUseAi(false);
+      setRoadmap(extractOutlineAndRoadmap(pages));
+      return;
     }
 
     setLoading(true);
@@ -85,6 +82,12 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
         prompt,
         context: fullContext.slice(0, 4000),
       });
+
+      if (typeof data.balanceAfter === 'number') {
+        syncBalanceFromServer(data.balanceAfter);
+      } else if (aiConfig.provider === 'system') {
+        spendTokens(2, 'Dựng lộ trình học AI');
+      }
 
       const rawText = data.reply || '';
       const match = rawText.match(/\[[\s\S]*\]/);
@@ -162,11 +165,22 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
                   className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-300 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold font-mono shrink-0">
-                      {idx + 1}
-                    </div>
+                    <button
+                      type="button"
+                      title={step.isCompleted ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành chặng'}
+                      onClick={() => {
+                        setRoadmap(prev => prev.map((s, i) => i === idx ? { ...s, isCompleted: !s.isCompleted } : s));
+                      }}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono shrink-0 transition-colors cursor-pointer ${
+                        step.isCompleted
+                          ? 'bg-[#E0562D] text-white'
+                          : 'bg-slate-900 text-white hover:bg-slate-700'
+                      }`}
+                    >
+                      {step.isCompleted ? '✓' : idx + 1}
+                    </button>
                     <div>
-                      <h5 className="text-xs font-bold text-slate-900">
+                      <h5 className={`text-xs font-bold ${step.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                         <MathRenderer content={step.title} />
                       </h5>
                       <div className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">
@@ -186,6 +200,7 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
                         onClick={() => {
                           if (step.pageIndex !== undefined) {
                             setBookPage(itemId, step.pageIndex);
+                            onJumpToPage?.(step.pageIndex);
                           }
                         }}
                         className="p-1 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors cursor-pointer"

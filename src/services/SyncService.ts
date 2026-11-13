@@ -100,11 +100,27 @@ export class SyncService {
           targetStickyId: result.idMap[thread.targetStickyId] || thread.targetStickyId,
         }));
 
-        // Upsert items & threads to cloud
+        // Upsert items, threads & strokes to cloud
         await StudySpaceService.upsertItems(newSpaceId, remappedItems);
         if (remappedThreads.length > 0) {
           await StudySpaceService.saveThreads(newSpaceId, remappedThreads);
         }
+
+        try {
+          const rawStrokes = localStorage.getItem(`vitudy_strokes_${space.id}`);
+          if (rawStrokes) {
+            const parsedStrokes = JSON.parse(rawStrokes);
+            if (Array.isArray(parsedStrokes) && parsedStrokes.length > 0) {
+              const remappedStrokes = parsedStrokes.map((st: any) => ({
+                ...st,
+                attachedToItemId: st.attachedToItemId
+                  ? (result.idMap[st.attachedToItemId] || st.attachedToItemId)
+                  : undefined,
+              }));
+              await StudySpaceService.saveStrokes(newSpaceId, remappedStrokes);
+            }
+          }
+        } catch {}
 
         result.migrated += remappedItems.length;
       }

@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useViToken } from '@/context/ViTokenContext';
+import { useAuth } from '@/context/AuthContext';
 import { getAssetPath } from '@/lib/assets';
 import { 
   Store, 
@@ -32,6 +33,7 @@ import { SelectSpaceForDocModal } from './SelectSpaceForDocModal';
 import { ModalErrorBoundary } from '@/components/common/ModalErrorBoundary';
 import { INITIAL_MARKET_ITEMS, MarketItem } from '@/data/marketMockData';
 import { getPurchasedItemIds, recordPurchasedItemId } from '@/services/MarketPurchaseStorage';
+import { KnowInheritService } from '@/services/KnowInheritService';
 
 interface MarketModalProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ interface MarketModalProps {
 export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) {
   const { addUploadedDocument, addExamSheet, activeSpace, addMarketItemToSpace } = useStudySpace();
   const { purchaseKnowledgeItem, addTokens, wallet } = useViToken();
+  const { user } = useAuth();
 
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [selectedDeskItemId, setSelectedDeskItemId] = useState<string>('');
@@ -55,10 +58,26 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
   const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isOpen) {
-      setPurchasedIds(getPurchasedItemIds());
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+    const localIds = getPurchasedItemIds();
+    setPurchasedIds(localIds);
+
+    let cancelled = false;
+    KnowInheritService.fetchPublishedListings(user?.id).then(({ items, fromServer }) => {
+      if (cancelled) return;
+      if (fromServer && items.length > 0) {
+        const serverPurchased = items.filter((i) => i.purchased).map((i) => i.id);
+        const merged = Array.from(new Set([...localIds, ...serverPurchased]));
+        setPurchasedIds(merged);
+        setMarketItems(
+          items.map((i) => ({ ...i, purchased: merged.includes(i.id) }))
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, user?.id]);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,7 +222,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
       return;
     }
 
-    const success = purchaseKnowledgeItem(item.price, item.title, item.author);
+    const success = purchaseKnowledgeItem(item.price, item.title, item.author, item.id);
     if (success) {
       recordPurchasedItemId(item.id);
       setPurchasedIds(prev => [...prev, item.id]);
@@ -877,6 +896,18 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                 <div className="whitespace-pre-line font-mono text-xs text-stone-800 bg-stone-50 p-3 rounded-lg border border-stone-200 leading-relaxed">
                   {previewItem.previewText}
                 </div>
+                {!isItemPurchased(previewItem) && previewItem.pages && previewItem.pages.length > 1 && (
+                  <div className="relative overflow-hidden rounded-lg border border-stone-200 bg-stone-50 p-3">
+                    <div className="font-mono text-xs text-stone-700 blur-[4px] select-none pointer-events-none leading-relaxed">
+                      {previewItem.pages[1]?.text?.slice(0, 240) || previewItem.previewText}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/40">
+                      <span className="px-3 py-1.5 rounded-lg bg-white border border-stone-200 text-xs font-semibold text-stone-800 shadow-xs">
+                        Mở tài liệu để xem toàn bộ {previewItem.pages.length} trang
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {previewItem.pages && previewItem.pages.length > 0 && (

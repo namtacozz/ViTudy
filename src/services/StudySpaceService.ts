@@ -250,7 +250,10 @@ export class StudySpaceService {
     if (!supabase || !itemId) return;
 
     try {
-      await supabase.from('desk_documents').delete().eq('id', itemId);
+      await Promise.all([
+        supabase.from('desk_documents').delete().eq('id', itemId),
+        supabase.from('inteline_threads').delete().eq('source_item_id', itemId),
+      ]);
     } catch (err) {
       console.warn('Lỗi deleteItem:', err);
     }

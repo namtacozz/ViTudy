@@ -14,6 +14,7 @@ import { MindMapConnectors } from './MindMapConnectors';
 import { VisualLinkThreads } from './VisualLinkThreads';
 import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
+import { MultiplayerCursorsLayer } from './MultiplayerCursorsLayer';
 import { isItemVisible } from '@/lib/viewportCulling';
 import { parsePdfFile } from '@/services/PdfParserService';
 import { formatUploadedDocTitle } from '@/utils/documentNaming';
@@ -395,6 +396,14 @@ export function InfiniteDesk() {
   return (
     <div
       ref={containerRef}
+      onMouseMove={(e) => {
+        if (typeof window === 'undefined' || !window.location.search.includes('room=')) return;
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const worldX = (e.clientX - rect.left - transform.x) / transform.scale;
+        const worldY = (e.clientY - rect.top - transform.y) / transform.scale;
+        window.dispatchEvent(new CustomEvent('vitudy_cursor_broadcast', { detail: { x: worldX, y: worldY } }));
+      }}
       onMouseDownCapture={handleMouseDownCapture}
       onDoubleClickCapture={handleDoubleClickCapture}
       onMouseDown={handleMouseDown}
@@ -490,6 +499,9 @@ export function InfiniteDesk() {
 
         {/* Physical Detective Red String Threads on TOP of items and pins */}
         <VisualLinkThreads />
+
+        {/* Live Multiplayer Cursors */}
+        <MultiplayerCursorsLayer />
       </div>
 
       {/* Top-Level Full-Screen Drawing, Creation & Eraser Layer */}

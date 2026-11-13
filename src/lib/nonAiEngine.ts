@@ -73,12 +73,26 @@ export function splitSentences(text: string): string[] {
 /**
  * 2. Tokenize và tính tần suất từ (TF-IDF nhẹ)
  */
+const VI_COMPOUND_TERMS = [
+  'hàm số', 'đạo hàm', 'tích phân', 'vi phân', 'giới hạn', 'phương trình', 'bất đẳng thức',
+  'ma trận', 'không gian', 'ánh xạ', 'xác suất', 'thống kê', 'biến cố', 'phân phối',
+  'cấu trúc dữ liệu', 'giải thuật', 'thuật toán', 'đệ quy', 'độ phức tạp', 'cây nhị phân',
+  'học máy', 'trí tuệ nhân tạo', 'mạng nơ-ron', 'cung cầu', 'cân bằng', 'kinh tế vi mô',
+  'vận tốc', 'gia tốc', 'định luật', 'động lượng', 'năng lượng', 'cơ năng'
+];
+
 function tokenize(sentence: string): string[] {
   // Thay thế các công thức toán LaTeX trước khi tokenize để không tách từ khóa toán
-  const clean = sentence
+  let clean = sentence
     .replace(/(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^\$\n]+?\$|\\\([\s\S]+?\\\))/g, ' ')
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s_]/gu, ' ');
+
+  for (const term of VI_COMPOUND_TERMS) {
+    if (clean.includes(term)) {
+      clean = clean.replaceAll(term, term.replace(/\s+/g, '_'));
+    }
+  }
 
   return clean
     .split(/\s+/)
@@ -306,7 +320,7 @@ export function extractOutlineAndRoadmap(pages: { title?: string; text: string }
 
     const wordCount = page.text.split(/\s+/).length;
     // Tốc độ đọc ước tính: 200 từ/phút, tối thiểu 2 phút
-    const estimatedMinutes = Math.max(2, Math.round(wordCount / 180));
+    const estimatedMinutes = Math.max(2, Math.round(wordCount / 200));
 
     steps.push({
       id: `step-${pageIdx}`,

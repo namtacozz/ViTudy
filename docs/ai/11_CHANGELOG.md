@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-11-13 21:05 — main (Thực Thi Kế Hoạch Khắc Phục Toàn Diện 7 Giai Đoạn Từ Audit Flow Report)
+- **Task:** Thực hiện trọn vẹn 7 giai đoạn xử lý toàn bộ các lỗ hổng bảo mật, luồng AI, KnowInherit Market, STudy, StudySpace 2.5D và Mobile Companion:
+  1. **Phase 1 — Bảo mật ViToken & RLS (`ViTokenService.ts`, `ViTokenContext.tsx`, `TopUpModal.tsx`, `sepay-webhook/index.ts`, `0018_secure_vitoken_and_rls.sql`):**
+     - Gỡ bỏ hoàn toàn backdoor 9999 ViToken cho tài khoản cá nhân trên client.
+     - Bổ sung `spend_vitoken` RPC và `publish_know_inherit_listing` RPC trên Supabase; khóa `INSERT/UPDATE` trực tiếp vào `know_inherit_listings`.
+     - Chặn chế độ nạp 0đ (`isDevMode`) chỉ chạy trong `NODE_ENV === 'development'`.
+     - Loại bỏ `EXPECTED_API_KEY` cứng trong `sepay-webhook`, chuyển sang so sánh constant-time `timingSafeEqualStr`.
+  2. **Phase 2 — AI Gateway & Đa nhà cung cấp (`ai-chat/index.ts`, `aiClient.ts`, `byokStore.ts`, `SummaryTab.tsx`, `QuizTab.tsx`, `FlashcardTab.tsx`, `RoadmapTab.tsx`, `IntelineModal.tsx`):**
+     - Sửa định tuyến `provider === 'system'` với Gemini sang API Google Gemini (hoặc fallback sang OpenAI nếu thiếu `GEMINI_API_KEY`), sửa lỗi toán tử chuỗi `cleanContext` trong `ai-chat`.
+     - Hoàn thiện **Anthropic Claude (`byok_claude`)** cả ở Edge Function `ai-chat` lẫn client-side `callDirectClaude`.
+     - Triệt tiêu lỗi double-debit ViToken bằng `syncBalanceFromServer(data.balanceAfter)`.
+     - Obfuscate khóa BYOK trong `ByokStore` kết hợp `sessionStorage`/`localStorage`.
+  3. **Phase 3 — Chợ Tài Liệu KnowInherit Dữ Liệu Thật (`KnowInheritService.ts`, `0019_seed_real_know_inherit.sql`, `MarketModal.tsx`, `KnowInheritPublishModal.tsx`):**
+     - Nạp 6 tài liệu học thuật thật từ Wikipedia Tiếng Việt (CC BY-SA 4.0) vào `know_inherit_listings` qua migration `0019`.
+     - Kết nối `MarketModal` và `KnowInheritPublishModal` với Supabase (`fetchPublishedListings`, `publishListing`, `purchaseKnowledgeItem` RPC) và bổ sung lớp xem thử làm mờ (`blur-[4px]`) cho trang chưa mở khóa.
+  4. **Phase 4 — STudy, Non-AI Engine & Kiểm định Điểm Thi (`nonAiEngine.ts`, `RoadmapTab.tsx`, `FlashcardService.ts`, `StudySpaceContext.tsx`, `StudySpaceService.ts`, `0020_exam_validation.sql`):**
+     - Đồng bộ tốc độ đọc 200 từ/phút và bổ sung nhận diện cụm từ ghép tiếng Việt trong `nonAiEngine.ts`.
+     - Hỗ trợ đánh dấu hoàn thành từng chặng và nhảy trang (`onJumpToPage`) trong `RoadmapTab.tsx`.
+     - Chuyển `FlashcardService` sang múi giờ `Asia/Ho_Chi_Minh`.
+     - Tự động dọn `inteline_threads` mồ côi khi xóa vật thể (`removeDeskItem`, `deleteItem`).
+     - Thêm validation server-side tính lại điểm hệ 10 trong `submit_exam_attempt` (`0020_exam_validation.sql`).
+  5. **Phase 5 — StudySpace 2.5D, Camera & Multiplayer (`StudySpaceContext.tsx`, `SyncService.ts`, `InfiniteDesk.tsx`, `MultiplayerCursorsLayer.tsx`, `MultiplayerBar.tsx`):**
+     - Chuẩn hóa phân loại tài liệu: `pageCount < 5 ? 'paper' : 'book'`.
+     - Lưu & khôi phục vị trí camera (`transform`) theo từng bàn học trong `localStorage`.
+     - Đồng bộ migration nét vẽ (`vitudy_strokes_<spaceId>`) lên cloud trong `SyncService.migrateToCloud`.
+     - Gắn `MultiplayerCursorsLayer` vào `InfiniteDesk` và truyền tọa độ con trỏ thế giới thực khi ở trong phòng học nhóm.
+  6. **Phase 6 — Mobile Companion & CSP (`MobileCompanionView.tsx`, `layout.tsx`):**
+     - Nâng cấp `MobileCompanionView` lên 4 tab (`Tài liệu`, `Thẻ ghi nhớ` SM-2, `Trắc nghiệm`, `Ghi chú`).
+     - Bổ sung `<meta httpEquiv="Content-Security-Policy">` tương thích static export.
+  7. **Phase 7 — Kiểm thử & Tài liệu:**
+     - Thêm test cho `nonAiEngine`, `KnowInheritService`, `ByokStore` obfuscation.
+     - `pnpm test` (21/21 files, 68/68 tests pass), `npx tsc --noEmit` (0 errors), `pnpm run build:pages` (16/16 static pages pass).
+
+---
+
 ## 2026-11-12 21:15 — main (Cải Tiến Cockpit Trang Chủ, Gói Nạp ViToken, Cài Đặt AI ViTAI/ChatGPT & Cố Định Trạng Thái Bàn Học)
 - **Task:**
   1. **Tái Thiết Kế Cockpit Trang Chủ (`HomePage.tsx`, `StudySpaceContext.tsx`):**

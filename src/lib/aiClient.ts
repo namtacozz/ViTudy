@@ -293,6 +293,10 @@ export async function askAi(req: AskAiRequest): Promise<AskAiResult> {
     return callDirectOpenAi({ ...req, apiKey: resolvedApiKey });
   }
 
+  if (req.provider === 'byok_claude' && resolvedApiKey && (!supabaseUrl || !jwtToken)) {
+    return callDirectClaude({ ...req, apiKey: resolvedApiKey });
+  }
+
   const authBearer = jwtToken || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   // Nếu chưa đăng nhập và đang ở chế độ system (hoặc chưa cấu hình Supabase)
@@ -406,6 +410,35 @@ async function callDirectOpenAi(req: AskAiRequest): Promise<AskAiResult> {
   return { reply, provider: 'byok_openai' };
 }
 
+async function callDirectClaude(req: AskAiRequest): Promise<AskAiResult> {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': req.apiKey || '',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: req.model || 'claude-3-5-sonnet-latest',
+      max_tokens: req.maxTokens || 1024,
+      system: 'Bạn là trợ lý học tập ViTudy thông minh, giải thích ngắn gọn, chính xác.',
+      messages: [
+        { role: 'user', content: req.context ? `NGỮ CẢNH:\n${req.context}\n\nCÂU HỎI:\n${req.prompt}` : req.prompt },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Anthropic Claude lỗi (${res.status}): ${errText.slice(0, 150)}`);
+  }
+
+  const data = await res.json();
+  const reply = data.content?.[0]?.text || 'Không có phản hồi từ Claude.';
+  return { reply, provider: 'byok_claude' };
+}
+
 export async function testAiConnection(params: {
   provider: AiProvider;
   model: string;
@@ -414,6 +447,25 @@ export async function testAiConnection(params: {
 }): Promise<{ success: boolean; latencyMs: number; message: string }> {
   const startTime = Date.now();
   try {
+    if (params.provider === 'byok_claude') {
+      if (!params.apiKey || !params.apiKey.trim()) {
+        throw new Error('Vui lòng nhập Anthropic Claude API Key trước khi kiểm tra.');
+      }
+      await callDirectClaude({
+        provider: 'byok_claude',
+        model: params.model,
+        apiKey: params.apiKey.trim(),
+        prompt: 'Kiểm tra kết nối. Trả lời đúng 1 từ: OK',
+        maxTokens: 16,
+      });
+      const latency = Date.now() - startTime;
+      return {
+        success: true,
+        latencyMs: latency,
+        message: `Anthropic Claude sẵn sàng! Mô hình ${params.model} phản hồi sau ${latency}ms.`,
+      };
+    }
+
     if (params.provider === 'system') {
       const res = await askAi({
         provider: 'system',
@@ -480,17 +532,6 @@ export async function testAiConnection(params: {
         success: true,
         latencyMs: Date.now() - startTime,
         message: `Kết nối thành công! OpenAI (${model}) phản hồi sau ${Date.now() - startTime}ms.`,
-      };
-    }
-
-    if (params.provider === 'byok_claude') {
-      if (!params.apiKey || !params.apiKey.trim()) {
-        throw new Error('Vui lòng nhập Anthropic Claude API Key trước khi kiểm tra.');
-      }
-      return {
-        success: true,
-        latencyMs: Date.now() - startTime,
-        message: `Khóa API Claude đã được lưu hợp lệ trên trình duyệt của bạn.`,
       };
     }
 

@@ -42,8 +42,24 @@ export function MultiplayerBar() {
     isFollowPresenter,
     setIsFollowPresenter,
     toggleSimulation,
-    leaveRoom
+    leaveRoom,
+    broadcastCursor
   } = useRealtimeMultiplayer(activeSpace.id, 'Bạn (Chủ bàn)', true);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('vitudy_peers_update', { detail: peers }));
+  }, [peers]);
+
+  useEffect(() => {
+    const onCursorBroadcast = (e: Event) => {
+      const pos = (e as CustomEvent<{ x: number; y: number }>).detail;
+      if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+        broadcastCursor(pos.x, pos.y);
+      }
+    };
+    window.addEventListener('vitudy_cursor_broadcast', onCursorBroadcast);
+    return () => window.removeEventListener('vitudy_cursor_broadcast', onCursorBroadcast);
+  }, [broadcastCursor]);
 
   useEffect(() => {
     setMounted(true);

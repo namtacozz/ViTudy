@@ -34,12 +34,7 @@ export class ViTokenService {
         return DEFAULT_WALLET;
       }
 
-      let balance = profile.vitoken_balance;
-      // Đặc quyền cấp 5000 ViToken cho tài khoản tác giả namtacozz@gmail.com
-      if (profile.email === 'namtacozz@gmail.com' && balance < 5000) {
-        balance = 5000;
-        await supabase.from('profiles').update({ vitoken_balance: 5000 }).eq('id', userId);
-      }
+      const balance = profile.vitoken_balance;
 
       const history = await this.getHistory(userId, 50);
 
@@ -105,6 +100,31 @@ export class ViTokenService {
     } catch (err) {
       console.warn('Lỗi claimStreak qua RPC:', err);
       return { success: false, earned: 0, streak: 1, balanceAfter: 50 };
+    }
+  }
+
+  static async spendTokensServer(
+    amount: number,
+    type: string,
+    description: string,
+    reference?: string
+  ): Promise<{ success: boolean; balanceAfter?: number; error?: string }> {
+    const supabase = getSupabase();
+    if (!supabase) return { success: false, error: 'Supabase not configured' };
+
+    try {
+      const { data, error } = await supabase.rpc('spend_vitoken', {
+        p_amount: amount,
+        p_type: type,
+        p_description: description,
+        p_reference: reference || null,
+      });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, balanceAfter: typeof data === 'number' ? data : undefined };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Unknown error' };
     }
   }
 

@@ -1,14 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PeerUser } from '@/hooks/useRealtimeMultiplayer';
 import { MousePointer2 } from 'lucide-react';
 
 interface MultiplayerCursorsLayerProps {
-  peers: PeerUser[];
+  peers?: PeerUser[];
 }
 
-export function MultiplayerCursorsLayer({ peers }: MultiplayerCursorsLayerProps) {
+export function MultiplayerCursorsLayer({ peers: propPeers }: MultiplayerCursorsLayerProps) {
+  const [eventPeers, setEventPeers] = useState<PeerUser[]>([]);
+
+  useEffect(() => {
+    if (propPeers !== undefined) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<PeerUser[]>).detail;
+      if (Array.isArray(detail)) setEventPeers(detail);
+    };
+    window.addEventListener('vitudy_peers_update', handler);
+    return () => window.removeEventListener('vitudy_peers_update', handler);
+  }, [propPeers]);
+
+  const peers = propPeers ?? eventPeers;
   const peersWithCursor = peers.filter(p => p.cursor && typeof p.cursor.x === 'number');
 
   if (peersWithCursor.length === 0) return null;

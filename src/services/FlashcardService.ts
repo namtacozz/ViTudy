@@ -26,12 +26,25 @@ export function generateCardHash(front: string, back: string): string {
   return `h_${Math.abs(hash).toString(16)}`;
 }
 
+function getTodayVNDate(): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  } catch {
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
 export class FlashcardService {
   static async getCardsForReview(userId: string): Promise<FlashcardReview[]> {
     const supabase = getSupabase();
     if (!supabase) return [];
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayVNDate();
 
     try {
       const { data, error } = await supabase
@@ -73,7 +86,7 @@ export class FlashcardService {
       easinessFactor: 2.5,
       interval: 1,
       repetitions: 0,
-      nextReviewDate: new Date().toISOString().split('T')[0],
+      nextReviewDate: getTodayVNDate(),
     };
 
     if (supabase) {

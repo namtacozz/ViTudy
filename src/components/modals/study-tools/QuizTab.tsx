@@ -38,7 +38,7 @@ export function QuizTab({
   activePageText 
 }: QuizTabProps) {
   const { addExamSheet, addStickyNote } = useStudySpace();
-  const { wallet, aiConfig, spendTokens } = useViToken();
+  const { wallet, aiConfig, spendTokens, syncBalanceFromServer } = useViToken();
 
   const cacheKey = documentTitle || 'default-doc';
   const cachedData = getStudyCache(cacheKey);
@@ -121,8 +121,9 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
       const parsedList = parseQuizJsonSafely(rawText);
 
       if (parsedList.length > 0) {
-        // Chỉ trừ ViToken khi sinh thành công từ AI hệ thống
-        if (isSystemAi) {
+        if (typeof data.balanceAfter === 'number') {
+          syncBalanceFromServer(data.balanceAfter);
+        } else if (isSystemAi) {
           spendTokens(2, `Tạo trắc nghiệm AI (${parsedList.length} câu): ${documentTitle.slice(0, 25)}`);
         }
 

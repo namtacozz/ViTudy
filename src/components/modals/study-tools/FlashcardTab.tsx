@@ -28,7 +28,7 @@ interface FlashcardTabProps {
 export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
   const { addStickyNote } = useStudySpace();
   const { user } = useAuth();
-  const { aiConfig, spendTokens } = useViToken();
+  const { wallet, aiConfig, spendTokens, syncBalanceFromServer } = useViToken();
 
   const cacheKey = documentTitle || 'default-doc';
   const cachedData = getStudyCache(cacheKey);
@@ -58,18 +58,15 @@ export function FlashcardTab({ fullText, documentTitle }: FlashcardTabProps) {
       return;
     }
 
-    if (aiConfig.provider === 'system') {
-      const ok = spendTokens(2, `Tạo thẻ ghi nhớ AI: ${documentTitle.slice(0, 30)}`);
-      if (!ok) {
-        alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang trích xuất Non-AI miễn phí.');
-        setUseAi(false);
-        const cards = generateFlashcardsFromRules(fullText, 8);
-        setFlashcards(cards);
-        setCurrentIdx(0);
-        setIsFlipped(false);
-        setSm2Notice(null);
-        return;
-      }
+    if (aiConfig.provider === 'system' && wallet.balance < 2) {
+      alert('Số dư ViToken không đủ để dùng AI Hệ Thống. Chuyển sang trích xuất Non-AI miễn phí.');
+      setUseAi(false);
+      const cards = generateFlashcardsFromRules(fullText, 8);
+      setFlashcards(cards);
+      setCurrentIdx(0);
+      setIsFlipped(false);
+      setSm2Notice(null);
+      return;
     }
 
     setLoading(true);
@@ -93,6 +90,12 @@ Trả về dạng JSON array hợp lệ, KHÔNG thêm bất kỳ văn bản nào
         prompt,
         context: fullText.slice(0, 4000),
       });
+
+      if (typeof data.balanceAfter === 'number') {
+        syncBalanceFromServer(data.balanceAfter);
+      } else if (aiConfig.provider === 'system') {
+        spendTokens(2, `Tạo thẻ ghi nhớ AI: ${documentTitle.slice(0, 30)}`);
+      }
 
       const rawText = data.reply || '';
       const match = rawText.match(/\[[\s\S]*\]/);

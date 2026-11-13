@@ -1,9 +1,26 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getServiceRoleClient } from '../_shared/auth.ts';
 
-const EXPECTED_API_KEY = Deno.env.get('SEPAY_API_KEY') || 'KDF8FCOKEG3KPUF890MHNXJHG1PW0VPYWJU6NNBRODVGZKS6MOAZMLJCLO5SRG2S';
+const EXPECTED_API_KEY = Deno.env.get('SEPAY_API_KEY') || '';
+
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 serve(async (req: Request) => {
+  // 0. Ensure server API key is configured
+  if (!EXPECTED_API_KEY) {
+    return new Response(JSON.stringify({ error: 'server_misconfigured', message: 'SEPAY_API_KEY is not provisioned' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   // 1. Only allow POST requests for webhook
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'method_not_allowed' }), {
@@ -16,7 +33,7 @@ serve(async (req: Request) => {
   const authHeader = req.headers.get('Authorization') || '';
   const apiKey = authHeader.replace(/^Apikey\s+/i, '').trim();
 
-  if (!apiKey || apiKey !== EXPECTED_API_KEY) {
+  if (!apiKey || !timingSafeEqualStr(apiKey, EXPECTED_API_KEY)) {
     return new Response(JSON.stringify({ error: 'unauthorized', message: 'Invalid or missing Sepay API Key' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

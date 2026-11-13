@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { DeskItem } from '@/types/studyspace';
 import { useViToken } from '@/context/ViTokenContext';
 import { useAuth } from '@/context/AuthContext';
+import { KnowInheritService } from '@/services/KnowInheritService';
 import { 
   Store, 
   ShieldCheck, 
@@ -116,9 +117,39 @@ export function KnowInheritPublishModal({
     setIsAuditing(false);
   };
 
-  const handleConfirmPublish = () => {
+  const handleConfirmPublish = async () => {
     if (!auditResult) return;
-    
+
+    const pagesPayload = (item?.pages || []).map((p, idx) => ({
+      pageNumber: idx + 1,
+      title: `Trang ${idx + 1}`,
+      text: p.text || '',
+    }));
+
+    const preview = previewExcerpt || item?.pages?.[0]?.text?.slice(0, 300) || 'Xem trước tài liệu...';
+    const docTypeLabel = docType === 'exam' ? 'Đề thi' : docType === 'paper' ? 'Tờ tóm tắt' : 'Giáo trình & Tổng hợp';
+
+    if (user) {
+      const res = await KnowInheritService.publishListing({
+        title: item?.title || 'Tài liệu học tập',
+        subject,
+        docType: docTypeLabel,
+        authorName,
+        previewText: preview,
+        pages: pagesPayload,
+      });
+
+      if (res.ok && res.listing) {
+        onPublished?.(res.listing);
+        onClose();
+        return;
+      }
+      if (res.error) {
+        alert(res.error);
+        return;
+      }
+    }
+
     const newListing = {
       id: `mkt-${Date.now()}`,
       title: item?.title || 'Tài liệu học tập',
@@ -130,7 +161,7 @@ export function KnowInheritPublishModal({
       authorEarn: auditResult.authorEarn,
       purchased: true,
       summary: description || `Bộ tài liệu ${item?.title || 'tổng hợp'} gồm ${item?.pageCount || 1} trang, thuộc môn ${subject}.`,
-      previewText: previewExcerpt || item?.pages?.[0]?.text?.slice(0, 300) || 'Xem trước tài liệu...'
+      previewText: preview,
     };
 
     onPublished?.(newListing);

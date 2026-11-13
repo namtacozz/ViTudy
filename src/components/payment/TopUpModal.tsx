@@ -114,11 +114,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
     }
   };
 
-  const isDevMode = typeof window !== 'undefined' && (
-    window.location.search.includes('dev=true') || 
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-  );
+  const isDevMode = process.env.NODE_ENV === 'development';
 
   const selectedPkg = packages.find(p => p.id === selectedPackageId) || packages[0];
 

@@ -395,44 +395,109 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
         const rawSse = await codexRes.text();
         reply = parseCodexSseStream(rawSse) || 'Không có phản hồi từ ChatGPT Codex.';
 
-      } else if (provider === 'byok_gemini' || provider === 'oauth_gemini') {
-        const geminiKey = apiKey || accessToken;
-        if (!geminiKey) {
+      } else if (provider === 'byok_gemini' || provider === 'oauth_gemini' || (provider === 'system' && model.includes('gemini'))) {
+        const geminiKey = provider === 'system' ? Deno.env.get('GEMINI_API_KEY') : (apiKey || accessToken);
+        if (!geminiKey && provider !== 'system') {
           return new Response(
             JSON.stringify({ error: 'missing_api_key', message: 'Chưa cấu hình API Key hoặc Token Google Gemini.' }),
             { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        const geminiModel = model.includes('gemini') ? model : 'gemini-1.5-flash';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
-
-        const calculatedTokens = typeof maxTokens === 'number' && maxTokens > 0 
-          ? Math.min(maxTokens, 4000) 
+        const calculatedTokens = typeof maxTokens === 'number' && maxTokens > 0
+          ? Math.min(maxTokens, 4000)
           : 2500;
 
-        const geminiRes = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: `${systemInstruction}\n\n${cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : ''}CÂU HỎI:\n${cleanPrompt}` }],
+        if (!geminiKey && provider === 'system') {
+          const fallbackOpenAiKey = Deno.env.get('OPENAI_API_KEY');
+          if (!fallbackOpenAiKey) {
+            reply = `[ViTudy AI Assistant]\nDựa trên tài liệu bạn cung cấp:\n${cleanContext ? `"${cleanContext.slice(0, 150)}..."` : 'Chủ đề: ' + cleanPrompt}\n\n1. Trọng tâm: Câu hỏi thuộc nội dung cốt lõi của bài học.\n2. Hướng dẫn: Đọc kỹ định nghĩa và chú ý các trường hợp đặc biệt để làm bài chính xác.`;
+          } else {
+            const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${fallbackOpenAiKey}`,
               },
+              body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                  { role: 'system', content: systemInstruction },
+                  { role: 'user', content: (cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : '') + `CÂU HỎI:\n${cleanPrompt}` },
+                ],
+                max_tokens: calculatedTokens,
+                temperature: 0.7,
+              }),
+            });
+            if (!openAiRes.ok) {
+              throw new Error(`OpenAI fallback error: status ${openAiRes.status}`);
+            }
+            const openAiData = await openAiRes.json();
+            reply = openAiData.choices?.[0]?.message?.content || 'Không có phản hồi từ AI.';
+          }
+        } else {
+          const geminiModel = model.includes('gemini') ? model : 'gemini-2.5-flash';
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
+
+          const geminiRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [{ text: `${systemInstruction}\n\n${cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : ''}CÂU HỎI:\n${cleanPrompt}` }],
+                },
+              ],
+              generationConfig: {
+                maxOutputTokens: calculatedTokens,
+              },
+            }),
+          });
+
+          if (!geminiRes.ok) {
+            throw new Error(`Gemini API error: status ${geminiRes.status}`);
+          }
+
+          const geminiData = await geminiRes.json();
+          reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Không có phản hồi từ Gemini.';
+        }
+
+      } else if (provider === 'byok_claude') {
+        if (!apiKey) {
+          return new Response(
+            JSON.stringify({ error: 'missing_api_key', message: 'Chưa cấu hình API Key Anthropic Claude.' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const calculatedTokens = typeof maxTokens === 'number' && maxTokens > 0
+          ? Math.min(maxTokens, 4096)
+          : 2500;
+
+        const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: model || 'claude-3-5-sonnet-latest',
+            max_tokens: calculatedTokens,
+            system: systemInstruction,
+            messages: [
+              { role: 'user', content: (cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : '') + `CÂU HỎI:\n${cleanPrompt}` },
             ],
-            generationConfig: {
-              maxOutputTokens: calculatedTokens,
-            },
           }),
         });
 
-        if (!geminiRes.ok) {
-          throw new Error(`Gemini API error: status ${geminiRes.status}`);
+        if (!claudeRes.ok) {
+          throw new Error(`Claude API error: status ${claudeRes.status}`);
         }
 
-        const geminiData = await geminiRes.json();
-        reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Không có phản hồi từ Gemini.';
+        const claudeData = await claudeRes.json();
+        reply = claudeData.content?.[0]?.text || 'Không có phản hồi từ Claude.';
 
       } else {
         // BYOK OpenAI or System Managed OpenAI
@@ -456,7 +521,7 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
               model: model || 'gpt-4o-mini',
               messages: [
                 { role: 'system', content: systemInstruction },
-                { role: 'user', content: cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : '' + `CÂU HỎI:\n${cleanPrompt}` },
+                { role: 'user', content: (cleanContext ? `NGỮ CẢNH:\n${cleanContext}\n\n` : '') + `CÂU HỎI:\n${cleanPrompt}` },
               ],
               max_tokens: calculatedTokens,
               temperature: 0.7,
