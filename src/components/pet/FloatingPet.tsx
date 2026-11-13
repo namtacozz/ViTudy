@@ -158,6 +158,10 @@ export const FloatingPet: React.FC = () => {
       <div
         className="fixed inset-0 pointer-events-none z-[9990] overflow-hidden select-none font-sans"
         aria-hidden="false"
+        style={{
+          background: 'transparent',
+          WebkitTapHighlightColor: 'transparent',
+        }}
       >
         <div
           onPointerDown={handlePointerDown}
@@ -168,25 +172,51 @@ export const FloatingPet: React.FC = () => {
             transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
             transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
             touchAction: 'none',
+            background: 'transparent',
+            boxShadow: 'none',
+            border: 'none',
+            outline: 'none',
+            padding: 0,
+            WebkitTapHighlightColor: 'transparent',
           }}
-          className="absolute top-0 left-0 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group"
+          className="absolute top-0 left-0 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group bg-transparent border-0 shadow-none outline-none p-0"
           title={isAsleep ? 'Bấm để đánh thức và điểm danh hôm nay' : 'Bấm để xem bộ sưu tập'}
         >
           {/* Vỏ Pet & Animation Container — Chỉ giữ lại hình ảnh thú cưng tự nhiên */}
           <div
-            className={`relative w-[88px] h-[88px] flex items-center justify-center ${
+            className={`relative w-[88px] h-[88px] flex items-center justify-center bg-transparent border-0 shadow-none outline-none p-0 ${
               isWakingUp
                 ? 'pet-wake-animation'
                 : isAsleep
                 ? 'pet-idle-sleep'
                 : 'pet-idle-awake'
             }`}
+            style={{
+              background: 'transparent',
+              boxShadow: 'none',
+              border: 'none',
+              outline: 'none',
+              padding: 0,
+              WebkitTapHighlightColor: 'transparent',
+            }}
           >
             <img
               src={currentImageSrc}
               alt={stageConfig.name}
               draggable={false}
-              className="w-full h-full object-contain filter drop-shadow-md select-none pointer-events-none"
+              style={{
+                background: 'transparent',
+                boxShadow: 'none',
+                border: 'none',
+                outline: 'none',
+                display: 'block',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitUserDrag: 'none' as any,
+                filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+              className="w-full h-full object-contain pointer-events-none"
             />
 
             {/* Chữ Zzz bay lơ lửng khi đang ngủ */}
