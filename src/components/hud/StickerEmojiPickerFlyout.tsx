@@ -447,9 +447,16 @@ export function StickerEmojiPickerFlyout({ isOpen, onClose, onSelect }: StickerE
                           {rendered.url ? (
                             <img
                               src={rendered.url}
-                              alt={item.name}
+                              alt={item.content}
                               className="w-7 h-7 object-contain pointer-events-none"
                               loading="lazy"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                const span = document.createElement('span');
+                                span.className = 'text-2xl leading-none';
+                                span.textContent = rendered.content || item.content;
+                                target.replaceWith(span);
+                              }}
                             />
                           ) : (
                             <span className="text-2xl">{item.content}</span>
@@ -532,9 +539,16 @@ export function StickerEmojiPickerFlyout({ isOpen, onClose, onSelect }: StickerE
                           {rendered.url ? (
                             <img
                               src={rendered.url}
-                              alt={item.name}
+                              alt={item.content}
                               className="w-7 h-7 object-contain pointer-events-none"
                               loading="lazy"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                const span = document.createElement('span');
+                                span.className = 'text-2xl leading-none';
+                                span.textContent = rendered.content || item.content;
+                                target.replaceWith(span);
+                              }}
                             />
                           ) : (
                             <span className="text-2xl">{item.content}</span>

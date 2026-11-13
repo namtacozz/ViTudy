@@ -559,6 +559,42 @@ export const STICKER_CATEGORIES: StickerCategory[] = [
         width: 140,
         height: 140,
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><ellipse cx="50" cy="58" rx="30" ry="24" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/><circle cx="62" cy="36" r="18" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/><ellipse cx="78" cy="38" rx="12" ry="7" fill="#f97316" stroke="#c2410c" stroke-width="2"/><circle cx="66" cy="32" r="2.5" fill="#000"/><circle cx="68" cy="31" r="0.8" fill="#fff"/><polygon points="45 14 75 22 55 24" fill="#1e293b"/><line x1="42" y1="80" x2="38" y2="92" stroke="#f97316" stroke-width="3" stroke-linecap="round"/><line x1="58" y1="80" x2="58" y2="92" stroke="#f97316" stroke-width="3" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'st-badge-done',
+        name: 'Huy hiệu Đã hoàn thành',
+        type: 'sticker',
+        isSvg: true,
+        width: 150,
+        height: 54,
+        content: `<svg viewBox="0 0 150 50" width="100%" height="100%"><rect x="4" y="4" width="142" height="42" rx="21" fill="#ecfdf5" stroke="#10b981" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#10b981"/><path d="M20 25 L24 29 L32 21" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="44" y="30" font-size="13" font-weight="800" fill="#065f46" font-family="sans-serif">ĐÃ XONG</text></svg>`
+      },
+      {
+        id: 'st-badge-exam',
+        name: 'Huy hiệu Ôn thi gấp',
+        type: 'sticker',
+        isSvg: true,
+        width: 150,
+        height: 54,
+        content: `<svg viewBox="0 0 150 50" width="100%" height="100%"><rect x="4" y="4" width="142" height="42" rx="21" fill="#fff7ed" stroke="#E0562D" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#E0562D"/><path d="M26 17 V25 L31 28" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><text x="44" y="30" font-size="13" font-weight="800" fill="#9a3412" font-family="sans-serif">ÔN THI</text></svg>`
+      },
+      {
+        id: 'st-badge-review',
+        name: 'Nhãn Cần xem lại',
+        type: 'sticker',
+        isSvg: true,
+        width: 155,
+        height: 54,
+        content: `<svg viewBox="0 0 155 50" width="100%" height="100%"><rect x="4" y="4" width="147" height="42" rx="21" fill="#fefce8" stroke="#eab308" stroke-width="2.5"/><circle cx="26" cy="25" r="12" fill="#eab308"/><text x="26" y="30" font-size="15" font-weight="900" fill="#fff" text-anchor="middle" font-family="sans-serif">?</text><text x="44" y="30" font-size="13" font-weight="800" fill="#854d0e" font-family="sans-serif">XEM LẠI</text></svg>`
+      },
+      {
+        id: 'st-medal-gold',
+        name: 'Huy chương Thành tích',
+        type: 'sticker',
+        isSvg: true,
+        width: 120,
+        height: 130,
+        content: `<svg viewBox="0 0 100 110" width="100%" height="100%"><polygon points="32 8 46 8 50 42 36 42" fill="#ef4444"/><polygon points="54 8 68 8 64 42 50 42" fill="#dc2626"/><circle cx="50" cy="64" r="28" fill="#facc15" stroke="#ca8a04" stroke-width="3"/><circle cx="50" cy="64" r="20" fill="#fef08a"/><polygon points="50 49 54 58 64 59 56 66 58 76 50 71 42 76 44 66 36 59 46 58" fill="#eab308"/></svg>`
       }
     ]
   },
@@ -593,6 +629,51 @@ export const STICKER_CATEGORIES: StickerCategory[] = [
         width: 130,
         height: 140,
         content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><ellipse cx="50" cy="54" rx="28" ry="32" fill="#78350f" stroke="#451a03" stroke-width="2.5"/><ellipse cx="50" cy="58" rx="18" ry="22" fill="#fef3c7"/><circle cx="38" cy="40" r="11" fill="#fff" stroke="#451a03" stroke-width="2"/><circle cx="62" cy="40" r="11" fill="#fff" stroke="#451a03" stroke-width="2"/><circle cx="38" cy="40" r="4.5" fill="#000"/><circle cx="62" cy="40" r="4.5" fill="#000"/><polygon points="50 48 46 54 54 54" fill="#f97316"/><rect x="32" y="14" width="36" height="8" rx="2" fill="#1e293b"/></svg>`
+      },
+      {
+        id: 'st-study-coffee',
+        name: 'Cà phê tập trung',
+        type: 'sticker',
+        isSvg: true,
+        width: 120,
+        height: 120,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M26 40 H68 V72 A16 16 0 0 1 52 88 H42 A16 16 0 0 1 26 72 Z" fill="#fff" stroke="#1e293b" stroke-width="3"/><path d="M68 48 H76 A8 8 0 0 1 76 66 H68" fill="none" stroke="#1e293b" stroke-width="3"/><ellipse cx="47" cy="40" rx="21" ry="5" fill="#78350f" stroke="#1e293b" stroke-width="2.5"/><path d="M38 26 Q34 18 40 12 M50 24 Q46 16 52 10 M60 26 Q56 18 62 12" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'st-study-pomodoro',
+        name: 'Đồng hồ Pomodoro',
+        type: 'sticker',
+        isSvg: true,
+        width: 120,
+        height: 120,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="56" r="32" fill="#ef4444" stroke="#7f1d1d" stroke-width="3"/><path d="M50 24 L42 14 L50 18 L58 14 Z" fill="#22c55e" stroke="#14532d" stroke-width="2"/><circle cx="50" cy="56" r="22" fill="#fff"/><path d="M50 56 L50 40 M50 56 L62 60" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'st-math-sigma',
+        name: 'Ký hiệu Toán học Sigma',
+        type: 'sticker',
+        isSvg: true,
+        width: 120,
+        height: 120,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="12" y="12" width="76" height="76" rx="16" fill="#eff6ff" stroke="#3b82f6" stroke-width="3"/><path d="M68 30 H34 L52 50 L34 70 H68" fill="none" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      },
+      {
+        id: 'st-math-graph',
+        name: 'Đồ thị hàm số',
+        type: 'sticker',
+        isSvg: true,
+        width: 130,
+        height: 120,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="10" y="10" width="80" height="80" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2.5"/><path d="M22 82 V18 M18 78 H84" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/><path d="M26 70 Q44 20 56 54 T82 24" fill="none" stroke="#E0562D" stroke-width="3.5" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'st-study-book-open',
+        name: 'Sách mở ghi chú',
+        type: 'sticker',
+        isSvg: true,
+        width: 130,
+        height: 120,
+        content: `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M14 26 Q32 20 50 30 Q68 20 86 26 V76 Q68 70 50 80 Q32 70 14 76 Z" fill="#fffbeb" stroke="#78350f" stroke-width="3" stroke-linejoin="round"/><line x1="50" y1="30" x2="50" y2="80" stroke="#78350f" stroke-width="2.5"/><line x1="22" y1="42" x2="42" y2="45" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="54" x2="42" y2="57" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><line x1="58" y1="45" x2="78" y2="42" stroke="#d97706" stroke-width="2" stroke-linecap="round"/><line x1="58" y1="57" x2="78" y2="54" stroke="#d97706" stroke-width="2" stroke-linecap="round"/></svg>`
       },
       {
         id: 'st-funky-dumpster-fire',

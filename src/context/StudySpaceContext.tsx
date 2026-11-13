@@ -744,12 +744,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     if (status === 'authenticated' && uId) {
       if (isManual) setSaveStatus('saving');
       try {
-        // Lưu space trước để đảm bảo foreign key tồn tại trước khi chèn items
+        // Lưu space trước, sau đó items (để FK của threads/strokes tồn tại), rồi mới lưu threads & strokes
         await StudySpaceService.saveSpace(curSpace, uId);
+        await StudySpaceService.upsertItems(curSpace.id, curSpace.items);
         await Promise.all([
-          StudySpaceService.upsertItems(curSpace.id, curSpace.items),
-          curSpace.threads && curSpace.threads.length > 0 
-            ? StudySpaceService.saveThreads(curSpace.id, curSpace.threads) 
+          curSpace.threads && curSpace.threads.length > 0
+            ? StudySpaceService.saveThreads(curSpace.id, curSpace.threads)
             : Promise.resolve(),
           StudySpaceService.saveStrokes(curSpace.id, strokes, uId)
         ]);

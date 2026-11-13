@@ -224,7 +224,10 @@ export class StudySpaceService {
     try {
       const safeSpaceId = ensureUUID(spaceId);
       const rows = items.map(item => deskItemToRow(item, safeSpaceId));
-      await supabase.from('desk_documents').upsert(rows);
+      const { error: upsertErr } = await supabase.from('desk_documents').upsert(rows);
+      if (upsertErr) {
+        console.warn('Lỗi upsert desk_documents:', upsertErr.message, upsertErr.details);
+      }
 
       // Upsert document pages if provided
       for (const item of items) {
@@ -318,7 +321,19 @@ export class StudySpaceService {
         points: s.points as unknown as Json,
         attached_to_item_id: s.attachedToItemId ? ensureUUID(s.attachedToItemId) : null,
       }));
-      await supabase.from('desk_drawings').upsert(rows);
+      // Xóa các nét vẽ cũ không còn trong danh sách hiện tại rồi upsert lại
+      const currentIds = rows.map(r => r.id);
+      if (currentIds.length > 0) {
+        await supabase
+          .from('desk_drawings')
+          .delete()
+          .eq('space_id', safeSpaceId)
+          .not('id', 'in', `(${currentIds.join(',')})`);
+      }
+      const { error: strokeErr } = await supabase.from('desk_drawings').upsert(rows);
+      if (strokeErr) {
+        console.warn('Lỗi upsert desk_drawings:', strokeErr.message, strokeErr.details);
+      }
     } catch (err) {
       console.warn('Lỗi saveStrokes:', err);
     }
