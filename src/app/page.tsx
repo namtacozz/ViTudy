@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { GuestBanner } from '@/components/auth/GuestBanner';
 import { MigrationDialog } from '@/components/auth/MigrationDialog';
 import { HomePage } from '@/components/home/HomePage';
+import { useStudySpace } from '@/context/StudySpaceContext';
 
 const StudySpaceDeskView = dynamic(
   () => import('@/components/canvas/StudySpaceDeskView'),
@@ -33,9 +34,17 @@ function StudySpacePageContent() {
   const viewParam = searchParams.get('view');
   const roomParam = searchParams.get('room');
   const spaceParam = searchParams.get('space');
+  const { switchSpace, activeSpaceId } = useStudySpace();
 
   // URL có view=desk hoặc có room tham gia hoặc có space -> hiển thị Bàn học; ngược lại (view=home hoặc link gốc) -> Trang chủ
   const isDeskView = viewParam === 'desk' || Boolean(roomParam) || Boolean(spaceParam);
+
+  // Đồng bộ space từ URL vào activeSpaceId của StudySpaceContext
+  useEffect(() => {
+    if (spaceParam && isDeskView && spaceParam !== activeSpaceId) {
+      switchSpace(spaceParam);
+    }
+  }, [spaceParam, isDeskView, activeSpaceId, switchSpace]);
 
   // Lưu trạng thái view hiện tại vào sessionStorage để các trang con (như /profile, /market) quay về đúng nơi
   useEffect(() => {

@@ -215,7 +215,7 @@ export function TopLeftNav() {
         {/* Nút lưu thủ công & Trạng thái lưu (Tự động lưu mỗi 10 phút hoặc khi thoát trang) */}
         <button
           type="button"
-          onClick={() => saveCurrentSpaceImmediately()}
+          onClick={() => saveCurrentSpaceImmediately(true)}
           disabled={saveStatus === 'saving'}
           title={
             saveStatus === 'saving'

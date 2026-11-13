@@ -261,10 +261,11 @@ export class StudySpaceService {
     if (!supabase || !spaceId) return [];
 
     try {
+      const safeSpaceId = ensureUUID(spaceId);
       const { data, error } = await supabase
         .from('desk_drawings')
         .select('*')
-        .eq('space_id', spaceId);
+        .eq('space_id', safeSpaceId);
 
       if (error || !data) return [];
 
@@ -286,7 +287,8 @@ export class StudySpaceService {
     const supabase = getSupabase();
     if (!supabase || !spaceId) return;
     try {
-      await supabase.from('desk_drawings').delete().eq('space_id', spaceId);
+      const safeSpaceId = ensureUUID(spaceId);
+      await supabase.from('desk_drawings').delete().eq('space_id', safeSpaceId);
     } catch (err) {
       console.warn('Lỗi clearStrokes:', err);
     }
@@ -297,20 +299,21 @@ export class StudySpaceService {
     if (!supabase || !spaceId) return;
 
     try {
+      const safeSpaceId = ensureUUID(spaceId);
       if (strokes.length === 0) {
-        await supabase.from('desk_drawings').delete().eq('space_id', spaceId);
+        await supabase.from('desk_drawings').delete().eq('space_id', safeSpaceId);
         return;
       }
 
       const rows = strokes.map(s => ({
-        id: s.id.includes('-') && s.id.length === 36 ? s.id : undefined,
-        space_id: spaceId,
+        id: ensureUUID(s.id),
+        space_id: safeSpaceId,
         author_id: authorId || null,
         color: s.color,
         width: s.width,
         is_highlighter: s.isHighlighter ?? false,
         points: s.points as unknown as Json,
-        attachedToItemId: s.attachedToItemId || null,
+        attached_to_item_id: s.attachedToItemId ? ensureUUID(s.attachedToItemId) : null,
       }));
       await supabase.from('desk_drawings').upsert(rows);
     } catch (err) {
@@ -323,14 +326,15 @@ export class StudySpaceService {
     if (!supabase || !spaceId) return;
 
     try {
+      const safeSpaceId = ensureUUID(spaceId);
       const rows = threads.map(t => ({
-        id: t.id.includes('-') && t.id.length === 36 ? t.id : undefined,
-        space_id: spaceId,
-        source_item_id: t.sourceItemId,
+        id: ensureUUID(t.id),
+        space_id: safeSpaceId,
+        source_item_id: ensureUUID(t.sourceItemId),
         source_page_number: t.sourcePageNumber,
         selected_text: t.selectedText,
         source_offset: (t.sourceOffset as unknown as Json) || null,
-        target_sticky_id: t.targetStickyId,
+        target_sticky_id: t.targetStickyId ? ensureUUID(t.targetStickyId) : null,
         question: t.question,
         answer: t.answer,
       }));

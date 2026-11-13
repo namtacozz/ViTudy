@@ -186,8 +186,12 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     return formatRelativeTimeVN(space.lastOpenedAt || space.updatedAt || space.createdAt);
   };
 
-  // Filter spaces
-  const filteredSpaces = spaces.filter((s) => {
+  // Filter spaces: Chỉ hiển thị các bàn học có tài liệu hoặc ghi chú thực sự (loại bỏ các bàn học rỗng demo/thử nghiệm)
+  const validSpaces = useMemo(() => {
+    return spaces.filter(s => s.items && s.items.length > 0);
+  }, [spaces]);
+
+  const filteredSpaces = validSpaces.filter((s) => {
     if (activeNav === 'starred' && !s.starred) return false;
     if (ownershipTab === 'shared' && !s.isShared) {
       // Demo: if no shared spaces exist, empty list
@@ -203,8 +207,8 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   });
 
   const displayedSpaces = showAllSpaces ? filteredSpaces : filteredSpaces.slice(0, 6);
-  const latestSpace = spaces[0] || null;
-  const starredSpaces = useMemo(() => spaces.filter((s) => s.starred), [spaces]);
+  const latestSpace = validSpaces[0] || null;
+  const starredSpaces = useMemo(() => validSpaces.filter((s) => s.starred), [validSpaces]);
 
   const handleSignOut = async () => {
     setIsProfileDropdownOpen(false);

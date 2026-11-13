@@ -71,7 +71,7 @@ export function buildVietQrUrl(params: VietQrParams): string {
   return `https://img.vietqr.io/image/${bankParam}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${accountName}`;
 }
 
-const FALLBACK_PACKAGES: PaymentPackage[] = [
+export const FALLBACK_PACKAGES: PaymentPackage[] = [
   { id: 'light', label: 'Nhẹ nhàng', tokenAmount: 20, priceVnd: 20000, sort: 1 },
   { id: 'diligent', label: 'Chăm chỉ', tokenAmount: 50, priceVnd: 45000, sort: 2 },
   { id: 'tryhard', label: 'Try hard', tokenAmount: 100, priceVnd: 85000, sort: 3 },
@@ -90,11 +90,14 @@ export class PaymentService {
         .eq('enabled', true)
         .order('sort', { ascending: true });
 
-      if (error || !data || data.length === 0) return FALLBACK_PACKAGES;
+      // Nếu DB chưa có các gói chuẩn mới ('light', 'diligent', 'tryhard', 'group')
+      // thì dùng trực tiếp danh sách 4 gói chuẩn chính thức
+      if (error || !data || data.length === 0 || !data.some(p => p.id === 'light' || p.id === 'diligent')) {
+        return FALLBACK_PACKAGES;
+      }
 
       return data.map(p => {
         let tokenAmount = p.token_amount;
-        // Chuẩn hóa dữ liệu cũ nếu token_amount bị nhân 1.000 so với giá tiền (1.000đ = 1 ViToken)
         if (tokenAmount >= 1000 && p.price_vnd < 1000000 && tokenAmount >= p.price_vnd * 0.5) {
           tokenAmount = Math.round(tokenAmount / 1000);
         }
@@ -161,6 +164,7 @@ export class PaymentService {
         if (
           error.message.includes('schema cache') || 
           error.message.includes('Could not find the function') ||
+          error.message.includes('package_not_found') ||
           (error as any).code === 'PGRST202' ||
           error.message.includes('unauthenticated')
         ) {
