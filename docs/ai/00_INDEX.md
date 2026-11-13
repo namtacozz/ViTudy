@@ -1,8 +1,8 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
 > **Commit Hash:** `Current Working Tree`  
-> **Cập nhật lần cuối:** `2026-11-08`  
-> **Trạng thái Codebase:** Đã hoàn thành toàn bộ E2E CDP Testing qua cổng 9222, sửa lỗi TopUpModal bằng createPortal, Dashboard Guest Mode, đồng bộ hóa 5 gói ViToken, 14/14 test suites pass, docs:check pass.
+> **Cập nhật lần cuối:** `2026-11-13`  
+> **Trạng thái Codebase:** Đã hoàn thành Board Game Studio, Bảng Vẽ 4 Góc, 23/23 test suites (78 tests) pass, `build:pages` pass, `docs:check` pass.
 
 ---
 

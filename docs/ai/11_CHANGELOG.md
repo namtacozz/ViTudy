@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-11-13 22:14 — uncommitted (Board Game Studio & Bảng Vẽ 4 Góc)
+- Task: Xây dựng trọn vẹn hệ thống thiết kế Board Game (Bút Trò Chơi / Game Pen), Bảng Vẽ 4 Góc, Quân cờ khớp ô Map, Xúc xắc 3D top-down, Bộ thẻ Cơ hội/Khí vận (AI), Sổ Đỏ, Tiền VNĐ (1k–500k), Ngân hàng và Tủ Trò Chơi Cá Nhân.
+- Changed:
+  - `src/types/boardgame.ts` & `src/types/boardgame.test.ts`: Định nghĩa mô hình dữ liệu `BoardGamePackage`, `BoardTile`, `GameCardDeck`, `SavedDrawingAsset`, `DEFAULT_VND_CURRENCIES`, `generateMapTiles`, `breakAmountIntoVndNotes`.
+  - `src/types/studyspace.ts`, `src/context/StudySpaceContext.tsx`, `src/services/StudySpaceService.ts`: Bổ sung `artboard` & `board_game` vào `DeskItem` và `ActiveToolType` (`game_pen`, `create_artboard`).
+  - `src/services/GameCabinetStorage.ts` & `src/services/BoardGameAiService.ts`: Lưu trữ Tủ Game & Kho Bản Vẽ, tích hợp AI tạo thẻ bài & thiết kế ô cờ hàng loạt.
+  - `src/components/objects/FourCornerArtboard.tsx`: Bảng vẽ 4 góc (Bút/Màu/Tẩy/Chọn vùng/Kéo ảnh ngoài/Lưu/Khớp ô Map làm quân cờ).
+  - `src/components/objects/BoardGameArena.tsx` & `src/components/objects/boardgame/*`: `TopDownDice3D`, `GameLinkLayer`, `TileFormEditorModal`, `DeckAndDeedModal`, `CurrencyAndBankPanel`.
+  - `src/components/hud/GamePenToolbar.tsx`, `src/components/hud/LeftCreationBar.tsx`, `src/components/modals/GameCabinetModal.tsx`, `src/components/canvas/InfiniteDesk.tsx`, `src/components/canvas/DeskDrawingInteractionLayer.tsx`.
+- Verified by: `pnpm test` (23 files, 78 tests pass), `pnpm run build:pages` (exit 0), `pnpm run docs:check` (OK).
+- Open follow-ups: Theo dõi workflow GitHub Pages deploy sau khi push `main`.
+
+---
+
 ## 2026-11-13 21:05 — main (Thực Thi Kế Hoạch Khắc Phục Toàn Diện 7 Giai Đoạn Từ Audit Flow Report)
 - **Task:** Thực hiện trọn vẹn 7 giai đoạn xử lý toàn bộ các lỗ hổng bảo mật, luồng AI, KnowInherit Market, STudy, StudySpace 2.5D và Mobile Companion:
   1. **Phase 1 — Bảo mật ViToken & RLS (`ViTokenService.ts`, `ViTokenContext.tsx`, `TopUpModal.tsx`, `sepay-webhook/index.ts`, `0018_secure_vitoken_and_rls.sql`):**

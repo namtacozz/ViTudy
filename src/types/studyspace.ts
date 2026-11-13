@@ -1,4 +1,16 @@
-export type ItemType = 'paper' | 'book' | 'sticky_note' | 'roadmap' | 'exam_sheet' | 'code_block' | 'mind_map' | 'sticker';
+import type { BoardGamePackage, SavedDrawingAsset } from './boardgame';
+
+export type ItemType =
+  | 'paper'
+  | 'book'
+  | 'sticky_note'
+  | 'roadmap'
+  | 'exam_sheet'
+  | 'code_block'
+  | 'mind_map'
+  | 'sticker'
+  | 'artboard'
+  | 'board_game';
 
 export interface PageContent {
   id: string;
@@ -73,6 +85,8 @@ export interface DeskItem {
   author?: string;
   purchased?: boolean;
   marketItemId?: string;
+  artboardData?: SavedDrawingAsset;
+  boardGameData?: BoardGamePackage;
 }
 
 export interface IntelineThread {
@@ -101,14 +115,16 @@ export interface StudySpace {
   threads?: IntelineThread[];
 }
 
-export type ActiveToolType = 
-  | 'cursor' 
-  | 'pen' 
-  | 'highlighter' 
-  | 'smart_shape' 
-  | 'eraser' 
-  | 'area_eraser' 
-  | 'create_note';
+export type ActiveToolType =
+  | 'cursor'
+  | 'pen'
+  | 'highlighter'
+  | 'smart_shape'
+  | 'eraser'
+  | 'area_eraser'
+  | 'create_note'
+  | 'game_pen'
+  | 'create_artboard';
 
 export interface DrawingStroke {
   id: string;

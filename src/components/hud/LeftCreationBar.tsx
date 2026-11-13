@@ -23,9 +23,14 @@ import {
   Table,
   Network,
   Video,
-  X
+  X,
+  Gamepad2,
+  Palette,
+  Archive
 } from 'lucide-react';
 import { StickerEmojiPickerFlyout, StickerPickerItem } from '@/components/hud/StickerEmojiPickerFlyout';
+import { GamePenToolbar } from '@/components/hud/GamePenToolbar';
+import { GameCabinetModal } from '@/components/modals/GameCabinetModal';
 
 export function LeftCreationBar() {
   const {
@@ -52,6 +57,7 @@ export function LeftCreationBar() {
   const [isPenColorPickerOpen, setIsPenColorPickerOpen] = useState(false);
   const [isMoreToolsOpen, setIsMoreToolsOpen] = useState(false);
   const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
+  const [isGameCabinetOpen, setIsGameCabinetOpen] = useState(false);
 
   // Note pastel colors
   const stickyColors = [
@@ -105,6 +111,18 @@ export function LeftCreationBar() {
       icon: <Network className="w-5 h-5 text-slate-800 stroke-[2.2]" />
     },
     {
+      id: 'artboard_4corner',
+      title: 'Bảng Vẽ 4 Góc',
+      desc: 'Vẽ tranh, kéo ảnh & tạo quân cờ khớp ô Map',
+      icon: <Palette className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
+    },
+    {
+      id: 'game_cabinet',
+      title: 'Tủ Trò Chơi Cá Nhân',
+      desc: 'Lấy Board Game đã thiết kế ra bàn chơi hoặc sửa lại',
+      icon: <Archive className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
+    },
+    {
       id: 'screen_record',
       title: 'Record screen',
       desc: 'Ghi hình bài giảng & màn hình học tập',
@@ -141,6 +159,20 @@ export function LeftCreationBar() {
     setIsMoreToolsOpen(false);
     if (toolId === 'screen_record') {
       window.dispatchEvent(new CustomEvent('vitudy:open-record-modal'));
+      return;
+    }
+    if (toolId === 'artboard_4corner') {
+      setStickyCreationTemplate?.({
+        itemType: 'artboard',
+        width: 520,
+        height: 440,
+        typeLabel: 'Bảng Vẽ 4 Góc (Artboard)'
+      });
+      setActiveTool('create_note');
+      return;
+    }
+    if (toolId === 'game_cabinet') {
+      setIsGameCabinetOpen(true);
       return;
     }
     if (toolId === 'shapes_and_lines') {
@@ -255,6 +287,44 @@ export function LeftCreationBar() {
           }`}
         >
           {currentPenIcon}
+        </button>
+
+        {/* Bút Trò Chơi (Game Pen) */}
+        <button
+          title="Bút Trò Chơi (Thiết kế Board Game: Tạo Map, Ô, Xúc xắc 3D, Thẻ, Tiền VNĐ)"
+          onClick={() => {
+            setActiveTool(activeTool === 'game_pen' ? 'cursor' : 'game_pen');
+            setIsNoteFlyoutOpen(false);
+            setIsPenFlyoutOpen(false);
+            setIsMoreToolsOpen(false);
+          }}
+          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+            activeTool === 'game_pen'
+              ? 'bg-[#E0562D] text-white shadow-sm font-bold'
+              : 'text-slate-900 hover:text-[#E0562D] hover:bg-orange-50'
+          }`}
+        >
+          <Gamepad2 className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
+        {/* Bảng Vẽ 4 Góc */}
+        <button
+          title="Bảng Vẽ 4 Góc (Vẽ tranh, kéo ảnh & tạo quân cờ)"
+          onClick={() => {
+            setIsNoteFlyoutOpen(false);
+            setIsPenFlyoutOpen(false);
+            setIsMoreToolsOpen(false);
+            setStickyCreationTemplate?.({
+              itemType: 'artboard',
+              width: 520,
+              height: 440,
+              typeLabel: 'Bảng Vẽ 4 Góc (Artboard)'
+            });
+            setActiveTool('create_note');
+          }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer text-slate-900 hover:text-[#E0562D] hover:bg-orange-50"
+        >
+          <Palette className="w-5 h-5 stroke-[2.2]" />
         </button>
 
         {/* Gạch chia vùng NẰM TRÊN nút + */}
@@ -539,6 +609,15 @@ export function LeftCreationBar() {
           </>
         )}
       </div>
+
+      {/* Thanh công cụ nổi Bút Trò Chơi (Game Pen) */}
+      <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
+
+      {/* Modal Tủ Trò Chơi & Kho Bản Vẽ Cá Nhân */}
+      <GameCabinetModal
+        isOpen={isGameCabinetOpen}
+        onClose={() => setIsGameCabinetOpen(false)}
+      />
     </div>
   );
 }

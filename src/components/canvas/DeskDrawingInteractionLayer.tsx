@@ -19,6 +19,9 @@ export function DeskDrawingInteractionLayer() {
     addCodeBlock,
     addMindMapNode,
     addSticker,
+    addArtboard,
+    addBoardGame,
+    setActiveGamePenTool,
     startStroke, 
     appendPoint, 
     snapCurrentStroke,
@@ -237,7 +240,7 @@ export function DeskDrawingInteractionLayer() {
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = async (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -300,6 +303,31 @@ export function DeskDrawingInteractionLayer() {
           addMindMapNode(template.text || '', finalX, finalY, undefined, template.mindMapColor || '#a855f7');
         } else if (template?.itemType === 'sticker' && template.stickerData) {
           addSticker(template.stickerData, finalX, finalY, finalW, finalH);
+        } else if (template?.itemType === 'artboard') {
+          addArtboard(finalX, finalY, Math.max(finalW, 420), Math.max(finalH, 360));
+        } else if (template?.itemType === 'board_game') {
+          let parsedCfg = { layoutMode: 'perimeter_ring' as 'perimeter_ring' | 'full_grid', rows: 11, cols: 11 };
+          try {
+            if (template.text) parsedCfg = JSON.parse(template.text);
+          } catch {}
+          const { createDefaultBoardGamePackage } = await import('@/types/boardgame');
+          const mapW = Math.max(finalW, parsedCfg.cols * 64);
+          const mapH = Math.max(finalH, parsedCfg.rows * 64);
+          const pkg = createDefaultBoardGamePackage({
+            id: `game-${Date.now()}`,
+            layoutMode: parsedCfg.layoutMode,
+            rows: parsedCfg.rows,
+            cols: parsedCfg.cols,
+            width: mapW,
+            height: mapH,
+          });
+          addBoardGame(pkg, finalX, finalY);
+          setDragBox(null);
+          setActiveGamePenTool('select');
+          setActiveTool('game_pen');
+          setStickyCreationColor(null);
+          setStickyCreationTemplate?.(null);
+          return;
         } else {
           addStickyNote(noteText, finalX, finalY, noteColor, finalW, finalH);
         }
