@@ -127,13 +127,14 @@ export function KnowInheritPublishModal({
     }));
 
     const preview = previewExcerpt || item?.pages?.[0]?.text?.slice(0, 300) || 'Xem trước tài liệu...';
-    const docTypeLabel = docType === 'exam' ? 'Đề thi' : docType === 'paper' ? 'Tờ tóm tắt' : 'Giáo trình & Tổng hợp';
+    const summaryText = description || `Bộ tài liệu ${item?.title || 'tổng hợp'} gồm ${item?.pageCount || 1} trang, thuộc môn ${subject}.`;
 
     if (user) {
       const res = await KnowInheritService.publishListing({
         title: item?.title || 'Tài liệu học tập',
+        summary: summaryText,
         subject,
-        docType: docTypeLabel,
+        docType,
         authorName,
         previewText: preview,
         pages: pagesPayload,
