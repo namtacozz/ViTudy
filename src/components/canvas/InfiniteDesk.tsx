@@ -151,7 +151,8 @@ export function InfiniteDesk() {
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
-      const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement | null;
+      if (!target || typeof target.closest !== 'function') return;
       // Prevent canvas zoom if scrolling inside an explicit modal dialog, study tools, or scrollable container
       if (
         target.closest('[role="dialog"]') ||
@@ -225,7 +226,125 @@ export function InfiniteDesk() {
     };
   }, []);
 
-  // Window pointer event listeners for 2-finger pinch-zoom/pan & 1-finger pan
+  // =========================================================================
+  // DEDICATED HIGH-PERFORMANCE NATIVE MULTI-TOUCH PINCH-ZOOM & PAN (MOBILE)
+  // Ensures 100% reliable 2-finger pinch gesture on iOS & Android touchscreens
+  // Capture phase ensures touches are tracked even when landing on books or notes
+  // =========================================================================
+  useEffect(() => {
+    let pinchBaseline: {
+      dist: number;
+      mid: { x: number; y: number };
+    } | null = null;
+
+    const calcDistance = (t1: Touch, t2: Touch) => {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.hypot(dx, dy);
+    };
+
+    const calcMidpoint = (t1: Touch, t2: Touch) => {
+      return {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2,
+      };
+    };
+
+    const handleTouchStartCapture = (e: TouchEvent) => {
+      // Don't intercept touches if interacting inside an overlay modal dialog
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        typeof target.closest === 'function' &&
+        (target.closest('[role="dialog"]') || target.closest('[data-modal="true"]'))
+      ) {
+        return;
+      }
+
+      if (e.touches.length >= 2) {
+        // Multi-touch detected: cancel any pending single-finger panning
+        setIsPanning(false);
+        panStartRef.current = null;
+
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = calcDistance(t1, t2);
+        const mid = calcMidpoint(t1, t2);
+
+        pinchBaseline = { dist: Math.max(dist, 1), mid };
+      } else {
+        pinchBaseline = null;
+      }
+    };
+
+    const handleTouchMoveCapture = (e: TouchEvent) => {
+      if (e.touches.length >= 2) {
+        // CRITICAL: Prevent default browser zoom/bounce/scroll on iOS Safari & Chrome Android
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = calcDistance(t1, t2);
+        const currentMid = calcMidpoint(t1, t2);
+
+        if (!pinchBaseline) {
+          pinchBaseline = { dist: Math.max(currentDist, 1), mid: currentMid };
+          return;
+        }
+
+        const prevDist = pinchBaseline.dist;
+        const prevMid = pinchBaseline.mid;
+
+        const factor = currentDist / prevDist;
+        const dx = currentMid.x - prevMid.x;
+        const dy = currentMid.y - prevMid.y;
+
+        // Advance baseline immediately for zero latency
+        pinchBaseline = { dist: Math.max(currentDist, 1), mid: currentMid };
+
+        // Apply smooth zoom and two-finger pan around midpoint
+        setTransform(prev => {
+          const MIN_SCALE = 0.35;
+          const MAX_SCALE = 2.5;
+          const targetScale = prev.scale * factor;
+          const newScale = Math.min(Math.max(Number(targetScale.toFixed(3)), MIN_SCALE), MAX_SCALE);
+          const scaleRatio = newScale / prev.scale;
+
+          const newX = Math.round(currentMid.x - (currentMid.x - prev.x) * scaleRatio + dx);
+          const newY = Math.round(currentMid.y - (currentMid.y - prev.y) * scaleRatio + dy);
+
+          return {
+            ...prev,
+            x: newX,
+            y: newY,
+            scale: newScale,
+          };
+        });
+      }
+    };
+
+    const handleTouchEndCapture = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        pinchBaseline = null;
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStartCapture, { capture: true, passive: true });
+    window.addEventListener('touchmove', handleTouchMoveCapture, { capture: true, passive: false });
+    window.addEventListener('touchend', handleTouchEndCapture, { capture: true, passive: true });
+    window.addEventListener('touchcancel', handleTouchEndCapture, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStartCapture, { capture: true });
+      window.removeEventListener('touchmove', handleTouchMoveCapture, { capture: true });
+      window.removeEventListener('touchend', handleTouchEndCapture, { capture: true });
+      window.removeEventListener('touchcancel', handleTouchEndCapture, { capture: true });
+    };
+  }, [setTransform]);
+
+  // Window pointer event listeners for 2-finger pinch-zoom/pan & 1-finger pan (Mouse & Stylus & Single-Touch Pan)
   useEffect(() => {
     let rafId: number | null = null;
     let pendingFactor = 1;
@@ -237,8 +356,9 @@ export function InfiniteDesk() {
       if (!activePointersRef.current.has(e.pointerId)) return;
       activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      // Two-finger Pinch-to-Zoom & Pan Gesture
-      if (activePointersRef.current.size === 2 && pinchStartRef.current) {
+      // Two-pointer Pinch-to-Zoom & Pan Gesture (Non-touch: Trackpad / Dual-Stylus only)
+      // (Touch screen 2-finger gestures are exclusively handled by dedicated Native Touch Engine above)
+      if (e.pointerType !== 'touch' && activePointersRef.current.size === 2 && pinchStartRef.current) {
         const pts = Array.from(activePointersRef.current.values());
         const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
         const mid = {
@@ -275,7 +395,7 @@ export function InfiniteDesk() {
 
             if (curMid) {
               setTransform(prev => {
-                const MIN_SCALE = 0.4;
+                const MIN_SCALE = 0.35;
                 const MAX_SCALE = 2.5;
                 const targetScale = prev.scale * curFactor;
                 const newScale = Math.min(Math.max(Number(targetScale.toFixed(3)), MIN_SCALE), MAX_SCALE);
@@ -298,7 +418,7 @@ export function InfiniteDesk() {
         return;
       }
 
-      // Single-finger or mouse canvas pan
+      // Single-finger touch or mouse canvas pan
       if (panStartRef.current && activePointersRef.current.size === 1) {
         const dx = e.clientX - panStartRef.current.x;
         const dy = e.clientY - panStartRef.current.y;
@@ -346,7 +466,8 @@ export function InfiniteDesk() {
 
     if (isViewRotateMode && e.button === 0) {
       // Don't intercept clicks on HUD buttons or modals
-      const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement | null;
+      if (!target || typeof target.closest !== 'function') return;
       if (target.closest('button[title*="xoay"]') || target.closest('[data-hud="true"]') || target.closest('[data-focus-notice="true"]')) {
         return;
       }
@@ -387,7 +508,8 @@ export function InfiniteDesk() {
     if (isViewRotateMode) return;
     if (activeTool !== 'cursor') return;
 
-    const target = e.target as HTMLElement;
+    const target = e.target as HTMLElement | null;
+    if (!target || typeof target.closest !== 'function') return;
 
     // Don't pan if clicking an interactive control
     const isInteractive = Boolean(

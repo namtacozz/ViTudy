@@ -9,7 +9,9 @@ import { PomodoroProvider } from '@/context/PomodoroContext';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#E0562D',
 };
@@ -56,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${openSans.variable} ${patrickHand.variable} ${lora.variable}`} suppressHydrationWarning spellCheck={false}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
         <link rel="manifest" href={`${basePath}/manifest.json`} />
         <link rel="icon" href={`${basePath}/icons/vitudy.png`} type="image/png" />
         <link rel="shortcut icon" href={`${basePath}/favicon.ico`} />

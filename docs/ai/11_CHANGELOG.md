@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-11-13 23:35 — dev (Khắc Phục Triệt Để Cử Chỉ 2 Ngón Tay Zoom & Pan Bàn Học Trên Điện Thoại)
+- **Task:** Giải quyết triệt để phản hồi của Sếp: "VIÊC TRONG BÀN HỌC KHI DÙNG 2 NGÓN ĐỂ ZOOM VẪN CHƯA ĐƯỢC":
+  1. **Khóa cứng Viewport Meta Tag (`src/app/layout.tsx`):**
+     - Đổi `maximumScale: 5` thành `maximumScale: 1`, `minimumScale: 1`, `userScalable: false`.
+     - Ngăn chặn hoàn toàn việc trình duyệt di động (iOS Safari, Android Chrome) kích hoạt Browser Page Zoom của hệ điều hành làm méo mó UI và nuốt mất sự kiện cảm ứng của canvas.
+  2. **Tối ưu hóa Dedicated Native Touch Pinch & Pan Engine (`src/components/canvas/InfiniteDesk.tsx`):**
+     - Lắng nghe sự kiện cảm ứng native trực tiếp trên `window` ở Capture phase (`{ capture: true, passive: false }`) để bắt trọn 100% cử chỉ ngay cả khi ngón tay đặt trên sách `BookSpread` hay ghi chú `StickyNote`.
+     - Loại bỏ hoàn toàn bộ lọc ngưỡng chết (`deadzone threshold Math.abs(factor - 1) > 0.0005`) khiến các vi chỉnh zoom nhỏ bị vứt bỏ trước đó, giúp phóng to thu nhỏ nhạy bén tức thì từng micromet.
+     - Tách biệt hoàn toàn Touch khỏi PointerEvent: `pointermove` tự động bỏ qua khi `e.pointerType === 'touch'`, triệt tiêu hoàn toàn hiện tượng 2 bộ điều khiển cùng can thiệp vào `setTransform` gây giật lag hoặc tranh chấp state.
+     - Khắc phục lỗi crash tiềm ẩn runtime: kiểm tra `typeof target.closest === 'function'` trước khi truy xuất DOM, loại trừ hoàn toàn `TypeError: target.closest is not a function` khi target là `document`/`window`.
+  3. **Kiểm thử & Xác thực:**
+     - Tạo mới `src/components/canvas/InfiniteDeskTouchZoom.test.tsx` (2 unit tests kiểm tra Pinch-to-zoom và Touch-end cleanup).
+     - Chạy toàn bộ test suites canvas & modals: 19/19 tests PASS (100%).
+     - Dev server compile sạch sẽ, phản hồi HTTP 200 OK.
+- **Changed:**
+  - `src/app/layout.tsx`
+  - `src/components/canvas/InfiniteDesk.tsx`
+  - `AGENTS.md`
+- **Added:**
+  - `src/components/canvas/InfiniteDeskTouchZoom.test.tsx`
+
+---
+
 ## 2026-11-13 23:00 — dev (Tinh Chỉnh Chợ Mobile Sheet Công Thái Học & Bàn Học Di Động Chuẩn GreenLearn)
 - **Task:** Giải quyết triệt để phản hồi của Sếp về trải nghiệm responsive di động: "tắt reponsive rấ tệ tinh chỉnh lại thêm nữa vẫn chưa tối ưu bàn học giống greenlearn cho điện thoại":
   1. **Tối ưu hóa Bàn Học 2.5D Di Động Chuẩn GreenLearn (`src/app/page.tsx`, `StudySpaceDeskView.tsx`, `LeftCreationBar.tsx`, `StudySpaceContext.tsx`):**
