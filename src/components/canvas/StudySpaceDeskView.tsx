@@ -14,9 +14,10 @@ import { MultiplayerBar } from '../hud/MultiplayerBar';
 import { ActivityService } from '@/services/ActivityService';
 import { OnboardingTour } from '../onboarding/OnboardingTour';
 import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAssetPath } from '@/lib/assets';
 
 export default function StudySpaceDeskView() {
-  const { focusedItemId } = useStudySpace();
+  const { focusedItemId, isDeskReady } = useStudySpace();
   const isFocusMode = !!focusedItemId;
 
   // Independent drawer states for each of the 5 HUD islands in focus mode
@@ -60,6 +61,38 @@ export default function StudySpaceDeskView() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-white select-none">
+      {/* Desk Loading Overlay: chờ tải đủ ghi chú, tài liệu, sticker, GIF và nét vẽ trước khi mở bàn */}
+      {!isDeskReady && (
+        <div
+          className="fixed inset-0 z-[9990] bg-slate-50/95 backdrop-blur-md flex flex-col items-center justify-center gap-4 transition-opacity duration-300"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <div className="absolute inset-0 rounded-2xl border-2 border-[#E0562D]/20 animate-ping" />
+            <div className="relative w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-lg flex items-center justify-center">
+              <img
+                src={getAssetPath('/icons/vitudy.png')}
+                alt="ViTudy"
+                width={32}
+                height={32}
+                style={{ width: 32, height: 32, maxWidth: 32, maxHeight: 32 }}
+                className="w-8 h-8 object-contain"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-1.5 text-center px-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#E0562D] animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 rounded-full bg-[#E0562D] animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 rounded-full bg-[#E0562D] animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <p className="text-sm font-bold text-slate-900 mt-1">Đang mở bàn học của bạn...</p>
+            <p className="text-xs text-slate-500">Đang đồng bộ tài liệu, ghi chú, hình dán và nét vẽ từ đám mây</p>
+          </div>
+        </div>
+      )}
+
       {/* 2.5D Infinite Canvas Desk */}
       <InfiniteDesk />
 

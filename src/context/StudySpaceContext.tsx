@@ -141,6 +141,7 @@ interface StudySpaceContextType {
   resetExam: (itemId: string) => void;
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
   saveCurrentSpaceImmediately: (isManual?: boolean) => Promise<boolean>;
+  isDeskReady: boolean;
 }
 
 const DEFAULT_TRANSFORM: CanvasTransform = {
@@ -167,6 +168,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [spaces, setSpaces] = useState<StudySpace[]>([]);
   const [activeSpaceId, setActiveSpaceId] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSwitchingSpace, setIsSwitchingSpace] = useState(false);
   const [transform, setTransform] = useState<CanvasTransform>(DEFAULT_TRANSFORM);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -274,8 +276,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const startStroke = (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => {
+    const strokeId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : ensureUUID(`stroke-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`);
     setCurrentStroke({
-      id: `stroke-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: strokeId,
       points: [point],
       color,
       width,
@@ -517,12 +523,15 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     } catch {}
   }, [user?.id, activeSpaceId]);
 
-  // Deep NFC normalization & Zero-Emoji sanitizer for persistent storage safety
-  const removeEmojis = (str: string) => str.replace(/([\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u27BF])/g, '').trim();
-  const normalizeNFC = (text: string) => (text ? removeEmojis(sanitizeDocumentText(text).normalize('NFC')) : '');
+  // Deep NFC normalization & binary sanitizer for persistent storage safety (preserves emojis for emoji stickers/notes)
+  const normalizeNFC = (text: string) => (text ? sanitizeDocumentText(text).normalize('NFC') : '');
 
   // Load spaces on startup from Supabase Cloud (when authenticated) or localStorage (guest)
   useEffect(() => {
+    if (status === 'loading') return;
+    let cancelled = false;
+    setIsLoaded(false);
+
     const isAuth = status === 'authenticated' && Boolean(user?.id);
     const userPrefix = isAuth ? `user_${user!.id}_` : 'guest_';
     let localSpaces: StudySpace[] | null = null;
@@ -577,96 +586,104 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     };
 
     if (isAuth && user?.id) {
-      StudySpaceService.loadSpaces(user.id).then((cloudSpaces) => {
-        let targetId = '';
-        
-        // Lọc bỏ các bàn học rỗng demo/thử nghiệm cũ
-        const isGhostEmpty = (s: StudySpace) =>
-          (!s.items || s.items.length === 0) &&
-          ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm', 'Bàn học trống'].includes(s.name.trim());
+      (async () => {
+        try {
+          const cloudSpaces = await StudySpaceService.loadSpaces(user.id);
+          if (cancelled) return;
+          let targetId = '';
 
-        // Dọn dẹp trên cloud cho các bàn học rỗng
-        cloudSpaces.forEach(cs => {
-          if (isGhostEmpty(cs)) {
-            StudySpaceService.deleteSpace(cs.id).catch(() => {});
+          // Lọc bỏ các bàn học rỗng demo/thử nghiệm cũ
+          const isGhostEmpty = (s: StudySpace) =>
+            (!s.items || s.items.length === 0) &&
+            ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm', 'Bàn học trống'].includes(s.name.trim());
+
+          // Dọn dẹp trên cloud cho các bàn học rỗng
+          cloudSpaces.forEach(cs => {
+            if (isGhostEmpty(cs)) {
+              StudySpaceService.deleteSpace(cs.id).catch(() => {});
+            }
+          });
+
+          const cleanCloudSpaces = cloudSpaces.filter(cs => !isGhostEmpty(cs));
+          const cleanLocalSpaces = (localSpaces || []).filter(ls => !isGhostEmpty(ls));
+
+          if (cleanCloudSpaces.length > 0) {
+            // Bảo toàn dữ liệu cục bộ: Nếu local có bàn học cùng id mà có tài liệu mới hơn/đầy đủ hơn, giữ local
+            const mergedSpaces = cleanCloudSpaces.map(cs => {
+              const localMatch = cleanLocalSpaces.find(ls => ls.id === cs.id || ensureUUID(ls.id) === cs.id);
+              if (!localMatch) return cs;
+              const localTime = new Date(localMatch.updatedAt || localMatch.lastOpenedAt || 0).getTime();
+              const cloudTime = new Date(cs.updatedAt || cs.lastOpenedAt || 0).getTime();
+              if (localMatch.items && (cs.items.length === 0 || localTime >= cloudTime || localMatch.items.length >= cs.items.length)) {
+                StudySpaceService.saveSpace(localMatch, user.id)
+                  .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
+                  .catch(() => {});
+                return {
+                  ...cs,
+                  ...localMatch,
+                  items: localMatch.items
+                };
+              }
+              return cs;
+            });
+
+            // Chỉ merge các space local của chính user này nếu chưa có trên cloud
+            cleanLocalSpaces.forEach(ls => {
+              if (!mergedSpaces.some(cs => cs.id === ls.id || ensureUUID(cs.id) === ensureUUID(ls.id))) {
+                mergedSpaces.push(ls);
+                StudySpaceService.saveSpace(ls, user.id)
+                  .then(() => StudySpaceService.upsertItems(ls.id, ls.items))
+                  .catch(() => {});
+              }
+            });
+
+            setSpaces(mergedSpaces);
+            syncLocal(mergedSpaces);
+
+            targetId = (urlSpaceId && mergedSpaces.some(s => s.id === urlSpaceId))
+              ? urlSpaceId
+              : (localActiveId && mergedSpaces.some(s => s.id === localActiveId))
+              ? localActiveId
+              : mergedSpaces[0].id;
+            setActiveSpaceId(targetId);
+          } else if (cleanLocalSpaces.length > 0) {
+            // Chưa có trên cloud nhưng có local của user -> sync local lên cloud
+            setSpaces(cleanLocalSpaces);
+            syncLocal(cleanLocalSpaces);
+            targetId = (urlSpaceId && cleanLocalSpaces.some(s => s.id === urlSpaceId))
+              ? urlSpaceId
+              : (localActiveId && cleanLocalSpaces.some(s => s.id === localActiveId))
+              ? localActiveId
+              : cleanLocalSpaces[0].id;
+            setActiveSpaceId(targetId);
+            cleanLocalSpaces.forEach(s => {
+              StudySpaceService.saveSpace(s, user.id)
+                .then(() => StudySpaceService.upsertItems(s.id, s.items))
+                .catch(() => {});
+            });
+          } else {
+            // Tài khoản mới chưa tạo bàn học: giữ danh sách trống
+            setSpaces([]);
+            setActiveSpaceId('');
+            syncLocal([]);
           }
-        });
 
-        const cleanCloudSpaces = cloudSpaces.filter(cs => !isGhostEmpty(cs));
-        const cleanLocalSpaces = (localSpaces || []).filter(ls => !isGhostEmpty(ls));
-
-        if (cleanCloudSpaces.length > 0) {
-          // Bảo toàn dữ liệu cục bộ: Nếu local có bàn học cùng id mà có tài liệu mới hơn/đầy đủ hơn, giữ local
-          const mergedSpaces = cleanCloudSpaces.map(cs => {
-            const localMatch = cleanLocalSpaces.find(ls => ls.id === cs.id || ensureUUID(ls.id) === cs.id);
-            if (!localMatch) return cs;
-            const localTime = new Date(localMatch.updatedAt || localMatch.lastOpenedAt || 0).getTime();
-            const cloudTime = new Date(cs.updatedAt || cs.lastOpenedAt || 0).getTime();
-            if (localMatch.items && (cs.items.length === 0 || localTime >= cloudTime || localMatch.items.length >= cs.items.length)) {
-              StudySpaceService.saveSpace(localMatch, user.id)
-                .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
-                .catch(() => {});
-              return {
-                ...cs,
-                ...localMatch,
-                items: localMatch.items
-              };
-            }
-            return cs;
-          });
-
-          // Chỉ merge các space local của chính user này nếu chưa có trên cloud
-          cleanLocalSpaces.forEach(ls => {
-            if (!mergedSpaces.some(cs => cs.id === ls.id || ensureUUID(cs.id) === ensureUUID(ls.id))) {
-              mergedSpaces.push(ls);
-              StudySpaceService.saveSpace(ls, user.id)
-                .then(() => StudySpaceService.upsertItems(ls.id, ls.items))
-                .catch(() => {});
-            }
-          });
-
-          setSpaces(mergedSpaces);
-          syncLocal(mergedSpaces);
-
-          targetId = (urlSpaceId && mergedSpaces.some(s => s.id === urlSpaceId))
-            ? urlSpaceId
-            : (localActiveId && mergedSpaces.some(s => s.id === localActiveId))
-            ? localActiveId
-            : mergedSpaces[0].id;
-          setActiveSpaceId(targetId);
-        } else if (cleanLocalSpaces.length > 0) {
-          // Chưa có trên cloud nhưng có local của user -> sync local lên cloud
-          setSpaces(cleanLocalSpaces);
-          syncLocal(cleanLocalSpaces);
-          targetId = (urlSpaceId && cleanLocalSpaces.some(s => s.id === urlSpaceId))
-            ? urlSpaceId
-            : (localActiveId && cleanLocalSpaces.some(s => s.id === localActiveId))
-            ? localActiveId
-            : cleanLocalSpaces[0].id;
-          setActiveSpaceId(targetId);
-          cleanLocalSpaces.forEach(s => {
-            StudySpaceService.saveSpace(s, user.id)
-              .then(() => StudySpaceService.upsertItems(s.id, s.items))
-              .catch(() => {});
-          });
-        } else {
-          // Tài khoản mới chưa tạo bàn học: giữ danh sách trống
-          setSpaces([]);
-          setActiveSpaceId('');
-          syncLocal([]);
-        }
-
-        if (targetId) {
-          loadLocalStrokes(targetId);
-          StudySpaceService.loadStrokes(targetId).then(cloudStrokes => {
-            if (cloudStrokes && cloudStrokes.length > 0) {
+          if (targetId) {
+            loadLocalStrokes(targetId);
+            const cloudStrokes = await StudySpaceService.loadStrokes(targetId);
+            if (!cancelled && cloudStrokes && cloudStrokes.length > 0) {
               setStrokes(cloudStrokes);
             }
-          });
+          }
+        } finally {
+          if (!cancelled) {
+            setIsLoaded(true);
+          }
         }
-        setIsLoaded(true);
-      });
-      return;
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
 
     // Khi là khách (Guest)
@@ -815,12 +832,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   // Debounce autosave khi thay đổi vật thể hoặc nét vẽ
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || isSwitchingSpace) return;
     const timer = setTimeout(() => {
       saveCurrentSpaceImmediately();
     }, 800);
     return () => clearTimeout(timer);
-  }, [spaces, strokes, saveCurrentSpaceImmediately, isLoaded]);
+  }, [spaces, strokes, saveCurrentSpaceImmediately, isLoaded, isSwitchingSpace]);
 
   // Lắng nghe đồng bộ realtime bàn học khi học nhóm multiplayer
   useEffect(() => {
@@ -880,11 +897,16 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       }
 
       if (status === 'authenticated' && user?.id) {
-        StudySpaceService.loadStrokes(spaceId).then(cloudStrokes => {
-          if (cloudStrokes && cloudStrokes.length > 0) {
-            setStrokes(cloudStrokes);
-          }
-        });
+        setIsSwitchingSpace(true);
+        StudySpaceService.loadStrokes(spaceId)
+          .then(cloudStrokes => {
+            if (cloudStrokes && cloudStrokes.length > 0) {
+              setStrokes(cloudStrokes);
+            }
+          })
+          .finally(() => {
+            setIsSwitchingSpace(false);
+          });
       }
     }
   };
@@ -2080,7 +2102,10 @@ Trong đó:
     customWidth?: number,
     customHeight?: number
   ): string => {
-    const stickerId = `sticker-${Date.now()}`;
+    const stickerId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : ensureUUID(`sticker-${Date.now()}`);
     const w = customWidth || sticker.width || (sticker.type === 'gif' ? 260 : sticker.type === 'sticker' ? 140 : 100);
     const h = customHeight || sticker.height || (sticker.type === 'gif' ? 200 : sticker.type === 'sticker' ? 140 : 100);
 
@@ -2602,7 +2627,8 @@ Trong đó:
         isViewRotateMode,
         setIsViewRotateMode,
         saveStatus,
-        saveCurrentSpaceImmediately
+        saveCurrentSpaceImmediately,
+        isDeskReady: isLoaded && !isSwitchingSpace
       }}
     >
       {children}

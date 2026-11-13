@@ -10,14 +10,21 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 export function ensureUUID(id: string): string {
   if (UUID_REGEX.test(id)) return id;
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+  if (!id) {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return '00000000-0000-4000-8000-000000000000';
   }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+  // Deterministic 128-bit hash so legacy IDs (e.g. sticker-..., stroke-...) always map to the same UUID
+  const h = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35];
+  for (let i = 0; i < id.length; i++) {
+    const c = id.charCodeAt(i);
+    h[i & 3] = Math.imul(h[i & 3] ^ c, 0x01000193) >>> 0;
+    h[(i + 1) & 3] = (h[(i + 1) & 3] + ((h[i & 3] << 5) | (h[i & 3] >>> 27))) >>> 0;
+  }
+  const hex = h.map(v => v.toString(16).padStart(8, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
 export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInsert {
@@ -113,56 +120,61 @@ export class StudySpaceService {
         .eq('owner_id', userId)
         .order('created_at', { ascending: true });
 
-      if (spacesError || !spacesData) return [];
+      if (spacesError || !spacesData || spacesData.length === 0) return [];
 
-      const result: StudySpace[] = [];
+      const spaceIds = spacesData.map(s => s.id);
 
-      for (const spaceRow of spacesData) {
-        // 2. Load documents for this space
-        const { data: docsData } = await supabase
+      // 2. Batch-load all documents & threads across all spaces in parallel (eliminates N+1 round-trips)
+      const [{ data: allDocsData }, { data: allThreadsData }] = await Promise.all([
+        supabase
           .from('desk_documents')
           .select('*')
-          .eq('space_id', spaceRow.id)
-          .order('z_index', { ascending: true });
-
-        // 3. Load pages for these documents
-        const docIds = (docsData || []).map(d => d.id);
-        const pagesByDocId: Record<string, PageContent[]> = {};
-
-        if (docIds.length > 0) {
-          const { data: pagesData } = await supabase
-            .from('document_pages')
-            .select('*')
-            .in('document_id', docIds)
-            .order('page_number', { ascending: true });
-
-          if (pagesData) {
-            for (const p of pagesData) {
-              if (!pagesByDocId[p.document_id]) {
-                pagesByDocId[p.document_id] = [];
-              }
-              pagesByDocId[p.document_id].push({
-                id: p.id,
-                pageNumber: p.page_number,
-                title: p.title || undefined,
-                text: p.content,
-              });
-            }
-          }
-        }
-
-        // Map items
-        const items: DeskItem[] = (docsData || []).map(row => 
-          rowToDeskItem(row as DeskDocumentRow, pagesByDocId[row.id] || [])
-        );
-
-        // 4. Load threads for this space
-        const { data: threadsData } = await supabase
+          .in('space_id', spaceIds)
+          .order('z_index', { ascending: true }),
+        supabase
           .from('inteline_threads')
           .select('*')
-          .eq('space_id', spaceRow.id);
+          .in('space_id', spaceIds),
+      ]);
 
-        const threads: IntelineThread[] = (threadsData || []).map(t => ({
+      // 3. Batch-load all document pages in one query
+      const allDocIds = (allDocsData || []).map(d => d.id);
+      const pagesByDocId: Record<string, PageContent[]> = {};
+
+      if (allDocIds.length > 0) {
+        const { data: pagesData } = await supabase
+          .from('document_pages')
+          .select('*')
+          .in('document_id', allDocIds)
+          .order('page_number', { ascending: true });
+
+        if (pagesData) {
+          for (const p of pagesData) {
+            if (!pagesByDocId[p.document_id]) {
+              pagesByDocId[p.document_id] = [];
+            }
+            pagesByDocId[p.document_id].push({
+              id: p.id,
+              pageNumber: p.page_number,
+              title: p.title || undefined,
+              text: p.content,
+            });
+          }
+        }
+      }
+
+      const docsBySpaceId: Record<string, DeskItem[]> = {};
+      for (const row of allDocsData || []) {
+        if (!docsBySpaceId[row.space_id]) docsBySpaceId[row.space_id] = [];
+        docsBySpaceId[row.space_id].push(
+          rowToDeskItem(row as DeskDocumentRow, pagesByDocId[row.id] || [])
+        );
+      }
+
+      const threadsBySpaceId: Record<string, IntelineThread[]> = {};
+      for (const t of allThreadsData || []) {
+        if (!threadsBySpaceId[t.space_id]) threadsBySpaceId[t.space_id] = [];
+        threadsBySpaceId[t.space_id].push({
           id: t.id,
           sourceItemId: t.source_item_id,
           sourcePageNumber: t.source_page_number,
@@ -172,21 +184,19 @@ export class StudySpaceService {
           question: t.question,
           answer: t.answer,
           createdAt: t.created_at,
-        }));
-
-        result.push({
-          id: spaceRow.id,
-          name: spaceRow.name,
-          subject: spaceRow.subject,
-          description: '',
-          createdAt: spaceRow.created_at,
-          updatedAt: spaceRow.updated_at,
-          items,
-          threads,
         });
       }
 
-      return result;
+      return spacesData.map(spaceRow => ({
+        id: spaceRow.id,
+        name: spaceRow.name,
+        subject: spaceRow.subject,
+        description: '',
+        createdAt: spaceRow.created_at,
+        updatedAt: spaceRow.updated_at,
+        items: docsBySpaceId[spaceRow.id] || [],
+        threads: threadsBySpaceId[spaceRow.id] || [],
+      }));
     } catch (err) {
       console.warn('Lỗi loadSpaces từ Supabase Cloud:', err);
       return [];
@@ -259,9 +269,10 @@ export class StudySpaceService {
     if (!supabase || !itemId) return;
 
     try {
+      const safeItemId = ensureUUID(itemId);
       await Promise.all([
-        supabase.from('desk_documents').delete().eq('id', itemId),
-        supabase.from('inteline_threads').delete().eq('source_item_id', itemId),
+        supabase.from('desk_documents').delete().eq('id', safeItemId),
+        supabase.from('inteline_threads').delete().eq('source_item_id', safeItemId),
       ]);
     } catch (err) {
       console.warn('Lỗi deleteItem:', err);
