@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-11-14 00:20 — dev (Bóc Nền Trắng Ảnh PNG Thú Cưng Thành Kênh Alpha Thật & Chuẩn Hóa Widget Trong Suốt)
+- **Task:** Xử lý triệt để ô vuông màu trắng đằng sau nhân vật theo lựa chọn Phương án 2 của Sếp:
+  1. **Tự động bóc nền trắng bằng Python script (`scripts/remove_pet_bg.py`):**
+     - Áp dụng thuật toán BFS Flood-fill từ 4 cạnh biên ngoài kết hợp làm mềm biên Gaussian blur ($r = 1.2\text{px}$) để chuyển toàn bộ vùng nền màu trắng đặc (`RGB 254-255`) thành kênh Alpha trong suốt (`Alpha = 0`).
+     - Bảo lưu 100% chi tiết bên trong nhân vật thú cưng (`Alpha = 255`).
+     - Sao lưu ảnh gốc an toàn vào `brand/pet_original_backup/`.
+     - Xuất đè ảnh PNG trong suốt chất lượng cao vào cả 3 thư mục: `brand/pet/`, `public/brand/pet/`, và `public/pets/`.
+     - Kiểm tra xác nhận bằng PIL: 4 góc của toàn bộ 8 file ảnh đạt `Alpha = 0`, giải quyết triệt để vấn đề mà không dùng mẹo `mix-blend-mode`.
+  2. **Chuẩn hóa CSS/HTML widget `FloatingPet.tsx`:**
+     - Thiết lập `background: transparent; box-shadow: none; border: none; outline: none; padding: 0; -webkit-tap-highlight-color: transparent` trên tất cả container và wrapper.
+     - Thẻ `<img>`: Bỏ toàn bộ box-shadow/border, thiết lập `filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15))` ôm sát đường viền nhân vật; `user-select: none; -webkit-user-drag: none`.
+  3. **Verification:** Toàn bộ 28 test suites (103/103 tests) PASS 100%.
+- **Changed:**
+  - `src/components/pet/FloatingPet.tsx`
+  - `scripts/remove_pet_bg.py`
+  - `brand/pet/*.png` (8 files)
+  - `public/brand/pet/*.png` (8 files)
+  - `public/pets/*.png` (8 files)
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+
+---
+
 ## 2026-11-14 00:10 — dev (Tinh Giản Streak Pet: Bỏ Ô Badge Hộp Nổi, Chỉ Giữ Lại Thú Cưng Tự Nhiên)
 - **Task:** Tinh giản hiển thị của `FloatingPet.tsx` theo yêu cầu của Sếp: "tôi muốn mất cái ô nớ và chỉ giữ lại con pet được không nhìn kỳ quá":
   1. **Loại bỏ hoàn toàn ô badge hộp nổi:** Gỡ bỏ thẻ badge nền trắng viền xám đè trên đầu con pet (`div.mb-1.flex.items-center...`).
