@@ -179,6 +179,7 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       * Bộ ảnh PNG 1:1 nền trong suốt gồm 4 cấp độ: Stage 1 "Trứng" (0-3 ngày: `stage1.png`, `sleep-stage1.png`), Stage 2 "Nứt vỏ" (4-10 ngày: `stage2.png`, `sleep-stage2.png`), Stage 3 "Vịt con" (11-100 ngày: `stage3.png`, `sleep-stage3.png`), và Stage 4 "Trưởng thành" (101+ ngày: `stage4.png`, `sleep-stage4.png`).
       * Toàn bộ đường dẫn ảnh bắt buộc bọc qua `getAssetPath` để tương thích mọi môi trường triển khai (subpath / GitHub Pages).
     * **Kéo thả công thái học & Tự động bám viền (Floating & Edge Snapping):**
+      * **Triệt tiêu hoàn toàn ô badge hộp thừa:** Chỉ hiển thị duy nhất hình ảnh chú thú cưng nổi lơ lửng tự nhiên trên màn hình, loại bỏ hoàn toàn ô badge hộp trắng đè trên đầu pet gây rối mắt.
       * Sử dụng Pointer Events (`pointerdown`, `pointermove`, `pointerup`), phân biệt chính xác thao tác kéo và chạm: di chuyển $< 6\text{px}$ là Chạm (Tap/Click), $\ge 6\text{px}$ là Kéo (Drag).
       * Khi thả tay, tự động bám dính (snap) vào mép trái hoặc phải gần nhất với chuyển động mượt mà (`cubic-bezier(0.18, 0.89, 0.32, 1.28)`), luôn giữ khoảng cách an toàn trong viewport và lưu vị trí vào `localStorage`.
       * Container bao bọc sử dụng `pointer-events: none`, chỉ khối widget thú cưng bật `pointer-events-auto`, triệt tiêu hoàn toàn việc che chặn thao tác click lên giao diện phía sau.

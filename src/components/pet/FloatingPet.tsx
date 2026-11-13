@@ -172,13 +172,7 @@ export const FloatingPet: React.FC = () => {
           className="absolute top-0 left-0 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group"
           title={isAsleep ? 'Bấm để đánh thức và điểm danh hôm nay' : 'Bấm để xem bộ sưu tập'}
         >
-          {/* Badge Streak ngọn lửa */}
-          <div className="mb-1 flex items-center gap-1 bg-white/95 text-slate-800 text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-md border border-slate-200 backdrop-blur-xs transition-transform group-hover:scale-105">
-            <span className="text-[#E0562D]">🔥</span>
-            <span>{status.current_streak}</span>
-          </div>
-
-          {/* Vỏ Pet & Animation Container */}
+          {/* Vỏ Pet & Animation Container — Chỉ giữ lại hình ảnh thú cưng tự nhiên */}
           <div
             className={`relative w-[88px] h-[88px] flex items-center justify-center ${
               isWakingUp

@@ -73,13 +73,12 @@ describe('FloatingPet Widget Component', () => {
     };
   });
 
-  it('renders pet streak badge and sleep image when not checked in', () => {
+  it('renders pet sleep image cleanly without redundant badge box when not checked in', () => {
     render(<FloatingPet />);
-    expect(screen.getByText('5')).toBeDefined();
-    expect(screen.getByText('🔥')).toBeDefined();
-
     const img = screen.getByRole('img');
     expect(img.getAttribute('src')).toContain('sleep-stage2.png');
+    // Ensure the redundant pill box is gone
+    expect(screen.queryByText('🔥')).toBeNull();
   });
 
   it('triggers checkin when tapped while asleep (movement under 6px)', async () => {

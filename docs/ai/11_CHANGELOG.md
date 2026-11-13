@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-11-14 00:10 — dev (Tinh Giản Streak Pet: Bỏ Ô Badge Hộp Nổi, Chỉ Giữ Lại Thú Cưng Tự Nhiên)
+- **Task:** Tinh giản hiển thị của `FloatingPet.tsx` theo yêu cầu của Sếp: "tôi muốn mất cái ô nớ và chỉ giữ lại con pet được không nhìn kỳ quá":
+  1. **Loại bỏ hoàn toàn ô badge hộp nổi:** Gỡ bỏ thẻ badge nền trắng viền xám đè trên đầu con pet (`div.mb-1.flex.items-center...`).
+  2. **Thú cưng nổi lơ lửng thuần khiết:** Toàn bộ widget giờ đây chỉ hiển thị duy nhất hình ảnh chú thú cưng trong suốt tự nhiên, nhún nhảy (awake) hoặc thở chậm + Zzz (asleep), không có bất kỳ khung hộp hay đường viền thừa nào làm che mắt.
+  3. **Cập nhật Unit Tests:** Chỉnh sửa `FloatingPet.test.tsx` (5/5 tests PASS).
+- **Changed:**
+  - `src/components/pet/FloatingPet.tsx`
+  - `src/components/pet/FloatingPet.test.tsx`
+  - `AGENTS.md`
+
+---
+
 ## 2026-11-14 00:05 — dev (Xây Dựng Tính Năng Thú Cưng Chuỗi Học Tập - Streak Pet Widget)
 - **Task:** Triển khai hoàn chỉnh tính năng "Streak Pet" (Thú cưng chuỗi học tập) tích hợp trực tiếp vào ViTudy từ bộ assets ảnh trong thư mục `brand/pet/`:
   1. **Assets & Cấu hình Stage (`public/brand/pet/`, `src/components/pet/stages.ts`):**
