@@ -2,7 +2,7 @@
 
 > **Commit Hash:** `Current Working Tree (dev)`  
 > **Cập nhật lần cuối:** `2026-11-13`  
-> **Trạng thái Codebase:** Hoàn thành tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Mobile/Tablet Responsiveness, Pinch-to-zoom 2 ngón, Palm Rejection, Compact HUD, Mobile Bottom Nav 5 tab, Mobile Desk Cards), 25/25 test files pass (91 tests), Next.js 15.1.7 build clean 16/16 pages pass.
+> **Trạng thái Codebase:** Hoàn thành tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Mobile/Tablet Responsiveness, Pinch-to-zoom 2 ngón, Palm Rejection, Mobile Sheet MarketModal cử chỉ vuốt, Bàn học dock đáy mobile portrait, Compact HUD), 26/26 test files pass (96 tests), Next.js 15.1.7 build clean 16/16 pages pass.
 
 ---
 

@@ -203,10 +203,10 @@ export function LeftCreationBar() {
   return (
     <div 
       data-tour="left-toolbar-island"
-      className="relative flex flex-col items-center gap-1.5 pointer-events-auto select-none"
+      className="relative flex max-sm:portrait:flex-row flex-col items-center gap-1.5 pointer-events-auto select-none"
     >
-      {/* Tool Island: Vertical on all screen sizes with compact mobile styles */}
-      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex flex-col items-center gap-1 relative max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-fixed-toolbar">
+      {/* Tool Island: Horizontal bottom dock on mobile portrait, vertical on landscape and desktop */}
+      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 relative max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-fixed-toolbar">
         {/* Select (Cursor) Tool */}
         <button
           title="Con trỏ điều hướng (Kéo di chuyển bàn / Chọn vật thể)"
@@ -264,7 +264,7 @@ export function LeftCreationBar() {
         </button>
 
         {/* Gạch chia vùng NẰM TRÊN nút + */}
-        <div className="w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
+        <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
 
         {/* Nút + Công cụ mở rộng (More tools) - nằm dưới pen và trên lock */}
         <button
@@ -284,7 +284,7 @@ export function LeftCreationBar() {
         </button>
 
         {/* Gạch chia vùng NẰM DƯỚI nút + */}
-        <div className="w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
+        <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
 
         {/* Lock Pan View Toggle */}
         <button
@@ -301,7 +301,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
         {isNoteFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 sm:ml-3 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-xl flex flex-col gap-2 z-50 animate-fade-in max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
+          <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:top-auto max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:mb-2 max-sm:portrait:ml-0 max-sm:portrait:flex-row sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 sm:flex-col bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-xl flex gap-2 z-50 animate-fade-in max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
             {stickyColors.map(c => (
               <button
                 key={c.value}
@@ -318,7 +318,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED PEN SUB-TOOLBAR FLYOUT ================= */}
         {isPenFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 sm:ml-3 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl flex flex-col items-center gap-2 z-50 animate-fade-in min-w-[44px] max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
+          <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:top-auto max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:mb-2 max-sm:portrait:ml-0 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl flex max-sm:portrait:flex-row flex-col items-center gap-2 z-50 animate-fade-in min-w-[44px] max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
             {/* Tool 1: Pen (Bút vẽ thường) */}
             <button
               title="Bút vẽ tự do (Pen)"
@@ -384,10 +384,10 @@ export function LeftCreationBar() {
               <BoxSelect className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-900 stroke-[2.4]" />
             </button>
 
-            <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+            <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 w-7 h-[1px] bg-slate-200 my-0.5" />
 
             {/* Stroke Width Selector (3 kích thước: S, M, L) */}
-            <div className="flex flex-col items-center gap-1.5 py-0.5">
+            <div className="flex max-sm:portrait:flex-row flex-col items-center gap-1.5 py-0.5">
               <button
                 title="Nét mảnh (Nhỏ)"
                 onClick={() => setPenWidthLevel('small')}
@@ -417,7 +417,7 @@ export function LeftCreationBar() {
               </button>
             </div>
 
-            <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+            <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 w-7 h-[1px] bg-slate-200 my-0.5" />
 
             {/* Single Current Color Button with Compact Popup */}
             <div className="relative pb-0.5">
@@ -432,7 +432,7 @@ export function LeftCreationBar() {
 
               {/* Flyout 6-Color Palette Grid (3 columns x 2 rows) */}
               {isPenColorPickerOpen && (
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 sm:ml-3 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl backdrop-blur-md grid grid-cols-3 gap-2 z-50 animate-fade-in w-28">
+                <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:mb-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl backdrop-blur-md grid grid-cols-3 gap-2 z-50 animate-fade-in w-28">
                   {penColors.map(c => (
                     <button
                       key={c.value}
@@ -483,7 +483,7 @@ export function LeftCreationBar() {
 
         {/* ================= MORE TOOLS FLYOUT (Miro-style, Zero Search) ================= */}
         {isMoreToolsOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 sm:ml-3 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-3 shadow-2xl flex flex-col gap-1 z-50 animate-fade-in w-64 sm:w-72 text-slate-900 select-none max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
+          <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:top-auto max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:mb-2 max-sm:portrait:ml-0 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-3 shadow-2xl flex flex-col gap-1 z-50 animate-fade-in w-64 sm:w-72 text-slate-900 select-none max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
             <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-100 mb-1">
               <span className="text-xs font-black text-slate-900 tracking-wide uppercase">
                 Công cụ mở rộng
@@ -529,7 +529,7 @@ export function LeftCreationBar() {
       </div>
 
       {/* Grouped Undo & Redo Column Pill below toolbar */}
-      <div className="w-full bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-md backdrop-blur-md flex flex-col items-center gap-1 text-slate-900">
+      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-md backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 text-slate-900">
         <button
           title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
           onClick={undoStroke}
@@ -558,7 +558,7 @@ export function LeftCreationBar() {
 
         {strokes.length > 0 && (
           <>
-            <div className="w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
+            <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
             <button
               title="Xóa toàn bộ nét vẽ"
               onClick={clearStrokes}

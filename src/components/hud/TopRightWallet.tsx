@@ -430,7 +430,7 @@ export function TopRightWallet() {
     <>
       <div 
         data-tour="wallet-market"
-        className="relative flex items-center bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none gap-0.5 sm:gap-1"
+        className="relative flex items-center bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-0.5 sm:p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none gap-0.5 sm:gap-1 max-w-[50vw] shrink-0 justify-end"
       >
         {/* Daily Streak Button */}
         <button

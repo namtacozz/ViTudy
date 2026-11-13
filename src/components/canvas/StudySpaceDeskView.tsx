@@ -71,7 +71,10 @@ export default function StudySpaceDeskView() {
   }, []);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-white select-none">
+    <div 
+      className="relative w-screen h-[100dvh] overflow-hidden bg-white select-none touch-none overscroll-none"
+      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
+    >
       {/* 2.5D Infinite Canvas Desk */}
       <InfiniteDesk />
 
@@ -132,11 +135,17 @@ export default function StudySpaceDeskView() {
         )}
       </div>
 
-      {/* ================= 3. LEFT TOOL CREATION BAR ================= */}
+      {/* ================= 3. TOOL CREATION BAR (Dock ngang đáy trên mobile portrait, Dọc mép trái trên landscape & desktop) ================= */}
       <div 
         className={clsx(
-          "fixed left-1 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          isFocusMode && !showLeftInFocus ? "-translate-x-[calc(100%+12px)]" : "translate-x-0"
+          "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
+          // Mobile Portrait: Dock ngang đáy
+          "max-sm:portrait:bottom-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
+          // Landscape & Desktop: Cột dọc mép trái
+          "sm:left-1 sm:top-1/2 sm:-translate-y-1/2 max-sm:landscape:left-1 max-sm:landscape:top-1/2 max-sm:landscape:-translate-y-1/2",
+          isFocusMode && !showLeftInFocus 
+            ? "max-sm:portrait:translate-y-[calc(100%+16px)] sm:-translate-x-[calc(100%+12px)] max-sm:landscape:-translate-x-[calc(100%+12px)]" 
+            : "max-sm:portrait:translate-y-0 sm:translate-x-0 max-sm:landscape:translate-x-0"
         )}
       >
         <LeftCreationBar />

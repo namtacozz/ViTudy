@@ -76,28 +76,19 @@ function StudySpacePageContent() {
     return <HomePage onEnterDesk={handleEnterDesk} />;
   }
 
-  // Mobile Mode (<768px): Mặc định mở Mobile Companion, có thể chuyển sang Canvas 2.5D
-  if (isMobile && mobileMode === 'companion') {
+  // Mobile Companion Mode (chỉ mở khi có tham số explicit ?view=companion)
+  if (viewParam === 'companion') {
     return (
-      <div className="w-full min-h-screen bg-white overflow-y-auto">
-        <MobileCompanionView onSwitchToCanvas={() => setMobileMode('canvas')} />
+      <div className="w-full min-h-[100dvh] bg-white overflow-y-auto">
+        <MobileCompanionView />
         <GuestBanner user={user} />
       </div>
     );
   }
 
-  // Desktop & Tablet (hoặc Mobile khi chọn chuyển sang Canvas 2.5D)
+  // Desktop, Tablet & Mobile 2.5D Infinite Workspace (Giống GreenLearn)
   return (
     <>
-      {isMobile && mobileMode === 'canvas' && (
-        <button
-          type="button"
-          onClick={() => setMobileMode('companion')}
-          className="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 bg-[#0f172a]/95 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all border border-slate-700 hover:bg-[#E0562D]"
-        >
-          <span>Chế độ đọc</span>
-        </button>
-      )}
       <StudySpaceDeskView />
       <GuestBanner user={user} />
       <MigrationDialog />
@@ -107,7 +98,7 @@ function StudySpacePageContent() {
 
 export default function StudySpacePage() {
   return (
-    <Suspense fallback={<div className="w-screen h-screen bg-[#e8ebf0]" />}>
+    <Suspense fallback={<div className="w-screen h-[100dvh] bg-[#e8ebf0]" />}>
       <StudySpacePageContent />
     </Suspense>
   );

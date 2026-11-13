@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `cd7f213`  
+> **Commit Hash:** `c2bf732`  
 > **Cập nhật lần cuối:** `2026-11-13`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -20,7 +20,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `MindMapConnectors` | `component` | [src/components/canvas/MindMapConnectors.tsx:L6-L103](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/MindMapConnectors.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
 | `Minimap` | `component` | [src/components/canvas/Minimap.tsx:L12-L235](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/Minimap.tsx) | Bản đồ radar thu nhỏ góc nhìn toàn cảnh không gian bàn học 2.5D |
 | `MultiplayerCursorsLayer` | `component` | [src/components/canvas/MultiplayerCursorsLayer.tsx:L11-L57](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/MultiplayerCursorsLayer.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
-| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L18-L222](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
+| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L18-L231](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
 | `VisualLinkThreads` | `component` | [src/components/canvas/VisualLinkThreads.tsx:L6-L215](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/VisualLinkThreads.tsx) | Vẽ các đường dây nối SVG trực quan từ đoạn trích sách sang giấy note Inteline |
 
 ### Objects (Sách, Giấy, Note)
@@ -70,7 +70,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `FullScreenDocModal` | `component` | [src/components/modals/FullScreenDocModal.tsx:L33-L867](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/FullScreenDocModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `IntelineModal` | `component` | [src/components/modals/IntelineModal.tsx:L27-L270](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/IntelineModal.tsx) | Hộp thoại AI hỏi đáp ngữ cảnh sâu Inteline theo từng dòng/trang tài liệu |
 | `KnowInheritPublishModal` | `component` | [src/components/modals/KnowInheritPublishModal.tsx:L39-L450](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/KnowInheritPublishModal.tsx) | Hộp thoại chia sẻ tài liệu lên chợ tri thức: AI thẩm định điểm và tính giá |
-| `MarketModal` | `component` | [src/components/modals/MarketModal.tsx:L44-L1024](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/MarketModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
+| `MarketModal` | `component` | [src/components/modals/MarketModal.tsx:L44-L1098](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/MarketModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `MobileCompanionView` | `component` | [src/components/mobile/MobileCompanionView.tsx:L30-L412](file:////home/nhat/Documents/DUT/ViTudy/src/components/mobile/MobileCompanionView.tsx) | Giao diện di động rút gọn đồng bộ tài liệu từ máy tính |
 | `ModelGroup` | `type` | [src/components/modals/AiConfigModal.tsx:L34-L37](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/AiConfigModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `ModelItem` | `type` | [src/components/modals/AiConfigModal.tsx:L28-L32](file:////home/nhat/Documents/DUT/ViTudy/src/components/modals/AiConfigModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
@@ -92,12 +92,12 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `AuthStatus` | `type` | [src/context/AuthContext.tsx:L8-L8](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `CreationPlacementTemplate` | `type` | [src/context/StudySpaceContext.tsx:L11-L30](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `PomodoroProvider` | `context` | [src/context/PomodoroContext.tsx:L35-L168](file:////home/nhat/Documents/DUT/ViTudy/src/context/PomodoroContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L167-L2635](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
+| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L167-L2636](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
 | `useAuth` | `hook` | [src/context/AuthContext.tsx:L312-L318](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `useOptionalAuth` | `hook` | [src/context/AuthContext.tsx:L320-L322](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `usePomodoroContext` | `hook` | [src/context/PomodoroContext.tsx:L170-L176](file:////home/nhat/Documents/DUT/ViTudy/src/context/PomodoroContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `UserProfile` | `type` | [src/context/AuthContext.tsx:L10-L16](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L2637-L2643](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
+| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L2638-L2644](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
 | `useViToken` | `hook` | [src/context/ViTokenContext.tsx:L317-L323](file:////home/nhat/Documents/DUT/ViTudy/src/context/ViTokenContext.tsx) | Hook quản lý ví ViToken, chi tiêu token, điểm danh streak và cấu hình AI |
 | `ViTokenProvider` | `context` | [src/context/ViTokenContext.tsx:L47-L315](file:////home/nhat/Documents/DUT/ViTudy/src/context/ViTokenContext.tsx) | Provider lưu trữ và đồng bộ ví ViToken, lịch sử giao dịch vào localStorage |
 
@@ -301,7 +301,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StickerPickerItem` | `type` | [src/data/stickersAndEmojis.ts:L1-L11](file:////home/nhat/Documents/DUT/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `StreakCalendar` | `component` | [src/components/dashboard/StreakCalendar.tsx:L19-L114](file:////home/nhat/Documents/DUT/ViTudy/src/components/dashboard/StreakCalendar.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudySpace` | `type` | [src/types/studyspace.ts:L90-L102](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `StudySpacePage` | `component` | [src/app/page.tsx:L108-L114](file:////home/nhat/Documents/DUT/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StudySpacePage` | `component` | [src/app/page.tsx:L99-L105](file:////home/nhat/Documents/DUT/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudyStats` | `component` | [src/components/dashboard/StudyStats.tsx:L14-L189](file:////home/nhat/Documents/DUT/ViTudy/src/components/dashboard/StudyStats.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TermsPage` | `component` | [src/app/terms/page.tsx:L8-L84](file:////home/nhat/Documents/DUT/ViTudy/src/app/terms/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TokenHistory` | `component` | [src/components/dashboard/TokenHistory.tsx:L12-L84](file:////home/nhat/Documents/DUT/ViTudy/src/components/dashboard/TokenHistory.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |

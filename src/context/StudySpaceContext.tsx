@@ -1739,9 +1739,10 @@ Trong đó:
     const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
 
-    const pad = 120;
+    const isMobile = winW < 640;
+    const pad = isMobile ? 16 : 100;
     const scale = Math.min((winW - pad * 2) / contentW, (winH - pad * 2) / contentH, 1.2);
-    const clampedScale = Math.max(0.25, Math.min(scale, 1.0));
+    const clampedScale = Math.max(isMobile ? 0.35 : 0.25, Math.min(scale, 1.0));
 
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;

@@ -4,6 +4,34 @@
 
 ---
 
+## 2026-11-13 23:00 — dev (Tinh Chỉnh Chợ Mobile Sheet Công Thái Học & Bàn Học Di Động Chuẩn GreenLearn)
+- **Task:** Giải quyết triệt để phản hồi của Sếp về trải nghiệm responsive di động: "tắt reponsive rấ tệ tinh chỉnh lại thêm nữa vẫn chưa tối ưu bàn học giống greenlearn cho điện thoại":
+  1. **Tối ưu hóa Bàn Học 2.5D Di Động Chuẩn GreenLearn (`src/app/page.tsx`, `StudySpaceDeskView.tsx`, `LeftCreationBar.tsx`, `StudySpaceContext.tsx`):**
+     - Loại bỏ hoàn toàn fallback `MobileCompanionView` mặc định khi vào bàn học trên mobile. Mọi thiết bị cảm ứng mở trực tiếp 100% Bàn Học 2.5D (`StudySpaceDeskView`).
+     - Tinh chỉnh `fitAllToScreen()` trong `StudySpaceContext.tsx`: Trên mobile (`winW < 640px`), giảm đệm padding từ `120px` xuống `16px` và nâng sàn scale lên `0.35`, giúp cuốn sách được căn trọn vẹn và rõ nét vào giữa màn hình điện thoại ngay khi mở bàn học.
+     - Thanh công cụ sáng tạo (`LeftCreationBar.tsx` & `StudySpaceDeskView.tsx`): Trên mobile portrait chuyển thành dock ngang ở đáy màn hình (`bottom-2 left-1/2 -translate-x-1/2`), các flyout (chọn bút, màu note, công cụ mở rộng) mở ngược lên trên (`bottom-full mb-2`), giải phóng 100% không gian 2 bên bàn học. Khi xoay ngang (landscape) tự động xếp dọc mép trái.
+     - Chống va chạm HUD góc trên: Cân chỉnh `TopLeftNav.tsx` (`max-w-[48vw]`) và `TopRightWallet.tsx` (`max-w-[50vw]`), tên bàn học truncate `max-w-[65px] min-[390px]:max-w-[90px]`, ô tìm kiếm slide-out co giãn an toàn, triệt tiêu hoàn toàn việc 2 thanh HUD bị đè lên nhau trên màn hình hẹp < 400px.
+  2. **Đại tu Chợ Tài Liệu Dạng Mobile Sheet (`src/components/modals/MarketModal.tsx`):**
+     - Khung chứa Mobile Sheet `h-[94dvh] rounded-t-3xl sm:rounded-3xl` với thanh drag bar `w-12 h-1.5` trên đỉnh (hỗ trợ chạm vào để đóng).
+     - Cơ chế đóng modal công thái học: Hỗ trợ cử chỉ vuốt xuống (Touch swipe down $> 70\text{px}$) từ header, nút Đóng (X) to rõ `w-9.5 h-9.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 active:scale-90 border border-stone-200/60` với vùng bấm $\ge 38\text{px}$.
+     - Bộ lọc 1 dòng cuộn ngang duy nhất (Zero Flex-Wrap): Gom toàn bộ tabs loại tài liệu + môn học + dropdown lọc điểm/giá/sắp xếp vào một hàng cuộn ngang mượt mà (`overflow-x-auto no-scrollbar flex-nowrap py-0.5`), triệt tiêu hoàn toàn việc ngắt dòng 3-4 tầng làm choán hết màn hình.
+     - Thẻ tài liệu mobile: Bố cục ngang công thái học cao ~110px, bìa sách `w-20 h-28 shrink-0` bên trái kèm thông tin, điểm AI, giá và nút "Xem thử" / "Mua / Mở bàn học" bên phải, bảo đảm danh sách sách chiếm 80% chiều cao modal và cuộn mượt mà.
+  3. **Kiểm thử & Xác thực:**
+     - Tạo test suite mới `src/components/modals/MarketModal.test.tsx` (5 unit tests kiểm tra mobile sheet, nút tắt, thanh drag bar, cử chỉ vuốt xuống, chuyển tủ cá nhân).
+     - Chạy toàn bộ 26 test files: 96/96 tests PASS (100%).
+     - Chạy `pnpm build`: Next.js 15.1.7 compiled clean, 16/16 static pages generated thành công.
+- **Changed:**
+  - `src/app/page.tsx`
+  - `src/components/canvas/StudySpaceDeskView.tsx`
+  - `src/components/hud/LeftCreationBar.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/context/StudySpaceContext.tsx`
+  - `AGENTS.md`
+- **Added:**
+  - `src/components/modals/MarketModal.test.tsx`
+
 ## 2026-11-13 22:35 — dev (Tối Ưu Hóa Trải Nghiệm Di Động & Máy Tính Bảng Giống GreenLearn)
 - **Task:** Triển khai kế hoạch tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Mobile & Tablet Responsiveness) kế thừa từ GreenLearn:
   1. **Device Detection & CSS Engine (`src/hooks/useResponsiveLayout.ts`, `src/app/layout.tsx`, `src/app/globals.css`):**

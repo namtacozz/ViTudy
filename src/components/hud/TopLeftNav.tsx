@@ -128,9 +128,9 @@ export function TopLeftNav() {
   return (
     <div className="relative flex flex-col gap-2 pointer-events-auto">
       {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size on desktop, compact on mobile) */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 shadow-sm backdrop-blur-md text-slate-900">
+      <div className="flex items-center gap-1 sm:gap-2.5 bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl px-1.5 py-1 sm:px-4 sm:py-2.5 shadow-sm backdrop-blur-md text-slate-900 max-w-[48vw] shrink-0">
         {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.png */}
-        <div className="flex items-center gap-1 sm:gap-1.5 pr-2 sm:pr-3 border-r border-slate-200">
+        <div className="flex items-center gap-1 sm:gap-1.5 pr-1.5 sm:pr-3 border-r border-slate-200 shrink-0">
           <Link
             href="/?view=home"
             onClick={() => {
@@ -160,14 +160,14 @@ export function TopLeftNav() {
         </div>
 
         {/* Space Dropdown Button */}
-        <div className="relative">
+        <div className="relative min-w-0">
           <button
             onClick={() => setIsSpaceMenuOpen(!isSpaceMenuOpen)}
-            className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer max-w-full"
           >
-            <BookMarked className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-800 stroke-[2.4]" />
-            <span className="max-w-[120px] sm:max-w-[220px] truncate">{activeSpace.name}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
+            <BookMarked className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-800 stroke-[2.4] shrink-0" />
+            <span className="max-w-[65px] min-[390px]:max-w-[90px] sm:max-w-[220px] truncate">{activeSpace.name}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4] shrink-0" />
           </button>
 
           {/* Spaces Menu */}
@@ -267,7 +267,7 @@ export function TopLeftNav() {
 
           {/* Slide-out Input container */}
           <div className={`transition-all duration-300 ease-out flex items-center overflow-hidden ${
-            isSearchExpanded ? 'w-36 sm:w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
+            isSearchExpanded ? 'w-28 min-[390px]:w-36 sm:w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
           }`}>
             <input
               type="text"

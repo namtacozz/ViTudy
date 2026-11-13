@@ -8,9 +8,9 @@
 * **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini, Claude, OpenAI System) qua tiền tệ ViToken, và chợ tri thức KnowInherit 85/15.
 * **Giai đoạn phát triển:** Hoàn thành toàn diện kế hoạch khắc phục 7 giai đoạn từ Audit Flow Report: siết chặt bảo mật RPC ViToken & RLS, sửa định tuyến Gemini/Claude AI Gateway & chống double-debit, kết nối KnowInherit Market với dữ liệu thật Wikipedia CC BY-SA 4.0, hoàn thiện STudy/SM-2 múi giờ VN/kiểm định điểm thi server-side, lưu camera 2.5D + đồng bộ strokes + Multiplayer cursors, và nâng cấp Mobile Companion 4 tab + CSP.
 * **Sức khỏe Repo (Health):**
-  * `Unit & Integration Tests`: **Pass** (`pnpm test`: 21/21 files, 68/68 tests pass).
+  * `Unit & Integration Tests`: **Pass** (`pnpm test`: 26/26 files, 96/96 tests pass 100%).
   * `TypeCheck`: **Pass** (`npx tsc --noEmit`: 0 lỗi).
-  * `Build`: **Pass** (`pnpm run build:pages` biên dịch sạch 100%, xuất tĩnh `out/` 16/16 trang sẵn sàng GitHub Pages).
+  * `Build`: **Pass** (`pnpm run build` Next.js 15.1.7 biên dịch sạch 100%, 16/16 trang tĩnh sẵn sàng).
 
 ---
 
