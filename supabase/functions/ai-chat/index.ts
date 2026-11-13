@@ -89,6 +89,152 @@ function resolveCodexModel(requestedModel: string): string {
   return m;
 }
 
+const SIMULATION_FALLBACK_REPLY = (cleanContext: string, cleanPrompt: string) =>
+  `[ViTudy AI Assistant]\nDựa trên tài liệu bạn cung cấp:\n${cleanContext ? `"${cleanContext.slice(0, 150)}..."` : 'Chủ đề: ' + cleanPrompt}\n\n1. Trọng tâm: Câu hỏi thuộc nội dung cốt lõi của bài học.\n2. Hướng dẫn: Đọc kỹ định nghĩa và chú ý các trường hợp đặc biệt để làm bài chính xác.`;
+
+async function refreshOpenAiOAuthToken(refreshToken: string): Promise<
+  | { ok: true; access_token: string; refresh_token: string; expires_in?: number; account_id?: string }
+  | { ok: false; errDetail: string }
+> {
+  const trimmed = refreshToken.trim();
+  if (!trimmed) return { ok: false, errDetail: 'missing_refresh_token' };
+
+  const refreshRes = await fetch(OPENAI_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'refresh_token',
+      client_id: OPENAI_OAUTH_CLIENT_ID,
+      refresh_token: trimmed,
+    }),
+  });
+
+  const refreshData = await refreshRes.json().catch(() => ({}));
+  if (!refreshRes.ok || !refreshData.access_token) {
+    const errDetail =
+      refreshData.error_description ||
+      refreshData.error?.message ||
+      refreshData.error ||
+      `HTTP ${refreshRes.status}`;
+    return { ok: false, errDetail: String(errDetail) };
+  }
+
+  return {
+    ok: true,
+    access_token: refreshData.access_token,
+    refresh_token: refreshData.refresh_token || trimmed,
+    expires_in: refreshData.expires_in,
+    account_id: extractAccountIdFromJwt(refreshData.access_token),
+  };
+}
+
+async function callCodexResponses(params: {
+  token: string;
+  accountId?: string;
+  model: string;
+  instructions: string;
+  userMessageText: string;
+  refreshToken?: string;
+}): Promise<string> {
+  const executeRequest = async (bearerToken: string, acctId?: string) => {
+    const resolvedAccountId = acctId || extractAccountIdFromJwt(bearerToken);
+    const codexHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${bearerToken}`,
+      'Accept': 'text/event-stream',
+      'originator': 'codex_cli_rs',
+      'User-Agent': 'codex_cli_rs/0.136.0 (Linux; x86_64)',
+      'OpenAI-Beta': 'responses=v1',
+    };
+    if (resolvedAccountId) {
+      codexHeaders['ChatGPT-Account-Id'] = resolvedAccountId;
+    }
+
+    return await fetch(CODEX_RESPONSES_URL, {
+      method: 'POST',
+      headers: codexHeaders,
+      body: JSON.stringify({
+        model: resolveCodexModel(params.model),
+        instructions: params.instructions,
+        input: [
+          {
+            type: 'message',
+            role: 'user',
+            content: [
+              {
+                type: 'input_text',
+                text: params.userMessageText,
+              },
+            ],
+          },
+        ],
+        store: false,
+        stream: true,
+        reasoning: {
+          effort: 'low',
+          summary: 'auto',
+        },
+      }),
+    });
+  };
+
+  let codexRes = await executeRequest(params.token, params.accountId);
+
+  if (codexRes.status === 401 && params.refreshToken) {
+    const refreshed = await refreshOpenAiOAuthToken(params.refreshToken);
+    if (refreshed.ok) {
+      codexRes = await executeRequest(refreshed.access_token, params.accountId || refreshed.account_id);
+    }
+  }
+
+  if (!codexRes.ok) {
+    const errBody = await codexRes.text().catch(() => '');
+    throw new Error(`Codex Gateway (${codexRes.status}): ${errBody.slice(0, 200)}`);
+  }
+
+  const rawSse = await codexRes.text();
+  return parseCodexSseStream(rawSse) || 'Không có phản hồi từ ChatGPT Codex.';
+}
+
+async function callSystemCodexFallback(params: {
+  model: string;
+  instructions: string;
+  cleanContext: string;
+  cleanPrompt: string;
+}): Promise<string | null> {
+  const sysAccess = (Deno.env.get('SYSTEM_CHATGPT_ACCESS_TOKEN') || '').trim();
+  const sysRefresh = (Deno.env.get('SYSTEM_CHATGPT_REFRESH_TOKEN') || '').trim();
+  const sysAccountId = (Deno.env.get('SYSTEM_CHATGPT_ACCOUNT_ID') || '').trim() || undefined;
+
+  if (!sysAccess && !sysRefresh) return null;
+
+  let activeToken = sysAccess;
+  let activeAccountId = sysAccountId;
+  if (!activeToken && sysRefresh) {
+    const refreshed = await refreshOpenAiOAuthToken(sysRefresh);
+    if (!refreshed.ok) {
+      throw new Error(`System ChatGPT OAuth refresh failed: ${refreshed.errDetail}`);
+    }
+    activeToken = refreshed.access_token;
+    activeAccountId = activeAccountId || refreshed.account_id;
+  }
+
+  const userMessageText = params.cleanContext
+    ? `NGỮ CẢNH TÀI LIỆU:\n${params.cleanContext}\n\nCÂU HỎI:\n${params.cleanPrompt}`
+    : params.cleanPrompt;
+  const codexModel =
+    params.model.startsWith('cx/') || params.model.startsWith('gpt-5') ? params.model : '';
+
+  return await callCodexResponses({
+    token: activeToken,
+    accountId: activeAccountId,
+    model: codexModel,
+    instructions: params.instructions,
+    userMessageText,
+    refreshToken: sysRefresh || undefined,
+  });
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -168,39 +314,23 @@ serve(async (req: Request) => {
         );
       }
 
-      const refreshRes = await fetch(OPENAI_TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          grant_type: 'refresh_token',
-          client_id: OPENAI_OAUTH_CLIENT_ID,
-          refresh_token: String(refreshToken).trim(),
-        }),
-      });
-
-      const refreshData = await refreshRes.json().catch(() => ({}));
-      if (!refreshRes.ok || !refreshData.access_token) {
-        const errDetail =
-          refreshData.error_description ||
-          refreshData.error?.message ||
-          refreshData.error ||
-          `HTTP ${refreshRes.status}`;
+      const refreshed = await refreshOpenAiOAuthToken(String(refreshToken));
+      if (!refreshed.ok) {
         return new Response(
           JSON.stringify({
             error: 'oauth_refresh_failed',
-            message: `Phiên đăng nhập ChatGPT đã hết hạn và không thể tự gia hạn (${errDetail}). Vui lòng kết nối lại.`,
+            message: `Phiên đăng nhập ChatGPT đã hết hạn và không thể tự gia hạn (${refreshed.errDetail}). Vui lòng kết nối lại.`,
           }),
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const accountId = extractAccountIdFromJwt(refreshData.access_token);
       return new Response(
         JSON.stringify({
-          access_token: refreshData.access_token,
-          refresh_token: refreshData.refresh_token || refreshToken,
-          expires_in: refreshData.expires_in,
-          account_id: accountId,
+          access_token: refreshed.access_token,
+          refresh_token: refreshed.refresh_token,
+          expires_in: refreshed.expires_in,
+          account_id: refreshed.account_id,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -342,58 +472,17 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
           );
         }
 
-        const resolvedAccountId = clientAccountId || extractAccountIdFromJwt(token);
-        const codexModel = resolveCodexModel(model);
         const userMessageText = cleanContext
           ? `NGỮ CẢNH TÀI LIỆU:\n${cleanContext}\n\nCÂU HỎI:\n${cleanPrompt}`
           : cleanPrompt;
 
-        const codexHeaders: Record<string, string> = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'text/event-stream',
-          'originator': 'codex_cli_rs',
-          'User-Agent': 'codex_cli_rs/0.136.0 (Linux; x86_64)',
-          'OpenAI-Beta': 'responses=v1',
-        };
-        if (resolvedAccountId) {
-          codexHeaders['ChatGPT-Account-Id'] = resolvedAccountId;
-        }
-
-        const codexRes = await fetch(CODEX_RESPONSES_URL, {
-          method: 'POST',
-          headers: codexHeaders,
-          body: JSON.stringify({
-            model: codexModel,
-            instructions: systemInstruction,
-            input: [
-              {
-                type: 'message',
-                role: 'user',
-                content: [
-                  {
-                    type: 'input_text',
-                    text: userMessageText,
-                  },
-                ],
-              },
-            ],
-            store: false,
-            stream: true,
-            reasoning: {
-              effort: 'low',
-              summary: 'auto',
-            },
-          }),
+        reply = await callCodexResponses({
+          token,
+          accountId: clientAccountId,
+          model,
+          instructions: systemInstruction,
+          userMessageText,
         });
-
-        if (!codexRes.ok) {
-          const errBody = await codexRes.text().catch(() => '');
-          throw new Error(`Codex Gateway (${codexRes.status}): ${errBody.slice(0, 200)}`);
-        }
-
-        const rawSse = await codexRes.text();
-        reply = parseCodexSseStream(rawSse) || 'Không có phản hồi từ ChatGPT Codex.';
 
       } else if (provider === 'byok_gemini' || provider === 'oauth_gemini' || (provider === 'system' && model.includes('gemini'))) {
         const geminiKey = provider === 'system' ? Deno.env.get('GEMINI_API_KEY') : (apiKey || accessToken);
@@ -411,7 +500,13 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
         if (!geminiKey && provider === 'system') {
           const fallbackOpenAiKey = Deno.env.get('OPENAI_API_KEY');
           if (!fallbackOpenAiKey) {
-            reply = `[ViTudy AI Assistant]\nDựa trên tài liệu bạn cung cấp:\n${cleanContext ? `"${cleanContext.slice(0, 150)}..."` : 'Chủ đề: ' + cleanPrompt}\n\n1. Trọng tâm: Câu hỏi thuộc nội dung cốt lõi của bài học.\n2. Hướng dẫn: Đọc kỹ định nghĩa và chú ý các trường hợp đặc biệt để làm bài chính xác.`;
+            const codexReply = await callSystemCodexFallback({
+              model,
+              instructions: systemInstruction,
+              cleanContext,
+              cleanPrompt,
+            });
+            reply = codexReply ?? SIMULATION_FALLBACK_REPLY(cleanContext, cleanPrompt);
           } else {
             const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
               method: 'POST',
@@ -504,8 +599,16 @@ Nếu có ngữ cảnh (Context), hãy ưu tiên bám sát dữ liệu trong ng�
         const targetKey = provider === 'byok_openai' ? apiKey : Deno.env.get('OPENAI_API_KEY');
 
         if (!targetKey) {
-          // Simulation fallback if system key not yet provisioned in environment
-          reply = `[ViTudy AI Assistant]\nDựa trên tài liệu bạn cung cấp:\n${cleanContext ? `"${cleanContext.slice(0, 150)}..."` : 'Chủ đề: ' + cleanPrompt}\n\n1. Trọng tâm: Câu hỏi thuộc nội dung cốt lõi của bài học.\n2. Hướng dẫn: Đọc kỹ định nghĩa và chú ý các trường hợp đặc biệt để làm bài chính xác.`;
+          const codexReply = provider === 'system'
+            ? await callSystemCodexFallback({
+                model,
+                instructions: systemInstruction,
+                cleanContext,
+                cleanPrompt,
+              })
+            : null;
+          // Simulation fallback if neither system OAuth nor API key is provisioned
+          reply = codexReply ?? SIMULATION_FALLBACK_REPLY(cleanContext, cleanPrompt);
         } else {
           const calculatedTokens = typeof maxTokens === 'number' && maxTokens > 0 
             ? Math.min(maxTokens, 4000) 
