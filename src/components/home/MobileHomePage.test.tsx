@@ -175,7 +175,7 @@ describe('Mobile HomePage Responsiveness', () => {
     const titleElements = screen.getAllByText('Giải tích 1');
     expect(titleElements.length).toBeGreaterThanOrEqual(1);
 
-    // Summary '1 sách · 1 tờ'
-    expect(screen.getAllByText(/1 sách · 1 tờ/i).length).toBeGreaterThanOrEqual(1);
+    // Summary '1 sách · 1 tài liệu'
+    expect(screen.getAllByText(/1 sách · 1 tài liệu/i).length).toBeGreaterThanOrEqual(1);
   });
 });

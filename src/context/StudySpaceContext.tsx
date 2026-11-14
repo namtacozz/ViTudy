@@ -412,7 +412,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const cancelStroke = () => {
-    setCurrentStroke(null);
+    setActiveStroke(null);
   };
 
   const [isFingerDrawingEnabled, setIsFingerDrawingEnabledState] = useState<boolean>(() => {

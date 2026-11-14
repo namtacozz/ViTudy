@@ -6,7 +6,20 @@ console.log('🚀 Đang build ViTudy cho GitHub Pages (Static Export)...');
 process.env.GITHUB_PAGES = 'true';
 process.env.NEXT_PUBLIC_BASE_PATH = '/ViTudy';
 
-execSync('next build', { stdio: 'inherit', env: process.env });
+const apiDir = path.resolve(process.cwd(), 'src/app/api');
+const tempApiDir = path.resolve(process.cwd(), 'src/app/_api_temp_pages');
+const hasApiDir = fs.existsSync(apiDir);
+
+try {
+  if (hasApiDir) {
+    fs.renameSync(apiDir, tempApiDir);
+  }
+  execSync('next build', { stdio: 'inherit', env: process.env });
+} finally {
+  if (hasApiDir && fs.existsSync(tempApiDir)) {
+    fs.renameSync(tempApiDir, apiDir);
+  }
+}
 
 const outDir = path.resolve(process.cwd(), 'out');
 const noJekyllPath = path.join(outDir, '.nojekyll');

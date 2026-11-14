@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getAssetPath } from '@/lib/assets';
+import { todayKey } from '@/lib/dateVN';
+import { calculateStage, calculateDaysToNextStage, PET_STAGES } from '@/components/pet/stages';
 
 export interface PetStatus {
   current_streak: number;
@@ -28,12 +30,49 @@ export function usePet() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const url = getAssetPath('/api/pet/status');
-      const res = await fetch(url, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (res.ok) {
-        const data: PetStatus = await res.json();
+      let data: PetStatus | null = null;
+      try {
+        const url = getAssetPath('/api/pet/status');
+        const res = await fetch(url, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+          data = await res.json();
+        }
+      } catch {}
+
+      // Fallback sang client-side localStorage khi chạy static (GitHub Pages)
+      if (!data && typeof window !== 'undefined') {
+        const saved = localStorage.getItem('vitudy_pet_streak');
+        let currentStreak = 1;
+        let longestStreak = 1;
+        let lastCheckinDate = '';
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            currentStreak = Number(parsed.current_streak) || 1;
+            longestStreak = Number(parsed.longest_streak) || 1;
+            lastCheckinDate = parsed.last_checkin_date || '';
+          } catch {}
+        }
+        const today = todayKey();
+        const checked_in_today = lastCheckinDate === today;
+        const stage = calculateStage(currentStreak);
+        const maxUnlockedStage = calculateStage(longestStreak);
+        const unlocked_stages = PET_STAGES.filter(s => s.stage <= maxUnlockedStage).map(s => s.stage);
+        const days_to_next_stage = calculateDaysToNextStage(currentStreak);
+        data = {
+          current_streak: currentStreak,
+          longest_streak: longestStreak,
+          checked_in_today,
+          stage,
+          unlocked_stages,
+          days_to_next_stage,
+          server_date: today,
+        };
+      }
+
+      if (data) {
         setStatus(data);
       }
     } catch (err) {
@@ -48,19 +87,74 @@ export function usePet() {
     setIsCheckingIn(true);
 
     try {
-      const url = getAssetPath('/api/pet/checkin');
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      let result: CheckinResult | null = null;
+      try {
+        const url = getAssetPath('/api/pet/checkin');
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+          result = await res.json();
+        }
+      } catch {}
 
-      if (!res.ok) throw new Error('Check-in failed');
+      // Fallback sang client-side localStorage khi chạy static (GitHub Pages)
+      if (!result && typeof window !== 'undefined') {
+        const saved = localStorage.getItem('vitudy_pet_streak');
+        let currentStreak = 0;
+        let longestStreak = 0;
+        let lastCheckinDate = '';
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            currentStreak = Number(parsed.current_streak) || 0;
+            longestStreak = Number(parsed.longest_streak) || 0;
+            lastCheckinDate = parsed.last_checkin_date || '';
+          } catch {}
+        }
+        const today = todayKey();
+        const yesterday = todayKey(new Date(Date.now() - 86400000));
+        const oldStage = calculateStage(currentStreak);
+        if (lastCheckinDate === yesterday) {
+          currentStreak += 1;
+        } else if (lastCheckinDate !== today) {
+          currentStreak = 1;
+        }
+        if (currentStreak > longestStreak) {
+          longestStreak = currentStreak;
+        }
+        lastCheckinDate = today;
+        const newStage = calculateStage(currentStreak);
+        const maxUnlockedStage = calculateStage(longestStreak);
+        const unlocked_stages = PET_STAGES.filter(s => s.stage <= maxUnlockedStage).map(s => s.stage);
+        const days_to_next_stage = calculateDaysToNextStage(currentStreak);
+        const evolved = newStage > oldStage;
 
-      const result: CheckinResult = await res.json();
-      setStatus(result);
+        const payload = {
+          current_streak: currentStreak,
+          longest_streak: longestStreak,
+          last_checkin_date: lastCheckinDate,
+        };
+        localStorage.setItem('vitudy_pet_streak', JSON.stringify(payload));
+        result = {
+          current_streak: currentStreak,
+          longest_streak: longestStreak,
+          checked_in_today: true,
+          stage: newStage,
+          unlocked_stages,
+          days_to_next_stage,
+          server_date: today,
+          evolved,
+          new_stage: newStage,
+        };
+      }
 
-      if (result.evolved) {
-        setEvolutionModalData({ newStage: result.new_stage });
+      if (result) {
+        setStatus(result);
+        if (result.evolved) {
+          setEvolutionModalData({ newStage: result.new_stage });
+        }
       }
 
       return result;
