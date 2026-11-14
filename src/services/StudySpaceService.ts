@@ -199,17 +199,20 @@ export class StudySpaceService {
         });
       }
 
-      return spacesData.map(spaceRow => ({
-        id: spaceRow.id,
-        name: spaceRow.name,
-        subject: spaceRow.subject,
-        description: '',
-        starred: Boolean(spaceRow.starred),
-        createdAt: spaceRow.created_at,
-        updatedAt: spaceRow.updated_at,
-        items: docsBySpaceId[spaceRow.id] || [],
-        threads: threadsBySpaceId[spaceRow.id] || [],
-      }));
+      return spacesData.map(spaceRow => {
+        const cam = (spaceRow.camera_transform as Record<string, unknown> | null) || null;
+        return {
+          id: spaceRow.id,
+          name: spaceRow.name,
+          subject: spaceRow.subject,
+          description: '',
+          starred: Boolean(spaceRow.starred) || Boolean(cam?.starred),
+          createdAt: spaceRow.created_at,
+          updatedAt: spaceRow.updated_at,
+          items: docsBySpaceId[spaceRow.id] || [],
+          threads: threadsBySpaceId[spaceRow.id] || [],
+        };
+      });
     } catch (err) {
       console.warn('Lỗi loadSpaces từ Supabase Cloud:', err);
       return [];
@@ -222,14 +225,26 @@ export class StudySpaceService {
 
     try {
       const safeSpaceId = ensureUUID(space.id);
-      await supabase.from('study_spaces').upsert({
+      const { error } = await supabase.from('study_spaces').upsert({
         id: safeSpaceId,
         owner_id: userId,
         name: space.name,
         subject: space.subject,
         starred: Boolean(space.starred),
+        camera_transform: { starred: Boolean(space.starred) },
         updated_at: new Date().toISOString(),
       });
+      if (error && (error.code === '42703' || error.code === 'PGRST204' || error.message?.includes('starred'))) {
+        // Fallback if migration 0022 hasn't been applied on remote DB yet
+        await supabase.from('study_spaces').upsert({
+          id: safeSpaceId,
+          owner_id: userId,
+          name: space.name,
+          subject: space.subject,
+          camera_transform: { starred: Boolean(space.starred) },
+          updated_at: new Date().toISOString(),
+        });
+      }
     } catch (err) {
       console.warn('Lỗi saveSpace:', err);
     }

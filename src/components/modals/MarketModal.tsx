@@ -150,7 +150,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
 
   const purchasedCount = useMemo(() => {
     return marketItems.filter(i => isItemPurchased(i)).length;
-  }, [marketItems, purchasedIds]);
+  }, [marketItems, purchasedIds, user?.id]);
 
   // Filtered & sorted items
   const filteredItems = useMemo(() => {
@@ -205,7 +205,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
       }
       return 0;
     });
-  }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy, isCabinetView, purchasedIds]);
+  }, [marketItems, searchQuery, selectedType, selectedCategory, minScore, maxPrice, sortBy, isCabinetView, purchasedIds, user?.id]);
 
   // Action: Add document to study desk via space selector modal so user can choose destination desk
   const handleAddToDesk = (item: MarketItem) => {
@@ -651,6 +651,11 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
 
                     {/* Actions and Price side-by-side */}
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                      {isOwnListing(item) && (
+                        <span className="text-[10px] font-bold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
+                          Tài liệu của bạn
+                        </span>
+                      )}
                       <div className="flex items-center gap-1 bg-stone-100 px-2.5 py-1.5 rounded-xl">
                         <span className="text-xs font-black font-mono text-stone-900">{item.price}</span>
                         <img 

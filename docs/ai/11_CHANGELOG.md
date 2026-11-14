@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-11-14 14:34 — uncommitted (Sửa 9 lỗi & 2 cải tiến UI/UX trên bàn học, Chợ, ViToken, Nhật ký)
+- Task: Xử lý triệt để 9 lỗi báo cáo (01–09) và 2 đề xuất cải tiến giao diện (5.1, 5.2), chuẩn bị merge và deploy trên nhánh `main`.
+- Changed:
+  - `src/components/objects/BookSpread.tsx`: Bọc hộp thoại xác nhận "Xóa sách khỏi bàn học?" trong `createPortal(..., document.body)` với `z-[9995]` để không bị các tài liệu chồng lên che khuất (Lỗi 01).
+  - `src/services/StudySpaceService.ts`, `src/types/database.types.ts`, `supabase/migrations/0022_add_starred_and_publish_score.sql`: Lưu bền vững cột `starred` của `study_spaces` lên Supabase kèm cơ chế fallback qua `camera_transform.starred` nếu DB chưa áp dụng migration `0022` (Lỗi 02).
+  - `src/components/modals/KnowInheritPublishModal.tsx` & `supabase/migrations/0022_add_starred_and_publish_score.sql`: Đồng bộ công thức tính thu nhập tác giả `Math.floor(price * 0.85)` và công thức chấm điểm AI giữa modal chia sẻ với RPC `publish_know_inherit_listing` (Lỗi 03, Lỗi 09).
+  - `src/context/ViTokenContext.tsx`: Tách khóa `localStorage` theo `user_${user.id}_vitudy_wallet` / `guest_vitudy_wallet` và đối soát lại số dư từ server khi `claimStreak` phản hồi (Lỗi 04).
+  - `src/components/modals/MarketModal.tsx` & `src/services/KnowInheritService.ts`: Bổ sung `authorId`, nhận diện `isOwnListing` để hiển thị nhãn `"Tài liệu của bạn"` và nút `"Mở ở bàn học"` thay vì `"Mua"` ở cả Grid View, List View và Preview; đưa tài liệu tự đăng vào Tủ tài liệu cá nhân; sửa tooltip điểm AI mở xuống dưới (`top-full mt-1.5 z-[120]`) và bỏ `overflow-hidden` ở List View để không bị cắt (Lỗi 05, Lỗi 06, Lỗi 08).
+  - `src/services/ActivityService.ts` & `src/services/StatsService.ts`: Đồng bộ múi giờ `Asia/Ho_Chi_Minh` trong `getWeeklyStudyMinutes` và bổ sung `flushRemaining` khi ẩn tab / `pagehide` / unmount (Lỗi 07).
+  - `src/components/home/HomePage.tsx`: Thu gọn thẻ bàn học chế độ lưới với `content-start items-start` và thumbnail preview nhỏ gọn (Đề xuất 5.1).
+  - `src/utils/deskSummary.ts` & `src/components/hud/TopLeftNav.tsx`: Hiển thị chi tiết số lượng từng loại nội dung (`sách`, `tài liệu`, `đề thi`, `ghi chú`, `trò chơi`, `khối mã`, `sơ đồ`, `bảng tính`, `slide`, `bảng vẽ`, `lộ trình`, `hình dán`) cho mọi loại > 0 (Đề xuất 5.2).
+- Verified by: `pnpm test` (27/27 files, 118/118 tests pass), `pnpm run build:pages` (static export pass), `pnpm run docs:index`, `pnpm run docs:check` (`[CHECK OK]`).
+- Open follow-ups: Áp dụng `supabase/migrations/0022_add_starred_and_publish_score.sql` lên Supabase production khi có quyền DB migration (client đã có fallback `camera_transform.starred` cho Lỗi 02).
+
 ## 2026-11-14 11:01 — uncommitted (Bổ sung Upload từ URL, Bảng tính đa sheet & Trình chiếu Slide đồng bộ)
 - Task: Cho phép đưa tài liệu từ URL (Google Docs/Sheets/Slides, link trực tiếp) kèm kiểm tra quyền chia sẻ công khai và hướng dẫn bật chia sẻ; thêm vật thể Bảng tính đa sheet (`spreadsheet`) và Trình chiếu Slide (`presentation`) hỗ trợ Full View / Tập trung và đồng bộ phòng học multiplayer.
 - Changed:

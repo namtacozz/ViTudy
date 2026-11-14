@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `3362bc8`  
+> **Commit Hash:** `5ee70c5`  
 > **Cập nhật lần cuối:** `2026-11-14`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -89,7 +89,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `GameCabinetModal` | `component` | [src/components/modals/GameCabinetModal.tsx:L15-L242](file:///F:/AppMaking/ViTudy/src/components/modals/GameCabinetModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `IntelineModal` | `component` | [src/components/modals/IntelineModal.tsx:L27-L270](file:///F:/AppMaking/ViTudy/src/components/modals/IntelineModal.tsx) | Hộp thoại AI hỏi đáp ngữ cảnh sâu Inteline theo từng dòng/trang tài liệu |
 | `KnowInheritPublishModal` | `component` | [src/components/modals/KnowInheritPublishModal.tsx:L39-L450](file:///F:/AppMaking/ViTudy/src/components/modals/KnowInheritPublishModal.tsx) | Hộp thoại chia sẻ tài liệu lên chợ tri thức: AI thẩm định điểm và tính giá |
-| `MarketModal` | `component` | [src/components/modals/MarketModal.tsx:L44-L1034](file:///F:/AppMaking/ViTudy/src/components/modals/MarketModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
+| `MarketModal` | `component` | [src/components/modals/MarketModal.tsx:L44-L1039](file:///F:/AppMaking/ViTudy/src/components/modals/MarketModal.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `MobileCompanionView` | `component` | [src/components/mobile/MobileCompanionView.tsx:L30-L412](file:///F:/AppMaking/ViTudy/src/components/mobile/MobileCompanionView.tsx) | Giao diện di động rút gọn đồng bộ tài liệu từ máy tính |
 | `ModelGroup` | `type` | [src/components/modals/AiConfigModal.tsx:L34-L37](file:///F:/AppMaking/ViTudy/src/components/modals/AiConfigModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `ModelItem` | `type` | [src/components/modals/AiConfigModal.tsx:L28-L32](file:///F:/AppMaking/ViTudy/src/components/modals/AiConfigModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
@@ -170,7 +170,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `fitRotatedRectangle` | `fn` | [src/utils/smartShape.ts:L429-L555](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `fitTriangle` | `fn` | [src/utils/smartShape.ts:L560-L622](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `Flashcard` | `type` | [src/lib/nonAiEngine.ts:L28-L33](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `formatDeskItemsSummary` | `fn` | [src/utils/deskSummary.ts:L6-L27](file:///F:/AppMaking/ViTudy/src/utils/deskSummary.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `formatDeskItemsSummary` | `fn` | [src/utils/deskSummary.ts:L6-L37](file:///F:/AppMaking/ViTudy/src/utils/deskSummary.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `formatRelativeTimeVN` | `fn` | [src/lib/dateVN.ts:L65-L91](file:///F:/AppMaking/ViTudy/src/lib/dateVN.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `formatUploadedDocTitle` | `fn` | [src/utils/documentNaming.ts:L6-L37](file:///F:/AppMaking/ViTudy/src/utils/documentNaming.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `generateCircleStroke` | `fn` | [src/utils/smartShape.test.ts:L61-L86](file:///F:/AppMaking/ViTudy/src/utils/smartShape.test.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
