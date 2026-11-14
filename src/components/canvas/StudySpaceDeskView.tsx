@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { InfiniteDesk } from './InfiniteDesk';
@@ -17,8 +17,20 @@ import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import { getAssetPath } from '@/lib/assets';
 
 export default function StudySpaceDeskView() {
-  const { focusedItemId, isDeskReady } = useStudySpace();
+  const { focusedItemId, isDeskReady, fitAllToScreen, activeSpaceId } = useStudySpace();
   const isFocusMode = !!focusedItemId;
+
+  // Auto-fit content to screen and center upon opening the desk
+  const autoFittedSpaceRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeSpaceId && autoFittedSpaceRef.current !== activeSpaceId) {
+      autoFittedSpaceRef.current = activeSpaceId;
+      const timer = setTimeout(() => {
+        fitAllToScreen?.();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSpaceId, fitAllToScreen]);
 
   // Independent drawer states for each of the 5 HUD islands in focus mode
   const [showTopLeftInFocus, setShowTopLeftInFocus] = useState(false);
@@ -60,7 +72,10 @@ export default function StudySpaceDeskView() {
   }, []);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-white select-none">
+    <div 
+      className="relative w-screen h-[100dvh] overflow-hidden bg-white select-none touch-none overscroll-none"
+      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
+    >
       {/* Desk Loading Overlay: chờ tải đủ ghi chú, tài liệu, sticker, GIF và nét vẽ trước khi mở bàn */}
       {!isDeskReady && (
         <div
@@ -92,7 +107,6 @@ export default function StudySpaceDeskView() {
           </div>
         </div>
       )}
-
       {/* 2.5D Infinite Canvas Desk */}
       <InfiniteDesk />
 
@@ -104,7 +118,7 @@ export default function StudySpaceDeskView() {
       {/* ================= 1. TOP-LEFT NAV HUD (ViTudy | Tên bàn học | Search) ================= */}
       <div 
         className={clsx(
-          "fixed top-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          "fixed top-1 left-1 landscape-phone:left-[56px] landscape-header-offset z-40 transition-transform duration-300 ease-out pointer-events-auto",
           isFocusMode && !showTopLeftInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >
@@ -153,16 +167,17 @@ export default function StudySpaceDeskView() {
         )}
       </div>
 
-      {/* ================= 3. LEFT TOOL CREATION BAR (Responsive Floating Dock on Mobile) ================= */}
+      {/* ================= 3. TOOL CREATION BAR (Dock ngang đáy trên mobile portrait, Dọc mép trái trên landscape & desktop) ================= */}
       <div 
         className={clsx(
           "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          // Desktop & Tablet (Left centered)
-          "md:left-1 md:top-1/2 md:-translate-y-1/2",
-          isFocusMode && !showLeftInFocus ? "md:-translate-x-[calc(100%+12px)]" : "md:translate-x-0",
-          // Mobile (< 768px): Bottom floating dock
-          "max-md:bottom-2 max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-auto",
-          isFocusMode && !showLeftInFocus ? "max-md:translate-y-[calc(100%+24px)]" : "max-md:translate-y-0"
+          // Mobile Portrait: Dock ngang đáy
+          "max-sm:portrait:bottom-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
+          // Landscape & Desktop: Cột dọc mép trái
+          "sm:left-1 sm:top-1/2 sm:-translate-y-1/2 max-sm:landscape:left-1 max-sm:landscape:top-1/2 max-sm:landscape:-translate-y-1/2",
+          isFocusMode && !showLeftInFocus 
+            ? "max-sm:portrait:translate-y-[calc(100%+16px)] sm:-translate-x-[calc(100%+12px)] max-sm:landscape:-translate-x-[calc(100%+12px)]" 
+            : "max-sm:portrait:translate-y-0 sm:translate-x-0 max-sm:landscape:translate-x-0"
         )}
       >
         <LeftCreationBar />

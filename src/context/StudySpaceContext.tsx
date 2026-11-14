@@ -135,6 +135,9 @@ interface StudySpaceContextType {
   snapCurrentStroke: () => import('@/utils/smartShape').RecognizedShapeResult | null;
   revertCurrentStroke: () => void;
   finishStroke: () => void;
+  cancelStroke: () => void;
+  isFingerDrawingEnabled: boolean;
+  setIsFingerDrawingEnabled: (enabled: boolean) => void;
   addStroke: (stroke: import('@/types/studyspace').DrawingStroke) => void;
   undoStroke: () => void;
   redoStroke: () => void;
@@ -406,6 +409,25 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       } catch {}
       return updatedStrokes;
     });
+  };
+
+  const cancelStroke = () => {
+    setCurrentStroke(null);
+  };
+
+  const [isFingerDrawingEnabled, setIsFingerDrawingEnabledState] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vitudy_finger_drawing_enabled') || localStorage.getItem('greenlearn_finger_drawing_enabled');
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+
+  const setIsFingerDrawingEnabled = (enabled: boolean) => {
+    setIsFingerDrawingEnabledState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vitudy_finger_drawing_enabled', String(enabled));
+    }
   };
 
   const [redoStack, setRedoStack] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
@@ -693,6 +715,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         : cleanGuestSpaces[0].id;
       setActiveSpaceId(targetId);
       loadLocalStrokes(targetId);
+    } else {
+      // Khách mới chưa có bàn học: Khởi tạo ngay 1 bàn học trắng sẵn sàng sử dụng
+      const initialBlankSpace: StudySpace = {
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`,
+        name: 'Bàn học của tôi',
+        subject: 'Học tập',
+        description: 'Không gian bàn học tự do',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastOpenedAt: new Date().toISOString(),
+        starred: false,
+        items: []
+      };
+      setSpaces([initialBlankSpace]);
+      setActiveSpaceId(initialBlankSpace.id);
+      syncLocal([initialBlankSpace]);
     }
     setIsLoaded(true);
   }, [status, user?.id, syncLocal]);
@@ -1781,9 +1819,10 @@ Trong đó:
     const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
 
-    const pad = 120;
+    const isMobile = winW < 640;
+    const pad = isMobile ? 16 : 100;
     const scale = Math.min((winW - pad * 2) / contentW, (winH - pad * 2) / contentH, 1.2);
-    const clampedScale = Math.max(0.25, Math.min(scale, 1.0));
+    const clampedScale = Math.max(isMobile ? 0.35 : 0.25, Math.min(scale, 1.0));
 
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
@@ -2848,6 +2887,9 @@ Trong đó:
         snapCurrentStroke,
         revertCurrentStroke,
         finishStroke,
+        cancelStroke,
+        isFingerDrawingEnabled,
+        setIsFingerDrawingEnabled,
         addStroke,
         undoStroke,
         redoStroke,

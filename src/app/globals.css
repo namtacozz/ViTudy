@@ -82,6 +82,125 @@ nextjs-portal,
   display: none !important;
 }
 
+/* Ensure mobile touch targets meet 44px minimum */
+button, [role="button"], a {
+  touch-action: manipulation;
+}
+
+/* ==========================================================================
+   ROCK-SOLID HARD-LOCKED MOBILE RESPONSIVE ENGINE (Fix Cứng Giao Diện Mobile)
+   Applied via Media Queries AND html[data-device="mobile"]
+   ========================================================================== */
+
+@media (max-width: 639.98px), 
+       ((max-width: 850px) and (pointer: coarse) and (orientation: portrait)),
+       ((max-height: 500px) and (pointer: coarse)) {
+  .responsive-sidebar {
+    display: none !important;
+  }
+  .responsive-bottom-nav {
+    display: flex !important;
+  }
+  .responsive-desk-table {
+    display: none !important;
+  }
+  .responsive-desk-cards {
+    display: block !important;
+  }
+  .responsive-mobile-menu-btn {
+    display: flex !important;
+  }
+  .responsive-desktop-breadcrumb {
+    display: none !important;
+  }
+  .responsive-mobile-pb {
+    padding-bottom: 6rem !important;
+  }
+
+  .mobile-hide-forced {
+    display: none !important;
+  }
+  .mobile-show-forced {
+    display: block !important;
+  }
+  .mobile-flex-forced {
+    display: flex !important;
+  }
+}
+
+/* Hard-lock selector: unconditionally forces phone layout when data-device="mobile" is set */
+html[data-device="mobile"] .responsive-sidebar {
+  display: none !important;
+}
+html[data-device="mobile"] .responsive-bottom-nav {
+  display: flex !important;
+}
+html[data-device="mobile"] .responsive-desk-table {
+  display: none !important;
+}
+html[data-device="mobile"] .responsive-desk-cards {
+  display: block !important;
+}
+html[data-device="mobile"] .responsive-mobile-menu-btn {
+  display: flex !important;
+}
+html[data-device="mobile"] .responsive-desktop-breadcrumb {
+  display: none !important;
+}
+html[data-device="mobile"] .responsive-mobile-pb {
+  padding-bottom: 6rem !important;
+}
+
+html[data-device="mobile"] .mobile-hide-forced {
+  display: none !important;
+}
+html[data-device="mobile"] .mobile-show-forced {
+  display: block !important;
+}
+html[data-device="mobile"] .mobile-flex-forced {
+  display: flex !important;
+}
+
+/* Landscape Phone Layout Optimizations (@media (max-height: 500px) and (orientation: landscape)) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .landscape-fixed-toolbar {
+    position: fixed !important;
+    left: max(env(safe-area-inset-left, 0px) + 4px, 4px) !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow-y: auto !important;
+    overflow-x: visible !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .landscape-fixed-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .landscape-subpanel {
+    max-height: calc(100dvh - 20px) !important;
+    overflow-y: auto !important;
+    top: 8px !important;
+    transform: none !important;
+  }
+
+  .landscape-header-offset {
+    left: max(env(safe-area-inset-left, 0px) + 56px, 56px) !important;
+  }
+
+  .landscape-hide-text {
+    display: none !important;
+  }
+
+  .landscape-compact-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+}
+
 /* Micro-interaction Keyframes for Quiz Options & Badges */
 @keyframes badgePop {
   0% { transform: scale(0.8); }

@@ -88,6 +88,189 @@
 
 ---
 
+## 2026-11-14 09:25 — dev (Khắc Phục Nối Nét 2 Ngón Khi Vẽ & Cách Ly Pointer Events Chuẩn Xác)
+- **Task:** Khắc phục triệt để lỗi khi đang dùng công cụ vẽ, đặt 2 ngón tay lên canvas thì tạo ra đường thẳng nối 2 điểm chạm thay vì zoom/pan:
+  1. **Quản lý con trỏ theo Map (`activePointersRef`):** Lưu trữ chính xác danh sách con trỏ đang hoạt động theo `pointerId`.
+  2. **Hủy nét vẽ dở khi phát hiện $\ge 2$ con trỏ:** Hủy timer 40ms, gọi `cancelStroke()` ngay lập tức để không lưu vào history/undo, chuyển sang chế độ pinch-zoom và 2-finger pan.
+  3. **Khóa con trỏ vẽ (`drawingPointerIdRef`):** Chỉ bắt đầu nét vẽ khi đúng 1 con trỏ và `e.isPrimary === true`, có độ trễ ~40ms phát hiện ngón thứ 2. Chỉ con trỏ đã khởi tạo nét vẽ mới được phép gọi `appendPoint()`; bất kỳ con trỏ nào khác di chuyển trong khi vẽ sẽ lập tức hủy nét vẽ, triệt tiêu 100% đường nối 2 điểm chạm.
+  4. **Hỗ trợ Stylus & Touch Palm Rejection:** Bút vẽ (`pointerType: pen`) vẽ tức thì không trễ, chạm ngón tay (`pointerType: touch`) chuyển thành pan/zoom khi `isFingerDrawingEnabled === false`.
+  5. **Xử lý `pointercancel`, `pointerup`, `blur`:** Reset toàn diện trạng thái con trỏ, chống kẹt ngón trên cả element và window.
+  6. **Cấu hình `touch-action: none`:** Áp dụng nghiêm ngặt trên toàn bộ canvas và lớp đón bắt vẽ.
+- **Changed:**
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`
+  - `src/components/canvas/DrawingGestureMultiTouch.test.tsx`
+  - `src/components/canvas/InfiniteDesk.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+
+---
+
+## 2026-11-14 00:20 — dev (Bóc Nền Trắng Ảnh PNG Thú Cưng Thành Kênh Alpha Thật & Chuẩn Hóa Widget Trong Suốt)
+- **Task:** Xử lý triệt để ô vuông màu trắng đằng sau nhân vật theo lựa chọn Phương án 2 của Sếp:
+  1. **Tự động bóc nền trắng bằng Python script (`scripts/remove_pet_bg.py`):**
+     - Áp dụng thuật toán BFS Flood-fill từ 4 cạnh biên ngoài kết hợp làm mềm biên Gaussian blur ($r = 1.2\text{px}$) để chuyển toàn bộ vùng nền màu trắng đặc (`RGB 254-255`) thành kênh Alpha trong suốt (`Alpha = 0`).
+     - Bảo lưu 100% chi tiết bên trong nhân vật thú cưng (`Alpha = 255`).
+     - Sao lưu ảnh gốc an toàn vào `brand/pet_original_backup/`.
+     - Xuất đè ảnh PNG trong suốt chất lượng cao vào cả 3 thư mục: `brand/pet/`, `public/brand/pet/`, và `public/pets/`.
+     - Kiểm tra xác nhận bằng PIL: 4 góc của toàn bộ 8 file ảnh đạt `Alpha = 0`, giải quyết triệt để vấn đề mà không dùng mẹo `mix-blend-mode`.
+  2. **Chuẩn hóa CSS/HTML widget `FloatingPet.tsx`:**
+     - Thiết lập `background: transparent; box-shadow: none; border: none; outline: none; padding: 0; -webkit-tap-highlight-color: transparent` trên tất cả container và wrapper.
+     - Thẻ `<img>`: Bỏ toàn bộ box-shadow/border, thiết lập `filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15))` ôm sát đường viền nhân vật; `user-select: none; -webkit-user-drag: none`.
+  3. **Verification:** Toàn bộ 28 test suites (103/103 tests) PASS 100%.
+- **Changed:**
+  - `src/components/pet/FloatingPet.tsx`
+  - `scripts/remove_pet_bg.py`
+  - `brand/pet/*.png` (8 files)
+  - `public/brand/pet/*.png` (8 files)
+  - `public/pets/*.png` (8 files)
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+
+---
+
+## 2026-11-14 00:10 — dev (Tinh Giản Streak Pet: Bỏ Ô Badge Hộp Nổi, Chỉ Giữ Lại Thú Cưng Tự Nhiên)
+- **Task:** Tinh giản hiển thị của `FloatingPet.tsx` theo yêu cầu của Sếp: "tôi muốn mất cái ô nớ và chỉ giữ lại con pet được không nhìn kỳ quá":
+  1. **Loại bỏ hoàn toàn ô badge hộp nổi:** Gỡ bỏ thẻ badge nền trắng viền xám đè trên đầu con pet (`div.mb-1.flex.items-center...`).
+  2. **Thú cưng nổi lơ lửng thuần khiết:** Toàn bộ widget giờ đây chỉ hiển thị duy nhất hình ảnh chú thú cưng trong suốt tự nhiên, nhún nhảy (awake) hoặc thở chậm + Zzz (asleep), không có bất kỳ khung hộp hay đường viền thừa nào làm che mắt.
+  3. **Cập nhật Unit Tests:** Chỉnh sửa `FloatingPet.test.tsx` (5/5 tests PASS).
+- **Changed:**
+  - `src/components/pet/FloatingPet.tsx`
+  - `src/components/pet/FloatingPet.test.tsx`
+  - `AGENTS.md`
+
+---
+
+## 2026-11-14 00:05 — dev (Xây Dựng Tính Năng Thú Cưng Chuỗi Học Tập - Streak Pet Widget)
+- **Task:** Triển khai hoàn chỉnh tính năng "Streak Pet" (Thú cưng chuỗi học tập) tích hợp trực tiếp vào ViTudy từ bộ assets ảnh trong thư mục `brand/pet/`:
+  1. **Assets & Cấu hình Stage (`public/brand/pet/`, `src/components/pet/stages.ts`):**
+     - Đồng bộ toàn bộ 8 file ảnh PNG 2048x2048 RGBA trong suốt từ `brand/pet/` vào `public/brand/pet/`:
+       - Cấp 1 "Trứng" (0-3 ngày): `stage1.png`, `sleep-stage1.png`
+       - Cấp 2 "Nứt vỏ" (4-10 ngày): `stage2.png`, `sleep-stage2.png`
+       - Cấp 3 "Vịt con" (11-100 ngày): `stage3.png`, `sleep-stage3.png`
+       - Cấp 4 "Trưởng thành" (101+ ngày): `stage4.png`, `sleep-stage4.png`
+     - Bọc đường dẫn qua `getAssetPath` đảm bảo tương thích mọi môi trường (subpath / GitHub Pages).
+  2. **Giao diện & Hiệu ứng (`src/components/pet/FloatingPet.tsx`, `PetGalleryModal.tsx`, `pet.css`):**
+     - Widget di động lơ lửng bám màn hình, hỗ trợ kéo thả bằng Pointer Events (chuột & cảm ứng điện thoại), phân biệt chính xác thao tác kéo vs chạm ($< 6\text{px}$ = tap).
+     - Tự động snap vào mép trái/phải gần nhất, clamp an toàn trong viewport và lưu vị trí vào `localStorage`.
+     - Idle animations chuẩn CSS: Thức thì nhún nhảy nhẹ nhàng (`pet-idle-awake`), ngủ thì thở chậm rãi (`pet-idle-sleep`) kèm bong bóng chữ `Zzz` bay lên mờ dần.
+     - Chạm khi ngủ: bừng tỉnh (`pet-wake-animation`), điểm danh và tăng chuỗi ngày.
+     - Chạm khi thức: mở Bộ sưu tập thú cưng (`PetGalleryModal`) qua React Portal, hỗ trợ xem trước bản lúc ngủ (`sleep-stageX.png`), ẩn silhouette đen cho cấp chưa mở, hiển thị tiến độ ngày đến cấp tiếp theo.
+     - Popup chúc mừng tiến hóa khi người dùng vượt ngưỡng cấp độ mới.
+  3. **Backend & API (`src/app/api/pet/status/route.ts`, `src/app/api/pet/checkin/route.ts`):**
+     - Xử lý ngày theo múi giờ chuẩn server `Asia/Ho_Chi_Minh` (`todayKey()`), đảm bảo tính lũy đẳng (idempotent - không tăng lặp điểm danh trong ngày).
+     - Tự động hẹn giờ cho thú cưng đi ngủ lúc 00:00:02 và tự động đồng bộ khi chuyển tab.
+  4. **Kiểm thử tự động:**
+     - Tạo mới `src/components/pet/FloatingPet.test.tsx` (5 unit tests PASS 100%).
+     - Toàn bộ 28 test files (103/103 tests) PASS.
+- **Changed:**
+  - `src/app/layout.tsx`
+  - `AGENTS.md`
+- **Added:**
+  - `public/brand/pet/*`
+  - `src/components/pet/stages.ts`
+  - `src/components/pet/pet.css`
+  - `src/components/pet/usePet.ts`
+  - `src/components/pet/FloatingPet.tsx`
+  - `src/components/pet/PetGalleryModal.tsx`
+  - `src/components/pet/FloatingPet.test.tsx`
+  - `src/app/api/pet/status/route.ts`
+  - `src/app/api/pet/checkin/route.ts`
+
+---
+
+## 2026-11-13 23:35 — dev (Khắc Phục Triệt Để Cử Chỉ 2 Ngón Tay Zoom & Pan Bàn Học Trên Điện Thoại)
+- **Task:** Giải quyết triệt để phản hồi của Sếp: "VIÊC TRONG BÀN HỌC KHI DÙNG 2 NGÓN ĐỂ ZOOM VẪN CHƯA ĐƯỢC":
+  1. **Khóa cứng Viewport Meta Tag (`src/app/layout.tsx`):**
+     - Đổi `maximumScale: 5` thành `maximumScale: 1`, `minimumScale: 1`, `userScalable: false`.
+     - Ngăn chặn hoàn toàn việc trình duyệt di động (iOS Safari, Android Chrome) kích hoạt Browser Page Zoom của hệ điều hành làm méo mó UI và nuốt mất sự kiện cảm ứng của canvas.
+  2. **Tối ưu hóa Dedicated Native Touch Pinch & Pan Engine (`src/components/canvas/InfiniteDesk.tsx`):**
+     - Lắng nghe sự kiện cảm ứng native trực tiếp trên `window` ở Capture phase (`{ capture: true, passive: false }`) để bắt trọn 100% cử chỉ ngay cả khi ngón tay đặt trên sách `BookSpread` hay ghi chú `StickyNote`.
+     - Loại bỏ hoàn toàn bộ lọc ngưỡng chết (`deadzone threshold Math.abs(factor - 1) > 0.0005`) khiến các vi chỉnh zoom nhỏ bị vứt bỏ trước đó, giúp phóng to thu nhỏ nhạy bén tức thì từng micromet.
+     - Tách biệt hoàn toàn Touch khỏi PointerEvent: `pointermove` tự động bỏ qua khi `e.pointerType === 'touch'`, triệt tiêu hoàn toàn hiện tượng 2 bộ điều khiển cùng can thiệp vào `setTransform` gây giật lag hoặc tranh chấp state.
+     - Khắc phục lỗi crash tiềm ẩn runtime: kiểm tra `typeof target.closest === 'function'` trước khi truy xuất DOM, loại trừ hoàn toàn `TypeError: target.closest is not a function` khi target là `document`/`window`.
+  3. **Kiểm thử & Xác thực:**
+     - Tạo mới `src/components/canvas/InfiniteDeskTouchZoom.test.tsx` (2 unit tests kiểm tra Pinch-to-zoom và Touch-end cleanup).
+     - Chạy toàn bộ test suites canvas & modals: 19/19 tests PASS (100%).
+     - Dev server compile sạch sẽ, phản hồi HTTP 200 OK.
+- **Changed:**
+  - `src/app/layout.tsx`
+  - `src/components/canvas/InfiniteDesk.tsx`
+  - `AGENTS.md`
+- **Added:**
+  - `src/components/canvas/InfiniteDeskTouchZoom.test.tsx`
+
+---
+
+## 2026-11-13 23:00 — dev (Tinh Chỉnh Chợ Mobile Sheet Công Thái Học & Bàn Học Di Động Chuẩn GreenLearn)
+- **Task:** Giải quyết triệt để phản hồi của Sếp về trải nghiệm responsive di động: "tắt reponsive rấ tệ tinh chỉnh lại thêm nữa vẫn chưa tối ưu bàn học giống greenlearn cho điện thoại":
+  1. **Tối ưu hóa Bàn Học 2.5D Di Động Chuẩn GreenLearn (`src/app/page.tsx`, `StudySpaceDeskView.tsx`, `LeftCreationBar.tsx`, `StudySpaceContext.tsx`):**
+     - Loại bỏ hoàn toàn fallback `MobileCompanionView` mặc định khi vào bàn học trên mobile. Mọi thiết bị cảm ứng mở trực tiếp 100% Bàn Học 2.5D (`StudySpaceDeskView`).
+     - Tinh chỉnh `fitAllToScreen()` trong `StudySpaceContext.tsx`: Trên mobile (`winW < 640px`), giảm đệm padding từ `120px` xuống `16px` và nâng sàn scale lên `0.35`, giúp cuốn sách được căn trọn vẹn và rõ nét vào giữa màn hình điện thoại ngay khi mở bàn học.
+     - Thanh công cụ sáng tạo (`LeftCreationBar.tsx` & `StudySpaceDeskView.tsx`): Trên mobile portrait chuyển thành dock ngang ở đáy màn hình (`bottom-2 left-1/2 -translate-x-1/2`), các flyout (chọn bút, màu note, công cụ mở rộng) mở ngược lên trên (`bottom-full mb-2`), giải phóng 100% không gian 2 bên bàn học. Khi xoay ngang (landscape) tự động xếp dọc mép trái.
+     - Chống va chạm HUD góc trên: Cân chỉnh `TopLeftNav.tsx` (`max-w-[48vw]`) và `TopRightWallet.tsx` (`max-w-[50vw]`), tên bàn học truncate `max-w-[65px] min-[390px]:max-w-[90px]`, ô tìm kiếm slide-out co giãn an toàn, triệt tiêu hoàn toàn việc 2 thanh HUD bị đè lên nhau trên màn hình hẹp < 400px.
+  2. **Đại tu Chợ Tài Liệu Dạng Mobile Sheet (`src/components/modals/MarketModal.tsx`):**
+     - Khung chứa Mobile Sheet `h-[94dvh] rounded-t-3xl sm:rounded-3xl` với thanh drag bar `w-12 h-1.5` trên đỉnh (hỗ trợ chạm vào để đóng).
+     - Cơ chế đóng modal công thái học: Hỗ trợ cử chỉ vuốt xuống (Touch swipe down $> 70\text{px}$) từ header, nút Đóng (X) to rõ `w-9.5 h-9.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 active:scale-90 border border-stone-200/60` với vùng bấm $\ge 38\text{px}$.
+     - Bộ lọc 1 dòng cuộn ngang duy nhất (Zero Flex-Wrap): Gom toàn bộ tabs loại tài liệu + môn học + dropdown lọc điểm/giá/sắp xếp vào một hàng cuộn ngang mượt mà (`overflow-x-auto no-scrollbar flex-nowrap py-0.5`), triệt tiêu hoàn toàn việc ngắt dòng 3-4 tầng làm choán hết màn hình.
+     - Thẻ tài liệu mobile: Bố cục ngang công thái học cao ~110px, bìa sách `w-20 h-28 shrink-0` bên trái kèm thông tin, điểm AI, giá và nút "Xem thử" / "Mua / Mở bàn học" bên phải, bảo đảm danh sách sách chiếm 80% chiều cao modal và cuộn mượt mà.
+  3. **Kiểm thử & Xác thực:**
+     - Tạo test suite mới `src/components/modals/MarketModal.test.tsx` (5 unit tests kiểm tra mobile sheet, nút tắt, thanh drag bar, cử chỉ vuốt xuống, chuyển tủ cá nhân).
+     - Chạy toàn bộ 26 test files: 96/96 tests PASS (100%).
+     - Chạy `pnpm build`: Next.js 15.1.7 compiled clean, 16/16 static pages generated thành công.
+- **Changed:**
+  - `src/app/page.tsx`
+  - `src/components/canvas/StudySpaceDeskView.tsx`
+  - `src/components/hud/LeftCreationBar.tsx`
+  - `src/components/hud/TopLeftNav.tsx`
+  - `src/components/hud/TopRightWallet.tsx`
+  - `src/components/modals/MarketModal.tsx`
+  - `src/context/StudySpaceContext.tsx`
+  - `AGENTS.md`
+- **Added:**
+  - `src/components/modals/MarketModal.test.tsx`
+
+## 2026-11-13 22:35 — dev (Tối Ưu Hóa Trải Nghiệm Di Động & Máy Tính Bảng Giống GreenLearn)
+- **Task:** Triển khai kế hoạch tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Mobile & Tablet Responsiveness) kế thừa từ GreenLearn:
+  1. **Device Detection & CSS Engine (`src/hooks/useResponsiveLayout.ts`, `src/app/layout.tsx`, `src/app/globals.css`):**
+     - Hook `useResponsiveLayout` kết hợp User-Agent, `shortestSide < 600px`, và media query `pointer: coarse`.
+     - Script `<head>` đặt `data-device="mobile"` tức thì chống giật giao diện (anti-flicker).
+     - Viewport `viewportFit: 'cover'`, CSS classes hard-locked mobile engine, landscape phone toolbar & subpanels.
+  2. **Multi-Touch Gestures & InfiniteDesk (`src/components/canvas/InfiniteDesk.tsx`, `src/context/StudySpaceContext.tsx`, `src/components/canvas/StudySpaceDeskView.tsx`):**
+     - Pinch-to-zoom 2 ngón quanh trung điểm, 2-finger pan, chặn zoom mặc định của iOS Safari.
+     - Tự động gọi `fitAllToScreen()` khi mở bàn học trên mobile/tablet để vừa vặn màn hình.
+  3. **Drawing Layer & Palm Rejection (`src/components/canvas/DeskDrawingInteractionLayer.tsx`):**
+     - Bộ lọc 40ms touch delay buffer chuyển đổi êm ái sang pinch-zoom và gọi `cancelStroke()` khi phát hiện $\ge 2$ ngón tay.
+     - Palm Rejection cho Stylus (`pointerType === 'pen'`): cho phép tắt vẽ bằng ngón tay (`isFingerDrawingEnabled === false`), biến thao tác chạm ngón tay thành pan/zoom bàn học.
+  4. **HUD Responsive Bàn Học (`LeftCreationBar.tsx`, `TopLeftNav.tsx`, `TopRightWallet.tsx`, `BottomLeftKnowledge.tsx`, `Minimap.tsx`, `BottomRightToolkit.tsx`):**
+     - Minimap tự động ẩn mặc định trên màn hình < 640px, kích thước compact 145x90px, ẩn phím tắt "(Phím M)". Nút mở map responsive touch target 44px.
+     - `LeftCreationBar`: thanh dọc tinh gọn cố định mép trái (`landscape-fixed-toolbar`), kích thước nút responsive `w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11`, thêm nút toggle vẽ ngón tay `Hand`.
+     - `TopLeftNav`: co giãn tìm kiếm, ẩn bớt text thương hiệu trên mobile/landscape phone, avatar kích thước cố định 28x28px shrink-0.
+     - `TopRightWallet`: co giãn responsive nút chuỗi, chợ, ví token và AI bot.
+     - `BottomLeftKnowledge`: nút upload và share responsive, bổ sung event listeners `vitudy:open-invite-modal`, `vitudy:trigger-upload`.
+  5. **Trang Chủ HomePage Mobile (`src/components/home/HomePage.tsx`):**
+     - Thanh điều hướng đáy 5 tab (`responsive-bottom-nav`) cố định đáy trên mobile (< 640px) với padding an toàn (`pb-safe`).
+     - Danh sách thẻ bàn học dạng card dọc cho màn hình nhỏ (`responsive-desk-cards`) thay thế bảng 12 cột.
+     - Nút menu mở drawer di động (`responsive-mobile-menu-btn`) và khoảng đệm đáy an toàn `responsive-mobile-pb`.
+  6. **Kiểm thử & Xác thực:**
+     - Tạo 3 test suites mới: `useResponsiveLayout.test.ts`, `MobileResponsiveDesk.test.tsx`, `DrawingGestureMultiTouch.test.tsx`, `MobileHomePage.test.tsx`.
+     - Chạy toàn bộ 25 test files: 91/91 tests PASS.
+     - Chạy `pnpm build`: Next.js 15.1.7 compiled successfully, 16/16 static pages generated.
+- **Changed:**
+  - `src/app/globals.css`, `src/app/layout.tsx`
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`, `src/components/canvas/InfiniteDesk.tsx`, `src/components/canvas/Minimap.tsx`, `src/components/canvas/StudySpaceDeskView.tsx`
+  - `src/components/hud/BottomLeftKnowledge.tsx`, `src/components/hud/BottomRightToolkit.tsx`, `src/components/hud/LeftCreationBar.tsx`, `src/components/hud/TopLeftNav.tsx`, `src/components/hud/TopRightWallet.tsx`
+  - `src/components/home/HomePage.tsx`, `src/context/StudySpaceContext.tsx`, `AGENTS.md`
+- **Added:**
+  - `src/hooks/useResponsiveLayout.ts`, `src/hooks/useResponsiveLayout.test.ts`
+  - `src/components/canvas/MobileResponsiveDesk.test.tsx`, `src/components/canvas/DrawingGestureMultiTouch.test.tsx`, `src/components/home/MobileHomePage.test.tsx`
+- **Verified by:**
+  - `pnpm test --run` $\rightarrow$ 25/25 test files passed (91 tests).
+  - `pnpm build` $\rightarrow$ 16/16 pages static compiled successfully.
+  - `pnpm run docs:index && pnpm run docs:check` $\rightarrow$ Check OK (282 symbols).
+- **Open follow-ups:** Không có.
+
+---
+
 ## 2026-11-13 21:05 — main (Thực Thi Kế Hoạch Khắc Phục Toàn Diện 7 Giai Đoạn Từ Audit Flow Report)
 - **Task:** Thực hiện trọn vẹn 7 giai đoạn xử lý toàn bộ các lỗ hổng bảo mật, luồng AI, KnowInherit Market, STudy, StudySpace 2.5D và Mobile Companion:
   1. **Phase 1 — Bảo mật ViToken & RLS (`ViTokenService.ts`, `ViTokenContext.tsx`, `TopUpModal.tsx`, `sepay-webhook/index.ts`, `0018_secure_vitoken_and_rls.sql`):**

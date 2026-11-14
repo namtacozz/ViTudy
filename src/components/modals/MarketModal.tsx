@@ -241,6 +241,23 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
     }
   };
 
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  // Swipe-down to dismiss handler for mobile sheet
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchEndY - touchStartY;
+    if (deltaY > 70) {
+      onClose();
+    }
+    setTouchStartY(null);
+  };
+
   const getCategoryLabel = (category: string) => {
     switch (category) {
       case 'math': return 'Toán học';
@@ -276,116 +293,162 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-end sm:items-center justify-center p-0 sm:p-4 touch-none overscroll-none"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white border border-stone-300 rounded-t-3xl sm:rounded-3xl w-full max-w-5xl p-5 sm:p-6 shadow-2xl relative max-h-[94vh] flex flex-col text-stone-900 animate-slide-up sm:animate-fade-in font-sans"
+        className="bg-white border border-stone-300 rounded-t-3xl sm:rounded-3xl w-full max-w-5xl p-3 sm:p-6 shadow-2xl relative h-[94dvh] sm:h-auto sm:max-h-[94vh] flex flex-col text-stone-900 animate-slide-up sm:animate-fade-in font-sans"
       >
-        {/* Mobile Drag Indicator Handle */}
-        <div className="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-3 sm:hidden shrink-0" />
+        {/* Mobile Drag Indicator Handle (tap to close / pull down) */}
+        <div 
+          onClick={onClose}
+          className="w-12 h-1.5 bg-stone-300 hover:bg-stone-400 rounded-full mx-auto mb-2 sm:hidden shrink-0 cursor-pointer transition-colors active:scale-95"
+          title="Nhấn để đóng Chợ"
+        />
         
         {/* Header bar */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-stone-900 text-white flex items-center justify-center shadow-xs">
-              <Store className="w-5 h-5 text-white" />
+        <div 
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="flex items-center justify-between pb-2 sm:pb-3 border-b border-stone-100 shrink-0 select-none"
+        >
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl bg-stone-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <Store className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <h3 className="text-base font-black text-stone-900 leading-tight">Chợ Tài Liệu</h3>
-              <p className="text-xs text-stone-600">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-black text-stone-900 leading-tight truncate">Chợ Tài Liệu</h3>
+              <p className="text-xs text-stone-600 hidden sm:block truncate">
                 Kho tri thức mở ViTudy — Học hỏi và trao đổi tài liệu học tập cùng cộng đồng.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsCabinetView(prev => !prev)}
-              className={`flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95 border ${
-                isCabinetView
-                  ? 'bg-orange-50 text-[#E0562D] border-[#E0562D]'
-                  : 'bg-white hover:bg-orange-50/50 text-stone-800 border-stone-200'
-              }`}
-              title="Xem các tài liệu bạn đã mở khóa và sở hữu vĩnh viễn"
-            >
-              <BookmarkCheck className="w-3.5 h-3.5 text-[#E0562D]" />
-              <span>Tủ tài liệu cá nhân</span>
-              {purchasedCount > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  isCabinetView ? 'bg-[#E0562D] text-white' : 'bg-[#FFF7ED] text-[#9A3412] border border-[#FFEDD5]'
-                }`}>
-                  {purchasedCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedDeskItemId(activeSpace.items[0]?.id || '');
-                setIsPublishOpen(true);
-              }}
-              className="flex items-center gap-1.5 text-xs bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Chia sẻ tài liệu</span>
-            </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCabinetView(prev => !prev)}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95 border ${
+                  isCabinetView
+                    ? 'bg-orange-50 text-[#E0562D] border-[#E0562D]'
+                    : 'bg-white hover:bg-orange-50/50 text-stone-800 border-stone-200'
+                }`}
+                title="Xem các tài liệu bạn đã mở khóa và sở hữu vĩnh viễn"
+              >
+                <BookmarkCheck className="w-3.5 h-3.5 text-[#E0562D]" />
+                <span>Tủ tài liệu cá nhân</span>
+                {purchasedCount > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    isCabinetView ? 'bg-[#E0562D] text-white' : 'bg-[#FFF7ED] text-[#9A3412] border border-[#FFEDD5]'
+                  }`}>
+                    {purchasedCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedDeskItemId(activeSpace.items[0]?.id || '');
+                  setIsPublishOpen(true);
+                }}
+                className="flex items-center gap-1.5 text-xs bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 px-3 py-1.5 rounded-xl font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Chia sẻ tài liệu</span>
+              </button>
+            </div>
+
+            {/* Close Button - Vùng bấm lớn chuẩn công thái học, dễ bấm tắt trên mọi màn hình */}
             <button
               id="close-market-modal"
               onClick={onClose}
               aria-label="Đóng chợ tài liệu"
-              className="w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
+              title="Đóng chợ (Esc)"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 hover:text-black flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-90 border border-stone-200/60 shadow-2xs"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4.5 h-4.5 stroke-[2.4]" />
             </button>
           </div>
         </div>
 
-        {/* User Balance Banner */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-2.5 text-xs">
-          <div className="flex items-center gap-2.5">
+        {/* Mobile Sub-Header Actions (2 buttons side-by-side) */}
+        <div className="grid grid-cols-2 gap-2 pt-2 sm:hidden shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsCabinetView(prev => !prev)}
+            className={`flex items-center justify-center gap-1.5 text-xs px-2.5 py-2 rounded-xl font-bold transition-all border shadow-2xs cursor-pointer active:scale-95 ${
+              isCabinetView
+                ? 'bg-orange-50 text-[#E0562D] border-[#E0562D]'
+                : 'bg-white hover:bg-stone-50 text-stone-800 border-stone-200'
+            }`}
+          >
+            <BookmarkCheck className="w-3.5 h-3.5 text-[#E0562D]" />
+            <span className="truncate">Tủ cá nhân</span>
+            {purchasedCount > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                isCabinetView ? 'bg-[#E0562D] text-white' : 'bg-[#FFF7ED] text-[#9A3412] border border-[#FFEDD5]'
+              }`}>
+                {purchasedCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setSelectedDeskItemId(activeSpace.items[0]?.id || '');
+              setIsPublishOpen(true);
+            }}
+            className="flex items-center justify-center gap-1.5 text-xs bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 px-2.5 py-2 rounded-xl font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="truncate">Chia sẻ tài liệu</span>
+          </button>
+        </div>
+
+        {/* Desktop User Balance Banner (Ẩn trên mobile để gom vào thanh tìm kiếm) */}
+        <div className="hidden sm:flex mt-2 items-center justify-between bg-stone-50 border border-stone-200/80 rounded-xl px-3 py-1.5 text-xs shrink-0">
+          <div className="flex items-center gap-2">
             <img
               src={getAssetPath('/icons/vitoken.svg')}
               alt="ViToken"
-              width={22}
-              height={22}
-              className="w-5.5 h-5.5 rounded-full object-contain shrink-0"
-              style={{ width: '22px', height: '22px', maxWidth: '22px', maxHeight: '22px' }}
+              width={18}
+              height={18}
+              className="w-4.5 h-4.5 rounded-full object-contain shrink-0"
+              style={{ width: '18px', height: '18px', maxWidth: '18px', maxHeight: '18px' }}
             />
             <span className="text-stone-700 font-medium">
-              Số dư của bạn: <strong className="text-stone-900 font-mono font-black text-sm">{wallet.balance} ViToken</strong>
+              Số dư: <strong className="text-stone-900 font-mono font-black">{wallet.balance} ViToken</strong>
             </span>
-            <span className="text-stone-400 text-[11px] font-mono">• (1 V = 1 ViToken)</span>
+            <span className="text-stone-400 text-[10px] font-mono">• (1 V = 1 ViToken)</span>
           </div>
-          <div className="text-stone-600 text-[11.5px] flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-stone-400" />
-            <span>Điểm danh hằng ngày hoặc chia sẻ tài liệu hữu ích để nhận thêm ViToken</span>
+          <div className="text-stone-500 text-[11px] flex items-center gap-1.5">
+            <Clock className="w-3 h-3 text-stone-400" />
+            <span>Điểm danh hằng ngày để nhận thêm ViToken</span>
           </div>
         </div>
 
         {/* Cabinet Mode Active Notice */}
         {isCabinetView && (
-          <div className="mt-2.5 bg-[#FFF7ED] border border-[#FFEDD5] text-[#9A3412] px-4 py-2 rounded-2xl text-xs flex items-center justify-between gap-2 animate-fade-in">
-            <div className="flex items-center gap-2">
-              <BookmarkCheck className="w-4 h-4 text-[#E0562D] flex-shrink-0" />
-              <span className="font-bold">Đang xem: Tủ tài liệu cá nhân ({purchasedCount} tài liệu đã sở hữu)</span>
-              <span className="text-slate-500 hidden sm:inline">• Nhấn &ldquo;Mở trên bàn học&rdquo; để chọn bàn học bạn muốn học</span>
+          <div className="mt-2 bg-[#FFF7ED] border border-[#FFEDD5] text-[#9A3412] px-3.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <BookmarkCheck className="w-4 h-4 text-[#E0562D] shrink-0" />
+              <span className="font-bold truncate">Tủ cá nhân ({purchasedCount} tài liệu đã mở)</span>
             </div>
             <button 
               type="button"
               onClick={() => setIsCabinetView(false)} 
-              className="text-xs font-bold text-[#E0562D] hover:underline cursor-pointer flex-shrink-0"
+              className="text-xs font-bold text-[#E0562D] hover:underline cursor-pointer shrink-0"
             >
-              Về Chợ chung →
+              Về Chợ →
             </button>
           </div>
         )}
 
         {/* Success toast notice */}
         {successToast && (
-          <div className="mt-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in shadow-2xs">
+          <div className="mt-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in shadow-2xs shrink-0">
             <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 flex-shrink-0 text-emerald-600 stroke-[2.4]" />
+              <Check className="w-4 h-4 shrink-0 text-emerald-600 stroke-[2.4]" />
               <span className="font-semibold">{successToast}</span>
             </div>
           </div>
@@ -393,9 +456,9 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
 
         {/* Warning / Error notice */}
         {errorMessage && (
-          <div className="mt-2.5 bg-red-50 border border-red-200 text-red-700 px-3.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2">
+          <div className="mt-2 bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-xl text-xs flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
               <span>{errorMessage}</span>
             </div>
             <button 
@@ -407,47 +470,62 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
           </div>
         )}
 
-        {/* Search & Filters Controls */}
+        {/* Search & Filters Controls - Tối ưu 2 dòng trên mobile, 1 thanh cuộn ngang không wrap */}
         {!(isCabinetView && purchasedCount === 0) && (
-          <div className="py-3 space-y-2.5 border-b border-stone-100">
-            {/* Row 1: Search bar + Result count + Type pills + View Mode */}
-            <div className="flex flex-col sm:flex-row items-center gap-2.5">
-              <div className="relative flex-1 w-full flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Tìm theo tên tài liệu, tác giả, nội dung trọng tâm..."
-                    className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:bg-white transition-all font-medium"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-                <div className="text-[11px] font-bold text-stone-600 bg-stone-100 px-2.5 py-2 rounded-xl whitespace-nowrap shrink-0">
-                  {filteredItems.length} tài liệu
-                </div>
+          <div className="py-2 space-y-1.5 border-b border-stone-100 shrink-0">
+            {/* Row 1: Search bar + Mobile Wallet Pill / Desktop Result Count */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Tìm theo tên tài liệu, tác giả..."
+                  className="w-full pl-9 pr-8 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:bg-white transition-all font-medium"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              {/* Type selector tabs */}
-              <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-xl w-full sm:w-auto">
+              {/* Mobile Wallet Balance Pill */}
+              <div className="flex sm:hidden items-center gap-1 bg-stone-100 px-2.5 py-1.5 rounded-xl shrink-0">
+                <img
+                  src={getAssetPath('/icons/vitoken.svg')}
+                  alt="ViToken"
+                  width={14}
+                  height={14}
+                  className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                />
+                <span className="text-xs font-black font-mono text-stone-900">{wallet.balance} V</span>
+              </div>
+
+              {/* Desktop Result Count */}
+              <div className="hidden sm:block text-[11px] font-bold text-stone-600 bg-stone-100 px-2.5 py-1.5 rounded-xl whitespace-nowrap shrink-0">
+                {filteredItems.length} tài liệu
+              </div>
+            </div>
+
+            {/* Row 2: Single-Line Horizontal Scroll Bar (Gom toàn bộ Loại + Môn học + Lọc vào 1 hàng vuốt ngang) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-nowrap w-full text-xs">
+              {/* Type pills */}
+              <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-xl shrink-0">
                 {[
                   { id: 'all', label: 'Tất cả' },
                   { id: 'book', label: 'Sách' },
-                  { id: 'paper', label: 'Tờ tóm tắt' },
+                  { id: 'paper', label: 'Tóm tắt' },
                   { id: 'exam', label: 'Đề thi' },
                 ].map(t => (
                   <button
                     key={t.id}
                     onClick={() => setSelectedType(t.id as any)}
-                    className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       selectedType === t.id
                         ? 'bg-white text-stone-900 shadow-xs'
                         : 'text-stone-600 hover:text-stone-900'
@@ -458,105 +536,98 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                 ))}
               </div>
 
-              {/* View Mode Toggle (Grid vs List) */}
-              <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-xl">
+              <div className="w-[1px] h-4 bg-stone-200 shrink-0 mx-0.5" />
+
+              {/* Category pills */}
+              {[
+                { id: 'all', label: 'Tất cả môn' },
+                { id: 'ai_ml', label: 'AI/ML' },
+                { id: 'math', label: 'Toán' },
+                { id: 'cs', label: 'CNTT' },
+                { id: 'data', label: 'Dữ liệu' },
+                { id: 'software', label: 'KTPM' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id as any)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer border shrink-0 whitespace-nowrap ${
+                    selectedCategory === cat.id
+                      ? 'bg-orange-50 text-[#E0562D] border-[#E0562D] font-bold shadow-2xs'
+                      : 'bg-stone-100 text-stone-600 border-transparent hover:bg-stone-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+
+              <div className="w-[1px] h-4 bg-stone-200 shrink-0 mx-0.5" />
+
+              {/* Min Score filter */}
+              <select
+                value={minScore}
+                onChange={e => setMinScore(Number(e.target.value))}
+                className="bg-stone-50 border border-stone-200 text-stone-700 py-1 px-2 rounded-lg text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer shrink-0"
+              >
+                <option value={0}>Điểm AI</option>
+                <option value={80}>≥ 80</option>
+                <option value={90}>≥ 90</option>
+              </select>
+
+              {/* Max Price filter */}
+              <select
+                value={maxPrice}
+                onChange={e => setMaxPrice(Number(e.target.value))}
+                className="bg-stone-50 border border-stone-200 text-stone-700 py-1 px-2 rounded-lg text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer shrink-0"
+              >
+                <option value={0}>Giá</option>
+                <option value={15}>≤ 15 V</option>
+                <option value={30}>≤ 30 V</option>
+                <option value={50}>≤ 50 V</option>
+              </select>
+
+              {/* Sort by */}
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as any)}
+                className="bg-stone-50 border border-stone-200 text-stone-900 py-1 px-2 rounded-lg text-xs font-semibold focus:outline-none focus:border-stone-400 cursor-pointer shrink-0"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="score">Điểm cao</option>
+                <option value="price_asc">Giá rẻ</option>
+              </select>
+
+              {/* View Mode Toggle (Grid vs List) - Desktop */}
+              <div className="hidden sm:flex items-center gap-1 bg-stone-100 p-0.5 rounded-xl shrink-0 ml-auto">
                 <button
                   onClick={() => setViewMode('grid')}
                   title="Dạng lưới thẻ"
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`p-1 rounded-lg transition-all cursor-pointer ${
                     viewMode === 'grid' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-900'
                   }`}
                 >
-                  <LayoutGrid className="w-4 h-4" />
+                  <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
                   title="Dạng danh sách gọn"
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`p-1 rounded-lg transition-all cursor-pointer ${
                     viewMode === 'list' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-900'
                   }`}
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-3.5 h-3.5" />
                 </button>
               </div>
-            </div>
 
-            {/* Row 2: Category Chips, Min Score, Max Price, Sort & Reset Button */}
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {/* Category pills */}
-                {[
-                  { id: 'all', label: 'Tất cả môn' },
-                  { id: 'ai_ml', label: 'AI/ML' },
-                  { id: 'math', label: 'Toán học' },
-                  { id: 'cs', label: 'Khoa học máy tính' },
-                  { id: 'data', label: 'Khoa học dữ liệu' },
-                  { id: 'software', label: 'Kỹ thuật phần mềm' },
-                ].map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id as any)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer border ${
-                      selectedCategory === cat.id
-                        ? 'bg-orange-50 text-[#E0562D] border-[#E0562D] font-bold shadow-2xs'
-                        : 'bg-stone-100 text-stone-600 border-transparent hover:bg-stone-200'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-
-                {/* Min Score filter */}
-                <select
-                  value={minScore}
-                  onChange={e => setMinScore(Number(e.target.value))}
-                  className="bg-stone-50 border border-stone-200 text-stone-700 py-1 px-2 rounded-lg text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer ml-1"
+              {/* Reset Button */}
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  className="flex items-center gap-1 text-[11px] font-bold text-[#E0562D] bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2 py-1 rounded-lg transition-colors cursor-pointer shrink-0"
                 >
-                  <option value={0}>Điểm AI: Tất cả</option>
-                  <option value={80}>Điểm AI ≥ 80</option>
-                  <option value={90}>Điểm AI ≥ 90 (Xuất sắc)</option>
-                </select>
-
-                {/* Max Price filter */}
-                <select
-                  value={maxPrice}
-                  onChange={e => setMaxPrice(Number(e.target.value))}
-                  className="bg-stone-50 border border-stone-200 text-stone-700 py-1 px-2 rounded-lg text-xs font-medium focus:outline-none focus:border-stone-400 cursor-pointer"
-                >
-                  <option value={0}>Giá: Tất cả</option>
-                  <option value={15}>≤ 15 V</option>
-                  <option value={30}>≤ 30 V</option>
-                  <option value={50}>≤ 50 V</option>
-                </select>
-
-                {/* Reset Button */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={handleResetFilters}
-                    className="flex items-center gap-1 text-[11.5px] font-bold text-[#E0562D] hover:text-[#c9451e] bg-orange-50 hover:bg-orange-100 border border-orange-200/70 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Đặt lại</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                {/* Sort by */}
-                <div className="flex items-center gap-1.5 text-stone-600 font-medium">
-                  <span>Sắp xếp:</span>
-                  <select
-                    value={sortBy}
-                    onChange={e => setSortBy(e.target.value as any)}
-                    className="bg-stone-50 border border-stone-200 text-stone-900 py-1 px-2.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-stone-400 cursor-pointer"
-                  >
-                    <option value="newest">Mới nhất</option>
-                    <option value="oldest">Cũ nhất</option>
-                    <option value="score">Điểm cao nhất</option>
-                    <option value="price_asc">Giá rẻ nhất</option>
-                  </select>
-                </div>
-              </div>
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Đặt lại</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -702,12 +773,12 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
               return (
                 <div 
                   key={item.id}
-                  className="bg-white border border-stone-200 rounded-2xl p-4 transition-all hover:border-stone-300 hover:shadow-md flex flex-col sm:flex-row gap-4 relative"
+                  className="bg-white border border-stone-200 rounded-2xl p-3 sm:p-4 transition-all hover:border-stone-300 hover:shadow-md flex flex-col sm:flex-row gap-3 sm:gap-4 relative"
                 >
                   {/* Cột trái: Khung bìa cuốn sách màu nâu da sang trọng */}
-                  <div className="w-full sm:w-28 flex flex-col justify-between flex-shrink-0">
+                  <div className="flex sm:flex-col justify-between shrink-0 gap-3 sm:gap-0">
                     <div 
-                      className="w-full h-36 rounded-xl p-2.5 flex flex-col justify-between shadow-md relative overflow-hidden select-none"
+                      className="w-20 sm:w-28 h-28 sm:h-36 rounded-xl p-1.5 sm:p-2.5 flex flex-col justify-between shadow-md relative overflow-hidden select-none shrink-0"
                       style={{
                         background: 'linear-gradient(145deg, #422614 0%, #28150a 100%)',
                         borderLeft: '4px solid #633618',
@@ -715,28 +786,55 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                       }}
                     >
                       {/* Header bìa: ViTudy brand + Document type badge */}
-                      <div className="flex items-center justify-between text-[8px] text-amber-200/80 font-mono tracking-wider uppercase border-b border-amber-900/60 pb-1">
+                      <div className="flex items-center justify-between text-[7.5px] sm:text-[8px] text-amber-200/80 font-mono tracking-wider uppercase border-b border-amber-900/60 pb-1">
                         <span>ViTudy</span>
                         <span className="font-bold text-amber-300">{getTypeLabel(item.type)}</span>
                       </div>
 
                       {/* Giữa bìa: Biểu tượng dập chìm thanh lịch */}
                       <div className="my-auto flex flex-col items-center justify-center text-center py-1">
-                        <div className="w-9 h-9 rounded-full border border-amber-700/60 bg-amber-950/40 flex items-center justify-center text-amber-300/90 shadow-inner">
-                          <TypeIcon className="w-4.5 h-4.5" />
+                        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border border-amber-700/60 bg-amber-950/40 flex items-center justify-center text-amber-300/90 shadow-inner">
+                          <TypeIcon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
                         </div>
                       </div>
 
                       {/* Footer bìa sách */}
-                      <div className="flex items-center justify-center text-[8px] text-amber-200/70 pt-1 border-t border-amber-900/60 font-mono">
+                      <div className="flex items-center justify-center text-[7.5px] sm:text-[8px] text-amber-200/70 pt-1 border-t border-amber-900/60 font-mono">
                         <span>{pageCount} trang</span>
+                      </div>
+                    </div>
+
+                    {/* Trên mobile: hiển thị nhanh tiêu đề và giá cạnh bìa sách */}
+                    <div className="sm:hidden flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold text-stone-900 leading-snug line-clamp-2 hover:text-[#E0562D]">
+                          {item.title}
+                        </h4>
+                        <div className="text-[11px] text-stone-600 mt-1 truncate">
+                          Tác giả: <strong className="text-stone-800">{item.author}</strong>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#E0562D] mt-1">
+                        <img 
+                          src={getAssetPath('/icons/vitoken.svg')} 
+                          alt="ViToken" 
+                          width={14} 
+                          height={14} 
+                          className="w-3.5 h-3.5 rounded-full object-contain shrink-0" 
+                        />
+                        <span>{item.price} ViToken</span>
+                        {isItemPurchased(item) && (
+                          <span className="text-[9.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full">
+                            Đã có
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Cột bên phải: Tiêu đề prominent, Tác giả, Metadata, Điểm AI, Tóm tắt nội dung và Nút hành động */}
+                  {/* Cột bên phải: Tiêu đề prominent (desktop), Metadata, Tóm tắt và Nút hành động */}
                   <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                    <div>
+                    <div className="hidden sm:block">
                       {/* Tiêu đề tài liệu */}
                       <h4 className="text-sm font-black text-stone-900 leading-snug mb-1.5 hover:text-[#E0562D] transition-colors">
                         {item.title}
@@ -796,10 +894,10 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                       </div>
                     </div>
 
-                    {/* Hàng dưới cùng: Giá và nút hành động (KHÔNG lặp lại ô giá 2 lần) */}
-                    <div className="mt-3 pt-2.5 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3">
-                      {/* Khối giá duy nhất */}
-                      <div className="flex items-center gap-1.5">
+                    {/* Hàng dưới cùng: Giá (desktop) và nút hành động */}
+                    <div className="mt-2 pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
+                      {/* Khối giá desktop */}
+                      <div className="hidden sm:flex items-center gap-1.5">
                         <span className="text-xs text-stone-500 font-medium">Giá:</span>
                         <img 
                           src={getAssetPath('/icons/vitoken.svg')} 
@@ -821,11 +919,11 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                         )}
                       </div>
 
-                      {/* Nút hành động: Xem thử + Mua/Thêm vào bàn học */}
-                      <div className="flex items-center gap-2">
+                      {/* Nút hành động: Xem thử + Mua/Mở ở bàn học */}
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                           onClick={() => setPreviewItem(item)}
-                          className="px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                          className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                         >
                           <Eye className="w-3.5 h-3.5 text-stone-600" />
                           <span>Xem thử</span>
@@ -833,7 +931,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
 
                         <button
                           onClick={() => handleBuyMarketItem(item)}
-                          className={`py-1.5 px-4 rounded-xl text-xs font-bold transition-all text-center cursor-pointer shadow-xs flex items-center gap-1.5 ${
+                          className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-xl text-xs font-bold transition-all text-center cursor-pointer shadow-xs flex items-center justify-center gap-1.5 ${
                             isItemPurchased(item)
                               ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                               : 'bg-[#E0562D] hover:bg-[#c9451e] text-white active:scale-95'
@@ -842,10 +940,10 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                           {isItemPurchased(item) ? (
                             <>
                               <ArrowRight className="w-3.5 h-3.5 text-white" />
-                              <span>Mở ở bàn học</span>
+                              <span>Mở bàn học</span>
                             </>
                           ) : (
-                            <span>Mua</span>
+                            <span>Mua ({item.price} V)</span>
                           )}
                         </button>
                       </div>

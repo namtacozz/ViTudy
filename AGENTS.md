@@ -6,6 +6,7 @@
 > 3. **If docs and code disagree:** Code wins; fix the docs and log it in the changelog.
 > 4. **Auto-Update Directives:** Bất cứ khi nào người dùng đề cập, thảo luận hoặc đưa ra yêu cầu chỉnh sửa liên quan đến một quy tắc thiết kế hay kỹ thuật nào, Agent **BẮT BUỘC TỰ ĐỘNG CẬP NHẬT NGAY** vào file `AGENTS.md` này mà không cần đợi người dùng phải nhắc.
 > 5. **Single Source of Truth:** Codebase này chỉ sử dụng duy nhất file `AGENTS.md` cho các chỉ dẫn của Agent. Tuyệt đối không tạo hay sử dụng file `CLAUDE.md`.
+> 6. **Quy Tắc Quản Trị Nhánh Git (Git Branch Governance - Bất Di Bất Dịch):** TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỘNG VÀO NHÁNH MAIN. Nghiêm cấm tuyệt đối mọi hành vi merge, rebase, push, commit hoặc can thiệp vào nhánh `main` dưới bất kỳ hình thức nào. Nhánh `main` hoàn toàn do Sếp toàn quyền kiểm soát và quản lý. Mọi tác vụ phát triển, thử nghiệm, commit và push của Agent CHỈ ĐƯỢC PHÉP thực hiện trên nhánh `dev`.
 
 ---
 
@@ -127,6 +128,16 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
     * **Quy Chuẩn Mở Tài Liệu Chợ Từ Bàn Học (`MarketModal` & `SelectSpaceForDocModal`):**
       * Khi người dùng đang ở bàn học (`activeSpace.id` tồn tại): Mua hoặc mở tài liệu trên Chợ sẽ nạp trực tiếp tài liệu vào bàn học hiện tại qua `addMarketItemToSpace`, hiển thị thông báo toast thành công và đóng modal; không bật modal chọn bàn thừa thãi và không chuyển hướng ra trang chủ.
       * Khi người dùng ở ngoài trang chủ mở `SelectSpaceForDocModal`: Kích hoạt `switchSpace` và điều hướng chuyển view vào bàn học đã chọn kèm tài liệu mới.
+    * **Quy Chuẩn Tối Ưu Bàn Học 2.5D Trên Điện Thoại Di Động (Mobile 2.5D Desk Standards — Đồng Bộ GreenLearn):**
+      * **Trực tiếp mở bàn học 2.5D trên mobile:** Người dùng di động truy cập trực tiếp 100% vào `StudySpaceDeskView` với trải nghiệm tương tác cảm ứng tự nhiên (Pinch-to-zoom 2 ngón tay, Two-finger pan, Palm Rejection), triệt tiêu hoàn toàn việc chuyển hướng sang chế độ rút gọn companion thô sơ.
+      * **Tự động co tỷ lệ và căn giữa màn hình (`fitAllToScreen`):** Khi vừa mở bàn học trên điện thoại (`winW < 640px`), hệ thống tự động tính toán bounding box với đệm nhỏ `pad = 16px` và sàn scale `0.35`, bảo đảm cuốn sách được căn ngay giữa màn hình với kích thước đọc tối ưu, người dùng không cần zoom hay kéo tìm sách.
+      * **Thanh công cụ sáng tạo dạng Dock ngang ở đáy (`LeftCreationBar`):** Trên Mobile Portrait, thanh công cụ chuyển thành dock ngang ở sát đáy màn hình (`bottom-2 left-1/2 -translate-x-1/2`), các flyout (chọn bút, màu note, công cụ mở rộng) mở ngược lên trên (`bottom-full mb-2`), giải phóng 100% không gian 2 bên bàn học. Khi xoay ngang (landscape) tự động chuyển về xếp dọc mép trái.
+      * **Chống va chạm HUD góc trên (`TopLeftNav` & `TopRightWallet`):** Khống chế chiều rộng tối đa (`max-w-[48vw]` cho Nav và `max-w-[50vw]` cho Wallet), tên bàn học truncate `max-w-[65px] min-[390px]:max-w-[90px]`, ô tìm kiếm slide-out thu gọn, triệt tiêu hoàn toàn việc 2 thanh HUD bị đè lên nhau trên màn hình hẹp < 400px.
+    * **Quy Chuẩn Chợ Tài Liệu Dạng Mobile Sheet (MarketModal Mobile Sheet Ergonomics):**
+      * **Khung chứa Mobile Bottom Sheet:** Chiều cao `94dvh`, bo góc trên `rounded-t-3xl`, thanh kéo drag bar `w-12 h-1.5` trên đỉnh (hỗ trợ chạm vào để đóng).
+      * **Cơ chế đóng modal an toàn & công thái học:** Hỗ trợ cử chỉ vuốt xuống (Touch swipe down $> 70\text{px}$) từ header, nút Đóng (X) to rõ `w-9.5 h-9.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 active:scale-90 border border-stone-200/60` với vùng bấm $\ge 38\text{px}$.
+      * **Bộ lọc 1 dòng cuộn ngang duy nhất (Zero Flex-Wrap):** Gom toàn bộ tabs loại tài liệu + môn học + dropdown lọc điểm/giá/sắp xếp vào một hàng cuộn ngang mượt mà (`overflow-x-auto no-scrollbar flex-nowrap py-0.5`), triệt tiêu hoàn toàn việc ngắt dòng 3-4 tầng làm choán hết màn hình.
+      * **Thẻ tài liệu ngang công thái học:** Mỗi card tài liệu trên mobile là bố cục ngang cao ~110px, bìa sách `w-20 h-28 shrink-0` bên trái kèm thông tin, điểm AI, giá và nút "Xem thử" / "Mua / Mở bàn học" bên phải, bảo đảm danh sách sách chiếm 80% chiều cao modal và cuộn mượt mà.
     * **Quy Chuẩn Tái Cấu Trúc Toàn Diện Trang Chủ Chuẩn Notion / Figma / Miro (`HomePage`):**
       * **Cấu trúc cố định không gian 100vh:** Triệt tiêu hoàn toàn cuộn toàn trang; bảng danh sách bàn học có container cuộn độc lập mượt mà.
       * **Thanh bên trái:** Bỏ logo trùng lặp ở đỉnh nội dung, chỉ giữ 1 logo ViTudy duy nhất ở sidebar; bổ sung icon thanh mảnh cho từng mục điều hướng (`Home`, `BookOpen`, `Star`, `Store`, `CalendarCheck`); thêm phím tắt `Ctrl + K` trên ô tìm kiếm; thu gọn số dư khả dụng thành chip thanh lịch `5.000 ViToken [+] Nạp`; bổ sung liên kết "Trợ giúp & Tài liệu" ở chân sidebar.
@@ -164,6 +175,23 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Biểu Tượng Chuỗi Ngày Học Tập (Streak Flame Icon):**
     * Biểu tượng ngọn lửa (`w-8.5 h-8.5`) màu Cam ViT (`#E0562D`) với phần bụng tròn ôm trọn số ngày chuỗi học tập màu trắng ở bên trong.
     * Tọa độ căn số tuyệt đối: `top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2`, số chuỗi nằm chính xác 100% trong tâm bụng lửa, cân đối 4 phía, không lệch, không che khuất và không tràn ra ngoài viền ngọn lửa.
+  * **Quy Chuẩn Thú Cưng Chuỗi Học Tập (Streak Pet Widget Standards):**
+    * **Thư mục Assets & Tên tệp chuẩn (`/brand/pet/`):**
+      * Bộ ảnh PNG 1:1 nền trong suốt gồm 4 cấp độ: Stage 1 "Trứng" (0-3 ngày: `stage1.png`, `sleep-stage1.png`), Stage 2 "Nứt vỏ" (4-10 ngày: `stage2.png`, `sleep-stage2.png`), Stage 3 "Vịt con" (11-100 ngày: `stage3.png`, `sleep-stage3.png`), và Stage 4 "Trưởng thành" (101+ ngày: `stage4.png`, `sleep-stage4.png`).
+      * Toàn bộ đường dẫn ảnh bắt buộc bọc qua `getAssetPath` để tương thích mọi môi trường triển khai (subpath / GitHub Pages).
+    * **Kéo thả công thái học & Tự động bám viền (Floating & Edge Snapping):**
+      * **Triệt tiêu hoàn toàn ô badge hộp thừa & Nền trong suốt 100%:** Chỉ hiển thị duy nhất hình ảnh chú thú cưng nổi lơ lửng tự nhiên trên màn hình, loại bỏ hoàn toàn ô badge hộp trắng đè trên đầu pet gây rối mắt.
+      * **Quy chuẩn độ trong suốt tuyệt đối (Pure Transparent Standards):** Toàn bộ container, wrapper và phần tử con của `FloatingPet` bắt buộc đặt `background: transparent; box-shadow: none; border: none; outline: none; padding: 0; -webkit-tap-highlight-color: transparent`. Nghiêm cấm đặt class nền thẻ (`bg-white`), viền (`border`), bo góc card hay bóng đổ (`shadow`) lên container.
+      * **Bóng đổ ôm theo hình thể nhân vật (`drop-shadow`):** Chỉ áp dụng `filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))` trực tiếp trên thẻ `<img>`, ôm sát từng đường nét viền của nhân vật, tuyệt đối không tạo khung bóng hình chữ nhật. Thẻ `<img>` dùng `user-select: none; -webkit-user-drag: none; display: block`.
+      * **Kênh Alpha thật trong PNG (True Alpha Channel):** Toàn bộ ảnh thú cưng trong `brand/pet/` và `public/brand/pet/` phải có kênh Alpha trong suốt thực sự (`A = 0` ở 4 góc và vùng ngoài, `A = 255` ở thân nhân vật). Tuyệt đối cấm sử dụng mẹo CSS (`mix-blend-mode`) để giấu nền trắng.
+      * Sử dụng Pointer Events (`pointerdown`, `pointermove`, `pointerup`), phân biệt chính xác thao tác kéo và chạm: di chuyển $< 6\text{px}$ là Chạm (Tap/Click), $\ge 6\text{px}$ là Kéo (Drag).
+      * Khi thả tay, tự động bám dính (snap) vào mép trái hoặc phải gần nhất với chuyển động mượt mà (`cubic-bezier(0.18, 0.89, 0.32, 1.28)`), luôn giữ khoảng cách an toàn trong viewport và lưu vị trí vào `localStorage`.
+      * Container bao bọc sử dụng `pointer-events: none`, chỉ khối widget thú cưng bật `pointer-events-auto`, triệt tiêu hoàn toàn việc che chặn thao tác click lên giao diện phía sau.
+    * **Nhịp sinh học & Điểm danh chuẩn server (Circadian Cycle & Check-in):**
+      * Trạng thái ngủ (`asleep`): Thở chậm rãi kèm chữ `Zzz` bay lơ lửng khi người dùng chưa điểm danh trong ngày theo múi giờ `Asia/Ho_Chi_Minh`. Chạm vào sẽ bừng tỉnh (`pet-wake-animation`), điểm danh và tăng chuỗi ngày học.
+      * Trạng thái thức (`awake`): Nhún nhảy nhẹ nhàng (`pet-awake-bob`). Chạm vào mở trực tiếp Bộ sưu tập thú cưng (`PetGalleryModal`).
+      * Hẹn giờ tự động đưa thú cưng đi ngủ lúc 00:00:02 (giờ VN) và tự động đồng bộ khi chuyển tab (`visibilitychange` / `focus`).
+      * Điểm danh đảm bảo tính lũy đẳng (idempotent), hỗ trợ chuẩn tiếp cận `prefers-reduced-motion`.
   * **Quy Chuẩn Nút Mở Bản Đồ Khi Ẩn (Minimap Reopen Button):**
     * Đồng bộ hoàn toàn style với Nút Tải lên tài liệu: khung vuông bo góc `rounded-xl`, kích thước chuẩn `w-10 h-10`, nền trắng `bg-white hover:bg-orange-50/80`, viền `border border-slate-300 hover:border-orange-300`, đổ bóng nhẹ `shadow-sm`, icon `Map` SVG màu Cam ViT (`#E0562D`, `stroke-[2.4]`). Tuyệt đối không dùng nút tròn nền cam độc lập.
   * **Hệ thống màu trạng thái ngữ nghĩa (Status Tokens):**
@@ -218,6 +246,39 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
   * **Quy chuẩn thẻ tài liệu & Chế độ xem:**
     * **Chế độ xem mặc định:** Chế độ lưới thẻ (`grid`) là mặc định, cân xứng 3 cột (`max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5`), triệt tiêu khoảng hở lệch bên phải.
     * **Bìa da nâu bên trái (Modal):** Thiết kế tối giản, sang trọng với viền dập da, logo ViTudy, icon loại tài liệu dập chìm và ngày chia sẻ. Tuyệt đối không nhồi nhét lặp lại tiêu đề 3 lần lên bìa sách.
+  * **Quy Chuẩn Tối Ưu Điện Thoại & Máy Tính Bảng (Mobile & Tablet Ergonomics Standards):**
+    * **Kiến trúc Hard-Locked Mobile Engine (`useResponsiveLayout` & `globals.css`):**
+      * Phát hiện thiết bị chuẩn xác kết hợp 3 lớp: User-Agent (`Mobile|Android|iPhone|iPad`), `shortestSide < 600px`, và Media Query con trỏ `(pointer: coarse)`.
+      * Inline script trong `<head>` đặt thuộc tính `data-device="mobile"` tức thì trước khi React hydrate, ngăn chặn hiện tượng giật giật (layout flicker/shift).
+      * Viewport cố định với `viewportFit: 'cover'`, triệt tiêu hành vi phóng to vô tình của iOS Safari (`touch-action: none`, `overscroll-behavior: none`).
+    * **Cử chỉ cảm ứng đa điểm & Bộ lọc cử chỉ InfiniteDesk (Multi-Touch Gestures):**
+      * **Viewport Hard-Lock (Chặn triệt để Page Zoom của trình duyệt):** Viewport trong `src/app/layout.tsx` bắt buộc cấu hình `maximumScale: 1`, `minimumScale: 1`, `userScalable: false`, `viewportFit: 'cover'`, triệt tiêu hoàn toàn việc trình duyệt di động (iOS Safari, Android Chrome) tự ý zoom toàn bộ trang web hoặc làm gián đoạn sự kiện cảm ứng của canvas.
+      * **Dedicated Window Capture Native Touch Engine:** Bộ xử lý cảm ứng 2 ngón tay lắng nghe trực tiếp sự kiện `touchstart`, `touchmove`, `touchend`, `touchcancel` ở cấp độ `window` với `{ capture: true, passive: false }`. Bắt trọn 100% cử chỉ ngay cả khi 2 ngón tay đặt trực tiếp lên sách `BookSpread` hay ghi chú `StickyNote`, gọi `e.preventDefault()` ngăn chặn native browser bounce/scroll.
+      * **Bảo đảm an toàn kiểu dữ liệu sự kiện:** Mọi truy xuất `target.closest(...)` bắt buộc kiểm tra `target && typeof target.closest === 'function'`, loại trừ hoàn toàn ngoại lệ `TypeError: target.closest is not a function` khi `e.target` là `document` hoặc `window`.
+      * **Pinch-to-zoom 2 ngón tay mượt mà (Zero Deadzone):** Tính toán tỷ lệ zoom `factor = currentDist / prevDist` tức thì quanh trung điểm `currentMid`, cập nhật trực tiếp `setTransform` mà không dùng bộ lọc ngưỡng (`deadzone threshold`), bảo đảm phản hồi chính xác từng micromet di chuyển ngón tay.
+      * **Tách biệt hoàn toàn Touch và Pointer Events:** Sự kiện `pointermove` tự động bỏ qua nếu `e.pointerType === 'touch'`, triệt tiêu hiện tượng 2 bộ điều khiển cùng nhảy vào `setTransform` gây giật lag hoặc tranh chấp state.
+      * **2-Finger Pan:** Kéo di chuyển bàn học bằng 2 ngón tay đồng thời mà không kích hoạt nét vẽ.
+      * **Quy chuẩn Pointer Events & Cách ly con trỏ vẽ (`activePointersRef` & `drawingPointerIdRef`):**
+        * Dùng `activePointersRef` (Map theo `pointerId`) lưu trữ chính xác danh sách con trỏ đang chạm trên canvas.
+        * Khi phát hiện $\ge 2$ con trỏ hoặc con trỏ phụ (`!e.isPrimary`): lập tức hủy bỏ bộ đếm 40ms, gọi `cancelStroke()` hủy nét vẽ dở (không lưu vào history/undo), và chuyển sang pinch-zoom / 2-finger pan.
+        * Chỉ bắt đầu nét vẽ khi đúng 1 con trỏ và `e.isPrimary === true`, áp dụng độ trễ ~40ms cho thao tác chạm ngón tay để phát hiện ngón thứ 2.
+        * Khóa con trỏ vẽ (`drawingPointerIdRef`): chỉ duy nhất con trỏ đã bắt đầu nét vẽ mới được phép gọi `appendPoint()`. Bất kỳ con trỏ nào khác di chuyển trong khi đang vẽ sẽ kích hoạt hủy nét vẽ ngay lập tức, triệt tiêu 100% hiện tượng nối đường thẳng giữa 2 điểm chạm.
+        * Hỗ trợ đầy đủ `pointerType: pen` vẽ tức thì, `touch` pan/zoom khi `isFingerDrawingEnabled === false` (Palm Rejection).
+        * Xử lý triệt để `pointercancel`, `pointerup` và `blur` trên cả component lẫn window để reset trạng thái sạch sẽ, tránh kẹt ngón.
+        * Áp dụng `touch-action: none` trên toàn bộ canvas và lớp đón bắt vẽ.
+      * **Chống tì tay thông minh (Palm Rejection):** Khi chế độ chỉ vẽ bằng bút Stylus (`isFingerDrawingEnabled === false`) được kích hoạt, các thao tác chạm bằng ngón tay (`pointerType === 'touch'`) chỉ dùng để di chuyển và phóng to thu nhỏ bàn học, chỉ nhận nét vẽ từ bút cảm ứng (`pointerType === 'pen'`).
+      * **Tự động căn chỉnh mở bàn học (`fitAllToScreen`):** Khi người dùng mở bàn học trên điện thoại hoặc máy tính bảng, hệ thống tự động tính toán bounding box toàn bộ tài liệu và phóng to vừa vặn màn hình mà không cần zoom thủ công.
+    * **Tối ưu HUD Bàn Học Trên Thiết Bị Di Động:**
+      * **Bản đồ thu nhỏ (Minimap):** Tự động ẩn mặc định trên màn hình < 640px, kích thước compact 145x90px, ẩn phím tắt "(Phím M)". Nút mở lại bản đồ đạt touch target 44px (`w-8.5 h-8.5 sm:w-10 sm:h-10`).
+      * **Thanh công cụ vẽ trái (`LeftCreationBar`):** Thiết kế dạng cột dọc tinh gọn cố định mép trái (`landscape-fixed-toolbar`), kích thước nút responsive `w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11`, flyout phụ cuộn độc lập (`landscape-subpanel`), tích hợp nút chuyển đổi vẽ ngón tay/stylus (`Hand`).
+      * **Thanh điều hướng trên trái (`TopLeftNav`):** Thu gọn nhãn chữ thương hiệu trên mobile/landscape phone, ô tìm kiếm co giãn thông minh (`w-36 sm:w-52`), avatar kích thước cố định 28x28px shrink-0.
+      * **Ví & Chuỗi trên phải (`TopRightWallet`):** Container và các nút chức năng responsive `w-8.5 h-8.5 sm:w-11 sm:h-11`, khối token nhỏ gọn không che tràn màn hình.
+      * **Bộ nút tải lên dưới trái (`BottomLeftKnowledge`):** Kích thước nút responsive, lắng nghe sự kiện kích hoạt tải lên/mời bạn từ menu.
+    * **Tối ưu Trang Chủ (`HomePage.tsx`):**
+      * **Thanh điều hướng đáy 5 tab (`responsive-bottom-nav`):** Cố định đáy màn hình trên mobile (< 640px) gồm: Trang chủ (`Home`), Bàn học (`BookOpen`), Chợ tài liệu (`Store`), Nhật ký (`CalendarCheck`), và Hồ sơ (`User`) với touch target $\ge 44px$ và padding an toàn (`pb-safe`).
+      * **Danh sách bàn học dạng Card dọc trên Mobile (`responsive-desk-cards`):** Tự động chuyển đổi từ bảng table 12 cột sang danh sách thẻ card dọc tinh gọn, hiển thị đầy đủ tiêu đề, tóm tắt tài liệu, thời gian mở, dấu sao và menu thao tác nhanh (đổi tên, nhân bản, xóa).
+      * **Nút mở Menu Drawer di động (`responsive-mobile-menu-btn`):** Header mobile hiển thị nút menu mở ngăn kéo bên trái chứa các lối tắt tiện ích.
+      * **Khoảng đệm đáy an toàn (`responsive-mobile-pb`):** Main view có padding đáy `pb-20 md:pb-6`, bảo đảm nội dung học tập không bị che khuất bởi Bottom Navigation Bar.
     * **Thông tin tin cậy bắt buộc:** Dấu xác thực tác giả (`CheckCircle2 text-sky-600`), số trang, lượt mua, ngày cập nhật, điểm AI có tiền tố `AI: [score]/100` kèm tooltip giải thích tiêu chí.
     * **Triệt tiêu lặp giá:** Khối giá hiển thị 1 lần duy nhất bên trái footer thẻ, bên phải là nút hành động "Xem thử" và "Mua [X] V" (hoặc "Thêm vào bàn học" khi đã sở hữu).
     * **Trạng thái Đã sở hữu & Tủ tài liệu cá nhân:**

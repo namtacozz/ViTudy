@@ -15,16 +15,18 @@ export const Minimap = React.memo(function Minimap({ isVisible = true, onClose }
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Minimap dimensions
-  const miniWidth = 190;
-  const miniHeight = 120;
-  const pad = 10;
-
   // Window viewport representation
   const [viewSize, setViewSize] = useState(() => 
     typeof window !== 'undefined' 
       ? { width: window.innerWidth, height: window.innerHeight } 
       : { width: 1200, height: 800 }
   );
+
+  // Minimap dimensions (compact on screens < 640px, default on desktop)
+  const isSmallScreen = viewSize.width < 640;
+  const miniWidth = isSmallScreen ? 145 : 190;
+  const miniHeight = isSmallScreen ? 90 : 120;
+  const pad = 10;
 
   useEffect(() => {
     setViewSize({ width: window.innerWidth, height: window.innerHeight });
@@ -226,7 +228,7 @@ export const Minimap = React.memo(function Minimap({ isVisible = true, onClose }
       </div>
 
       <div className="absolute bottom-1.5 left-2 text-[9.5px] font-mono font-bold text-slate-700 pointer-events-none tracking-wider select-none">
-        BẢN ĐỒ (Phím M)
+        BẢN ĐỒ <span className="hidden lg:inline landscape-phone:hidden">(Phím M)</span>
       </div>
     </div>
   );

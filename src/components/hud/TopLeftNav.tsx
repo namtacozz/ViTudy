@@ -95,7 +95,7 @@ export function TopLeftNav() {
   };
 
   // Filtered documents on current desk
-  const filteredDeskItems = activeSpace.items.filter(item => {
+  const filteredDeskItems = (activeSpace?.items || []).filter(item => {
     if (!searchQuery.trim()) return true;
     return item.title.toLowerCase().includes(searchQuery.toLowerCase().trim());
   });
@@ -132,10 +132,10 @@ export function TopLeftNav() {
 
   return (
     <div className="relative flex flex-col gap-2 pointer-events-auto">
-      {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size, bold strokes) */}
-      <div className="flex items-center gap-2.5 bg-white/95 border border-slate-300 rounded-2xl px-4 py-2.5 shadow-sm backdrop-blur-md text-slate-900">
-        {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.svg */}
-        <div className="flex items-center gap-1.5 pr-3 border-r border-slate-200">
+      {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size on desktop, compact on mobile) */}
+      <div className="flex items-center gap-1 sm:gap-2.5 bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl px-1.5 py-1 sm:px-4 sm:py-2.5 shadow-sm backdrop-blur-md text-slate-900 max-w-[48vw] shrink-0">
+        {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.png */}
+        <div className="flex items-center gap-1 sm:gap-1.5 pr-1.5 sm:pr-3 border-r border-slate-200 shrink-0">
           <Link
             href="/?view=home"
             onClick={() => {
@@ -153,11 +153,11 @@ export function TopLeftNav() {
               alt="ViTudy" 
               width={24}
               height={24}
-              className="w-6 h-6 object-contain flex-shrink-0" 
+              className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0" 
               style={{ width: '24px', height: '24px', maxWidth: '24px', maxHeight: '24px' }}
             />
             <span 
-              className="text-lg font-black tracking-tight text-[#E0562D] select-none leading-none"
+              className="text-sm sm:text-lg font-black tracking-tight text-[#E0562D] select-none leading-none hidden md:inline landscape-phone:hidden"
             >
               ViTudy
             </span>
@@ -165,7 +165,7 @@ export function TopLeftNav() {
         </div>
 
         {/* Space Dropdown & Inline Rename */}
-        <div className="relative flex items-center gap-0.5">
+        <div className="relative flex items-center gap-0.5 min-w-0">
           {isRenamingCurrent ? (
             <form
               onSubmit={(e) => {
@@ -191,18 +191,18 @@ export function TopLeftNav() {
                   }
                   setIsRenamingCurrent(false);
                 }}
-                className="w-40 px-2 py-0.5 text-sm font-bold text-slate-900 bg-white border border-[#E0562D] rounded-lg focus:outline-none"
+                className="w-28 sm:w-40 px-2 py-0.5 text-xs sm:text-sm font-bold text-slate-900 bg-white border border-[#E0562D] rounded-lg focus:outline-none"
               />
             </form>
           ) : (
             <>
               <button
                 onClick={() => setIsSpaceMenuOpen(!isSpaceMenuOpen)}
-                className="flex items-center gap-1.5 text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
+                className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer max-w-full"
               >
-                <BookMarked className="w-4 h-4 text-slate-800 stroke-[2.4]" />
-                <span className="max-w-[200px] truncate">{activeSpace.name}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
+                <BookMarked className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-800 stroke-[2.4] shrink-0" />
+                <span className="max-w-[65px] min-[390px]:max-w-[90px] sm:max-w-[200px] truncate">{activeSpace.name}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4] shrink-0" />
               </button>
               {renameSpace && activeSpaceId && (
                 <button
@@ -213,7 +213,7 @@ export function TopLeftNav() {
                     setIsRenamingCurrent(true);
                     setIsSpaceMenuOpen(false);
                   }}
-                  className="p-1 rounded-md text-slate-400 hover:text-[#E0562D] hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="hidden sm:flex p-1 rounded-md text-slate-400 hover:text-[#E0562D] hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   <Pencil className="w-3 h-3" />
                 </button>
@@ -326,15 +326,15 @@ export function TopLeftNav() {
 
           {/* Slide-out Input container */}
           <div className={`transition-all duration-300 ease-out flex items-center overflow-hidden ${
-            isSearchExpanded ? 'w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
+            isSearchExpanded ? 'w-28 min-[390px]:w-36 sm:w-52 pl-1.5 opacity-100' : 'w-0 pl-0 opacity-0'
           }`}>
             <input
               type="text"
-              placeholder="Tìm tài liệu trên bàn..."
+              placeholder="Tìm tài liệu..."
               value={searchQuery}
               onFocus={() => setIsSearchFocused(true)}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none pr-1"
+              className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none pr-1"
             />
             {searchQuery && (
               <button
@@ -426,40 +426,43 @@ export function TopLeftNav() {
         )}
 
         {/* Dashboard & User Account / Login Button */}
-        <div className="pl-2 border-l border-slate-200 flex items-center gap-1.5">
+        <div className="pl-1 sm:pl-2 border-l border-slate-200 flex items-center gap-1 sm:gap-1.5">
           <Link
             href="/dashboard"
             title="Thống kê học tập (Dashboard)"
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg hidden sm:flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
-            <BarChart2 className="w-4 h-4 stroke-[2.2]" />
+            <BarChart2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
           </Link>
 
           {user ? (
             <Link
               href="/profile?from=desk"
               title={`Hồ sơ cá nhân (${profile?.display_name || user.email})`}
-              className="w-7 h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs"
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs shrink-0"
+              style={{ width: '24px', height: '24px', minWidth: '24px', minHeight: '24px', maxWidth: '28px', maxHeight: '28px' }}
             >
               {profile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
                   alt={profile?.display_name || 'Avatar'}
+                  width={24}
+                  height={24}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span>{(profile?.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>
+                <span className="text-[11px] sm:text-xs">{(profile?.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>
               )}
             </Link>
           ) : (
             <Link
               href="/auth"
               title="Đăng nhập tài khoản"
-              className="px-2.5 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+              className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white text-[11px] sm:text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-xs"
             >
-              <LogIn className="w-3.5 h-3.5 stroke-[2.4]" />
-              <span className="hidden sm:inline">Đăng nhập</span>
+              <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.4]" />
+              <span className="hidden md:inline">Đăng nhập</span>
             </Link>
           )}
         </div>

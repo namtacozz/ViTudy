@@ -1,8 +1,8 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
-> **Commit Hash:** `Current Working Tree`  
-> **Cập nhật lần cuối:** `2026-11-13`  
-> **Trạng thái Codebase:** Đã hoàn thành Board Game Studio, Bảng Vẽ 4 Góc, 23/23 test suites (78 tests) pass, `build:pages` pass, `docs:check` pass.
+> **Commit Hash:** `Current Working Tree (dev)`  
+> **Cập nhật lần cuối:** `2026-11-14`  
+> **Trạng thái Codebase:** Đã hoàn thành Board Game Studio, Bảng Vẽ 4 Góc, Tối ưu hóa toàn diện cho điện thoại di động & máy tính bảng (Pinch-to-zoom 2 ngón, Palm Rejection, Mobile Sheet MarketModal cử chỉ vuốt, Bàn học dock đáy mobile portrait, Compact HUD), Streak Pet ảo tương tác và hệ thống xác thực Auth/Guest linh hoạt.
 
 ---
 
