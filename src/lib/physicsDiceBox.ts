@@ -86,6 +86,13 @@ function createD6FaceTexture(value: number): THREE.CanvasTexture {
   return texture;
 }
 
+export interface DropZoneRect {
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+}
+
 interface DieInstance {
   mesh: THREE.Mesh;
   body: CANNON.Body;
@@ -95,6 +102,7 @@ interface DieInstance {
 
 export class PhysicsDiceBox {
   private container: HTMLElement;
+  private dropZone: DropZoneRect | null = null;
   private scene: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
@@ -118,8 +126,9 @@ export class PhysicsDiceBox {
   private iteration = 0;
   private disposed = false;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, dropZone?: DropZoneRect) {
     this.container = container;
+    this.dropZone = dropZone || null;
     this.scene = new THREE.Scene();
     this.world = new CANNON.World();
     this.world.gravity.set(0, 0, -9.8 * 800);
@@ -181,13 +190,31 @@ export class PhysicsDiceBox {
     this.resize();
   }
 
+  public setDropZone(dropZone: DropZoneRect) {
+    this.dropZone = dropZone;
+    this.resize();
+  }
+
+  private getZoneWorldCenter(): { x: number; y: number; halfW: number; halfH: number } {
+    if (!this.dropZone) {
+      return { x: 0, y: 0, halfW: this.cw * 0.85, halfH: this.ch * 0.85 };
+    }
+    return {
+      x: this.dropZone.centerX - this.cw,
+      y: this.ch - this.dropZone.centerY,
+      halfW: Math.max(36, this.dropZone.width * 0.43),
+      halfH: Math.max(36, this.dropZone.height * 0.43),
+    };
+  }
+
   public resize() {
     if (this.disposed) return;
     const width = Math.max(80, this.container.clientWidth || 140);
     const height = Math.max(80, this.container.clientHeight || 140);
     this.cw = width / 2;
     this.ch = height / 2;
-    this.scale = Math.max(18, Math.sqrt(this.cw * this.cw + this.ch * this.ch) / 5.4);
+    const zoneDim = this.dropZone ? Math.min(this.dropZone.width, this.dropZone.height) : Math.min(width, height);
+    this.scale = Math.max(18, Math.min(44, zoneDim * 0.21));
 
     this.renderer.setSize(width, height, false);
 
@@ -197,10 +224,11 @@ export class PhysicsDiceBox {
     this.camera.lookAt(0, 0, 0);
 
     const mw = Math.max(this.cw, this.ch);
+    const zone = this.getZoneWorldCenter();
     if (this.light) this.scene.remove(this.light);
     this.light = new THREE.SpotLight(0xffffff, 2.4);
-    this.light.position.set(-mw * 0.45, mw * 0.45, mw * 2.2);
-    this.light.target.position.set(0, 0, 0);
+    this.light.position.set(zone.x - mw * 0.35, zone.y + mw * 0.35, mw * 2.2);
+    this.light.target.position.set(zone.x, zone.y, 0);
     this.light.distance = mw * 6;
     this.light.castShadow = true;
     this.light.shadow.mapSize.width = 512;
@@ -221,17 +249,17 @@ export class PhysicsDiceBox {
     this.floorMesh.receiveShadow = true;
     this.scene.add(this.floorMesh);
 
-    // Rebuild 4 arena wall barriers
+    // Rebuild 4 arena wall barriers around the dropZone (so dice land inside it!)
     for (const b of this.barrierBodies) {
       this.world.removeBody(b);
     }
     this.barrierBodies = [];
     const barrierMat = new CANNON.Material('barrier');
     const walls: Array<{ pos: [number, number, number]; axis: [number, number, number]; angle: number }> = [
-      { pos: [0, this.ch * 0.85, 0], axis: [1, 0, 0], angle: Math.PI / 2 },
-      { pos: [0, -this.ch * 0.85, 0], axis: [1, 0, 0], angle: -Math.PI / 2 },
-      { pos: [this.cw * 0.85, 0, 0], axis: [0, 1, 0], angle: -Math.PI / 2 },
-      { pos: [-this.cw * 0.85, 0, 0], axis: [0, 1, 0], angle: Math.PI / 2 },
+      { pos: [zone.x, zone.y + zone.halfH, 0], axis: [1, 0, 0], angle: Math.PI / 2 },
+      { pos: [zone.x, zone.y - zone.halfH, 0], axis: [1, 0, 0], angle: -Math.PI / 2 },
+      { pos: [zone.x + zone.halfW, zone.y, 0], axis: [0, 1, 0], angle: -Math.PI / 2 },
+      { pos: [zone.x - zone.halfW, zone.y, 0], axis: [0, 1, 0], angle: Math.PI / 2 },
     ];
     for (const w of walls) {
       const body = new CANNON.Body({ mass: 0, material: barrierMat });
@@ -256,14 +284,15 @@ export class PhysicsDiceBox {
     }
 
     const spacing = boxSize * 1.35;
-    const startX = -((count - 1) * spacing) / 2;
+    const zone = this.getZoneWorldCenter();
+    const startX = zone.x - ((count - 1) * spacing) / 2;
 
     values.forEach((val, idx) => {
       const mesh = new THREE.Mesh(this.sharedGeometry!, this.sharedMaterials);
       mesh.castShadow = true;
       const body = new CANNON.Body({ mass: 300, material: this.diceBodyMaterial });
       body.addShape(new CANNON.Box(new CANNON.Vec3(halfSize, halfSize, halfSize)));
-      body.position.set(startX + idx * spacing, 0, halfSize);
+      body.position.set(startX + idx * spacing, zone.y, halfSize);
 
       // Orient top (+Z) to match `val`
       const q = quaternionForTopValue(val);
@@ -289,13 +318,14 @@ export class PhysicsDiceBox {
     this.clearDice();
     this.playRollSound(diceCount);
 
+    const zone = this.getZoneWorldCenter();
     const rawVec = swipeVector && (Math.abs(swipeVector.x) > 4 || Math.abs(swipeVector.y) > 4)
       ? { x: swipeVector.x, y: -swipeVector.y }
       : { x: (Math.random() * 2 - 1) * this.cw, y: -(Math.random() * 2 - 1) * this.ch };
 
     const dist = Math.max(1, Math.hypot(rawVec.x, rawVec.y));
     const norm = { x: rawVec.x / dist, y: rawVec.y / dist };
-    const boost = (Math.random() + 2.6) * Math.max(this.cw, this.ch) * 1.4;
+    const boost = (Math.random() + 2.4) * Math.max(this.cw, this.ch) * 0.9;
 
     const halfSize = this.scale * 0.55;
     const boxSize = halfSize * 2;
@@ -304,23 +334,32 @@ export class PhysicsDiceBox {
 
     for (let i = 0; i < diceCount; i++) {
       const vec = makeRandomVector(norm);
-      const posX = this.cw * (vec.x > 0 ? -1 : 1) * 0.55 + (i - (diceCount - 1) / 2) * (boxSize * 0.6);
-      const posY = this.ch * (vec.y > 0 ? -1 : 1) * 0.55;
-      const posZ = Math.random() * 90 + 120;
+      // Spawn high above and spread across the whole map, flying toward the dropZone
+      const spreadX = Math.min(this.cw * 0.72, zone.halfW * 2.8);
+      const spreadY = Math.min(this.ch * 0.72, zone.halfH * 2.8);
+      const posX = zone.x + (vec.x > 0 ? -1 : 1) * spreadX + (i - (diceCount - 1) / 2) * (boxSize * 0.7);
+      const posY = zone.y + (vec.y > 0 ? -1 : 1) * spreadY;
+      const posZ = Math.random() * 140 + 260;
 
       const velVec = makeRandomVector(norm);
+      const toZoneX = zone.x - posX;
+      const toZoneY = zone.y - posY;
       const mesh = new THREE.Mesh(this.sharedGeometry, this.sharedMaterials);
       mesh.castShadow = true;
 
       const body = new CANNON.Body({
         mass: 300,
         material: this.diceBodyMaterial,
-        linearDamping: 0.12,
-        angularDamping: 0.12,
+        linearDamping: 0.14,
+        angularDamping: 0.14,
       });
       body.addShape(new CANNON.Box(new CANNON.Vec3(halfSize, halfSize, halfSize)));
       body.position.set(posX, posY, posZ);
-      body.velocity.set(velVec.x * boost, velVec.y * boost, -180);
+      body.velocity.set(
+        toZoneX * 2.6 + velVec.x * boost * 0.25,
+        toZoneY * 2.6 + velVec.y * boost * 0.25,
+        -220
+      );
       body.angularVelocity.set(
         -(Math.random() * vec.y * 8 + 14 * vec.y),
         Math.random() * vec.x * 8 + 14 * vec.x,

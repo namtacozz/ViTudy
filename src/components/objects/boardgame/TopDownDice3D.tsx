@@ -2,21 +2,25 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Dices } from 'lucide-react';
-import { PhysicsDiceBox } from '@/lib/physicsDiceBox';
+import { DropZoneRect, PhysicsDiceBox } from '@/lib/physicsDiceBox';
 
 interface TopDownDice3DProps {
   diceCount: number;
   lastValues?: number[];
   onRollComplete: (values: number[]) => void;
   size?: number;
+  overlayContainer?: HTMLElement | null;
+  dropZone?: DropZoneRect;
 }
 
 export function TopDownDice3D({
   diceCount,
   lastValues = [],
   onRollComplete,
+  overlayContainer,
+  dropZone,
 }: TopDownDice3DProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const localContainerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<PhysicsDiceBox | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -34,27 +38,39 @@ export function TopDownDice3D({
     }
   }, [lastValues, diceCount, isRolling]);
 
+  // Update dropZone position/size dynamically when the tile or map resizes
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    if (boxRef.current && dropZone) {
+      boxRef.current.setDropZone(dropZone);
+      if (!isRolling) {
+        boxRef.current.showStaticValues(
+          displayValues.length === diceCount ? displayValues : Array.from({ length: diceCount }, () => 1)
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropZone?.centerX, dropZone?.centerY, dropZone?.width, dropZone?.height]);
+
+  useEffect(() => {
+    const targetEl = overlayContainer || localContainerRef.current;
+    if (!targetEl) return;
 
     let box: PhysicsDiceBox | null = null;
     try {
-      box = new PhysicsDiceBox(el);
+      box = new PhysicsDiceBox(targetEl, overlayContainer ? dropZone : undefined);
       boxRef.current = box;
       setWebglReady(true);
       const initial =
         lastValues.length === diceCount ? lastValues : Array.from({ length: diceCount }, () => 1);
       box.showStaticValues(initial);
     } catch {
-      // Fallback gracefully if WebGL is unavailable in headless/test environments
       setWebglReady(false);
     }
 
     const ro = typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver(() => box?.resize())
       : null;
-    ro?.observe(el);
+    ro?.observe(targetEl);
 
     return () => {
       ro?.disconnect();
@@ -62,7 +78,7 @@ export function TopDownDice3D({
       boxRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diceCount]);
+  }, [diceCount, overlayContainer]);
 
   const triggerRoll = (swipeVector?: { x: number; y: number }) => {
     if (isRolling) return;
@@ -117,8 +133,10 @@ export function TopDownDice3D({
       title="Nhấp hoặc vuốt để tung xúc xắc vật lý 3D"
       className="relative w-full h-full flex items-center justify-center cursor-pointer select-none group overflow-hidden rounded-full"
     >
-      {/* WebGL + cannon-es 3D Dice Arena */}
-      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+      {/* Local WebGL fallback container if overlayContainer is not supplied */}
+      {!overlayContainer && (
+        <div ref={localContainerRef} className="absolute inset-0 w-full h-full" />
+      )}
 
       {/* Fallback badge if WebGL unavailable */}
       {!webglReady && (

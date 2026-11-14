@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `a75fb7f`  
+> **Commit Hash:** `0b4661d`  
 > **Cập nhật lần cuối:** `2026-11-14`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -36,7 +36,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `CodeBlockItem` | `component` | [src/components/objects/CodeBlockItem.tsx:L15-L222](file:///F:/AppMaking/ViTudy/src/components/objects/CodeBlockItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `CurrencyAndBankPanel` | `component` | [src/components/objects/boardgame/CurrencyAndBankPanel.tsx:L23-L365](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/CurrencyAndBankPanel.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `DeckAndDeedModal` | `component` | [src/components/objects/boardgame/DeckAndDeedModal.tsx:L20-L338](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/DeckAndDeedModal.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `DiceLayer` | `component` | [src/components/objects/boardgame/DiceLayer.tsx:L15-L61](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/DiceLayer.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `DiceLayer` | `component` | [src/components/objects/boardgame/DiceLayer.tsx:L15-L76](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/DiceLayer.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `ExamQuizCard` | `component` | [src/components/objects/ExamQuizCard.tsx:L750-L750](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `ExamQuizCardComponent` | `component` | [src/components/objects/ExamQuizCard.tsx:L46-L748](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `FourCornerArtboard` | `component` | [src/components/objects/FourCornerArtboard.tsx:L42-L1104](file:///F:/AppMaking/ViTudy/src/components/objects/FourCornerArtboard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
@@ -50,7 +50,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StickyNoteItemComponent` | `component` | [src/components/objects/StickyNoteItem.tsx:L40-L1147](file:///F:/AppMaking/ViTudy/src/components/objects/StickyNoteItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `TileFormEditorModal` | `component` | [src/components/objects/boardgame/TileFormEditorModal.tsx:L22-L358](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TileFormEditorModal.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `TileView` | `component` | [src/components/objects/boardgame/TileView.tsx:L21-L263](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TileView.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `TopDownDice3D` | `component` | [src/components/objects/boardgame/TopDownDice3D.tsx:L14-L137](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TopDownDice3D.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `TopDownDice3D` | `component` | [src/components/objects/boardgame/TopDownDice3D.tsx:L16-L155](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TopDownDice3D.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 
 ### HUD & Overlays
 
@@ -147,6 +147,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `deleteBoardTileSafe` | `fn` | [src/lib/boardGameEngine.ts:L205-L237](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `DiscordAuthResult` | `type` | [src/lib/discord/sdk.ts:L3-L14](file:///F:/AppMaking/ViTudy/src/lib/discord/sdk.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `DocumentOutlineNode` | `type` | [src/lib/nonAiEngine.ts:L45-L51](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `DropZoneRect` | `type` | [src/lib/physicsDiceBox.ts:L89-L94](file:///F:/AppMaking/ViTudy/src/lib/physicsDiceBox.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `endTurn` | `fn` | [src/lib/boardGameEngine.ts:L880-L912](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `ensureValidOpenAiSession` | `fn` | [src/lib/aiClient.ts:L237-L251](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `exchangeOpenAiCode` | `fn` | [src/lib/aiClient.ts:L120-L235](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
