@@ -16,7 +16,9 @@ export default function AuthCallbackPage() {
       const getBasePath = () => {
         if (typeof window === 'undefined') return '';
         if (process.env.NEXT_PUBLIC_BASE_PATH) return process.env.NEXT_PUBLIC_BASE_PATH;
-        return window.location.pathname.startsWith('/ViTudy') ? '/ViTudy' : '';
+        if (window.location.pathname.startsWith('/ViTudy-dev')) return '/ViTudy-dev';
+        if (window.location.pathname.startsWith('/ViTudy')) return '/ViTudy';
+        return '';
       };
 
       const navigateToDesk = () => {

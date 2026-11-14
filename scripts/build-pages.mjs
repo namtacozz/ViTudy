@@ -4,7 +4,10 @@ import path from 'path';
 
 console.log('🚀 Đang build ViTudy cho GitHub Pages (Static Export)...');
 process.env.GITHUB_PAGES = 'true';
-process.env.NEXT_PUBLIC_BASE_PATH = '/ViTudy';
+if (!process.env.NEXT_PUBLIC_BASE_PATH) {
+  process.env.NEXT_PUBLIC_BASE_PATH = '/ViTudy';
+}
+console.log(`📦 Base Path cấu hình: ${process.env.NEXT_PUBLIC_BASE_PATH}`);
 
 const apiDir = path.resolve(process.cwd(), 'src/app/api');
 const tempApiDir = path.resolve(process.cwd(), 'src/app/_api_temp_pages');

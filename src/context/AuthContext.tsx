@@ -214,8 +214,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       let basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-      if (!basePath && typeof window !== 'undefined' && window.location.pathname.startsWith('/ViTudy')) {
-        basePath = '/ViTudy';
+      if (!basePath && typeof window !== 'undefined') {
+        if (window.location.pathname.startsWith('/ViTudy-dev')) {
+          basePath = '/ViTudy-dev';
+        } else if (window.location.pathname.startsWith('/ViTudy')) {
+          basePath = '/ViTudy';
+        }
       }
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const redirectUrl = `${origin}${basePath}/auth/reset`;
@@ -245,8 +249,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       let basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-      if (!basePath && typeof window !== 'undefined' && window.location.pathname.startsWith('/ViTudy')) {
-        basePath = '/ViTudy';
+      if (!basePath && typeof window !== 'undefined') {
+        if (window.location.pathname.startsWith('/ViTudy-dev')) {
+          basePath = '/ViTudy-dev';
+        } else if (window.location.pathname.startsWith('/ViTudy')) {
+          basePath = '/ViTudy';
+        }
       }
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const isPrivateLanIp = /^(http:\/\/)?(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(origin.replace(/^https?:\/\//, ''));
