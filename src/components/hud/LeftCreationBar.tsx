@@ -225,12 +225,15 @@ export function LeftCreationBar() {
   };
 
   const currentPenIcon = (() => {
-    if (activeTool === 'highlighter') return <Highlighter className="w-5 h-5 stroke-[2.4]" />;
-    if (activeTool === 'smart_shape') return <Sparkles className="w-5 h-5 stroke-[2.4]" />;
-    if (activeTool === 'eraser') return <Eraser className="w-5 h-5 stroke-[2.4]" />;
-    if (activeTool === 'area_eraser') return <BoxSelect className="w-5 h-5 stroke-[2.4]" />;
-    return <PenTool className="w-5 h-5 stroke-[2.4]" />;
+    if (activeTool === 'highlighter') return <Highlighter className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]" />;
+    if (activeTool === 'smart_shape') return <Sparkles className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]" />;
+    if (activeTool === 'eraser') return <Eraser className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]" />;
+    if (activeTool === 'area_eraser') return <BoxSelect className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]" />;
+    return <PenTool className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]" />;
   })();
+
+  const toolBtnBase = "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer flex-shrink-0 select-none landscape-compact-btn";
+  const toolIconClass = "w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]";
 
   return (
     <div 
@@ -238,7 +241,7 @@ export function LeftCreationBar() {
       className="relative flex max-sm:portrait:flex-row flex-col items-center gap-1.5 pointer-events-auto select-none"
     >
       {/* Tool Island: Horizontal bottom dock on mobile portrait, vertical on landscape and desktop */}
-      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 relative max-sm:landscape:max-h-[calc(100dvh-75px)] sm:max-h-[calc(100dvh-120px)] max-sm:portrait:max-w-[calc(100vw-16px)] overflow-y-auto max-sm:portrait:overflow-x-auto no-scrollbar landscape-fixed-toolbar">
+      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 sm:gap-1.5 relative max-sm:landscape:max-h-[calc(100dvh-75px)] sm:max-h-[calc(100dvh-120px)] max-sm:portrait:max-w-[calc(100vw-16px)] overflow-y-auto max-sm:portrait:overflow-x-auto no-scrollbar landscape-fixed-toolbar">
         {/* Select (Cursor) Tool */}
         <button
           title="Con trỏ điều hướng (Kéo di chuyển bàn / Chọn vật thể)"
@@ -248,13 +251,13 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             activeTool === 'cursor'
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
-              : 'text-slate-900 hover:text-black hover:bg-slate-100'
+              : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <MousePointer className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />
+          <MousePointer className={`${toolIconClass} text-slate-900`} />
         </button>
 
         {/* Sticky Note Button (+ Note with vertical color flyout) */}
@@ -265,13 +268,13 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             activeTool === 'create_note' || isNoteFlyoutOpen
               ? 'bg-slate-200 text-slate-900 border border-slate-300 shadow-xs'
-              : 'text-slate-900 hover:text-black hover:bg-slate-100'
+              : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <StickyNote className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />
+          <StickyNote className={`${toolIconClass} text-slate-900`} />
         </button>
 
         {/* Unified Pen Button with Miro-style Full Overlay Flyout */}
@@ -286,10 +289,10 @@ export function LeftCreationBar() {
               setActiveTool('pen');
             }
           }}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             isDrawingActive || isPenFlyoutOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
-              : 'text-slate-900 hover:text-black hover:bg-slate-100'
+              : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
         >
           {currentPenIcon}
@@ -304,13 +307,13 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`${toolBtnBase} ${
             activeTool === 'game_pen'
-              ? 'bg-[#E0562D] text-white shadow-sm font-bold'
-              : 'text-slate-900 hover:text-[#E0562D] hover:bg-orange-50'
+              ? 'bg-[#E0562D] text-white shadow-xs font-bold'
+              : 'text-slate-800 hover:text-[#E0562D] hover:bg-orange-50'
           }`}
         >
-          <Gamepad2 className="w-5 h-5 stroke-[2.2]" />
+          <Gamepad2 className={toolIconClass} />
         </button>
 
         {/* Bảng Vẽ 4 Góc */}
@@ -328,15 +331,15 @@ export function LeftCreationBar() {
             });
             setActiveTool('create_note');
           }}
-          className="w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer text-slate-900 hover:text-[#E0562D] hover:bg-orange-50"
+          className={`${toolBtnBase} text-slate-800 hover:text-[#E0562D] hover:bg-orange-50`}
         >
-          <Palette className="w-5 h-5 stroke-[2.2]" />
+          <Palette className={toolIconClass} />
         </button>
 
-        {/* Gạch chia vùng NẰM TRÊN nút + */}
-        <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
+        {/* Divider 1: Phân tách nhóm công cụ sáng tạo với nhóm mở rộng */}
+        <div className="w-5 sm:w-6 h-[1px] bg-slate-200 my-0.5 max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 flex-shrink-0" />
 
-        {/* Nút + Công cụ mở rộng (More tools) - nằm dưới pen và trên lock */}
+        {/* Nút + Công cụ mở rộng (More tools) */}
         <button
           title="Công cụ mở rộng (Shapes, Stickers, Code, Table, Mind map...)"
           onClick={() => {
@@ -344,46 +347,43 @@ export function LeftCreationBar() {
             setIsNoteFlyoutOpen(false);
             setIsPenFlyoutOpen(false);
           }}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             isMoreToolsOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
-              : 'text-slate-900 hover:text-black hover:bg-slate-100'
+              : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />
+          <Plus className={`${toolIconClass} text-slate-900`} />
         </button>
-
-        {/* Gạch chia vùng NẰM DƯỚI nút + */}
-        <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
 
         {/* Lock Pan View Toggle */}
         <button
           title={isPanLocked ? 'Mở khóa di chuyển bàn' : 'Khóa góc nhìn bàn học'}
           onClick={togglePanLock}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             isPanLocked
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
-              : 'text-slate-900 hover:text-black hover:bg-slate-100'
+              : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
         >
-          {isPanLocked ? <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" /> : <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />}
+          {isPanLocked ? <Lock className={`${toolIconClass} text-slate-900`} /> : <Unlock className={`${toolIconClass} text-slate-900`} />}
         </button>
 
-        {/* Gạch chia vùng trước Undo/Redo/Trash */}
-        <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
+        {/* Divider 2: Phân tách với nhóm thao tác hoàn tác nét vẽ */}
+        <div className="w-5 sm:w-6 h-[1px] bg-slate-200 my-0.5 max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 flex-shrink-0" />
 
         {/* Hoàn tác nét vẽ (Undo • Ctrl+Z) */}
         <button
           title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
           onClick={undoStroke}
           disabled={strokes.length === 0}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             strokes.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Undo2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
+          <Undo2 className={toolIconClass} />
         </button>
 
         {/* Làm lại nét vẽ (Redo • Ctrl+Y) */}
@@ -391,13 +391,13 @@ export function LeftCreationBar() {
           title="Làm lại nét vẽ (Redo • Ctrl+Y)"
           onClick={redoStroke}
           disabled={redoStack.length === 0}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+          className={`${toolBtnBase} ${
             redoStack.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Redo2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
+          <Redo2 className={toolIconClass} />
         </button>
 
         {/* Xóa toàn bộ nét vẽ (Trash) */}
@@ -405,9 +405,9 @@ export function LeftCreationBar() {
           <button
             title="Xóa toàn bộ nét vẽ"
             onClick={clearStrokes}
-            className="w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95 landscape-compact-btn"
+            className={`${toolBtnBase} text-slate-500 hover:text-rose-600 hover:bg-rose-50 active:scale-95`}
           >
-            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
+            <Trash2 className={toolIconClass} />
           </button>
         )}
 

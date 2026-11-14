@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-11-15 02:08 — uncommitted (Chuẩn hóa kích thước & khoảng cách toàn bộ nút trên thanh công cụ sáng tạo bằng nhau 100%)
+- Task: Đồng bộ kích thước khung, kích thước icon và khoảng cách toàn bộ các nút trên thanh công cụ sáng tạo `LeftCreationBar` bằng nhau chằn chặn, loại bỏ các divider thừa gây giãn cách lệch lạc theo ảnh phản hồi của Sếp.
+- Changed:
+  - `src/components/hud/LeftCreationBar.tsx`: Chuẩn hóa 100% các nút (Cursor, Note, Pen, GamePad, Artboard, Plus, Lock, Undo, Redo, Trash) dùng chung hằng số kích thước `toolBtnBase` (`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 landscape-compact-btn`); chuẩn hóa kích thước icon bên trong `toolIconClass` (`w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.3]`); triệt tiêu việc GamePad và Artboard dùng class riêng `w-11 h-11`; tinh giản chỉ giữ 2 đường kẻ phân cách `divider` theo 3 nhóm chức năng (Công cụ vẽ $\rightarrow$ Điều khiển $\rightarrow$ Hoàn tác) và bỏ divider kẹp dưới nút Plus, bảo đảm khoảng cách `gap-1 sm:gap-1.5` đồng đều 100%.
+  - `AGENTS.md`: Cập nhật quy chuẩn thiết kế "Chuẩn hóa Kích Thước & Khoảng Cách Bằng Nhau".
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test --run` (35/35 suites, 157/157 tests pass 100%), `pnpm run docs:index && pnpm run docs:check` (437 symbols).
+
+
 ## 2026-11-15 01:05 — uncommitted (Khắc phục triệt để lỗi button Undo/Delete đè lên Panel nút vẽ & Tạo ghi chú, hoàn trả Thú cưng về như cũ)
 - Task: Khắc phục triệt để lỗi nút Undo/Redo/Delete đè lên chính giữa thanh panel công cụ (che khuất nút Bút vẽ và Tạo ghi chú), hoàn trả 100% Thú cưng `FloatingPet` về nguyên bản như cũ theo yêu cầu của Sếp, và hoàn thiện phân tầng các panel trên mobile portrait.
 - Changed:
