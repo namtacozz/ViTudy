@@ -839,6 +839,15 @@ export const BoardGameArena = React.memo(function BoardGameArena({
         onTriggerDrawDeck={handleTriggerDrawDeck}
         onOpenBank={() => setIsBankOpen(true)}
         onRollComplete={handleRollComplete}
+        onUpdateDiceConfig={(tileId, nextDiceConfig) => {
+          commitAndSyncHost({
+            ...pkg,
+            tiles: pkg.tiles.map((t) =>
+              t.id === tileId ? { ...t, diceConfig: nextDiceConfig } : t
+            ),
+          });
+          showToast('Đã cập nhật bộ xúc xắc!');
+        }}
         onStartDragPawn={handleStartDragPawn}
       />
 

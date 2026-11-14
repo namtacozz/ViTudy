@@ -111,6 +111,10 @@ export interface BoardTile {
   deckId?: string;
   diceConfig?: {
     diceCount: number;
+    diceSides?: number;
+    perDieSides?: number[];
+    diceColor?: string;
+    labelColor?: string;
     lastRollValues?: number[];
     rollTimestamp?: number;
   };

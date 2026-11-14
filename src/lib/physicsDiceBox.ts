@@ -10,9 +10,8 @@ import { getAssetPath } from '@/lib/assets';
 const FRAME_RATE = 1 / 60;
 
 // Three.js BoxGeometry material index order: +X, -X, +Y, -Y, +Z, -Z
-// Standard die opposite faces sum to 7: (3,4), (2,5), (1,6)
-const FACE_VALUES = [3, 4, 2, 5, 1, 6] as const;
-const LOCAL_NORMALS = [
+const D6_FACE_VALUES = [3, 4, 2, 5, 1, 6] as const;
+const D6_LOCAL_NORMALS = [
   new THREE.Vector3(1, 0, 0),
   new THREE.Vector3(-1, 0, 0),
   new THREE.Vector3(0, 1, 0),
@@ -55,24 +54,42 @@ const PIP_LAYOUTS: Record<number, [number, number][]> = {
   ],
 };
 
-function createD6FaceTexture(value: number): THREE.CanvasTexture {
+export interface DropZoneRect {
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+}
+
+export interface DieSpec {
+  sides: number;
+  diceColor?: string;
+  labelColor?: string;
+}
+
+function createD6FaceTexture(
+  value: number,
+  diceColor = '#ffffff',
+  labelColor = '#0f172a'
+): THREE.CanvasTexture {
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
 
-  // Ivory-white die face with subtle bevel border
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = diceColor;
   ctx.fillRect(0, 0, size, size);
 
-  ctx.strokeStyle = '#cbd5e1';
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
   ctx.lineWidth = 10;
   ctx.strokeRect(5, 5, size - 10, size - 10);
 
   const pips = PIP_LAYOUTS[value] || PIP_LAYOUTS[1];
   const radius = value === 1 ? 28 : 21;
-  ctx.fillStyle = value === 1 ? '#E0562D' : '#0f172a';
+  // Use Cam ViT accent on pip 1 when die body is light white
+  const isDefaultWhite = diceColor.toLowerCase() === '#ffffff' || diceColor.toLowerCase() === '#fff';
+  ctx.fillStyle = value === 1 && isDefaultWhite ? '#E0562D' : labelColor;
 
   for (const [nx, ny] of pips) {
     ctx.beginPath();
@@ -86,16 +103,43 @@ function createD6FaceTexture(value: number): THREE.CanvasTexture {
   return texture;
 }
 
-export interface DropZoneRect {
-  centerX: number;
-  centerY: number;
-  width: number;
-  height: number;
+function createNumberFaceTexture(
+  text: string,
+  diceColor = '#ffffff',
+  labelColor = '#0f172a'
+): THREE.CanvasTexture {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  ctx.fillStyle = diceColor;
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.16)';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5, 5, size - 10, size - 10);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = `900 ${text.length >= 3 ? 82 : 108}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, size / 2, size / 2 + 4);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
 }
 
 interface DieInstance {
   mesh: THREE.Mesh;
   body: CANNON.Body;
+  sides: number;
+  faceNormals: THREE.Vector3[];
+  faceValues: number[];
+  disposables: Array<{ dispose: () => void }>;
   stoppedAtIteration?: number;
   settled: boolean;
 }
@@ -113,10 +157,6 @@ export class PhysicsDiceBox {
   private barrierBodies: CANNON.Body[] = [];
 
   private dice: DieInstance[] = [];
-  private sharedMaterials: THREE.MeshStandardMaterial[] = [];
-  private sharedTextures: THREE.CanvasTexture[] = [];
-  private sharedGeometry: THREE.BoxGeometry | null = null;
-
   private cw = 100;
   private ch = 100;
   private scale = 25;
@@ -146,7 +186,7 @@ export class PhysicsDiceBox {
     this.renderer.domElement.style.pointerEvents = 'none';
     this.container.appendChild(this.renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.45);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     this.scene.add(ambientLight);
 
     this.diceBodyMaterial = new CANNON.Material('dice');
@@ -172,20 +212,9 @@ export class PhysicsDiceBox {
       })
     );
 
-    // Floor rigid body at z = 0
     const floorBody = new CANNON.Body({ mass: 0, material: deskMaterial });
     floorBody.addShape(new CANNON.Plane());
     this.world.addBody(floorBody);
-
-    this.sharedMaterials = FACE_VALUES.map((val) => {
-      const tex = createD6FaceTexture(val);
-      this.sharedTextures.push(tex);
-      return new THREE.MeshStandardMaterial({
-        map: tex,
-        roughness: 0.35,
-        metalness: 0.05,
-      });
-    });
 
     this.resize();
   }
@@ -213,7 +242,9 @@ export class PhysicsDiceBox {
     const height = Math.max(80, this.container.clientHeight || 140);
     this.cw = width / 2;
     this.ch = height / 2;
-    const zoneDim = this.dropZone ? Math.min(this.dropZone.width, this.dropZone.height) : Math.min(width, height);
+    const zoneDim = this.dropZone
+      ? Math.min(this.dropZone.width, this.dropZone.height)
+      : Math.min(width, height);
     this.scale = Math.max(18, Math.min(44, zoneDim * 0.21));
 
     this.renderer.setSize(width, height, false);
@@ -249,7 +280,6 @@ export class PhysicsDiceBox {
     this.floorMesh.receiveShadow = true;
     this.scene.add(this.floorMesh);
 
-    // Rebuild 4 arena wall barriers around the dropZone (so dice land inside it!)
     for (const b of this.barrierBodies) {
       this.world.removeBody(b);
     }
@@ -273,80 +303,27 @@ export class PhysicsDiceBox {
     this.renderer.render(this.scene, this.camera);
   }
 
-  public showStaticValues(values: number[]) {
-    if (this.disposed || this.rolling) return;
-    this.clearDice();
-    const count = Math.max(1, values.length);
-    const halfSize = this.scale * 0.55;
-    const boxSize = halfSize * 2;
-    if (!this.sharedGeometry) {
-      this.sharedGeometry = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
-    }
-
-    const spacing = boxSize * 1.35;
-    const zone = this.getZoneWorldCenter();
-    const startX = zone.x - ((count - 1) * spacing) / 2;
-
-    values.forEach((val, idx) => {
-      const mesh = new THREE.Mesh(this.sharedGeometry!, this.sharedMaterials);
-      mesh.castShadow = true;
-      const body = new CANNON.Body({ mass: 300, material: this.diceBodyMaterial });
-      body.addShape(new CANNON.Box(new CANNON.Vec3(halfSize, halfSize, halfSize)));
-      body.position.set(startX + idx * spacing, zone.y, halfSize);
-
-      // Orient top (+Z) to match `val`
-      const q = quaternionForTopValue(val);
-      body.quaternion.copy(q);
-      mesh.position.set(body.position.x, body.position.y, body.position.z);
-      mesh.quaternion.set(q.x, q.y, q.z, q.w);
-
-      this.scene.add(mesh);
-      this.world.addBody(body);
-      this.dice.push({ mesh, body, settled: true });
-    });
-
-    this.renderer.render(this.scene, this.camera);
-  }
-
-  public startThrow(
-    diceCount: number,
-    onComplete: (values: number[]) => void,
-    swipeVector?: { x: number; y: number }
-  ) {
-    if (this.disposed || this.rolling) return;
-    this.rolling = true;
-    this.clearDice();
-    this.playRollSound(diceCount);
-
-    const zone = this.getZoneWorldCenter();
-    const rawVec = swipeVector && (Math.abs(swipeVector.x) > 4 || Math.abs(swipeVector.y) > 4)
-      ? { x: swipeVector.x, y: -swipeVector.y }
-      : { x: (Math.random() * 2 - 1) * this.cw, y: -(Math.random() * 2 - 1) * this.ch };
-
-    const dist = Math.max(1, Math.hypot(rawVec.x, rawVec.y));
-    const norm = { x: rawVec.x / dist, y: rawVec.y / dist };
-    const boost = (Math.random() + 2.4) * Math.max(this.cw, this.ch) * 0.9;
+  private buildDie(spec: DieSpec): DieInstance {
+    const sides = Math.max(2, Math.min(100, Math.round(spec.sides || 6)));
+    const diceColor = spec.diceColor || '#ffffff';
+    const labelColor = spec.labelColor || '#0f172a';
+    const disposables: Array<{ dispose: () => void }> = [];
 
     const halfSize = this.scale * 0.55;
-    const boxSize = halfSize * 2;
-    this.sharedGeometry?.dispose();
-    this.sharedGeometry = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
+    const radius = halfSize * 1.15;
 
-    for (let i = 0; i < diceCount; i++) {
-      const vec = makeRandomVector(norm);
-      // Spawn high above and spread across the whole map, flying toward the dropZone
-      const spreadX = Math.min(this.cw * 0.72, zone.halfW * 2.8);
-      const spreadY = Math.min(this.ch * 0.72, zone.halfH * 2.8);
-      const posX = zone.x + (vec.x > 0 ? -1 : 1) * spreadX + (i - (diceCount - 1) / 2) * (boxSize * 0.7);
-      const posY = zone.y + (vec.y > 0 ? -1 : 1) * spreadY;
-      const posZ = Math.random() * 140 + 260;
-
-      const velVec = makeRandomVector(norm);
-      const toZoneX = zone.x - posX;
-      const toZoneY = zone.y - posY;
-      const mesh = new THREE.Mesh(this.sharedGeometry, this.sharedMaterials);
+    if (sides === 6) {
+      const boxSize = halfSize * 2;
+      const geom = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
+      disposables.push(geom);
+      const mats = D6_FACE_VALUES.map((val) => {
+        const tex = createD6FaceTexture(val, diceColor, labelColor);
+        const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0.05 });
+        disposables.push(tex, mat);
+        return mat;
+      });
+      const mesh = new THREE.Mesh(geom, mats);
       mesh.castShadow = true;
-
       const body = new CANNON.Body({
         mass: 300,
         material: this.diceBodyMaterial,
@@ -354,25 +331,210 @@ export class PhysicsDiceBox {
         angularDamping: 0.14,
       });
       body.addShape(new CANNON.Box(new CANNON.Vec3(halfSize, halfSize, halfSize)));
-      body.position.set(posX, posY, posZ);
-      body.velocity.set(
+      return {
+        mesh,
+        body,
+        sides: 6,
+        faceNormals: D6_LOCAL_NORMALS.map((n) => n.clone()),
+        faceValues: [...D6_FACE_VALUES],
+        disposables,
+        settled: false,
+      };
+    }
+
+    // Polyhedral / custom N-sided die
+    let geom: THREE.BufferGeometry;
+    if (sides === 2) {
+      geom = new THREE.CylinderGeometry(radius, radius, radius * 0.35, 24);
+    } else if (sides === 4) {
+      geom = new THREE.TetrahedronGeometry(radius * 1.25, 0);
+    } else if (sides === 8) {
+      geom = new THREE.OctahedronGeometry(radius * 1.1, 0);
+    } else if (sides === 12) {
+      geom = new THREE.DodecahedronGeometry(radius * 1.05, 0);
+    } else {
+      // d10, d20, d100, or custom N-sided: crisp icosahedron polyhedron
+      geom = new THREE.IcosahedronGeometry(radius * 1.05, 0);
+    }
+    disposables.push(geom);
+
+    // Group triangles by unique face normal so each geometric face gets a numbered material
+    const posAttr = geom.getAttribute('position');
+    const faceNormals: THREE.Vector3[] = [];
+    const faceValues: number[] = [];
+    const triCount = Math.floor(posAttr.count / 3);
+
+    geom.clearGroups();
+    const normalToGroup = new Map<string, number>();
+    let groupIdx = 0;
+
+    for (let t = 0; t < triCount; t++) {
+      const i0 = t * 3;
+      const v0 = new THREE.Vector3().fromBufferAttribute(posAttr, i0);
+      const v1 = new THREE.Vector3().fromBufferAttribute(posAttr, i0 + 1);
+      const v2 = new THREE.Vector3().fromBufferAttribute(posAttr, i0 + 2);
+      const n = new THREE.Vector3().subVectors(v1, v0).cross(new THREE.Vector3().subVectors(v2, v0)).normalize();
+      const key = `${Math.round(n.x * 50)}_${Math.round(n.y * 50)}_${Math.round(n.z * 50)}`;
+
+      let g = normalToGroup.get(key);
+      if (g === undefined) {
+        g = groupIdx++;
+        normalToGroup.set(key, g);
+        faceNormals.push(n);
+        faceValues.push(((g % sides) + 1));
+      }
+      geom.addGroup(i0, 3, g);
+    }
+
+    // Generate UV coordinates per triangle so face numbers appear centered on each face
+    const uvs = new Float32Array(posAttr.count * 2);
+    for (let t = 0; t < triCount; t++) {
+      const base = t * 6;
+      uvs[base] = 0.5;
+      uvs[base + 1] = 0.88;
+      uvs[base + 2] = 0.14;
+      uvs[base + 3] = 0.2;
+      uvs[base + 4] = 0.86;
+      uvs[base + 5] = 0.2;
+    }
+    geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+    const mats = faceValues.map((val) => {
+      const tex = createNumberFaceTexture(String(val), diceColor, labelColor);
+      const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0.08 });
+      disposables.push(tex, mat);
+      return mat;
+    });
+
+    const mesh = new THREE.Mesh(geom, mats);
+    mesh.castShadow = true;
+
+    const body = new CANNON.Body({
+      mass: 320,
+      material: this.diceBodyMaterial,
+      linearDamping: 0.15,
+      angularDamping: 0.15,
+    });
+    if (sides === 2) {
+      body.addShape(new CANNON.Cylinder(radius, radius, radius * 0.35, 16));
+    } else {
+      body.addShape(new CANNON.Box(new CANNON.Vec3(halfSize, halfSize, halfSize)));
+    }
+
+    return {
+      mesh,
+      body,
+      sides,
+      faceNormals,
+      faceValues,
+      disposables,
+      settled: false,
+    };
+  }
+
+  public showStaticValues(values: number[], specs?: DieSpec[]) {
+    if (this.disposed || this.rolling) return;
+    this.clearDice();
+    const count = Math.max(1, specs ? specs.length : values.length);
+    const halfSize = this.scale * 0.55;
+    const spacing = halfSize * 2.7;
+    const zone = this.getZoneWorldCenter();
+    const startX = zone.x - ((count - 1) * spacing) / 2;
+
+    for (let idx = 0; idx < count; idx++) {
+      const spec = specs?.[idx] || { sides: 6 };
+      const val = values[idx] ?? 1;
+      const inst = this.buildDie(spec);
+      inst.body.position.set(startX + idx * spacing, zone.y, halfSize);
+
+      if (inst.sides === 6) {
+        const q = quaternionForD6TopValue(val);
+        inst.body.quaternion.copy(q);
+      } else {
+        // Orient the closest matching face normal toward +Z
+        const faceIdx = Math.max(0, inst.faceValues.indexOf(val));
+        const normal = inst.faceNormals[faceIdx] || new THREE.Vector3(0, 0, 1);
+        const qThree = new THREE.Quaternion().setFromUnitVectors(normal, new THREE.Vector3(0, 0, 1));
+        inst.body.quaternion.set(qThree.x, qThree.y, qThree.z, qThree.w);
+      }
+
+      inst.mesh.position.set(inst.body.position.x, inst.body.position.y, inst.body.position.z);
+      inst.mesh.quaternion.set(
+        inst.body.quaternion.x,
+        inst.body.quaternion.y,
+        inst.body.quaternion.z,
+        inst.body.quaternion.w
+      );
+      inst.settled = true;
+
+      this.scene.add(inst.mesh);
+      this.world.addBody(inst.body);
+      this.dice.push(inst);
+    }
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  public startThrow(
+    specsOrCount: number | DieSpec[],
+    onComplete: (values: number[]) => void,
+    swipeVector?: { x: number; y: number }
+  ) {
+    if (this.disposed || this.rolling) return;
+    this.rolling = true;
+    this.clearDice();
+
+    const specs: DieSpec[] = Array.isArray(specsOrCount)
+      ? specsOrCount
+      : Array.from({ length: specsOrCount }, () => ({ sides: 6 }));
+
+    this.playRollSound(specs.length);
+
+    const zone = this.getZoneWorldCenter();
+    const rawVec =
+      swipeVector && (Math.abs(swipeVector.x) > 4 || Math.abs(swipeVector.y) > 4)
+        ? { x: swipeVector.x, y: -swipeVector.y }
+        : { x: (Math.random() * 2 - 1) * this.cw, y: -(Math.random() * 2 - 1) * this.ch };
+
+    const dist = Math.max(1, Math.hypot(rawVec.x, rawVec.y));
+    const norm = { x: rawVec.x / dist, y: rawVec.y / dist };
+    const boost = (Math.random() + 2.4) * Math.max(this.cw, this.ch) * 0.9;
+    const halfSize = this.scale * 0.55;
+
+    for (let i = 0; i < specs.length; i++) {
+      const spec = specs[i];
+      const vec = makeRandomVector(norm);
+      const spreadX = Math.min(this.cw * 0.72, zone.halfW * 2.8);
+      const spreadY = Math.min(this.ch * 0.72, zone.halfH * 2.8);
+      const posX =
+        zone.x + (vec.x > 0 ? -1 : 1) * spreadX + (i - (specs.length - 1) / 2) * (halfSize * 1.4);
+      const posY = zone.y + (vec.y > 0 ? -1 : 1) * spreadY;
+      const posZ = Math.random() * 140 + 260;
+
+      const velVec = makeRandomVector(norm);
+      const toZoneX = zone.x - posX;
+      const toZoneY = zone.y - posY;
+
+      const inst = this.buildDie(spec);
+      inst.body.position.set(posX, posY, posZ);
+      inst.body.velocity.set(
         toZoneX * 2.6 + velVec.x * boost * 0.25,
         toZoneY * 2.6 + velVec.y * boost * 0.25,
         -220
       );
-      body.angularVelocity.set(
+      inst.body.angularVelocity.set(
         -(Math.random() * vec.y * 8 + 14 * vec.y),
         Math.random() * vec.x * 8 + 14 * vec.x,
         (Math.random() - 0.5) * 10
       );
-      body.quaternion.setFromAxisAngle(
+      inst.body.quaternion.setFromAxisAngle(
         new CANNON.Vec3(Math.random() || 1, Math.random(), Math.random()).unit(),
         Math.random() * Math.PI * 2
       );
 
-      this.scene.add(mesh);
-      this.world.addBody(body);
-      this.dice.push({ mesh, body, settled: false });
+      this.scene.add(inst.mesh);
+      this.world.addBody(inst.body);
+      this.dice.push(inst);
     }
 
     this.iteration = 0;
@@ -410,7 +572,13 @@ export class PhysicsDiceBox {
       if (this.checkThrowFinished()) {
         this.rolling = false;
         this.rafId = null;
-        const results = this.dice.map((d) => getDieTopValue(d.body));
+        const results = this.dice.map((d) => {
+          // For sides > geometric face count (e.g. d100 on 20-face polyhedron), sample uniformly 1..sides
+          if (d.sides > d.faceNormals.length) {
+            return Math.floor(Math.random() * d.sides) + 1;
+          }
+          return getDieTopValue(d.body, d.faceNormals, d.faceValues);
+        });
         onComplete(results);
         return;
       }
@@ -422,7 +590,7 @@ export class PhysicsDiceBox {
   }
 
   private checkThrowFinished(): boolean {
-    if (this.iteration > 240) return true; // Safety cap (~4s)
+    if (this.iteration > 240) return true;
     const threshold = 7;
     let allSettled = true;
     for (const d of this.dice) {
@@ -465,6 +633,7 @@ export class PhysicsDiceBox {
     for (const d of this.dice) {
       this.scene.remove(d.mesh);
       this.world.removeBody(d.body);
+      for (const item of d.disposables) item.dispose();
     }
     this.dice = [];
   }
@@ -473,10 +642,7 @@ export class PhysicsDiceBox {
     this.disposed = true;
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.clearDice();
-    this.sharedGeometry?.dispose();
     this.floorMesh?.geometry.dispose();
-    for (const m of this.sharedMaterials) m.dispose();
-    for (const t of this.sharedTextures) t.dispose();
     this.renderer.dispose();
     if (this.renderer.domElement.parentNode === this.container) {
       this.container.removeChild(this.renderer.domElement);
@@ -492,7 +658,11 @@ function makeRandomVector(vector: { x: number; y: number }): { x: number; y: num
   };
 }
 
-function getDieTopValue(body: CANNON.Body): number {
+function getDieTopValue(
+  body: CANNON.Body,
+  faceNormals: THREE.Vector3[],
+  faceValues: number[]
+): number {
   const q = new THREE.Quaternion(
     body.quaternion.x,
     body.quaternion.y,
@@ -502,35 +672,35 @@ function getDieTopValue(body: CANNON.Body): number {
   let bestDot = -Infinity;
   let bestValue = 1;
   const rotated = new THREE.Vector3();
-  for (let i = 0; i < LOCAL_NORMALS.length; i++) {
-    rotated.copy(LOCAL_NORMALS[i]).applyQuaternion(q);
+  for (let i = 0; i < faceNormals.length; i++) {
+    rotated.copy(faceNormals[i]).applyQuaternion(q);
     if (rotated.z > bestDot) {
       bestDot = rotated.z;
-      bestValue = FACE_VALUES[i];
+      bestValue = faceValues[i] ?? 1;
     }
   }
   return bestValue;
 }
 
-function quaternionForTopValue(value: number): CANNON.Quaternion {
+function quaternionForD6TopValue(value: number): CANNON.Quaternion {
   const q = new CANNON.Quaternion();
   switch (value) {
-    case 1: // +Z already up
+    case 1:
       q.set(0, 0, 0, 1);
       break;
-    case 6: // -Z up -> rotate X 180
+    case 6:
       q.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI);
       break;
-    case 3: // +X up -> rotate Y -90
+    case 3:
       q.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
       break;
-    case 4: // -X up -> rotate Y +90
+    case 4:
       q.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
       break;
-    case 2: // +Y up -> rotate X +90
+    case 2:
       q.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
       break;
-    case 5: // -Y up -> rotate X -90
+    case 5:
       q.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
       break;
     default:

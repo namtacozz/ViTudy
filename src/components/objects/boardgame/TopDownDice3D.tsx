@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Dices } from 'lucide-react';
-import { DropZoneRect, PhysicsDiceBox } from '@/lib/physicsDiceBox';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DieSpec, DropZoneRect, PhysicsDiceBox } from '@/lib/physicsDiceBox';
 
 interface TopDownDice3DProps {
   diceCount: number;
+  diceSides?: number;
+  perDieSides?: number[];
+  diceColor?: string;
+  labelColor?: string;
   lastValues?: number[];
   onRollComplete: (values: number[]) => void;
   size?: number;
@@ -15,6 +18,10 @@ interface TopDownDice3DProps {
 
 export function TopDownDice3D({
   diceCount,
+  diceSides = 6,
+  perDieSides,
+  diceColor = '#ffffff',
+  labelColor = '#0f172a',
   lastValues = [],
   onRollComplete,
   overlayContainer,
@@ -30,13 +37,28 @@ export function TopDownDice3D({
     lastValues.length === diceCount ? lastValues : Array.from({ length: diceCount }, () => 1)
   );
 
-  // Sync external lastValues updates (e.g. from STATE_SYNC in multiplayer)
+  const specs: DieSpec[] = useMemo(
+    () =>
+      Array.from({ length: diceCount }, (_, idx) => ({
+        sides: perDieSides?.[idx] ?? diceSides ?? 6,
+        diceColor,
+        labelColor,
+      })),
+    [diceCount, diceSides, perDieSides, diceColor, labelColor]
+  );
+
+  // Sync external lastValues or style/sides changes
   useEffect(() => {
-    if (lastValues.length === diceCount && !isRolling) {
-      setDisplayValues(lastValues);
-      boxRef.current?.showStaticValues(lastValues);
+    const vals =
+      lastValues.length === diceCount
+        ? lastValues
+        : Array.from({ length: diceCount }, (_, i) => displayValues[i] ?? 1);
+    if (!isRolling) {
+      setDisplayValues(vals);
+      boxRef.current?.showStaticValues(vals, specs);
     }
-  }, [lastValues, diceCount, isRolling]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastValues, specs, isRolling]);
 
   // Update dropZone position/size dynamically when the tile or map resizes
   useEffect(() => {
@@ -44,7 +66,8 @@ export function TopDownDice3D({
       boxRef.current.setDropZone(dropZone);
       if (!isRolling) {
         boxRef.current.showStaticValues(
-          displayValues.length === diceCount ? displayValues : Array.from({ length: diceCount }, () => 1)
+          displayValues.length === diceCount ? displayValues : Array.from({ length: diceCount }, () => 1),
+          specs
         );
       }
     }
@@ -62,7 +85,7 @@ export function TopDownDice3D({
       setWebglReady(true);
       const initial =
         lastValues.length === diceCount ? lastValues : Array.from({ length: diceCount }, () => 1);
-      box.showStaticValues(initial);
+      box.showStaticValues(initial, specs);
     } catch {
       setWebglReady(false);
     }
@@ -86,7 +109,7 @@ export function TopDownDice3D({
 
     if (boxRef.current && webglReady) {
       boxRef.current.startThrow(
-        diceCount,
+        specs,
         (finalVals) => {
           setDisplayValues(finalVals);
           setIsRolling(false);
@@ -99,7 +122,7 @@ export function TopDownDice3D({
 
     // Fallback when WebGL is unavailable
     setTimeout(() => {
-      const finalVals = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
+      const finalVals = specs.map((s) => Math.floor(Math.random() * Math.max(2, s.sides)) + 1);
       setDisplayValues(finalVals);
       setIsRolling(false);
       onRollComplete(finalVals);
@@ -124,8 +147,6 @@ export function TopDownDice3D({
     triggerRoll(Math.hypot(dx, dy) > 8 ? { x: dx, y: dy } : undefined);
   };
 
-  const total = displayValues.reduce((a, b) => a + b, 0);
-
   return (
     <div
       onPointerDown={handlePointerDown}
@@ -140,16 +161,13 @@ export function TopDownDice3D({
 
       {/* Fallback badge if WebGL unavailable */}
       {!webglReady && (
-        <div className="relative z-10 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white border border-slate-300 shadow text-xs font-black text-slate-900">
-          {displayValues.join(' + ')}
+        <div
+          style={{ backgroundColor: diceColor, color: labelColor }}
+          className="relative z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-300 shadow text-xs font-black"
+        >
+          {displayValues.join(' · ')}
         </div>
       )}
-
-      {/* Total pill */}
-      <div className="relative z-10 mt-auto mb-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900/90 text-white text-[10px] font-bold shadow pointer-events-none">
-        <Dices className="w-3 h-3 text-[#E0562D]" />
-        <span>{isRolling ? 'Đang lăn...' : `Tổng: ${total} điểm`}</span>
-      </div>
     </div>
   );
 }

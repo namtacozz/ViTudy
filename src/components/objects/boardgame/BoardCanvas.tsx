@@ -24,6 +24,7 @@ interface BoardCanvasProps {
   onTriggerDrawDeck: (tile: BoardTile) => void;
   onOpenBank: () => void;
   onRollComplete: (tileId: string, values: number[], total: number) => void;
+  onUpdateDiceConfig?: (tileId: string, config: NonNullable<BoardTile['diceConfig']>) => void;
   onStartDragPawn: (e: React.PointerEvent, pawn: GamePawn) => void;
 }
 
@@ -43,6 +44,7 @@ export const BoardCanvas = React.memo(function BoardCanvas({
   onTriggerDrawDeck,
   onOpenBank,
   onRollComplete,
+  onUpdateDiceConfig,
   onStartDragPawn,
 }: BoardCanvasProps) {
   const deckById = useMemo(() => {
@@ -143,6 +145,7 @@ export const BoardCanvas = React.memo(function BoardCanvas({
         isEditMode={isEditMode}
         onRollComplete={onRollComplete}
         onDeleteTile={onDeleteTile}
+        onUpdateDiceConfig={onUpdateDiceConfig}
       />
 
       <PawnLayer

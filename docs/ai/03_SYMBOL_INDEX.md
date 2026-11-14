@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `0b4661d`  
+> **Commit Hash:** `ec4fc2a`  
 > **Cập nhật lần cuối:** `2026-11-14`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -28,15 +28,15 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
 | `ActionPanel` | `component` | [src/components/objects/boardgame/ActionPanel.tsx:L26-L197](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/ActionPanel.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `BoardCanvas` | `component` | [src/components/objects/boardgame/BoardCanvas.tsx:L30-L157](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/BoardCanvas.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `BoardGameArena` | `component` | [src/components/objects/BoardGameArena.tsx:L59-L1271](file:///F:/AppMaking/ViTudy/src/components/objects/BoardGameArena.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `BoardCanvas` | `component` | [src/components/objects/boardgame/BoardCanvas.tsx:L31-L160](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/BoardCanvas.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `BoardGameArena` | `component` | [src/components/objects/BoardGameArena.tsx:L59-L1280](file:///F:/AppMaking/ViTudy/src/components/objects/BoardGameArena.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `BOOK_COVER_PRESETS` | `component` | [src/components/objects/BookSpread.tsx:L39-L80](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `BookSpread` | `component` | [src/components/objects/BookSpread.tsx:L1151-L1151](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Mô phỏng cuốn sách mở 2.5D, phân trang động DOM, bìa cứng, gờ gáy và popover Inteline |
 | `BookSpreadComponent` | `component` | [src/components/objects/BookSpread.tsx:L82-L1149](file:///F:/AppMaking/ViTudy/src/components/objects/BookSpread.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `CodeBlockItem` | `component` | [src/components/objects/CodeBlockItem.tsx:L15-L222](file:///F:/AppMaking/ViTudy/src/components/objects/CodeBlockItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `CurrencyAndBankPanel` | `component` | [src/components/objects/boardgame/CurrencyAndBankPanel.tsx:L23-L365](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/CurrencyAndBankPanel.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `DeckAndDeedModal` | `component` | [src/components/objects/boardgame/DeckAndDeedModal.tsx:L20-L338](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/DeckAndDeedModal.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `DiceLayer` | `component` | [src/components/objects/boardgame/DiceLayer.tsx:L15-L76](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/DiceLayer.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `DiceLayer` | `component` | [src/components/objects/boardgame/DiceLayer.tsx:L21-L119](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/DiceLayer.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `ExamQuizCard` | `component` | [src/components/objects/ExamQuizCard.tsx:L750-L750](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `ExamQuizCardComponent` | `component` | [src/components/objects/ExamQuizCard.tsx:L46-L748](file:///F:/AppMaking/ViTudy/src/components/objects/ExamQuizCard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `FourCornerArtboard` | `component` | [src/components/objects/FourCornerArtboard.tsx:L42-L1104](file:///F:/AppMaking/ViTudy/src/components/objects/FourCornerArtboard.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
@@ -50,7 +50,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StickyNoteItemComponent` | `component` | [src/components/objects/StickyNoteItem.tsx:L40-L1147](file:///F:/AppMaking/ViTudy/src/components/objects/StickyNoteItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `TileFormEditorModal` | `component` | [src/components/objects/boardgame/TileFormEditorModal.tsx:L22-L358](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TileFormEditorModal.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `TileView` | `component` | [src/components/objects/boardgame/TileView.tsx:L21-L263](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TileView.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `TopDownDice3D` | `component` | [src/components/objects/boardgame/TopDownDice3D.tsx:L16-L155](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TopDownDice3D.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `TopDownDice3D` | `component` | [src/components/objects/boardgame/TopDownDice3D.tsx:L19-L173](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TopDownDice3D.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 
 ### HUD & Overlays
 
@@ -145,9 +145,10 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `countSharpCorners` | `fn` | [src/utils/smartShape.ts:L152-L181](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `declareBankruptcy` | `fn` | [src/lib/boardGameEngine.ts:L831-L878](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `deleteBoardTileSafe` | `fn` | [src/lib/boardGameEngine.ts:L205-L237](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `DieSpec` | `type` | [src/lib/physicsDiceBox.ts:L64-L68](file:///F:/AppMaking/ViTudy/src/lib/physicsDiceBox.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `DiscordAuthResult` | `type` | [src/lib/discord/sdk.ts:L3-L14](file:///F:/AppMaking/ViTudy/src/lib/discord/sdk.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `DocumentOutlineNode` | `type` | [src/lib/nonAiEngine.ts:L45-L51](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `DropZoneRect` | `type` | [src/lib/physicsDiceBox.ts:L89-L94](file:///F:/AppMaking/ViTudy/src/lib/physicsDiceBox.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `DropZoneRect` | `type` | [src/lib/physicsDiceBox.ts:L57-L62](file:///F:/AppMaking/ViTudy/src/lib/physicsDiceBox.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `endTurn` | `fn` | [src/lib/boardGameEngine.ts:L880-L912](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `ensureValidOpenAiSession` | `fn` | [src/lib/aiClient.ts:L237-L251](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `exchangeOpenAiCode` | `fn` | [src/lib/aiClient.ts:L120-L235](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -261,24 +262,24 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `AuthForm` | `component` | [src/components/auth/AuthForm.tsx:L16-L258](file:///F:/AppMaking/ViTudy/src/components/auth/AuthForm.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AuthPage` | `component` | [src/app/auth/page.tsx:L11-L135](file:///F:/AppMaking/ViTudy/src/app/auth/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `BankConfig` | `type` | [src/services/PaymentService.ts:L45-L49](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `BankTransactionLog` | `type` | [src/types/boardgame.ts:L172-L180](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `BankTransactionLog` | `type` | [src/types/boardgame.ts:L176-L184](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `BOARD_GAMES_KEY` | `component` | [src/services/GameCabinetStorage.ts:L5-L5](file:///F:/AppMaking/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `BoardGameEventType` | `type` | [src/hooks/useRealtimeMultiplayer.ts:L7-L18](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `BoardGameMatchState` | `type` | [src/types/boardgame.ts:L202-L226](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `BoardGamePackage` | `type` | [src/types/boardgame.ts:L228-L251](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `BoardGameMatchState` | `type` | [src/types/boardgame.ts:L206-L230](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `BoardGamePackage` | `type` | [src/types/boardgame.ts:L232-L255](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `BoardGameRealtimeEvent` | `type` | [src/hooks/useRealtimeMultiplayer.ts:L20-L29](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `BoardTile` | `type` | [src/types/boardgame.ts:L93-L118](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `BoardTile` | `type` | [src/types/boardgame.ts:L93-L122](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `BoardTileRole` | `type` | [src/types/boardgame.ts:L73-L81](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `breakAmountIntoVndNotes` | `fn` | [src/types/boardgame.ts:L303-L315](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `breakAmountIntoVndNotes` | `fn` | [src/types/boardgame.ts:L307-L319](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `buildVietQrUrl` | `fn` | [src/services/PaymentService.ts:L59-L72](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `calculateBalanceTotal` | `fn` | [src/types/boardgame.ts:L293-L298](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `calculateBalanceTotal` | `fn` | [src/types/boardgame.ts:L297-L302](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `canEmitGameEvent` | `fn` | [src/hooks/useRealtimeMultiplayer.ts:L31-L39](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `CanvasTransform` | `type` | [src/types/studyspace.ts:L141-L146](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `compressImageDataUrl` | `fn` | [src/services/GameCabinetStorage.ts:L25-L69](file:///F:/AppMaking/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `createDefaultBoardGamePackage` | `fn` | [src/types/boardgame.ts:L403-L451](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `createDefaultBoardGamePackage` | `fn` | [src/types/boardgame.ts:L407-L455](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `createDemoStudySpace` | `fn` | [src/data/demoSpace.ts:L3-L97](file:///F:/AppMaking/ViTudy/src/data/demoSpace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `createEmptyBalance` | `fn` | [src/types/boardgame.ts:L265-L277](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `createStarterVndBalance` | `fn` | [src/types/boardgame.ts:L279-L291](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `createEmptyBalance` | `fn` | [src/types/boardgame.ts:L269-L281](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `createStarterVndBalance` | `fn` | [src/types/boardgame.ts:L283-L295](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `CurrencyNoteDesign` | `type` | [src/types/boardgame.ts:L12-L18](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `DashboardPage` | `component` | [src/app/dashboard/page.tsx:L14-L162](file:///F:/AppMaking/ViTudy/src/app/dashboard/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `Database` | `type` | [src/types/database.types.ts:L9-L455](file:///F:/AppMaking/ViTudy/src/types/database.types.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -306,16 +307,16 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `fetchModelViTokenCost` | `fn` | [src/services/BoardGameAiService.ts:L163-L177](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FlashcardReview` | `type` | [src/services/FlashcardService.ts:L4-L16](file:///F:/AppMaking/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCabinetStorage` | `component` | [src/services/GameCabinetStorage.ts:L158-L247](file:///F:/AppMaking/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GameCardDeck` | `type` | [src/types/boardgame.ts:L146-L156](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GameCardEffect` | `type` | [src/types/boardgame.ts:L132-L135](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GameCardItem` | `type` | [src/types/boardgame.ts:L137-L144](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GameLinkType` | `type` | [src/types/boardgame.ts:L120-L123](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GameNodeLink` | `type` | [src/types/boardgame.ts:L125-L130](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GamePawn` | `type` | [src/types/boardgame.ts:L158-L170](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `GamePenTool` | `type` | [src/types/boardgame.ts:L253-L263](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GameCardDeck` | `type` | [src/types/boardgame.ts:L150-L160](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GameCardEffect` | `type` | [src/types/boardgame.ts:L136-L139](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GameCardItem` | `type` | [src/types/boardgame.ts:L141-L148](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GameLinkType` | `type` | [src/types/boardgame.ts:L124-L127](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GameNodeLink` | `type` | [src/types/boardgame.ts:L129-L134](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GamePawn` | `type` | [src/types/boardgame.ts:L162-L174](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `GamePenTool` | `type` | [src/types/boardgame.ts:L257-L267](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `generateBoardDeckWithAi` | `fn` | [src/services/BoardGameAiService.ts:L179-L280](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `generateCardHash` | `fn` | [src/services/FlashcardService.ts:L18-L27](file:///F:/AppMaking/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `generateMapTiles` | `fn` | [src/types/boardgame.ts:L320-L401](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `generateMapTiles` | `fn` | [src/types/boardgame.ts:L324-L405](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `generateTilesContentWithAi` | `fn` | [src/services/BoardGameAiService.ts:L282-L375](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L51-L53](file:///F:/AppMaking/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getPurchasedItemIds` | `fn` | [src/services/MarketPurchaseStorage.ts:L8-L21](file:///F:/AppMaking/ViTudy/src/services/MarketPurchaseStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -333,7 +334,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `mapDbRowToMarketItem` | `fn` | [src/services/KnowInheritService.ts:L48-L75](file:///F:/AppMaking/ViTudy/src/services/KnowInheritService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MarketItem` | `type` | [src/data/marketMockData.ts:L3-L22](file:///F:/AppMaking/ViTudy/src/data/marketMockData.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MarketPage` | `component` | [src/app/market/page.tsx:L35-L870](file:///F:/AppMaking/ViTudy/src/app/market/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `MatchSnapshot` | `type` | [src/types/boardgame.ts:L182-L200](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `MatchSnapshot` | `type` | [src/types/boardgame.ts:L186-L204](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MathRenderer` | `component` | [src/components/common/MathRenderer.tsx:L99-L245](file:///F:/AppMaking/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `metadata` | `const` | [src/app/layout.tsx:L30-L41](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MigrationDialog` | `component` | [src/components/auth/MigrationDialog.tsx:L10-L110](file:///F:/AppMaking/ViTudy/src/components/auth/MigrationDialog.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
