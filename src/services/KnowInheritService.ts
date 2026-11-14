@@ -57,6 +57,7 @@ export function mapDbRowToMarketItem(row: DbListingRow, purchasedIds: Set<string
     id: row.id,
     title: row.title,
     author: row.author_name || 'Thành viên ViTudy',
+    authorId: row.author_id || undefined,
     aiScore: row.ai_quality_score,
     price: row.price,
     type: mapDocTypeToItemType(row.doc_type, mappedPages.length),

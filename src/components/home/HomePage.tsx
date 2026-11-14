@@ -40,6 +40,7 @@ import { TopUpModal } from '@/components/payment/TopUpModal';
 import { MarketModal } from '@/components/modals/MarketModal';
 import { AiConfigModal } from '@/components/modals/AiConfigModal';
 import { getAssetPath } from '@/lib/assets';
+import { formatDeskItemsSummary } from '@/utils/deskSummary';
 import { StudySpace } from '@/types/studyspace';
 import { formatRelativeTimeVN } from '@/lib/dateVN';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -167,20 +168,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
   };
 
   // Helper tính số tài liệu
-  const getSpaceSummary = (space: StudySpace) => {
-    if (space.items && space.items.length > 0) {
-      const books = space.items.filter(i => i.type === 'book').length;
-      const papers = space.items.filter(i => i.type === 'paper').length;
-      const notes = space.items.filter(i => i.type === 'sticky_note').length;
-      
-      const parts: string[] = [];
-      if (books > 0) parts.push(`${books} sách`);
-      if (papers > 0) parts.push(`${papers} tờ`);
-      if (notes > 0) parts.push(`${notes} ghi chú`);
-      if (parts.length > 0) return parts.join(' · ');
-    }
-    return 'Chưa có tài liệu';
-  };
+  const getSpaceSummary = (space: StudySpace) => formatDeskItemsSummary(space.items);
 
   const getRecentTimeString = (space: StudySpace) => {
     return formatRelativeTimeVN(space.lastOpenedAt || space.updatedAt || space.createdAt);
@@ -1058,9 +1046,9 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                 </div>
               </>
             ) : (
-              /* Grid View Mode */
-              <div className="flex-1 overflow-y-auto p-2 grid grid-cols-2 sm:grid-cols-3 gap-3 no-scrollbar">
-                {displayedSpaces.map((space) => {
+              /* Grid View Mode (compact cards, content-start so cards never stretch vertically) */
+              <div className="flex-1 overflow-y-auto p-2 grid grid-cols-2 sm:grid-cols-3 gap-2.5 content-start items-start no-scrollbar">
+                {displayedSpaces.map((space, idx) => {
                   const cleanSpaceName = space.name.replace(/\(Demo\)/i, '').trim();
                   const isDemo = space.name.includes('(Demo)');
 
@@ -1068,36 +1056,50 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                     <div
                       key={space.id}
                       onClick={() => handleOpenSpace(space.id)}
-                      className="bg-stone-50/70 border border-stone-200 rounded-xl p-3 flex flex-col justify-between hover:border-[#E0562D] hover:bg-white hover:shadow-2xs transition-all cursor-pointer group"
+                      className="bg-white border border-stone-200 rounded-xl p-2.5 flex flex-col gap-2 hover:border-[#E0562D] hover:shadow-xs transition-all cursor-pointer group"
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold text-stone-500 flex items-center gap-1 font-mono">
-                            <Clock className="w-3 h-3" />
+                      {/* Compact Desk Thumbnail Preview */}
+                      <div className="h-14 rounded-lg bg-[#f4f1ea] border border-stone-200/80 relative flex items-center justify-center overflow-hidden px-3">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-7 h-9 rounded-xs bg-white border border-stone-300 shadow-2xs flex flex-col justify-center gap-1 p-1">
+                            <div className="w-full h-0.5 bg-stone-200 rounded" />
+                            <div className="w-3/4 h-0.5 bg-stone-200 rounded" />
+                          </div>
+                          {idx % 2 === 0 && (
+                            <div className="w-6 h-6 rounded-xs bg-[#fef08a] border border-amber-300/70 shadow-2xs rotate-3" />
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStarSpace?.(space.id);
+                          }}
+                          title={space.starred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao'}
+                          className="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 border border-stone-200/70 text-stone-400 hover:text-amber-500 cursor-pointer shadow-2xs"
+                        >
+                          <Star className={`w-3 h-3 ${space.starred ? 'text-amber-500 fill-amber-400' : ''}`} />
+                        </button>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs font-bold text-stone-900 group-hover:text-[#E0562D] truncate">
+                            {cleanSpaceName}
+                          </h4>
+                          {isDemo && (
+                            <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0">
+                              Mẫu
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-1 text-[10.5px] text-stone-500">
+                          <span className="truncate">{getSpaceSummary(space)}</span>
+                          <span className="text-[10px] font-mono shrink-0 flex items-center gap-0.5">
+                            <Clock className="w-2.5 h-2.5" />
                             {getRecentTimeString(space)}
                           </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleStarSpace?.(space.id);
-                            }}
-                            className="text-stone-400 hover:text-amber-500 cursor-pointer"
-                          >
-                            <Star className={`w-3.5 h-3.5 ${space.starred ? 'text-amber-500 fill-amber-400' : ''}`} />
-                          </button>
                         </div>
-                        <h4 className="text-xs font-bold text-stone-900 group-hover:text-[#E0562D] truncate">
-                          {cleanSpaceName}
-                        </h4>
-                        {isDemo && (
-                          <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded shrink-0 inline-block mt-0.5">
-                            Mẫu
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-stone-500 mt-3 pt-2 border-t border-stone-200/80 truncate">
-                        {getSpaceSummary(space)}
                       </div>
                     </div>
                   );

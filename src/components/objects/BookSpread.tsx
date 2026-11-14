@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { DeskItem } from '@/types/studyspace';
 import { useStudySpace } from '@/context/StudySpaceContext';
@@ -1079,10 +1080,11 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
         )}
       </div>
 
-      {/* Safe Delete Confirmation Dialog */}
-      {isConfirmDelete && (
+      {/* Safe Delete Confirmation Dialog via Portal so overlapping books never cover it */}
+      {isConfirmDelete && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto"
+          data-overlay="true"
+          className="fixed inset-0 z-[9995] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto"
           onClick={(e) => {
             e.stopPropagation();
             setIsConfirmDelete(false);
@@ -1119,7 +1121,8 @@ Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối �
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 

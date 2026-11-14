@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useAuth } from '@/hooks/useAuth';
 import { usePomodoroContext } from '@/context/PomodoroContext';
+import { formatDeskItemsSummary } from '@/utils/deskSummary';
 import { 
   Compass, 
   Search, 
@@ -240,14 +241,16 @@ export function TopLeftNav() {
                       switchSpace(s.id);
                       setIsSpaceMenuOpen(false);
                     }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                    className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex flex-col gap-0.5 transition-colors cursor-pointer ${
                       s.id === activeSpaceId 
                         ? 'bg-slate-100 text-slate-900 border border-slate-300 font-bold' 
                         : 'text-slate-800 hover:bg-slate-50 font-semibold'
                     }`}
                   >
-                    <span className="truncate">{s.name}</span>
-                    <span className="text-[10px] text-slate-400 font-mono font-bold">{s.items.length} món</span>
+                    <span className="truncate w-full">{s.name}</span>
+                    <span className="text-[10px] text-slate-500 font-medium truncate w-full">
+                      {formatDeskItemsSummary(s.items)}
+                    </span>
                   </button>
                 ))}
               </div>

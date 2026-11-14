@@ -105,7 +105,7 @@ export function KnowInheritPublishModal({
     else if (docType === 'exam') price = 30;
     else price = 50;
 
-    const authorEarn = Math.round(price * 0.85 * 10) / 10;
+    const authorEarn = Math.floor(price * 0.85);
 
     setAuditResult({
       score: calculatedScore,

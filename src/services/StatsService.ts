@@ -19,11 +19,17 @@ export class StatsService {
     const daysLabel = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
     const today = new Date();
-    // 7 days ending today
+    const vnFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    // 7 days ending today (in Asia/Ho_Chi_Minh to match record_heartbeat)
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = vnFormatter.format(d);
       const dayLabel = daysLabel[d.getDay()];
       result.push({
         day: dayLabel,

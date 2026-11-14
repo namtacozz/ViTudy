@@ -60,6 +60,7 @@ export interface Database {
           name: string
           subject: string
           is_public: boolean
+          starred: boolean
           camera_transform: Json
           created_at: string
           updated_at: string
@@ -70,6 +71,7 @@ export interface Database {
           name?: string
           subject?: string
           is_public?: boolean
+          starred?: boolean
           camera_transform?: Json
           created_at?: string
           updated_at?: string
@@ -80,6 +82,7 @@ export interface Database {
           name?: string
           subject?: string
           is_public?: boolean
+          starred?: boolean
           camera_transform?: Json
           created_at?: string
           updated_at?: string

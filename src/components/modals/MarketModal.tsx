@@ -140,8 +140,12 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
     setSortBy('newest');
   };
 
+  const isOwnListing = (item: MarketItem) => {
+    return Boolean(user?.id && item.authorId && item.authorId === user.id);
+  };
+
   const isItemPurchased = (item: MarketItem) => {
-    return item.purchased || purchasedIds.includes(item.id);
+    return Boolean(item.purchased || purchasedIds.includes(item.id) || isOwnListing(item));
   };
 
   const purchasedCount = useMemo(() => {
@@ -592,7 +596,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
             </div>
           ) : viewMode === 'list' ? (
             /* COMPACT LIST VIEW */
-            <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+            <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl bg-white shadow-2xs">
               {filteredItems.map(item => {
                 const pageCount = item.pageCount || (item.pages ? item.pages.length : (item.type === 'book' ? 48 : (item.type === 'exam' ? 4 : 1)));
                 const downloadsCount = item.downloadsCount || (item.aiScore * 3 + 12);
@@ -632,7 +636,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                           <span className="font-bold text-[#E0562D] font-mono">
                             {item.aiScore}/100
                           </span>
-                          <div className="absolute left-0 bottom-full mb-1 hidden group-hover/score:flex flex-col w-56 p-2 bg-stone-900 text-white text-[10px] rounded-lg shadow-xl z-50 pointer-events-none">
+                          <div className="absolute left-0 top-full mt-1.5 hidden group-hover/score:flex flex-col w-56 p-2 bg-stone-900 text-white text-[10px] rounded-lg shadow-xl z-[120] pointer-events-none">
                             <span className="font-bold text-amber-300 mb-0.5">Tiêu chí chấm điểm tự động AI</span>
                             <span>• Độ chuẩn xác kiến thức: 40%</span>
                             <span>• Cấu trúc sư phạm: 35%</span>
@@ -760,7 +764,7 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                             {item.aiScore}/100
                           </span>
                           {/* Tooltip */}
-                          <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/score:flex flex-col w-60 p-2.5 bg-stone-900 text-white text-[10.5px] rounded-xl shadow-xl z-50 pointer-events-none">
+                          <div className="absolute left-0 top-full mt-1.5 hidden group-hover/score:flex flex-col w-60 p-2.5 bg-stone-900 text-white text-[10.5px] rounded-xl shadow-xl z-[120] pointer-events-none">
                             <div className="font-bold text-amber-300 mb-1 border-b border-stone-700 pb-1">
                               Tiêu chí chấm điểm tự động AI
                             </div>
@@ -807,8 +811,12 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                         />
                         <span className="text-sm font-black font-mono text-[#E0562D]">{item.price} ViToken</span>
                         {isItemPurchased(item) && (
-                          <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-1">
-                            Đã sở hữu
+                          <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ml-1 border ${
+                            isOwnListing(item)
+                              ? 'text-sky-800 bg-sky-50 border-sky-200'
+                              : 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                          }`}>
+                            {isOwnListing(item) ? 'Tài liệu của bạn' : 'Đã sở hữu'}
                           </span>
                         )}
                       </div>
@@ -978,17 +986,19 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
                 id: newListing.id,
                 title: newListing.title,
                 author: newListing.author,
+                authorId: newListing.authorId || user?.id,
                 aiScore: newListing.aiScore,
                 price: newListing.price,
                 type: newListing.type || 'paper',
-                category: 'cs',
-                date: new Date().toLocaleDateString('vi-VN'),
+                category: newListing.category || 'cs',
+                date: newListing.date || new Date().toLocaleDateString('vi-VN'),
                 purchased: true,
                 summary: newListing.summary,
                 previewText: newListing.previewText,
-                pageCount: 1,
-                downloadsCount: 1,
-                updatedDate: new Date().toLocaleDateString('vi-VN'),
+                pages: newListing.pages,
+                pageCount: newListing.pageCount || 1,
+                downloadsCount: 0,
+                updatedDate: newListing.updatedDate || new Date().toLocaleDateString('vi-VN'),
                 isAuthorVerified: true,
                 aiReviewCount: 1
               };

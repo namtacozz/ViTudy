@@ -4,6 +4,7 @@ export interface MarketItem {
   id: string;
   title: string;
   author: string;
+  authorId?: string;
   aiScore: number;
   price: number;
   type: 'book' | 'paper' | 'exam';

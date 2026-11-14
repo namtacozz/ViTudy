@@ -59,13 +59,17 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Load from localStorage on mount (guest fallback)
+  // Load from localStorage on mount (scoped by user vs guest)
   useEffect(() => {
+    if (status === 'loading') return;
     try {
-      const savedWallet = localStorage.getItem('vitudy_wallet');
+      const walletKey = status === 'authenticated' && user?.id ? `user_${user.id}_vitudy_wallet` : 'guest_vitudy_wallet';
+      const savedWallet = localStorage.getItem(walletKey) || (status !== 'authenticated' ? localStorage.getItem('vitudy_wallet') : null);
       if (savedWallet) {
         const parsed = JSON.parse(savedWallet);
         setWallet(parsed);
+      } else {
+        setWallet(DEFAULT_WALLET);
       }
       const savedAi = localStorage.getItem('vitudy_ai_config');
       if (savedAi) {
@@ -75,7 +79,7 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       // fallback to defaults if parse fails
     }
     setIsLoaded(true);
-  }, []);
+  }, [status, user?.id]);
 
   // Sync from Supabase Cloud and subscribe to Realtime balance changes
   useEffect(() => {
@@ -116,17 +120,18 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     }
   }, [status, user?.id]);
 
-  // Sync to localStorage
+  // Sync to localStorage (scoped by user vs guest so accounts never cross-contaminate)
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && status !== 'loading') {
       try {
-        localStorage.setItem('vitudy_wallet', JSON.stringify(wallet));
+        const walletKey = status === 'authenticated' && user?.id ? `user_${user.id}_vitudy_wallet` : 'guest_vitudy_wallet';
+        localStorage.setItem(walletKey, JSON.stringify(wallet));
         localStorage.setItem('vitudy_ai_config', JSON.stringify(aiConfig));
       } catch {
         // ignore storage quota errors
       }
     }
-  }, [wallet, aiConfig, isLoaded]);
+  }, [wallet, aiConfig, isLoaded, status, user?.id]);
 
   const claimDailyStreak = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -157,6 +162,7 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
       timestamp: new Date().toISOString()
     };
 
+    const prevSnapshot = wallet;
     setWallet(prev => ({
       ...prev,
       balance: prev.balance + earned,
@@ -166,9 +172,24 @@ export function ViTokenProvider({ children }: { children: React.ReactNode }) {
     }));
 
     if (status === 'authenticated') {
-      ViTokenService.claimStreak().catch(err => {
-        console.warn('Lỗi đồng bộ claimStreak lên Cloud:', err);
-      });
+      ViTokenService.claimStreak()
+        .then(res => {
+          if (res.success && typeof res.balanceAfter === 'number') {
+            setWallet(prev => ({
+              ...prev,
+              balance: res.balanceAfter,
+              streakDays: res.streak || prev.streakDays,
+              lastClaimDate: today,
+            }));
+          } else if (!res.success) {
+            // Reconcile back to server balance if RPC rejected (e.g. already claimed on server)
+            setWallet(prevSnapshot);
+          }
+        })
+        .catch(err => {
+          console.warn('Lỗi đồng bộ claimStreak lên Cloud:', err);
+          setWallet(prevSnapshot);
+        });
     }
 
     return { 

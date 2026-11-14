@@ -204,6 +204,7 @@ export class StudySpaceService {
         name: spaceRow.name,
         subject: spaceRow.subject,
         description: '',
+        starred: Boolean(spaceRow.starred),
         createdAt: spaceRow.created_at,
         updatedAt: spaceRow.updated_at,
         items: docsBySpaceId[spaceRow.id] || [],
@@ -226,6 +227,7 @@ export class StudySpaceService {
         owner_id: userId,
         name: space.name,
         subject: space.subject,
+        starred: Boolean(space.starred),
         updated_at: new Date().toISOString(),
       });
     } catch (err) {
