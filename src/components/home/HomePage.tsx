@@ -310,7 +310,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <button
               onClick={() => {
                 setActiveNav('my_desks');
-                onEnterDesk();
+                onEnterDesk(latestSpace?.id);
               }}
               className={`w-full text-left px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 ${
                 activeNav === 'my_desks'
@@ -568,7 +568,7 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             <div 
               onClick={() => {
                 startPomodoroSession(25);
-                onEnterDesk();
+                onEnterDesk(latestSpace?.id);
               }}
               title="Mục tiêu hôm nay: 1/4 phiên 25 phút. Nhấp để bắt đầu học ngay."
               className="hidden sm:flex items-center gap-2 bg-white border border-stone-200/90 hover:border-[#E0562D] px-2.5 py-1 rounded-full shadow-2xs transition-all cursor-pointer group active:scale-98 select-none"

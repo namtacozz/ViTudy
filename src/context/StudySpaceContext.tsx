@@ -889,7 +889,15 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       }
 
       // Cập nhật mốc mở lần cuối
-      const nextSpaces = spaces.map(s => s.id === spaceId ? { ...s, lastOpenedAt: new Date().toISOString() } : s);
+      const nowIso = new Date().toISOString();
+      let switchedSpace: StudySpace | null = null;
+      const nextSpaces = spaces.map(s => {
+        if (s.id === spaceId) {
+          switchedSpace = { ...s, lastOpenedAt: nowIso };
+          return switchedSpace;
+        }
+        return s;
+      });
       setSpaces(nextSpaces);
 
       // Lưu ngay vào localStorage
@@ -900,6 +908,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         localStorage.setItem('vitudy_spaces', JSON.stringify(nextSpaces));
         localStorage.setItem('vitudy_active_space_id', spaceId);
       } catch {}
+
+      if (status === 'authenticated' && user?.id && switchedSpace) {
+        StudySpaceService.saveSpace(switchedSpace, user.id).catch(() => {});
+      }
 
       // Nạp nét vẽ của bàn học mới
       try {
@@ -929,14 +941,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const toggleStarSpace = (spaceId: string) => {
-    setSpaces(prev => prev.map(s => {
-      if (s.id !== spaceId) return s;
-      const nextStar = !s.starred;
-      if (status === 'authenticated' && user?.id) {
-        StudySpaceService.saveSpace({ ...s, starred: nextStar }, user.id).catch(() => {});
-      }
-      return { ...s, starred: nextStar };
-    }));
+    setSpaces(prev => {
+      const updated = prev.map(s => {
+        if (s.id !== spaceId) return s;
+        const nextStar = !s.starred;
+        if (status === 'authenticated' && user?.id) {
+          StudySpaceService.saveSpace({ ...s, starred: nextStar }, user.id).catch(() => {});
+        }
+        return { ...s, starred: nextStar };
+      });
+      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
+      try {
+        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updated));
+        localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   const createSpace = (name: string, subject: string): string => {
@@ -1333,13 +1353,25 @@ Trong đó:
         return prev;
       }
       const updated = prev.filter(s => s.id !== spaceId);
+      const nextActiveId = activeSpaceId === spaceId && updated.length > 0 ? updated[0].id : activeSpaceId;
       if (activeSpaceId === spaceId && updated.length > 0) {
-        setActiveSpaceId(updated[0].id);
+        setActiveSpaceId(nextActiveId);
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          if (url.searchParams.has('space')) {
+            url.searchParams.set('space', nextActiveId);
+            window.history.replaceState({}, '', url.toString());
+          }
+        }
       }
       const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
       try {
         localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updated));
         localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
+        if (nextActiveId) {
+          localStorage.setItem(`${userPrefix}vitudy_active_space_id`, nextActiveId);
+          localStorage.setItem('vitudy_active_space_id', nextActiveId);
+        }
       } catch {
         // ignore
       }

@@ -227,7 +227,13 @@ export function TopLeftNav() {
                 Bàn học của bạn
               </div>
               <div className="space-y-1 max-h-48 overflow-y-auto my-1">
-                {spaces.map(s => (
+                {[...spaces]
+                  .sort((a, b) => {
+                    const ta = new Date(a.lastOpenedAt || a.updatedAt || a.createdAt || 0).getTime();
+                    const tb = new Date(b.lastOpenedAt || b.updatedAt || b.createdAt || 0).getTime();
+                    return tb - ta;
+                  })
+                  .map(s => (
                   <button
                     key={s.id}
                     onClick={() => {
