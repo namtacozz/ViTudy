@@ -109,3 +109,18 @@ RootLayout (src/app/layout.tsx)
 
 ### 3. `StickyNoteItem.tsx` — Giấy Ghi Chú
 * **Kích thước:** `220 × 200px`, font viết tay `Patrick Hand`, cỡ chữ `16px font-semibold text-stone-900`. Tích hợp `useDeskItemInteraction`.
+
+### 4. `FourCornerArtboard.tsx` — Bảng Vẽ 4 Góc (`artboard`)
+* **Vị trí file:** [`src/components/objects/FourCornerArtboard.tsx`](file:///F:/AppMaking/ViTudy/src/components/objects/FourCornerArtboard.tsx)
+* **Tính năng:** 4 góc công cụ chuyên vẽ (Bút/Cọ/Hình/Tẩy, Bảng màu/Undo/Redo, Chọn vùng di chuyển/phóng to/xoay/xóa, Lớp nét & ảnh, Zoom/Pan nội bộ, phím tắt `Ctrl+Z`/`Ctrl+Y`/`Delete`/`B`/`E`, áp lực bút cảm ứng `e.pressure`, xuất quân cờ tự do hoặc Khớp ô Map).
+
+### 5. `BoardGameArena.tsx` & `boardgame/*` — Bàn Cờ Board Game Studio (`board_game`)
+* **Vị trí file:** [`src/components/objects/BoardGameArena.tsx`](file:///F:/AppMaking/ViTudy/src/components/objects/BoardGameArena.tsx)
+* **Module con (`src/components/objects/boardgame/`):**
+  * `BoardCanvas.tsx`: Khung render bàn cờ kèm Viewport Culling cho bàn lớn (20×20 = 400 ô).
+  * `TileView.tsx`: Component ô cờ `React.memo` (ô đất, ô rút thẻ, ô Xuất phát, ô Tù, ô Phạt, ô Ngân hàng, ô Ngoài map).
+  * `DiceLayer.tsx` & `TopDownDice3D.tsx`: Xúc xắc 3D top-down nối trực tiếp vào `rollAndMove`.
+  * `PawnLayer.tsx`: Quân cờ người chơi, hỗ trợ di chuyển theo xúc xắc hoặc chế độ kéo tự do.
+  * `ActionPanel.tsx`: Thanh hành động theo lượt (Mua đất, Trả thuê, Nâng nhà, Thế chấp, Phá sản, Undo/Redo, Hết lượt).
+  * `GameLinkLayer.tsx`, `TileFormEditorModal.tsx`, `DeckAndDeedModal.tsx`, `CurrencyAndBankPanel.tsx`.
+* **HUD & Modal liên quan:** [`GamePenToolbar.tsx`](file:///F:/AppMaking/ViTudy/src/components/hud/GamePenToolbar.tsx), [`GameCabinetModal.tsx`](file:///F:/AppMaking/ViTudy/src/components/modals/GameCabinetModal.tsx).

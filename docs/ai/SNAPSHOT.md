@@ -1,16 +1,16 @@
 # SNAPSHOT.md — Bản Tiêu Hóa Dự Án Toàn Diện ViTudy
 
-> **Commit Hash:** `Current Working Tree (Production Ready)` | **Ngày cập nhật:** `2026-11-13` | **Tác giả:** Senior Staff Engineer
+> **Commit Hash:** `Current Working Tree (Production Ready)` | **Ngày cập nhật:** `2026-11-14` | **Tác giả:** Senior Staff Engineer
 
 ---
 
 ## 1. Tóm Tắt Dự Án & Sức Khỏe Repo (Health Summary)
-* **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini, Claude, OpenAI System) qua tiền tệ ViToken, và chợ tri thức KnowInherit 85/15.
-* **Giai đoạn phát triển:** Hoàn thành toàn diện kế hoạch khắc phục 7 giai đoạn từ Audit Flow Report: siết chặt bảo mật RPC ViToken & RLS, sửa định tuyến Gemini/Claude AI Gateway & chống double-debit, kết nối KnowInherit Market với dữ liệu thật Wikipedia CC BY-SA 4.0, hoàn thiện STudy/SM-2 múi giờ VN/kiểm định điểm thi server-side, lưu camera 2.5D + đồng bộ strokes + Multiplayer cursors, và nâng cấp Mobile Companion 4 tab + CSP.
+* **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini, Claude, OpenAI System) qua tiền tệ ViToken, chợ tri thức KnowInherit 85/15, và Board Game Studio + Bảng Vẽ 4 Góc.
+* **Giai đoạn phát triển:** Hoàn thành vòng 2 Board Game Studio & Bảng Vẽ 4 Góc: engine luật chơi thuần (`boardGameEngine.ts`), sổ cái tiền `applyTransfer` chống chỉnh sửa, dọn dữ liệu mồ côi, lưu IndexedDB nén ảnh 1024px, đồng bộ sự kiện Realtime, tách module `BoardGameArena` kèm viewport culling 400 ô, và +25 unit tests mới.
 * **Sức khỏe Repo (Health):**
-  * `Unit & Integration Tests`: **Pass** (`pnpm test`: 21/21 files, 68/68 tests pass).
+  * `Unit & Integration Tests`: **Pass** (`pnpm test`: 25/25 files, 103/103 tests pass).
   * `TypeCheck`: **Pass** (`npx tsc --noEmit`: 0 lỗi).
-  * `Build`: **Pass** (`pnpm run build:pages` biên dịch sạch 100%, xuất tĩnh `out/` 16/16 trang sẵn sàng GitHub Pages).
+  * `Build`: **Pass** (`pnpm run build:pages` biên dịch sạch 100%, xuất tĩnh `out/` sẵn sàng GitHub Pages).
 
 ---
 
@@ -32,7 +32,7 @@ graph TD
     Client["Client: InfiniteDesk 2.5D Canvas & VR HUD"]
     NLP["Non-AI Engine (TextRank, TF-IDF, Cloze Quiz)"]
     Hook["Hook: useDeskItemInteraction (Drag & 360° atan2)"]
-    Gateway["Next.js Route /api/ai/chat (Multi-Mode Gateway)"]
+    Gateway["Supabase Edge Function functions/v1/ai-chat"]
     Supa[("Supabase: 11 Tables + pgvector + RLS")]
     Codex["ChatGPT Codex Backend (originator: codex_cli_rs)"]
     Gemini["Google Gemini API (BYOK)"]
@@ -62,7 +62,7 @@ graph TD
 |---|---|---|
 | [`src/app/page.tsx`](file:///F:/AppMaking/ViTudy/src/app/page.tsx) | Trang chủ điều hướng: Desktop StudySpace hoặc Mobile Companion | `S` |
 | [`src/app/layout.tsx`](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Nạp font Open Sans & Patrick Hand, bọc ViToken & StudySpace Provider | `S` |
-| [`src/app/api/ai/chat/route.ts`](file:///F:/AppMaking/ViTudy/src/app/api/ai/chat/route.ts) | Cổng AI Gateway đa chế độ: ChatGPT Codex, Gemini BYOK, OpenAI System | `M` |
+| [`src/lib/aiClient.ts`](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Client AI Gateway gọi Supabase Edge Function `ai-chat` / BYOK / OAuth | `M` |
 | [`src/hooks/useDeskItemInteraction.ts`](file:///F:/AppMaking/ViTudy/src/hooks/useDeskItemInteraction.ts) | Hook tái sử dụng: kéo thả và xoay tự do 360° Math.atan2 quanh tâm | `M` |
 | [`src/components/canvas/StudySpaceDeskView.tsx`](file:///F:/AppMaking/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Wrapper trung tâm kết nối toàn bộ Canvas, HUD 4 góc và modal | `S` |
 | [`src/components/canvas/InfiniteDesk.tsx`](file:///F:/AppMaking/ViTudy/src/components/canvas/InfiniteDesk.tsx) | Mặt bàn 2.5D vô cực, xử lý pan canvas, phóng to thu nhỏ | `M` |

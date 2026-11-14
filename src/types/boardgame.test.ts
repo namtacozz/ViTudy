@@ -56,7 +56,7 @@ describe('Board Game Studio Core Logic', () => {
     expect(calculateBalanceTotal(notes)).toBe(783000);
   });
 
-  it('saves, lists, and deletes BoardGamePackage in GameCabinetStorage', () => {
+  it('saves, lists, and deletes BoardGamePackage in GameCabinetStorage', async () => {
     const pkg = createDefaultBoardGamePackage({
       id: 'game-test-1',
       layoutMode: 'perimeter_ring',
@@ -65,12 +65,13 @@ describe('Board Game Studio Core Logic', () => {
       width: 770,
       height: 770,
     });
-    GameCabinetStorage.saveGame(pkg);
-    const list = GameCabinetStorage.listGames();
+    const res = await GameCabinetStorage.saveGame(pkg);
+    expect(res.ok).toBe(true);
+    const list = await GameCabinetStorage.listGames();
     expect(list).toHaveLength(1);
     expect(list[0].id).toBe('game-test-1');
 
-    GameCabinetStorage.deleteGame('game-test-1');
-    expect(GameCabinetStorage.listGames()).toHaveLength(0);
+    await GameCabinetStorage.deleteGame('game-test-1');
+    expect(await GameCabinetStorage.listGames()).toHaveLength(0);
   });
 });

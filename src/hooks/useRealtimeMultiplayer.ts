@@ -4,6 +4,69 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSupabase, getSupabaseConfig } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
+export type BoardGameEventType =
+  | 'ROLL'
+  | 'MOVE'
+  | 'BUY'
+  | 'PAY'
+  | 'UPGRADE'
+  | 'MORTGAGE'
+  | 'END_TURN'
+  | 'BANKRUPT'
+  | 'UNDO'
+  | 'REDO'
+  | 'STATE_SYNC';
+
+export interface BoardGameRealtimeEvent {
+  gameId: string;
+  eventType: BoardGameEventType;
+  kind?: 'intent' | 'authoritative_state';
+  actorPawnId: string;
+  activeTurnPawnId: string;
+  payload?: Record<string, unknown>;
+  senderId?: string;
+  timestamp: number;
+}
+
+export function canEmitGameEvent(params: {
+  isViewer: boolean;
+  actorPawnId: string;
+  activeTurnPawnId: string | null;
+}): boolean {
+  if (params.isViewer) return false;
+  if (!params.activeTurnPawnId) return true;
+  return params.actorPawnId === params.activeTurnPawnId;
+}
+
+export type RoomActionResolution =
+  | 'reject'
+  | 'execute_local'
+  | 'execute_and_broadcast_state'
+  | 'send_intent';
+
+/**
+ * Kiến trúc Host-Authoritative:
+ * - Viewer: từ chối mọi thao tác.
+ * - Chơi local (offline): chạy trực tiếp trên máy.
+ * - Phòng online & là Host: chạy engine và phát STATE_SYNC authoritative.
+ * - Phòng online & không phải Host: chỉ gửi intent (kể cả UNDO/REDO) cho Host duyệt.
+ */
+export function resolveRoomGameAction(params: {
+  isOnline: boolean;
+  isHost: boolean;
+  isViewer: boolean;
+  actorPawnId: string;
+  activeTurnPawnId: string | null;
+}): RoomActionResolution {
+  if (params.isViewer) return 'reject';
+  if (!params.isOnline) return 'execute_local';
+  if (params.isHost) return 'execute_and_broadcast_state';
+  if (params.activeTurnPawnId && params.actorPawnId !== params.activeTurnPawnId) {
+    return 'reject';
+  }
+  return 'send_intent';
+}
+
 export interface PeerUser {
   id: string;
   name: string;
@@ -120,6 +183,19 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
       }
     });
 
+    // 4. Board Game Host-Authoritative Broadcast (intent -> Host; STATE_SYNC -> Clients)
+    channel.on('broadcast', { event: 'game_event' }, (payload) => {
+      const evt = payload.payload as BoardGameRealtimeEvent;
+      if (!evt || evt.senderId === userId || typeof window === 'undefined') return;
+      if (evt.kind === 'authoritative_state' || evt.eventType === 'STATE_SYNC') {
+        window.dispatchEvent(new CustomEvent('vitudy:game-state-sync', { detail: evt }));
+      } else if (evt.kind === 'intent' && isHost) {
+        window.dispatchEvent(new CustomEvent('vitudy:game-intent', { detail: evt }));
+      } else {
+        window.dispatchEvent(new CustomEvent('vitudy:game-event', { detail: evt }));
+      }
+    });
+
     // Subscribe to channel and track local user presence
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
@@ -172,6 +248,51 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     });
   }, [isConnected, userId]);
 
+  const broadcastGameEvent = useCallback((event: Omit<BoardGameRealtimeEvent, 'senderId'>) => {
+    const isViewer =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('mode') === 'view';
+    if (event.kind !== 'authoritative_state' && event.eventType !== 'STATE_SYNC') {
+      if (
+        !canEmitGameEvent({
+          isViewer,
+          actorPawnId: event.actorPawnId,
+          activeTurnPawnId: event.activeTurnPawnId,
+        })
+      ) {
+        return false;
+      }
+    } else if (!isHost || isViewer) {
+      return false;
+    }
+    if (!channelRef.current || !isConnected) return false;
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'game_event',
+      payload: { ...event, senderId: userId },
+    });
+    return true;
+  }, [isConnected, isHost, userId]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as unknown as { __vitudyIsHost?: boolean }).__vitudyIsHost = isHost;
+    }
+  }, [isHost]);
+
+  // Bridge cho các component (VD: BoardGameArena) phát sự kiện game lên Supabase Broadcast
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<Omit<BoardGameRealtimeEvent, 'senderId'>>;
+      if (custom.detail) {
+        broadcastGameEvent(custom.detail);
+      }
+    };
+    window.addEventListener('vitudy:emit-game-event', handler);
+    return () => window.removeEventListener('vitudy:emit-game-event', handler);
+  }, [broadcastGameEvent]);
+
   // Fallback simulation toggle when offline
   const toggleSimulation = useCallback(() => {
     setHasPeers(prev => {
@@ -222,6 +343,7 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     broadcastCursor,
     broadcastCamera,
     broadcastDeskUpdate,
+    broadcastGameEvent,
     toggleSimulation,
     leaveRoom
   };

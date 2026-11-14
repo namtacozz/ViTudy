@@ -31,7 +31,7 @@ export const DEFAULT_VND_CURRENCIES: CurrencyNoteDesign[] = [
 
 export interface ArtboardStroke {
   id: string;
-  points: { x: number; y: number }[];
+  points: { x: number; y: number; pressure?: number }[];
   color: string;
   width: number;
   opacity?: number;
@@ -45,6 +45,8 @@ export interface ArtboardImageLayer {
   y: number;
   width: number;
   height: number;
+  rotation?: number;
+  visible?: boolean;
 }
 
 export interface SavedDrawingAsset {
@@ -73,7 +75,10 @@ export type BoardTileRole =
   | 'draw_card_tile'
   | 'dice_drop_zone'
   | 'external_info'
-  | 'bank_zone';
+  | 'bank_zone'
+  | 'start_tile'
+  | 'jail_tile'
+  | 'penalty_tile';
 
 export interface PropertyDetails {
   baseRent: number;
@@ -81,6 +86,7 @@ export interface PropertyDetails {
   rentsByLevel: [number, number, number, number, number];
   resellValue: number;
   currentHouses: number;
+  isMortgaged?: boolean;
   upgradeRuleText?: string;
 }
 
@@ -100,6 +106,8 @@ export interface BoardTile {
   subtitle?: string;
   imageUrl?: string;
   price?: number;
+  penaltyAmount?: number;
+  jailTurns?: number;
   deckId?: string;
   diceConfig?: {
     diceCount: number;
@@ -165,6 +173,30 @@ export interface BankTransactionLog {
   id: string;
   timestamp: string;
   message: string;
+  fromId?: string;
+  toId?: string;
+  amount?: number;
+  reason?: string;
+}
+
+export interface MatchSnapshot {
+  playerBalances: Record<string, Record<VndDenomination, number>>;
+  pawns: GamePawn[];
+  tiles: BoardTile[];
+  decks: GameCardDeck[];
+  currentTurnIndex: number;
+  turnPhase: 'roll' | 'action' | 'ended';
+  jailTurnsRemaining: Record<string, number>;
+  bankruptPlayerIds: string[];
+  winnerId: string | null;
+  lastDiceRoll?: { values: number[]; total: number; rolledAt: number } | null;
+  lastDrawnCard?: {
+    deckId: string;
+    deckName: string;
+    card: GameCardItem;
+    drawnAt: number;
+  } | null;
+  ledgerChecksum?: string;
 }
 
 export interface BoardGameMatchState {
@@ -179,6 +211,18 @@ export interface BoardGameMatchState {
     drawnAt: number;
   } | null;
   logs: BankTransactionLog[];
+  turnOrder?: string[];
+  currentTurnIndex?: number;
+  turnPhase?: 'roll' | 'action' | 'ended';
+  lastDiceRoll?: { values: number[]; total: number; rolledAt: number } | null;
+  jailTurnsRemaining?: Record<string, number>;
+  bankruptPlayerIds?: string[];
+  winnerId?: string | null;
+  passStartSalary?: number;
+  ledgerChecksum?: string;
+  freeDragMode?: boolean;
+  undoStack?: MatchSnapshot[];
+  redoStack?: MatchSnapshot[];
 }
 
 export interface BoardGamePackage {

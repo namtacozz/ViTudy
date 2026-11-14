@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { StudySpaceService, ensureUUID } from '@/services/StudySpaceService';
 import { sanitizeDocumentText } from '@/services/OfficeParserService';
 import { OfflineQueue } from '@/services/OfflineQueue';
+import { cleanupDeskItemsOnDelete } from '@/lib/boardGameEngine';
 
 export interface CreationPlacementTemplate {
   itemType?: import('@/types/studyspace').ItemType;
@@ -2694,8 +2695,8 @@ Trong đó:
         return {
           ...s,
           updatedAt: new Date().toISOString(),
-          items: s.items.filter(item => item.id !== id),
-          threads: (s.threads || []).filter(t => t.sourceItemId !== id),
+          items: cleanupDeskItemsOnDelete(s.items, id),
+          threads: (s.threads || []).filter(t => t.sourceItemId !== id && t.targetStickyId !== id),
         };
       });
       syncLocal(nextList);

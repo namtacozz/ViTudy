@@ -122,3 +122,10 @@
   * Tìm kiếm theo `profiles.discord_id`. Nếu chưa có, gộp vào tài khoản có email trùng (nếu email Discord đã xác minh) hoặc tạo người dùng Supabase mới.
   * Sinh magic link `token_hash` qua Supabase Auth Admin API và trả về client để thực hiện `supabase.auth.verifyOtp()`.
   * Phản hồi `{ token_hash: string, email: string, discord_id: string }`.
+
+---
+
+## 3. Supabase Realtime Broadcast (Multiplayer & Board Game Events)
+* **Vị trí file:** [`src/hooks/useRealtimeMultiplayer.ts`](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts)
+* **Kênh:** `room-${spaceId}` (Supabase Presence + Broadcast).
+* **Sự kiện Board Game (`game_event`):** Đồng bộ theo sự kiện (`ROLL`, `MOVE`, `BUY`, `PAY`, `UPGRADE`, `MORTGAGE`, `END_TURN`, `BANKRUPT`) qua `broadcastGameEvent` & `vitudy:game-event`. Áp dụng hàm kiểm tra `canEmitGameEvent`: chỉ người chơi đang tới lượt và không ở chế độ `?mode=view` mới được phát sự kiện.

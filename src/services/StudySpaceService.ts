@@ -278,7 +278,9 @@ export class StudySpaceService {
       const safeItemId = ensureUUID(itemId);
       await Promise.all([
         supabase.from('desk_documents').delete().eq('id', safeItemId),
-        supabase.from('inteline_threads').delete().eq('source_item_id', safeItemId),
+        supabase.from('document_pages').delete().eq('document_id', safeItemId),
+        supabase.from('inteline_threads').delete().or(`source_item_id.eq.${safeItemId},target_sticky_id.eq.${safeItemId}`),
+        supabase.from('desk_drawings').delete().eq('attached_to_item_id', safeItemId),
       ]);
     } catch (err) {
       console.warn('Lỗi deleteItem:', err);

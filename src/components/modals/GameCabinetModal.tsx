@@ -24,10 +24,21 @@ export function GameCabinetModal({ isOpen, onClose }: GameCabinetModalProps) {
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      setGames(GameCabinetStorage.listGames());
-      setDrawings(GameCabinetStorage.listDrawings());
-    }
+    if (!isOpen) return;
+    let active = true;
+    (async () => {
+      const [gList, dList] = await Promise.all([
+        GameCabinetStorage.listGames(),
+        GameCabinetStorage.listDrawings(),
+      ]);
+      if (active) {
+        setGames(gList);
+        setDrawings(dList);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
@@ -159,7 +170,10 @@ export function GameCabinetModal({ isOpen, onClose }: GameCabinetModalProps) {
                       <button
                         type="button"
                         title="Xóa khỏi tủ"
-                        onClick={() => setGames(GameCabinetStorage.deleteGame(g.id))}
+                        onClick={async () => {
+                          const next = await GameCabinetStorage.deleteGame(g.id);
+                          setGames(next);
+                        }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -206,7 +220,10 @@ export function GameCabinetModal({ isOpen, onClose }: GameCabinetModalProps) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDrawings(GameCabinetStorage.deleteDrawing(d.id))}
+                        onClick={async () => {
+                          const next = await GameCabinetStorage.deleteDrawing(d.id);
+                          setDrawings(next);
+                        }}
                         className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

@@ -22,6 +22,7 @@ export interface AskAiRequest {
   apiKey?: string;
   accessToken?: string;
   maxTokens?: number;
+  requestId?: string;
 }
 
 export interface AskAiResult {
@@ -330,6 +331,7 @@ Giải đáp:
       accessToken: resolvedOAuthToken,
       accountId: resolvedAccountId,
       maxTokens: req.maxTokens,
+      requestId: req.requestId,
     }),
   });
 
@@ -353,6 +355,44 @@ Giải đáp:
     provider: data.provider || req.provider,
     balanceAfter: data.balanceAfter,
   };
+}
+
+export async function refundAiRequest(
+  requestId: string
+): Promise<{ refunded: boolean; balanceAfter?: number }> {
+  const supabase = getSupabase();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl || !requestId) return { refunded: false };
+
+  let jwtToken = '';
+  if (supabase) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      jwtToken = session?.access_token || '';
+    } catch {}
+  }
+  if (!jwtToken) return { refunded: false };
+
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/ai-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`,
+      },
+      body: JSON.stringify({
+        action: 'refund_ai_request',
+        requestId,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    return {
+      refunded: Boolean(data.refunded),
+      balanceAfter: typeof data.balanceAfter === 'number' ? data.balanceAfter : undefined,
+    };
+  } catch {
+    return { refunded: false };
+  }
 }
 
 async function callDirectGemini(req: AskAiRequest): Promise<AskAiResult> {

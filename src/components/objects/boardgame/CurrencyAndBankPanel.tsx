@@ -7,9 +7,9 @@ import {
   CurrencyNoteDesign,
   VndDenomination,
   calculateBalanceTotal,
-  breakAmountIntoVndNotes,
   createStarterVndBalance,
 } from '@/types/boardgame';
+import { applyTransfer } from '@/lib/boardGameEngine';
 import { X, Banknote, Landmark, ArrowRightLeft, Coins } from 'lucide-react';
 
 interface CurrencyAndBankPanelProps {
@@ -48,87 +48,57 @@ export function CurrencyAndBankPanel({
   const balances = pkg.matchState?.playerBalances || {};
   const logs = pkg.matchState?.logs || [];
 
+  const [transferError, setTransferError] = useState<string | null>(null);
+
   const handleDealStarterCash = () => {
-    const nextBalances: Record<string, Record<VndDenomination, number>> = { ...balances };
-    const starter = createStarterVndBalance();
-    players.forEach((p) => {
-      nextBalances[p.id] = { ...starter };
-    });
-    const total = calculateBalanceTotal(starter);
-    onUpdatePackage({
+    setTransferError(null);
+    let working: BoardGamePackage = {
       ...pkg,
       matchState: {
         ...pkg.matchState,
         isPlaying: true,
-        playerBalances: nextBalances,
-        logs: [
-          {
-            id: `log-${Date.now()}`,
-            timestamp: new Date().toLocaleTimeString('vi-VN'),
-            message: `Ngân hàng đã phát ${total.toLocaleString('vi-VN')}đ cho ${players.length} người chơi.`,
-          },
-          ...logs,
-        ].slice(0, 30),
+        playerBalances: {},
+        logs: [],
+        ledgerChecksum: undefined,
       },
-    });
+    };
+    const starterAmount = calculateBalanceTotal(createStarterVndBalance());
+    for (const p of players) {
+      const res = applyTransfer(working, {
+        fromId: 'bank',
+        toId: p.id,
+        amount: starterAmount,
+        reason: 'Phát vốn khởi điểm đầu ván',
+      });
+      if (res.ok) working = res.pkg;
+    }
+    onUpdatePackage(working);
   };
 
   const handleTransferMoney = (direction: 'bank_to_player' | 'player_to_target') => {
+    setTransferError(null);
     const amount = Math.max(1000, Math.round(transferAmount / 1000) * 1000);
-    const nextBalances = { ...balances };
 
-    if (direction === 'bank_to_player') {
-      const curTotal = calculateBalanceTotal(nextBalances[selectedPlayerId]);
-      nextBalances[selectedPlayerId] = breakAmountIntoVndNotes(curTotal + amount);
-      const pName = players.find((p) => p.id === selectedPlayerId)?.name || selectedPlayerId;
-      onUpdatePackage({
-        ...pkg,
-        matchState: {
-          ...pkg.matchState,
-          playerBalances: nextBalances,
-          logs: [
-            {
-              id: `log-${Date.now()}`,
-              timestamp: new Date().toLocaleTimeString('vi-VN'),
-              message: `Ngân hàng chi ${amount.toLocaleString('vi-VN')}đ cho ${pName}.`,
-            },
-            ...logs,
-          ].slice(0, 30),
-        },
-      });
+    const res =
+      direction === 'bank_to_player'
+        ? applyTransfer(pkg, {
+            fromId: 'bank',
+            toId: selectedPlayerId,
+            amount,
+            reason: 'Ngân hàng chi tiền',
+          })
+        : applyTransfer(pkg, {
+            fromId: selectedPlayerId,
+            toId: targetPlayerId,
+            amount,
+            reason: 'Chuyển khoản trực tiếp',
+          });
+
+    if (!res.ok) {
+      setTransferError(res.error || 'Giao dịch không hợp lệ.');
       return;
     }
-
-    const senderTotal = calculateBalanceTotal(nextBalances[selectedPlayerId]);
-    if (senderTotal < amount) return;
-    nextBalances[selectedPlayerId] = breakAmountIntoVndNotes(senderTotal - amount);
-
-    if (targetPlayerId !== 'bank') {
-      const recvTotal = calculateBalanceTotal(nextBalances[targetPlayerId]);
-      nextBalances[targetPlayerId] = breakAmountIntoVndNotes(recvTotal + amount);
-    }
-
-    const fromName = players.find((p) => p.id === selectedPlayerId)?.name || selectedPlayerId;
-    const toName =
-      targetPlayerId === 'bank'
-        ? 'Ngân hàng'
-        : players.find((p) => p.id === targetPlayerId)?.name || targetPlayerId;
-
-    onUpdatePackage({
-      ...pkg,
-      matchState: {
-        ...pkg.matchState,
-        playerBalances: nextBalances,
-        logs: [
-          {
-            id: `log-${Date.now()}`,
-            timestamp: new Date().toLocaleTimeString('vi-VN'),
-            message: `${fromName} chuyển ${amount.toLocaleString('vi-VN')}đ cho ${toName}.`,
-          },
-          ...logs,
-        ].slice(0, 30),
-      },
-    });
+    onUpdatePackage(res.pkg);
   };
 
   const handleUpdateCurrencyDesign = (denom: VndDenomination, patch: Partial<CurrencyNoteDesign>) => {
@@ -315,6 +285,11 @@ export function CurrencyAndBankPanel({
                     Ngân hàng thưởng
                   </button>
                 </div>
+                {transferError && (
+                  <p className="text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5">
+                    {transferError}
+                  </p>
+                )}
               </div>
 
               {/* Nhật ký giao dịch */}

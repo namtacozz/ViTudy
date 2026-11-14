@@ -1,17 +1,179 @@
-import { askAi } from '@/lib/aiClient';
+import { askAi, refundAiRequest } from '@/lib/aiClient';
+import { getSupabase } from '@/lib/supabase';
 import { AiConfig } from '@/types/vitoken';
 import { GameCardItem } from '@/types/boardgame';
 
-function extractJsonArray(raw: string): any[] | null {
+export interface ValidatedAiDeckCard {
+  title: string;
+  description: string;
+  effectType: 'money_delta' | 'move_steps' | 'skip_turn';
+  effectValue: number;
+}
+
+export interface ValidatedAiTileItem {
+  title: string;
+  price: number;
+  headerColor: string;
+  baseRent: number;
+  houseCost: number;
+}
+
+const MONEY_MIN = -2_000_000;
+const MONEY_MAX = 2_000_000;
+const PRICE_MAX = 10_000_000;
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+export function extractJsonArray(raw: string): unknown[] | null {
   try {
     const trimmed = raw.trim();
     const start = trimmed.indexOf('[');
     const end = trimmed.lastIndexOf(']');
     if (start !== -1 && end > start) {
-      return JSON.parse(trimmed.slice(start, end + 1));
+      const parsed = JSON.parse(trimmed.slice(start, end + 1));
+      return Array.isArray(parsed) ? parsed : null;
     }
   } catch {}
   return null;
+}
+
+export function validateAiDeckCards(rawList: unknown): {
+  valid: boolean;
+  cards: ValidatedAiDeckCard[];
+  errors: string[];
+} {
+  if (!Array.isArray(rawList) || rawList.length === 0) {
+    return { valid: false, cards: [], errors: ['Dữ liệu thẻ phải là mảng không rỗng.'] };
+  }
+
+  const cards: ValidatedAiDeckCard[] = [];
+  const errors: string[] = [];
+
+  for (let i = 0; i < rawList.length; i++) {
+    const item = rawList[i] as Record<string, unknown> | null;
+    if (!item || typeof item !== 'object') {
+      errors.push(`Phần tử #${i} không phải object.`);
+      continue;
+    }
+    const title = typeof item.title === 'string' ? item.title.trim() : '';
+    const description = typeof item.description === 'string' ? item.description.trim() : '';
+    const effectType = item.effectType;
+    const effectValue = Number(item.effectValue);
+
+    if (!title || !description) {
+      errors.push(`Thẻ #${i} thiếu title hoặc description.`);
+      continue;
+    }
+    if (effectType !== 'money_delta' && effectType !== 'move_steps' && effectType !== 'skip_turn') {
+      errors.push(`Thẻ #${i} có effectType không hợp lệ: ${String(effectType)}.`);
+      continue;
+    }
+    if (!Number.isFinite(effectValue)) {
+      errors.push(`Thẻ #${i} có effectValue không phải số.`);
+      continue;
+    }
+    if (effectType === 'money_delta' && (effectValue < MONEY_MIN || effectValue > MONEY_MAX)) {
+      errors.push(`Thẻ #${i} money_delta vượt ngưỡng [${MONEY_MIN}, ${MONEY_MAX}].`);
+      continue;
+    }
+    if (effectType === 'move_steps' && (effectValue < -12 || effectValue > 12 || effectValue === 0)) {
+      errors.push(`Thẻ #${i} move_steps vượt ngưỡng [-12, 12] hoặc bằng 0.`);
+      continue;
+    }
+    if (effectType === 'skip_turn' && (effectValue < 1 || effectValue > 3)) {
+      errors.push(`Thẻ #${i} skip_turn vượt ngưỡng [1, 3].`);
+      continue;
+    }
+
+    cards.push({
+      title,
+      description,
+      effectType,
+      effectValue: Math.round(effectValue),
+    });
+  }
+
+  return {
+    valid: cards.length > 0 && errors.length === 0,
+    cards,
+    errors,
+  };
+}
+
+export function validateAiTileItems(rawList: unknown): {
+  valid: boolean;
+  items: ValidatedAiTileItem[];
+  errors: string[];
+} {
+  if (!Array.isArray(rawList) || rawList.length === 0) {
+    return { valid: false, items: [], errors: ['Dữ liệu ô đất phải là mảng không rỗng.'] };
+  }
+
+  const items: ValidatedAiTileItem[] = [];
+  const errors: string[] = [];
+
+  for (let i = 0; i < rawList.length; i++) {
+    const raw = rawList[i] as Record<string, unknown> | null;
+    if (!raw || typeof raw !== 'object') {
+      errors.push(`Ô #${i} không phải object.`);
+      continue;
+    }
+    const title = typeof raw.title === 'string' ? raw.title.trim() : '';
+    const price = Number(raw.price);
+    const baseRent = Number(raw.baseRent);
+    const houseCost = Number(raw.houseCost);
+    const headerColor = typeof raw.headerColor === 'string' ? raw.headerColor.trim() : '';
+
+    if (!title) {
+      errors.push(`Ô #${i} thiếu title.`);
+      continue;
+    }
+    if (!Number.isFinite(price) || price < 0 || price > PRICE_MAX) {
+      errors.push(`Ô #${i} có price không hợp lệ (${raw.price}).`);
+      continue;
+    }
+    if (!Number.isFinite(baseRent) || baseRent < 0 || baseRent > price) {
+      errors.push(`Ô #${i} có baseRent không hợp lệ (${raw.baseRent}).`);
+      continue;
+    }
+    if (!Number.isFinite(houseCost) || houseCost < 0 || houseCost > PRICE_MAX) {
+      errors.push(`Ô #${i} có houseCost không hợp lệ (${raw.houseCost}).`);
+      continue;
+    }
+    if (!HEX_COLOR_RE.test(headerColor)) {
+      errors.push(`Ô #${i} có headerColor không hợp lệ (${headerColor}).`);
+      continue;
+    }
+
+    items.push({
+      title,
+      price: Math.round(price),
+      headerColor,
+      baseRent: Math.round(baseRent),
+      houseCost: Math.round(houseCost),
+    });
+  }
+
+  return {
+    valid: items.length > 0 && errors.length === 0,
+    items,
+    errors,
+  };
+}
+
+export async function fetchModelViTokenCost(model: string): Promise<number> {
+  const supabase = getSupabase();
+  if (!supabase || !model) return 1;
+  try {
+    const { data, error } = await supabase
+      .from('ai_model_costs')
+      .select('vitoken_cost, enabled')
+      .eq('model', model)
+      .maybeSingle();
+    if (!error && data && typeof data.vitoken_cost === 'number') {
+      return Math.max(0, data.vitoken_cost);
+    }
+  } catch {}
+  return 1;
 }
 
 export async function generateBoardDeckWithAi(params: {
@@ -19,44 +181,72 @@ export async function generateBoardDeckWithAi(params: {
   topicPrompt: string;
   count: number;
   aiConfig: AiConfig;
-}): Promise<{ cards: GameCardItem[]; usedFallback: boolean }> {
+  onBalanceUpdate?: (balanceAfter?: number) => void;
+}): Promise<{ cards: GameCardItem[]; usedFallback: boolean; refunded?: boolean; requestId: string }> {
   const count = Math.max(4, Math.min(30, params.count));
-  const prompt = `Bạn là nhà thiết kế Board Game chuyên nghiệp. Hãy thu thập ý tưởng và tạo đúng ${count} thẻ bài cho bộ bài "${params.deckName}" với chủ đề: "${params.topicPrompt}".
-Trả về DUY NHẤT một mảng JSON hợp lệ (không giải thích thêm), mỗi phần tử có dạng:
+  const requestId =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `bg-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const basePrompt = `Bạn là nhà thiết kế Board Game chuyên nghiệp. Hãy tạo đúng ${count} thẻ bài cho bộ bài "${params.deckName}" với chủ đề: "${params.topicPrompt}".
+Trả về DUY NHẤT một mảng JSON hợp lệ (không markdown, không giải thích thêm), mỗi phần tử có dạng:
 {
   "title": "Tiêu đề ngắn gọn của thẻ",
   "description": "Nội dung sự kiện rõ ràng, thú vị",
   "effectType": "money_delta" | "move_steps" | "skip_turn",
-  "effectValue": số nguyên (VD: 50000, -20000, 3, -2, hoặc 1 nếu skip_turn)
+  "effectValue": số nguyên (money_delta trong [-2000000, 2000000], move_steps trong [-12, 12] khác 0, skip_turn trong [1, 3])
 }`;
 
-  try {
-    const res = await askAi({
-      provider: params.aiConfig.provider,
-      model: params.aiConfig.model,
-      prompt,
-      context: `Tạo bộ bài board game "${params.deckName}"`,
-      maxTokens: 2500,
-    });
+  const modelName = params.aiConfig.model || 'gpt-4o-mini';
 
-    const parsed = extractJsonArray(res.reply);
-    if (parsed && parsed.length > 0) {
-      const cards: GameCardItem[] = parsed.slice(0, count).map((item, idx) => ({
-        id: `card-${Date.now()}-${idx}`,
-        title: String(item.title || `Thẻ ${idx + 1}`),
-        description: String(item.description || 'Thực hiện hiệu ứng theo quy định.'),
-        effect: {
-          type:
-            item.effectType === 'move_steps' || item.effectType === 'skip_turn'
-              ? item.effectType
-              : 'money_delta',
-          value: typeof item.effectValue === 'number' ? item.effectValue : 20000,
-        },
-      }));
-      return { cards, usedFallback: false };
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const prompt =
+        attempt === 1
+          ? basePrompt
+          : `${basePrompt}\n\nCHÚ Ý QUAN TRỌNG: Lần trước JSON bị sai cấu trúc. Chỉ xuất đúng mảng JSON bắt đầu bằng '[' và kết thúc bằng ']'.`;
+
+      const res = await askAi({
+        provider: params.aiConfig.provider,
+        model: modelName,
+        prompt,
+        context: `Tạo bộ bài board game "${params.deckName}"`,
+        maxTokens: 2500,
+        requestId,
+      });
+
+      const parsed = extractJsonArray(res.reply);
+      const validation = validateAiDeckCards(parsed);
+      if (validation.valid) {
+        const cards: GameCardItem[] = validation.cards.slice(0, count).map((item, idx) => ({
+          id: `card-${Date.now()}-${idx}`,
+          title: item.title,
+          description: item.description,
+          effect: {
+            type: item.effectType,
+            value: item.effectValue,
+          },
+        }));
+
+        if (typeof res.balanceAfter === 'number') {
+          params.onBalanceUpdate?.(res.balanceAfter);
+        }
+
+        return { cards, usedFallback: false, requestId };
+      }
+    } catch {
+      // Thử lại lần 2 hoặc fallback offline
     }
-  } catch {
-    // Fallback offline phía dưới
+  }
+
+  // Thất bại hẳn -> hoàn tiền idempotent phía server nếu đã trừ qua system provider
+  let refunded = false;
+  if (params.aiConfig.provider === 'system') {
+    const refundRes = await refundAiRequest(requestId);
+    refunded = refundRes.refunded;
+    if (typeof refundRes.balanceAfter === 'number') {
+      params.onBalanceUpdate?.(refundRes.balanceAfter);
+    }
   }
 
   const isChance = params.deckName.toLowerCase().includes('cơ hội');
@@ -86,53 +276,79 @@ Trả về DUY NHẤT một mảng JSON hợp lệ (không giải thích thêm),
     };
   });
 
-  return { cards, usedFallback: true };
+  return { cards, usedFallback: true, refunded, requestId };
 }
 
 export async function generateTilesContentWithAi(params: {
   tileCount: number;
   themePrompt: string;
   aiConfig: AiConfig;
+  onBalanceUpdate?: (balanceAfter?: number) => void;
 }): Promise<{
-  items: { title: string; price: number; headerColor: string; baseRent: number; houseCost: number }[];
+  items: ValidatedAiTileItem[];
   usedFallback: boolean;
+  refunded?: boolean;
+  requestId: string;
 }> {
   const count = Math.max(1, params.tileCount);
-  const prompt = `Hãy thiết kế ${count} ô đất cho bàn cờ Board Game chủ đề: "${params.themePrompt}".
+  const requestId =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `bg-tile-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const basePrompt = `Hãy thiết kế ${count} ô đất cho bàn cờ Board Game chủ đề: "${params.themePrompt}".
 Trả về DUY NHẤT mảng JSON hợp lệ gồm ${count} phần tử:
 {
   "title": "Tên địa điểm ngắn gọn",
-  "price": số tiền mua (bội số của 10000, từ 60000 đến 400000),
-  "headerColor": mã màu hex nổi bật (VD: "#E0562D", "#2563eb", "#16a34a", "#9333ea", "#ca8a04"),
-  "baseRent": tiền thuê cơ bản (khoảng 10-20% giá mua),
-  "houseCost": tiền nâng cấp 1 nhà (khoảng 50% giá mua)
+  "price": số tiền mua >= 0 (bội số của 10000, từ 60000 đến 400000),
+  "headerColor": mã màu hex 6 ký tự (VD: "#E0562D", "#2563eb", "#16a34a", "#9333ea", "#ca8a04"),
+  "baseRent": tiền thuê cơ bản >= 0 và <= price,
+  "houseCost": tiền nâng cấp 1 nhà >= 0
 }`;
 
-  try {
-    const res = await askAi({
-      provider: params.aiConfig.provider,
-      model: params.aiConfig.model,
-      prompt,
-      context: `Thiết kế ${count} ô đất Board Game`,
-      maxTokens: 3000,
-    });
-    const parsed = extractJsonArray(res.reply);
-    if (parsed && parsed.length > 0) {
-      const items = Array.from({ length: count }, (_, idx) => {
-        const raw = parsed[idx % parsed.length];
-        const price = Math.max(10000, Number(raw.price) || (idx + 1) * 20000);
-        return {
-          title: String(raw.title || `Địa điểm ${idx + 1}`),
-          price,
-          headerColor: String(raw.headerColor || '#E0562D'),
-          baseRent: Math.max(5000, Number(raw.baseRent) || Math.round(price * 0.15)),
-          houseCost: Math.max(10000, Number(raw.houseCost) || Math.round(price * 0.5)),
-        };
+  const modelName = params.aiConfig.model || 'gpt-4o-mini';
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const prompt =
+        attempt === 1
+          ? basePrompt
+          : `${basePrompt}\n\nCHÚ Ý: JSON phải hợp lệ, price >= 0, baseRent <= price, headerColor là #RRGGBB.`;
+
+      const res = await askAi({
+        provider: params.aiConfig.provider,
+        model: modelName,
+        prompt,
+        context: `Thiết kế ${count} ô đất Board Game`,
+        maxTokens: 3000,
+        requestId,
       });
-      return { items, usedFallback: false };
+
+      const parsed = extractJsonArray(res.reply);
+      const validation = validateAiTileItems(parsed);
+      if (validation.valid) {
+        const items = Array.from({ length: count }, (_, idx) => {
+          const validItem = validation.items[idx % validation.items.length];
+          return { ...validItem };
+        });
+
+        if (typeof res.balanceAfter === 'number') {
+          params.onBalanceUpdate?.(res.balanceAfter);
+        }
+
+        return { items, usedFallback: false, requestId };
+      }
+    } catch {
+      // Retry / Fallback offline
     }
-  } catch {
-    // Fallback offline phía dưới
+  }
+
+  let refunded = false;
+  if (params.aiConfig.provider === 'system') {
+    const refundRes = await refundAiRequest(requestId);
+    refunded = refundRes.refunded;
+    if (typeof refundRes.balanceAfter === 'number') {
+      params.onBalanceUpdate?.(refundRes.balanceAfter);
+    }
   }
 
   const vnPlaces = [
@@ -155,5 +371,5 @@ Trả về DUY NHẤT mảng JSON hợp lệ gồm ${count} phần tử:
     };
   });
 
-  return { items, usedFallback: true };
+  return { items, usedFallback: true, refunded, requestId };
 }

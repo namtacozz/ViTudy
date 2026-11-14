@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-11-14 08:40 — main (Nghiệm thu & Vá lỗ hổng sau vòng 2 Board Game / Bảng Vẽ)
+- Task: Đảm bảo trừ/hoàn ViToken idempotent 100% trên server, chuyển multiplayer sang Host-Authoritative (bao gồm `UNDO`/`REDO`), chống trùng `SyncService.migrateToCloud`, xác nhận read-back IndexedDB trước khi xóa `localStorage` cũ, kiểm thử E2E 2 tab trên Chrome CDP 9222 và đo FPS bàn 20×20.
+- Changed:
+  - `supabase/functions/ai-chat/index.ts`, `src/lib/aiClient.ts`, `src/services/BoardGameAiService.ts`, `src/components/objects/boardgame/{DeckAndDeedModal,TileFormEditorModal}.tsx`: Gỡ hoàn toàn `spendTokens` ở client; dùng `requestId` idempotent cho `debit_vitoken` khi retry và bổ sung `refund_ai_request` (`credit_vitoken` với `p_reference: 'refund:<requestId>'`) khi lỗi hẳn.
+  - `src/hooks/useRealtimeMultiplayer.ts` & `src/components/objects/BoardGameArena.tsx`: Chuyển sang **Host-Authoritative** (`resolveRoomGameAction`, `STATE_SYNC` & `intent`), bổ sung `UNDO`/`REDO` vào `game_event`.
+  - `src/services/SyncService.ts` & `src/services/GameCabinetStorage.ts`: Chặn chạy trùng `migrateToCloud` khi đã migrate; `GameCabinetStorage` đọc lại xác minh từ IndexedDB (`idbGet`) trước khi xóa `localStorage` cũ và giữ fallback khi IndexedDB bị chặn.
+  - `src/services/BoardGameAiService.test.ts` & `src/lib/boardGameEngine.test.ts`: Bổ sung test 3 tình huống AI billing/refund, Host-Authoritative + `UNDO`/`REDO`, migrate 2 lần không trùng + remap `drawingAssetId`, IndexedDB blocked fallback, và test tích hợp dọn mồ côi.
+  - `docs/ai/{10_DECISIONS,SNAPSHOT,11_CHANGELOG}.md`: Thêm ADR-021 và cập nhật số lượng test.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (25/25 files, 106/106 tests pass), Chrome CDP 9222 E2E 2 tab + đo FPS 20×20, `pnpm run build:pages`, `pnpm run docs:index`, `pnpm run docs:check`.
+
+---
+
+## 2026-11-14 07:45 — main (Hoàn thiện Bảng Vẽ 4 Góc & Board Game Studio — Vòng 2)
+- Task: Nâng cấp Board Game Studio & Bảng Vẽ 4 Góc từ công cụ thiết kế thành chơi được trọn ván với toàn vẹn dữ liệu, engine luật chơi thuần, đồng bộ sự kiện Realtime, tách module và +25 unit tests mới.
+- Changed:
+  - `src/lib/boardGameEngine.ts` & `src/lib/boardGameEngine.test.ts`: Tạo engine luật chơi thuần (`initMatch`, `rollAndMove`, `buyProperty`, `payRent`, `upgradeHouse`, `mortgageProperty`, `declareBankruptcy`, `endTurn`, `undoMatchMove`/`redoMatchMove`), sổ cái tiền `applyTransfer` kèm `ledgerChecksum` chống DevTools, dọn mồ côi `deleteBoardTileSafe` & `cleanupDeskItemsOnDelete`.
+  - `src/services/GameCabinetStorage.ts`: Chuyển sang IndexedDB (`idbGet`/`idbSet`), nén ảnh cạnh dài tối đa 1024px, xử lý `QuotaExceededError` có thông báo.
+  - `src/services/SyncService.ts`, `src/context/StudySpaceContext.tsx`, `src/services/StudySpaceService.ts`: Migrate `artboard`, `board_game`, Kho bản vẽ & Tủ Game từ guest sang account; dọn sạch tham chiếu mồ côi khi xóa item.
+  - `src/services/BoardGameAiService.ts` & `src/services/BoardGameAiService.test.ts`: Thêm validator schema, retry khi JSON lỗi, tra bảng `ai_model_costs` và chỉ trừ ViToken sau khi sinh hợp lệ.
+  - `src/hooks/useRealtimeMultiplayer.ts`: Đồng bộ sự kiện `game_event` (`ROLL`, `MOVE`, `BUY`, `PAY`, `UPGRADE`, `MORTGAGE`, `END_TURN`, `BANKRUPT`) với guard `canEmitGameEvent`.
+  - `src/components/objects/FourCornerArtboard.tsx`: Bổ sung Redo, chọn vùng biến đổi nét, lớp nét/ảnh (scale/rotate), zoom/pan nội bộ, phím tắt (`Ctrl+Z`/`Ctrl+Y`/`Delete`/`B`/`E`), áp lực bút cảm ứng `e.pressure`.
+  - `src/components/objects/BoardGameArena.tsx` & `src/components/objects/boardgame/{BoardCanvas,TileView,PawnLayer,ActionPanel,DiceLayer}.tsx`: Tách module, `React.memo(TileView)`, viewport culling cho bàn 20×20 (400 ô), nối `TopDownDice3D` -> `rollAndMove`.
+  - `docs/ai/{04_DATA_MODEL,05_API_AND_ROUTES,06_UI_MAP,08_FEATURE_STATUS,09_ISSUES_AND_TODO,10_DECISIONS,SNAPSHOT,11_CHANGELOG}.md`: Cập nhật tài liệu theo Update Protocol.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (25/25 files, 103/103 tests pass), `pnpm run build:pages`, `pnpm run docs:index`, `pnpm run docs:check`.
+
+---
+
 ## 2026-11-13 22:14 — uncommitted (Board Game Studio & Bảng Vẽ 4 Góc)
 - Task: Xây dựng trọn vẹn hệ thống thiết kế Board Game (Bút Trò Chơi / Game Pen), Bảng Vẽ 4 Góc, Quân cờ khớp ô Map, Xúc xắc 3D top-down, Bộ thẻ Cơ hội/Khí vận (AI), Sổ Đỏ, Tiền VNĐ (1k–500k), Ngân hàng và Tủ Trò Chơi Cá Nhân.
 - Changed:

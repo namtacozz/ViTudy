@@ -336,6 +336,53 @@ serve(async (req: Request) => {
       );
     }
 
+    // Action: Idempotent Refund for failed AI generation (e.g., invalid JSON after retries)
+    if (body.action === 'refund_ai_request') {
+      const { user, error: authError } = await authenticateUser(req);
+      if (!user || authError) {
+        return new Response(
+          JSON.stringify({ error: 'unauthorized', message: 'Vui lòng đăng nhập.' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const reqId = typeof body.requestId === 'string' ? body.requestId.trim() : '';
+      if (!reqId) {
+        return new Response(
+          JSON.stringify({ error: 'missing_request_id', message: 'Thiếu requestId.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const supabaseAdmin = getServiceRoleClient();
+      const { data: debitTx } = await supabaseAdmin
+        .from('vitoken_transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .eq('reference', reqId)
+        .eq('transaction_type', 'ai_usage')
+        .maybeSingle();
+
+      if (!debitTx || !debitTx.amount) {
+        return new Response(
+          JSON.stringify({ refunded: false }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: refundedBalance, error: refundErr } = await supabaseAdmin.rpc('credit_vitoken', {
+        p_user: user.id,
+        p_amount: Math.abs(debitTx.amount),
+        p_type: 'refund',
+        p_description: 'Hoàn tiền AI do sinh dữ liệu thất bại',
+        p_reference: `refund:${reqId}`,
+      });
+      if (refundErr) throw refundErr;
+
+      return new Response(
+        JSON.stringify({ refunded: true, balanceAfter: refundedBalance }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const {
       provider = 'system',
       model = 'gpt-4o-mini',
@@ -345,6 +392,7 @@ serve(async (req: Request) => {
       accessToken = '',
       accountId: clientAccountId = '',
       maxTokens,
+      requestId: clientRequestId,
     } = body;
 
     // 1. Authenticate user via JWT (Strictly required for 'system' provider that debits ViToken)
@@ -415,10 +463,13 @@ serve(async (req: Request) => {
       }
     }
 
-    // 3. ViToken Debit for System Managed Provider
+    // 3. ViToken Debit for System Managed Provider (idempotent by p_reference)
     let tokenCost = 1;
     let balanceAfter: number | undefined;
-    const requestId = crypto.randomUUID();
+    const requestId =
+      typeof clientRequestId === 'string' && clientRequestId.trim()
+        ? clientRequestId.trim()
+        : crypto.randomUUID();
 
     if (provider === 'system' && user) {
       const { data: costData } = await supabaseAdmin

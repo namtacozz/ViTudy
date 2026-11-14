@@ -1,6 +1,12 @@
 import { StudySpace } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { StudySpaceService } from './StudySpaceService';
+import {
+  BOARD_GAMES_KEY,
+  DRAWING_ASSETS_KEY,
+  GameCabinetStorage,
+} from './GameCabinetStorage';
+import { idbSet } from '@/lib/indexeddb';
 
 export interface MigrationResult {
   migrated: number;
@@ -25,11 +31,15 @@ export class SyncService {
     }
 
     const raw = localStorage.getItem('vitudy_spaces');
-    if (!raw) return false;
+    const hasCabinetLocal =
+      Boolean(localStorage.getItem(DRAWING_ASSETS_KEY)) ||
+      Boolean(localStorage.getItem(BOARD_GAMES_KEY));
+
+    if (!raw) return hasCabinetLocal;
 
     try {
       const spaces: StudySpace[] = JSON.parse(raw);
-      if (!Array.isArray(spaces) || spaces.length === 0) return false;
+      if (!Array.isArray(spaces) || spaces.length === 0) return hasCabinetLocal;
 
       // Ignore pure initial demo spaces
       const demoIds = new Set(INITIAL_SPACES.map(s => s.id));
@@ -39,9 +49,9 @@ export class SyncService {
       // Check if user has added custom items beyond the initial mock items
       const initialTotalItems = INITIAL_SPACES.reduce((sum, s) => sum + (s.items?.length || 0), 0);
       const currentTotalItems = spaces.reduce((sum, s) => sum + (s.items?.length || 0), 0);
-      return currentTotalItems > initialTotalItems;
+      return currentTotalItems > initialTotalItems || hasCabinetLocal;
     } catch {
-      return false;
+      return hasCabinetLocal;
     }
   }
 
@@ -53,6 +63,10 @@ export class SyncService {
     };
 
     if (typeof window === 'undefined' || !userId) {
+      return result;
+    }
+
+    if (localStorage.getItem(`vitudy_migrated_${userId}`) === 'true') {
       return result;
     }
 
@@ -80,7 +94,7 @@ export class SyncService {
           id: newSpaceId,
         }, userId);
 
-        // Remap item IDs
+        // Remap item IDs (giữ nguyên artboardData, boardGameData và cập nhật drawingAssetId nếu có)
         const remappedItems = space.items.map(item => {
           const newItemId = item.id.length === 36 && item.id.includes('-')
             ? item.id
@@ -90,6 +104,22 @@ export class SyncService {
             ...item,
             id: newItemId,
           };
+        }).map(item => {
+          if (item.type === 'board_game' && item.boardGameData) {
+            return {
+              ...item,
+              boardGameData: {
+                ...item.boardGameData,
+                pawns: item.boardGameData.pawns.map(p => ({
+                  ...p,
+                  drawingAssetId: p.drawingAssetId
+                    ? (result.idMap[p.drawingAssetId] || p.drawingAssetId)
+                    : undefined,
+                })),
+              },
+            };
+          }
+          return item;
         });
 
         // Remap threads targets and source items
@@ -123,6 +153,36 @@ export class SyncService {
         } catch {}
 
         result.migrated += remappedItems.length;
+      }
+
+      // Migrate Kho bản vẽ & Tủ Game từ Guest sang tài khoản đăng nhập
+      try {
+        const [drawings, games] = await Promise.all([
+          GameCabinetStorage.listDrawings(),
+          GameCabinetStorage.listGames(),
+        ]);
+
+        if (drawings.length > 0) {
+          if (typeof indexedDB !== 'undefined') {
+            await idbSet(`user_${userId}_${DRAWING_ASSETS_KEY}`, drawings);
+          }
+          for (const d of drawings) {
+            await GameCabinetStorage.saveDrawing(d);
+          }
+          result.migrated += drawings.length;
+        }
+
+        if (games.length > 0) {
+          if (typeof indexedDB !== 'undefined') {
+            await idbSet(`user_${userId}_${BOARD_GAMES_KEY}`, games);
+          }
+          for (const g of games) {
+            await GameCabinetStorage.saveGame(g);
+          }
+          result.migrated += games.length;
+        }
+      } catch (cabinetErr: any) {
+        result.errors.push(cabinetErr?.message || 'Lỗi di chuyển Kho bản vẽ / Tủ Game');
       }
 
       // Mark user as migrated

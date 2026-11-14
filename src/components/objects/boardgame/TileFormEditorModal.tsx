@@ -28,7 +28,7 @@ export function TileFormEditorModal({
   onApplyFormToAll,
   onAiFillAllTiles,
 }: TileFormEditorModalProps) {
-  const { aiConfig } = useViToken();
+  const { aiConfig, syncBalanceFromServer } = useViToken();
   const [mounted, setMounted] = useState(false);
 
   const [title, setTitle] = useState('');
@@ -114,6 +114,11 @@ export function TileFormEditorModal({
         tileCount: totalNormalTilesCount,
         themePrompt: aiPrompt,
         aiConfig,
+        onBalanceUpdate: (balanceAfter) => {
+          if (typeof balanceAfter === 'number') {
+            syncBalanceFromServer(balanceAfter);
+          }
+        },
       });
       onAiFillAllTiles(res.items);
       onClose();

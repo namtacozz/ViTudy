@@ -199,3 +199,25 @@
   4. **Thanh công cụ ngữ cảnh nổi trên Sticky Note (`StickyNoteItem`):** Tích hợp bảng đổi 5 màu giấy note pastel (Vàng ấm, Cam đào, Xanh mint, Lam nhạt, Hồng phấn) và nút phóng to cỡ chữ (A/A+) một chạm.
   5. **Dây nối tư duy 2.5D phong cách Chỉ Ghim Thám Tử (`VisualLinkThreads`):** Chuyển từ dây laser phát sáng sang sợi chỉ đỏ vật lý có bóng đổ tự nhiên, độ chùng võng trọng lực (gravity sag) và hai đầu đinh ghim tròn kim loại đỏ kết nối từ Sách sang Ghi chú.
 * **Lý do:** Tối ưu hóa không gian hiển thị, tăng cường tính trực quan học tập và kế thừa những tinh hoa công thái học tốt nhất từ Miro.
+
+---
+
+### ADR-020 — Engine Luật Chơi Thuần (`boardGameEngine.ts`) & Sổ Cái Tiền Chống Chỉnh Sửa (`applyTransfer`)
+* **Ngày quyết định:** `2026-11-14`
+* **Quyết định:**
+  1. Tách toàn bộ luật chơi Board Game (lượt đi, xúc xắc đi vòng nhận lương Start, ô phạt/tù, mua đất, trả thuê, nâng nhà, thế chấp, phá sản, điều kiện thắng, Undo/Redo) thành các hàm thuần trong [`src/lib/boardGameEngine.ts`](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts).
+  2. Mọi biến động số dư giữa người chơi và Ngân hàng bắt buộc đi qua duy nhất hàm `applyTransfer`, kiểm tra số dư $\ge 0$, ghi `BankTransactionLog` và cập nhật `ledgerChecksum` chống chỉnh sửa trực tiếp qua DevTools.
+  3. Đồng bộ Realtime qua Supabase Broadcast theo từng sự kiện (`ROLL`, `MOVE`, `BUY`, `PAY`, `UPGRADE`, `MORTGAGE`, `END_TURN`, `BANKRUPT`), chỉ người chơi đang tới lượt mới được phát sự kiện.
+* **Lý do:** Đảm bảo tính nhất quán tuyệt đối giữa trạng thái local, undo/redo và đồng bộ nhiều người chơi, đồng thời ngăn chặn gian lận/sai lệch số dư.
+* **Giải pháp thay thế bị bác bỏ:** Để UI tự cộng trừ `playerBalances` trực tiếp trong từng component. Bị bác bỏ vì dễ phát sinh lỗi đồng bộ, không kiểm soát được số dư âm và không chống được sửa state thủ công.
+
+---
+
+## ADR-021: Host-Authoritative Multiplayer & Phạm Vi Bảo Vệ `ledgerChecksum`
+* **Ngày:** 2026-11-14
+* **Trạng thái:** Đã chấp nhận
+* **Bối cảnh:** Trong phòng học trực tuyến nhiều người chơi (`?room=...`), nếu mọi client đều tự chạy `boardGameEngine` rồi phát state đè lên nhau sẽ dễ lệch state khi mạng trễ hoặc khi một client cố tình sửa state. Đồng thời `ledgerChecksum` trên client có thể bị đọc lại công thức nếu kẻ gian giải mã JS.
+* **Quyết định:**
+  1. Áp dụng mô hình **Host-Authoritative** qua `resolveRoomGameAction` (`useRealtimeMultiplayer.ts` & `BoardGameArena.tsx`): Chỉ Host chạy engine luật chơi và phát `STATE_SYNC` (`kind: 'authoritative_state'`) làm chân lý duy nhất cho toàn phòng. Các client không phải Host chỉ gửi ý định (`kind: 'intent'`: `ROLL`, `BUY`, `PAY`, `UPGRADE`, `MORTGAGE`, `END_TURN`, `BANKRUPT`, `UNDO`, `REDO`).
+  2. Ghi rõ giới hạn: `ledgerChecksum` chỉ dùng để **phát hiện sửa tay tình cờ qua DevTools / `localStorage`** trên client; chống gian lận có chủ đích giữa nhiều máy dựa vào quyền phán quyết của Host (hoặc server RPC đối với ví ViToken thật).
+  3. Toàn bộ trừ/hoàn ViToken khi gọi AI của Board Game (`BoardGameAiService`) chỉ thực hiện qua RPC server `debit_vitoken` / `credit_vitoken` trong `ai-chat` Edge Function với `requestId` (`p_reference`) idempotent (retry không trừ thêm, lỗi hẳn sẽ `refundAiRequest`), không trừ ở client.
