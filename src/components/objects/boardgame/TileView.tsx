@@ -225,11 +225,30 @@ export const TileView = React.memo(function TileView({
           </span>
         ) : isTrackNode ? (
           <span className="text-[9px] font-bold text-slate-500">Nút</span>
-        ) : tile.title ? (
-          <span className="text-[9px] font-bold text-slate-700 text-center px-1 truncate max-w-full">
-            {tile.title}
-          </span>
-        ) : null}
+        ) : (
+          <>
+            {tile.title && tile.form?.hasHeader === false && (
+              <span className="text-[9px] font-bold text-slate-700 text-center px-1 truncate max-w-full">
+                {tile.title}
+              </span>
+            )}
+            {(tile.customFields || [])
+              .filter((f) => f.showOnTile !== false && (f.label || f.value))
+              .slice(0, 3)
+              .map((f) => (
+                <div
+                  key={f.id}
+                  className={
+                    f.type === 'badge'
+                      ? 'px-1 py-0.2 rounded bg-orange-50 border border-orange-200 text-[#E0562D] text-[8px] font-bold truncate max-w-full mt-0.5'
+                      : 'text-[8px] text-slate-600 font-medium truncate max-w-full leading-tight'
+                  }
+                >
+                  {f.label ? `${f.label}: ${f.value}` : f.value}
+                </div>
+              ))}
+          </>
+        )}
 
         {deedOwnerPawn && (
           <div

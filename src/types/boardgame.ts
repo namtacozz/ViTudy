@@ -175,6 +175,24 @@ export function getBoardShapeClipPath(shape?: BoardShape): string | undefined {
   }
 }
 
+export interface TileCustomField {
+  id: string;
+  label: string;
+  value: string;
+  type: 'text' | 'number' | 'badge';
+  showOnTile?: boolean;
+}
+
+export interface TileTemplatePreset {
+  id: string;
+  name: string;
+  shape: BoardShape;
+  hasFunction: boolean;
+  form: TileFormTemplate;
+  customFields: TileCustomField[];
+  createdAt: string;
+}
+
 export interface BoardTile {
   id: string;
   role: BoardTileRole;
@@ -187,6 +205,7 @@ export interface BoardTile {
   height: number;
   hasFunction: boolean;
   form?: TileFormTemplate;
+  customFields?: TileCustomField[];
   title?: string;
   subtitle?: string;
   content?: string;
@@ -296,6 +315,7 @@ export interface MatchSnapshot {
   playerBalances: Record<string, Record<VndDenomination, number>>;
   pawns: GamePawn[];
   tiles: BoardTile[];
+  tileTemplates?: TileTemplatePreset[];
   decks: GameCardDeck[];
   currentTurnIndex: number;
   turnPhase: 'roll' | 'action' | 'ended';
@@ -365,6 +385,7 @@ export interface BoardGamePackage {
     backgroundImageUrl?: string;
   };
   tiles: BoardTile[];
+  tileTemplates?: TileTemplatePreset[];
   decks: GameCardDeck[];
   links: GameNodeLink[];
   currencyDesigns: CurrencyNoteDesign[];

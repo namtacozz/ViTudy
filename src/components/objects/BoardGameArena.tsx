@@ -1183,6 +1183,8 @@ export const BoardGameArena = React.memo(function BoardGameArena({
         isOpen={Boolean(editingTile)}
         tile={editingTile}
         totalNormalTilesCount={normalTilesCount}
+        ruleMode={pkg.ruleMode || 'sandbox'}
+        tileTemplates={pkg.tileTemplates || []}
         onClose={() => setEditingTile(null)}
         onSaveTile={(updatedTile) => {
           commitPkg({
@@ -1190,14 +1192,40 @@ export const BoardGameArena = React.memo(function BoardGameArena({
             tiles: pkg.tiles.map((t) => (t.id === updatedTile.id ? updatedTile : t)),
           });
         }}
-        onApplyFormToAll={(formTemplate) => {
+        onSaveTileTemplate={(tpl) => {
+          commitPkg({
+            ...pkg,
+            tileTemplates: [tpl, ...(pkg.tileTemplates || []).filter((x) => x.id !== tpl.id)],
+          });
+          showToast(`Đã lưu mẫu ô "${tpl.name}"!`);
+        }}
+        onDeleteTileTemplate={(tplId) => {
+          commitPkg({
+            ...pkg,
+            tileTemplates: (pkg.tileTemplates || []).filter((x) => x.id !== tplId),
+          });
+        }}
+        onApplyFormToAll={(formTemplate, hasFn, opts) => {
           commitPkg({
             ...pkg,
             tiles: pkg.tiles.map((t) =>
-              t.role === 'normal_cell' ? { ...t, form: { ...formTemplate } } : t
+              t.role === 'normal_cell'
+                ? {
+                    ...t,
+                    hasFunction: hasFn,
+                    shape: opts?.shape ?? t.shape,
+                    form: { ...formTemplate },
+                    customFields: opts?.customFields
+                      ? opts.customFields.map((f, idx) => ({
+                          ...f,
+                          id: `fld-${t.id}-${idx}-${Date.now()}`,
+                        }))
+                      : t.customFields,
+                  }
+                : t
             ),
           });
-          showToast('Đã áp dụng mẫu form lên toàn bộ ô cờ!');
+          showToast('Đã áp dụng mẫu lên toàn bộ ô cờ!');
         }}
         onAiFillAllTiles={(aiItems) => {
           let i = 0;
