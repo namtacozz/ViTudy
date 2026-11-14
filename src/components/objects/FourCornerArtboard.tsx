@@ -405,10 +405,11 @@ export const FourCornerArtboard = React.memo(function FourCornerArtboard({
         ref={canvasRef}
         width={w}
         height={h}
+        onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={handleCanvasPointerDown}
         onPointerMove={handleCanvasPointerMove}
         onPointerUp={handleCanvasPointerUp}
-        className="w-full h-full rounded-2xl touch-none cursor-crosshair block"
+        className="interactive-control w-full h-full rounded-2xl touch-none cursor-crosshair block"
       />
 
       {/* Preview khung kéo chọn vùng xóa */}

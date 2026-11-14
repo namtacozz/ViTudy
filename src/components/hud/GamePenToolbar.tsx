@@ -49,35 +49,35 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
     setActiveTool('create_note');
   };
 
-  const tools: { id: GamePenTool; label: string; desc: string; icon: React.ReactNode }[] = [
-    { id: 'select', label: 'Chọn / Sửa', desc: 'Nhấp vào ô để sửa form', icon: <MousePointer className="w-4 h-4" /> },
-    { id: 'create_draw_tile', label: 'Ô Rút Thẻ', desc: 'Cơ hội / Khí vận', icon: <SquareStack className="w-4 h-4" /> },
-    { id: 'create_deck', label: 'Bộ Thẻ / Sổ Đỏ', desc: 'Xấp bài & AI sinh thẻ', icon: <Layers className="w-4 h-4" /> },
-    { id: 'create_dice', label: 'Ô Xúc Xắc 3D', desc: 'Ô tròn thả 3D từ trên cao', icon: <Dices className="w-4 h-4" /> },
-    { id: 'create_external_info', label: 'Ô Ngoài Map', desc: 'Nâng nhà, tiền phạt, bán lại', icon: <Info className="w-4 h-4" /> },
-    { id: 'create_bank', label: 'Ô Ngân Hàng', desc: 'Quầy tiền VNĐ 1k–500k', icon: <Landmark className="w-4 h-4" /> },
-    { id: 'connect_nodes', label: 'Kéo Dây Nối', desc: 'Nối ô đất với ô thông tin / thẻ', icon: <Link2 className="w-4 h-4" /> },
+  const tools: { id: GamePenTool; title: string; icon: React.ReactNode }[] = [
+    { id: 'select', title: 'Chọn & Sửa ô cờ (Nhấp vào ô để thiết kế form)', icon: <MousePointer className="w-4.5 h-4.5 stroke-[2.2]" /> },
+    { id: 'create_draw_tile', title: 'Tạo ô rút thẻ (Cơ hội / Khí vận)', icon: <SquareStack className="w-4.5 h-4.5 stroke-[2.2]" /> },
+    { id: 'create_deck', title: 'Tạo bộ thẻ / Sổ đỏ (AI thu thập dữ liệu tạo thẻ)', icon: <Layers className="w-4.5 h-4.5 stroke-[2.2]" /> },
+    { id: 'create_dice', title: 'Tạo ô tròn thả xúc xắc 3D (Từ trên cao xuống)', icon: <Dices className="w-4.5 h-4.5 stroke-[2.2]" /> },
+    { id: 'create_external_info', title: 'Tạo ô thông tin ngoài map (Nâng nhà, tiền phạt, bán lại)', icon: <Info className="w-4.5 h-4.5 stroke-[2.2]" /> },
+    { id: 'create_bank', title: 'Tạo ô Ngân hàng (Tiền Việt Nam 1k–500k)', icon: <Landmark className="w-4.5 h-4.5 stroke-[2.2]" /> },
+    { id: 'connect_nodes', title: 'Kéo dây kết nối (Nối ô đất với ô thông tin / bộ thẻ)', icon: <Link2 className="w-4.5 h-4.5 stroke-[2.2]" /> },
   ];
 
   return (
-    <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-45 bg-white/95 backdrop-blur-md border border-slate-300 rounded-2xl p-2 shadow-2xl flex items-center gap-1.5 pointer-events-auto select-none">
-      {/* Nút Tạo Map kèm popover cấu hình */}
+    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl flex flex-col items-center gap-1.5 z-50 animate-fade-in min-w-[46px] select-none">
+      {/* Nút Tạo Map kèm popover cấu hình bung sang phải */}
       <div className="relative">
         <button
           type="button"
+          title="Tạo Map Board Game (Kéo thả lưới Full ô hoặc Ô viền N×M)"
           onClick={() => setShowMapConfig((v) => !v)}
-          className={`px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-all ${
+          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             showMapConfig || activeGamePenTool === 'create_map'
-              ? 'bg-[#E0562D] text-white shadow-sm'
+              ? 'bg-[#E0562D] text-white shadow-xs'
               : 'bg-orange-50 text-[#E0562D] border border-[#FFEDD5] hover:bg-orange-100'
           }`}
         >
-          <Grid className="w-4 h-4" />
-          <span>Tạo Map</span>
+          <Grid className="w-4.5 h-4.5 stroke-[2.2]" />
         </button>
 
         {showMapConfig && (
-          <div className="absolute bottom-full left-0 mb-3 w-72 bg-white border border-slate-300 rounded-2xl shadow-2xl p-3.5 space-y-3 z-50">
+          <div className="absolute left-full top-0 ml-3 w-72 bg-white border border-slate-300 rounded-2xl shadow-2xl p-3.5 space-y-3 z-50">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-slate-900">Cấu hình Map Board Game</span>
               <button
@@ -149,46 +149,45 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
         )}
       </div>
 
-      <div className="w-px h-7 bg-slate-200 mx-0.5" />
+      <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
 
       {tools.map((t) => (
         <button
           key={t.id}
           type="button"
-          title={t.desc}
+          title={t.title}
           onClick={() => setActiveGamePenTool(t.id)}
-          className={`px-2.5 py-2 rounded-xl flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-all ${
+          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             activeGamePenTool === t.id
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-700 hover:bg-slate-100'
+              ? 'bg-slate-200 text-slate-900 font-bold border border-slate-300'
+              : 'text-slate-900 hover:bg-slate-100'
           }`}
         >
           {t.icon}
-          <span className="hidden lg:inline">{t.label}</span>
         </button>
       ))}
 
-      <div className="w-px h-7 bg-slate-200 mx-0.5" />
+      <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
 
       <button
         type="button"
+        title="Mở Tủ Trò Chơi Cá Nhân (Lấy game đã lưu ra chơi hoặc sửa lại)"
         onClick={onOpenCabinet}
-        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-[#E0562D] hover:bg-orange-50 transition-all cursor-pointer"
       >
-        <Archive className="w-4 h-4 text-[#E0562D]" />
-        <span>Tủ Game</span>
+        <Archive className="w-4.5 h-4.5 stroke-[2.2]" />
       </button>
 
       <button
         type="button"
-        title="Thoát Bút Trò Chơi"
+        title="Đóng Bút Trò Chơi"
         onClick={() => {
           setActiveGamePenTool('select');
           setActiveTool('cursor');
         }}
-        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
       >
-        <X className="w-4 h-4" />
+        <X className="w-4 h-4 stroke-[2.2]" />
       </button>
     </div>
   );

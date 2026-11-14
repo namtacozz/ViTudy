@@ -566,6 +566,9 @@ export function LeftCreationBar() {
           onClose={() => setIsStickerPickerOpen(false)}
           onSelect={handleSelectStickerItem}
         />
+
+        {/* Thanh công cụ dọc Bút Trò Chơi (Game Pen) nằm cạnh thanh bên giống Pen/Highlight */}
+        <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
       </div>
 
       {/* Grouped Undo & Redo Column Pill below toolbar (Width and button sizes matching the main toolbar above) */}
@@ -609,9 +612,6 @@ export function LeftCreationBar() {
           </>
         )}
       </div>
-
-      {/* Thanh công cụ nổi Bút Trò Chơi (Game Pen) */}
-      <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
 
       {/* Modal Tủ Trò Chơi & Kho Bản Vẽ Cá Nhân */}
       <GameCabinetModal
