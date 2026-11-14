@@ -83,33 +83,33 @@ export function BottomRightToolkit() {
         <button
           title={isViewRotateMode ? "Đang bật chế độ xoay (Kéo bất kỳ đâu để xoay, nhấp để tắt)" : "Bật chế độ xoay bàn học (Kéo bất kỳ đâu để xoay)"}
           onClick={() => setIsViewRotateMode(prev => !prev)}
-          className={`p-2 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
+          className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer flex items-center justify-center ${
             isViewRotateMode 
               ? 'bg-[#E0562D] text-white shadow-xs' 
               : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <RotateTwoWay className="w-5 h-5 stroke-[2.4]" />
+          <RotateTwoWay className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
         </button>
 
         {/* Nút Căn chỉnh thông minh / Snap bàn học ngay ngắn */}
         <button
           title="Căn chỉnh bố cục bàn học ngay ngắn (Snap Grid)"
           onClick={() => tidyUpDesk?.()}
-          className="p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          className="p-1.5 sm:p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-lg sm:rounded-xl transition-colors cursor-pointer"
         >
-          <Sparkles className="w-5 h-5 stroke-[2.4]" />
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
         </button>
 
-        <div className="w-[1px] h-5 bg-slate-200" />
+        <div className="hidden sm:block w-[1px] h-5 bg-slate-200" />
 
-        {/* Zoom Out */}
+        {/* Zoom Out (Ẩn trên mobile hẹp vì đã có cử chỉ 2 ngón tay Pinch-to-zoom) */}
         <button
           title="Thu nhỏ"
           onClick={() => zoomBy(0.85)}
-          className="p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          className="hidden sm:flex p-1.5 sm:p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-lg sm:rounded-xl transition-colors cursor-pointer"
         >
-          <ZoomOut className="w-5 h-5 stroke-[2.4]" />
+          <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
         </button>
 
         {/* Zoom Scale Percentage & Miro-style Dropdown Menu */}
@@ -117,7 +117,7 @@ export function BottomRightToolkit() {
           <button
             title="Tùy chọn hiển thị & Zoom (Nhấp để mở menu)"
             onClick={() => setIsZoomMenuOpen(prev => !prev)}
-            className="px-2.5 py-1 text-xs font-mono text-slate-900 hover:text-black font-black hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
+            className="px-1.5 sm:px-2.5 py-1 text-xs font-mono text-slate-900 hover:text-black font-black hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
           >
             <span>{Math.round(transform.scale * 100)}%</span>
           </button>
@@ -185,22 +185,22 @@ export function BottomRightToolkit() {
           )}
         </div>
 
-        {/* Zoom In */}
+        {/* Zoom In (Ẩn trên mobile hẹp) */}
         <button
           title="Phóng to"
           onClick={() => zoomBy(1.15)}
-          className="p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          className="hidden sm:flex p-1.5 sm:p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-lg sm:rounded-xl transition-colors cursor-pointer"
         >
-          <ZoomIn className="w-5 h-5 stroke-[2.4]" />
+          <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
         </button>
 
         {/* Fit to screen / Maximize */}
         <button
           title="Căn giữa bàn học"
           onClick={resetView}
-          className="p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          className="p-1.5 sm:p-2 text-slate-800 hover:text-black hover:bg-slate-100 rounded-lg sm:rounded-xl transition-colors cursor-pointer"
         >
-          <Maximize2 className="w-5 h-5 stroke-[2.4]" />
+          <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
         </button>
       </div>
     </div>

@@ -430,7 +430,7 @@ export function TopRightWallet() {
     <>
       <div 
         data-tour="wallet-market"
-        className="relative flex items-center bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-0.5 sm:p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none gap-0.5 sm:gap-1 max-w-[50vw] shrink-0 justify-end"
+        className="relative flex items-center bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-0.5 sm:p-1.5 shadow-sm backdrop-blur-md pointer-events-auto select-none gap-0.5 sm:gap-1 shrink-0 justify-end"
       >
         {/* Daily Streak Button */}
         <button
@@ -463,9 +463,9 @@ export function TopRightWallet() {
           )}
         </button>
 
-        <div className="hidden sm:block w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="hidden md:block w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
-        {/* Chợ Tài Liệu (Ẩn trên mobile nhỏ để tránh đè lên TopLeftNav) */}
+        {/* Chợ Tài Liệu (Chỉ hiện từ md trở lên để không đè lên TopLeftNav trên mobile/landscape) */}
         <button
           id="market-trigger-btn"
           data-tour="market-btn"
@@ -475,7 +475,7 @@ export function TopRightWallet() {
           }}
           title="Chợ tài liệu"
           aria-label="Chợ tài liệu"
-          className={`hidden sm:flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer group ${
+          className={`hidden md:flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer group ${
             isMarketOpen 
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -512,7 +512,7 @@ export function TopRightWallet() {
             <span className="text-xs font-black font-mono text-slate-900">
               {wallet.balance}
             </span>
-            <span className="text-[11px] font-bold text-slate-600 hidden sm:inline">
+            <span className="text-[11px] font-bold text-slate-600 hidden md:inline">
               ViToken
             </span>
           </button>
@@ -531,9 +531,9 @@ export function TopRightWallet() {
           </button>
         </div>
 
-        <div className="hidden sm:block w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="hidden md:block w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
-        {/* AI Bot Pill (Ẩn trên mobile nhỏ để tránh đè lên TopLeftNav) */}
+        {/* AI Bot Pill (Chỉ hiện từ md trở lên để không đè lên TopLeftNav trên mobile/landscape) */}
         <button
           id="ai-config-trigger-btn"
           data-tour="inteline-btn"
@@ -541,7 +541,7 @@ export function TopRightWallet() {
             closeAllModals();
             setIsAiModalOpen(true);
           }}
-          className={`hidden sm:flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer ${
+          className={`hidden md:flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer ${
             isAiModalOpen 
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'

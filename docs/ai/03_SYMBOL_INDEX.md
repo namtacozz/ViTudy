@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `5ee70c5`  
+> **Commit Hash:** `9b58a9c`  
 > **Cập nhật lần cuối:** `2026-11-14`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -20,7 +20,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `MindMapConnectors` | `component` | [src/components/canvas/MindMapConnectors.tsx:L6-L103](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/MindMapConnectors.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
 | `Minimap` | `component` | [src/components/canvas/Minimap.tsx:L12-L235](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/Minimap.tsx) | Bản đồ radar thu nhỏ góc nhìn toàn cảnh không gian bàn học 2.5D |
 | `MultiplayerCursorsLayer` | `component` | [src/components/canvas/MultiplayerCursorsLayer.tsx:L11-L57](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/MultiplayerCursorsLayer.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
-| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L19-L263](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
+| `StudySpaceDeskView` | `component` | [src/components/canvas/StudySpaceDeskView.tsx:L19-L262](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/StudySpaceDeskView.tsx) | Component trung tâm tích hợp toàn bộ Canvas bàn học, HUD 4 góc và modal |
 | `VisualLinkThreads` | `component` | [src/components/canvas/VisualLinkThreads.tsx:L6-L215](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/VisualLinkThreads.tsx) | Vẽ các đường dây nối SVG trực quan từ đoạn trích sách sang giấy note Inteline |
 
 ### Objects (Sách, Giấy, Note)
@@ -70,7 +70,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `ModelItem` | `type` | [src/components/hud/TopRightWallet.tsx:L61-L65](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L23-L404](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L35-L731](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L37-L527](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
+| `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L37-L529](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
 | `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L145-L1264](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
 | `VrFrameOverlay` | `component` | [src/components/hud/VrFrameOverlay.tsx:L5-L15](file:////home/nhat/Documents/DUT/ViTudy/src/components/hud/VrFrameOverlay.tsx) | Khung viền 4 góc và nhãn chế độ "Không gian học 2.5D" phong cách VR HUD |
 
@@ -106,14 +106,14 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
 | `AuthContextType` | `type` | [src/context/AuthContext.tsx:L23-L35](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `AuthProvider` | `context` | [src/context/AuthContext.tsx:L39-L314](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
+| `AuthProvider` | `context` | [src/context/AuthContext.tsx:L39-L322](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `AuthResult` | `type` | [src/context/AuthContext.tsx:L18-L21](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `AuthStatus` | `type` | [src/context/AuthContext.tsx:L8-L8](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `CreationPlacementTemplate` | `type` | [src/context/StudySpaceContext.tsx:L15-L34](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `PomodoroProvider` | `context` | [src/context/PomodoroContext.tsx:L35-L168](file:////home/nhat/Documents/DUT/ViTudy/src/context/PomodoroContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L192-L2913](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
-| `useAuth` | `hook` | [src/context/AuthContext.tsx:L320-L326](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `useOptionalAuth` | `hook` | [src/context/AuthContext.tsx:L328-L330](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
+| `useAuth` | `hook` | [src/context/AuthContext.tsx:L328-L334](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
+| `useOptionalAuth` | `hook` | [src/context/AuthContext.tsx:L336-L338](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `usePomodoroContext` | `hook` | [src/context/PomodoroContext.tsx:L170-L176](file:////home/nhat/Documents/DUT/ViTudy/src/context/PomodoroContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `UserProfile` | `type` | [src/context/AuthContext.tsx:L10-L16](file:////home/nhat/Documents/DUT/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L2915-L2921](file:////home/nhat/Documents/DUT/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
@@ -293,7 +293,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `AiProvider` | `type` | [src/types/vitoken.ts:L19-L19](file:////home/nhat/Documents/DUT/ViTudy/src/types/vitoken.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ArtboardImageLayer` | `type` | [src/types/boardgame.ts:L41-L50](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ArtboardStroke` | `type` | [src/types/boardgame.ts:L32-L39](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `AuthCallbackPage` | `component` | [src/app/auth/callback/page.tsx:L8-L98](file:////home/nhat/Documents/DUT/ViTudy/src/app/auth/callback/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `AuthCallbackPage` | `component` | [src/app/auth/callback/page.tsx:L8-L100](file:////home/nhat/Documents/DUT/ViTudy/src/app/auth/callback/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AuthForm` | `component` | [src/components/auth/AuthForm.tsx:L16-L258](file:////home/nhat/Documents/DUT/ViTudy/src/components/auth/AuthForm.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AuthPage` | `component` | [src/app/auth/page.tsx:L11-L135](file:////home/nhat/Documents/DUT/ViTudy/src/app/auth/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `BankConfig` | `type` | [src/services/PaymentService.ts:L45-L49](file:////home/nhat/Documents/DUT/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -317,7 +317,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `calculateStage` | `fn` | [src/components/pet/stages.ts:L56-L65](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `canEmitGameEvent` | `fn` | [src/hooks/useRealtimeMultiplayer.ts:L31-L39](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `CanvasTransform` | `type` | [src/types/studyspace.ts:L171-L176](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `CheckinResult` | `type` | [src/components/pet/usePet.ts:L16-L19](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `CheckinResult` | `type` | [src/components/pet/usePet.ts:L18-L21](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `compressImageDataUrl` | `fn` | [src/services/GameCabinetStorage.ts:L25-L69](file:////home/nhat/Documents/DUT/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ConnectionStatus` | `type` | [src/services/ConnectionService.ts:L3-L8](file:////home/nhat/Documents/DUT/ViTudy/src/services/ConnectionService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `createBoardGameFromTemplate` | `fn` | [src/types/boardgame.ts:L868-L1084](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -351,7 +351,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `FeatureGrid` | `component` | [src/components/landing/FeatureGrid.tsx:L75-L160](file:////home/nhat/Documents/DUT/ViTudy/src/components/landing/FeatureGrid.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `fetchModelViTokenCost` | `fn` | [src/services/BoardGameAiService.ts:L170-L184](file:////home/nhat/Documents/DUT/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FlashcardReview` | `type` | [src/services/FlashcardService.ts:L4-L16](file:////home/nhat/Documents/DUT/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `FloatingPet` | `component` | [src/components/pet/FloatingPet.tsx:L13-L283](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/FloatingPet.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `FloatingPet` | `component` | [src/components/pet/FloatingPet.tsx:L13-L296](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/FloatingPet.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCabinetStorage` | `component` | [src/services/GameCabinetStorage.ts:L158-L247](file:////home/nhat/Documents/DUT/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCardDeck` | `type` | [src/types/boardgame.ts:L274-L284](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCardEffect` | `type` | [src/types/boardgame.ts:L245-L248](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -413,7 +413,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `PET_STAGES` | `component` | [src/components/pet/stages.ts:L13-L50](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PetGalleryModal` | `component` | [src/components/pet/PetGalleryModal.tsx:L15-L179](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/PetGalleryModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PetStageConfig` | `type` | [src/components/pet/stages.ts:L3-L11](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `PetStatus` | `type` | [src/components/pet/usePet.ts:L6-L14](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `PetStatus` | `type` | [src/components/pet/usePet.ts:L8-L16](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PomodoroPhase` | `type` | [src/hooks/usePomodoro.ts:L5-L5](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PresentationData` | `type` | [src/types/studyspace.ts:L37-L41](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PresentationSlide` | `type` | [src/types/studyspace.ts:L28-L35](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -469,7 +469,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `UseDiscordActivityResult` | `type` | [src/hooks/useDiscordActivity.ts:L8-L20](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/useDiscordActivity.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `usePaymentStatus` | `hook` | [src/hooks/usePaymentStatus.ts:L14-L167](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePaymentStatus.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePaymentStatusResult` | `type` | [src/hooks/usePaymentStatus.ts:L7-L12](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePaymentStatus.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `usePet` | `hook` | [src/components/pet/usePet.ts:L21-L128](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `usePet` | `hook` | [src/components/pet/usePet.ts:L23-L222](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `usePomodoro` | `hook` | [src/hooks/usePomodoro.ts:L23-L83](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePomodoroOptions` | `type` | [src/hooks/usePomodoro.ts:L7-L11](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePomodoroResult` | `type` | [src/hooks/usePomodoro.ts:L13-L21](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

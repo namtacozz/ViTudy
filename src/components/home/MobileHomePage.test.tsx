@@ -51,7 +51,7 @@ const mockSpaces = [
       { id: 'item-1', type: 'book', title: 'Giáo trình Giải tích' },
       { id: 'item-2', type: 'paper', title: 'Đề thi 2024' },
     ],
-    lastOpenedAt: new Date().toISOString(),
+    lastOpenedAt: '2026-11-14T10:00:00.000Z',
     starred: true,
   },
   {
@@ -62,7 +62,7 @@ const mockSpaces = [
     items: [
       { id: 'item-3', type: 'book', title: 'DSA Textbook' },
     ],
-    lastOpenedAt: new Date().toISOString(),
+    lastOpenedAt: '2026-11-13T10:00:00.000Z',
     starred: false,
   },
 ];

@@ -63,6 +63,7 @@ export function TopLeftNav() {
   const [newSpaceName, setNewSpaceName] = useState('');
   const [newSpaceSubject, setNewSpaceSubject] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [avatarImgError, setAvatarImgError] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -132,10 +133,10 @@ export function TopLeftNav() {
 
   return (
     <div className="relative flex flex-col gap-2 pointer-events-auto">
-      {/* HUD Pill: Brand & Space Selector & Slide-out Search (+30% size on desktop, compact on mobile) */}
-      <div className="flex items-center gap-1 sm:gap-2.5 bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl px-1.5 py-1 sm:px-4 sm:py-2.5 shadow-sm backdrop-blur-md text-slate-900 max-w-[48vw] shrink-0">
+      {/* HUD Pill: Brand & Space Selector & Slide-out Search */}
+      <div className="flex items-center gap-1 sm:gap-2 bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl px-1.5 py-1 sm:px-3 sm:py-2 shadow-sm backdrop-blur-md text-slate-900 min-w-0 max-w-full">
         {/* Brand Text ViTudy in Cam ViT (#E0562D) & Biểu tượng chính thức vitudy.png */}
-        <div className="flex items-center gap-1 sm:gap-1.5 pr-1.5 sm:pr-3 border-r border-slate-200 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 pr-1.5 sm:pr-2.5 border-r border-slate-200 shrink-0">
           <Link
             href="/?view=home"
             onClick={() => {
@@ -191,7 +192,7 @@ export function TopLeftNav() {
                   }
                   setIsRenamingCurrent(false);
                 }}
-                className="w-28 sm:w-40 px-2 py-0.5 text-xs sm:text-sm font-bold text-slate-900 bg-white border border-[#E0562D] rounded-lg focus:outline-none"
+                className="w-24 sm:w-40 px-2 py-0.5 text-xs sm:text-sm font-bold text-slate-900 bg-white border border-[#E0562D] rounded-lg focus:outline-none"
               />
             </form>
           ) : (
@@ -201,7 +202,7 @@ export function TopLeftNav() {
                 className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer max-w-full"
               >
                 <BookMarked className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-800 stroke-[2.4] shrink-0" />
-                <span className="max-w-[65px] min-[390px]:max-w-[90px] sm:max-w-[200px] truncate">{activeSpace.name}</span>
+                <span className="max-w-[55px] min-[360px]:max-w-[75px] min-[400px]:max-w-[110px] sm:max-w-[200px] truncate">{activeSpace.name}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4] shrink-0" />
               </button>
               {renameSpace && activeSpaceId && (
@@ -426,11 +427,11 @@ export function TopLeftNav() {
         )}
 
         {/* Dashboard & User Account / Login Button */}
-        <div className="pl-1 sm:pl-2 border-l border-slate-200 flex items-center gap-1 sm:gap-1.5">
+        <div className="pl-1 sm:pl-2 border-l border-slate-200 flex items-center gap-1 sm:gap-1.5 shrink-0">
           <Link
             href="/dashboard"
             title="Thống kê học tập (Dashboard)"
-            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg hidden sm:flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg hidden md:flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
             <BarChart2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
           </Link>
@@ -442,13 +443,14 @@ export function TopLeftNav() {
               className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs shrink-0"
               style={{ width: '24px', height: '24px', minWidth: '24px', minHeight: '24px', maxWidth: '28px', maxHeight: '28px' }}
             >
-              {profile?.avatar_url ? (
+              {profile?.avatar_url && !avatarImgError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
                   alt={profile?.display_name || 'Avatar'}
                   width={24}
                   height={24}
+                  onError={() => setAvatarImgError(true)}
                   className="w-full h-full object-cover"
                 />
               ) : (

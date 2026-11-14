@@ -238,7 +238,7 @@ export function LeftCreationBar() {
       className="relative flex max-sm:portrait:flex-row flex-col items-center gap-1.5 pointer-events-auto select-none"
     >
       {/* Tool Island: Horizontal bottom dock on mobile portrait, vertical on landscape and desktop */}
-      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 relative max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-fixed-toolbar">
+      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 relative max-sm:landscape:max-h-[calc(100dvh-75px)] sm:max-h-[calc(100dvh-120px)] overflow-y-auto no-scrollbar landscape-fixed-toolbar">
         {/* Select (Cursor) Tool */}
         <button
           title="Con trỏ điều hướng (Kéo di chuyển bàn / Chọn vật thể)"

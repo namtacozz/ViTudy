@@ -473,9 +473,9 @@ export function BottomLeftKnowledge() {
           setIsUrlModalOpen(true);
         }}
         title="Đưa tài liệu từ URL (Google Docs, Sheets, Slides...)"
-        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-slate-700 hover:text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+        className="w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white hover:bg-orange-50/80 text-slate-700 hover:text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
       >
-        <Link2 className="w-4.5 h-4.5 stroke-[2.2] group-hover:scale-110 transition-transform" />
+        <Link2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2] group-hover:scale-110 transition-transform" />
       </button>
 
       {/* Parsing PDF Indicator Toast */}

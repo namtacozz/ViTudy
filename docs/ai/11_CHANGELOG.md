@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-11-14 19:30 — uncommitted (Khắc phục triệt để lỗi HUD chèn đè lên nhau trên Landscape & Mobile Portrait)
+- Task: Khắc phục triệt để lỗi các thành phần HUD chèn đè lên nhau (TopLeftNav vs TopRightWallet, LeftCreationBar vs BottomLeftKnowledge, BottomLeftKnowledge vs BottomRightToolkit, FloatingPet vs Minimap/Toolkit) trên cả màn hình ngang (Landscape) và màn hình dọc di động (Portrait), đồng thời sửa lỗi ảnh avatar bị vỡ và tối ưu hóa không gian hiển thị.
+- Changed:
+  - `src/components/canvas/StudySpaceDeskView.tsx`: Hợp nhất `TopLeftNav` và `TopRightWallet` vào một `<header>` flex container (`pointer-events-none` với các con `pointer-events-auto`, `justify-between gap-1 sm:gap-2`) triệt tiêu 100% nguy cơ chèn đè; neo `LeftCreationBar` từ top với `max-h-[calc(100dvh-75px)]` chống đè `BottomLeftKnowledge`; tách tầng `BottomLeftKnowledge` lên `bottom-14` trên mobile portrait để nhường đáy cho `BottomRightToolkit`.
+  - `src/components/hud/TopLeftNav.tsx`: Thêm fallback xử lý lỗi ảnh đại diện (`avatarImgError`) fallback về avatar chữ cái đầu trên nền `#FFF7ED`, truncate tên bàn học thông minh theo breakpoint màn hình, ẩn nút thống kê trên màn hình nhỏ.
+  - `src/components/hud/TopRightWallet.tsx`: Ẩn nút Chợ, AI và chữ "ViToken" trên mobile/landscape hẹp (`hidden md:flex`), thu gọn thanh ví xuống ~120px chỉ còn Streak và Coin.
+  - `src/components/hud/BottomRightToolkit.tsx`: Ẩn nút ZoomIn/ZoomOut trên mobile (<640px) do đã có cử chỉ pinch-to-zoom 2 ngón tay, giảm chiều rộng thanh zoom mobile xuống ~130px.
+  - `src/components/hud/BottomLeftKnowledge.tsx`: Đồng bộ kích thước nút Nhập URL (`Link2`) khớp hoàn toàn với Upload và Share (`w-8.5 h-8.5 sm:w-10 sm:h-10`).
+  - `src/components/hud/LeftCreationBar.tsx`: Giới hạn chiều cao tối đa thích ứng `landscape` (`max-h-[calc(100dvh-75px)]`) và `portrait`.
+  - `src/components/pet/FloatingPet.tsx`: Khởi tạo vị trí mặc định ở 38% chiều cao màn hình bên phải (tránh xa góc đáy), responsive kích thước 64px/80px, giới hạn kéo thả cách đáy >= 90-120px, giảm `z-index` xuống `z-35` để không chắn tương tác HUD.
+  - `src/components/home/MobileHomePage.test.tsx`: Cố định ngày `lastOpenedAt` để tránh flaky sort test.
+  - `AGENTS.md`: Tự động bổ sung mục quy chuẩn "Anti-Overlap HUD Architecture for Mobile, Tablet & Landscape".
+  - `docs/ai/03_SYMBOL_INDEX.md`: Cập nhật bảng chỉ mục ký hiệu.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test --run` (35/35 suites, 157/157 tests pass 100%), `pnpm run docs:index && pnpm run docs:check` (437 symbols), `pnpm run build:pages` (16/16 pages).
+
+
 ## 2026-11-14 11:01 — uncommitted (Bổ sung Upload từ URL, Bảng tính đa sheet & Trình chiếu Slide đồng bộ)
 - Task: Cho phép đưa tài liệu từ URL (Google Docs/Sheets/Slides, link trực tiếp) kèm kiểm tra quyền chia sẻ công khai và hướng dẫn bật chia sẻ; thêm vật thể Bảng tính đa sheet (`spreadsheet`) và Trình chiếu Slide (`presentation`) hỗ trợ Full View / Tập trung và đồng bộ phòng học multiplayer.
 - Changed:
