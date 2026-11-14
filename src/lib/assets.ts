@@ -6,12 +6,20 @@ export function getAssetPath(path: string): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const envBasePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-  // In browser, if we are hosted on a subpath (e.g. GitHub Pages repo /ViTudy)
+  if (envBasePath) {
+    return `${envBasePath}${cleanPath}`;
+  }
+
+  // Fallback in browser if hosted on a known GitHub Pages subpath
   if (typeof window !== 'undefined') {
-    if (window.location.pathname.startsWith('/ViTudy')) {
+    const pathname = window.location.pathname;
+    if (pathname === '/ViTudy-dev' || pathname.startsWith('/ViTudy-dev/')) {
+      return `/ViTudy-dev${cleanPath}`;
+    }
+    if (pathname === '/ViTudy' || pathname.startsWith('/ViTudy/')) {
       return `/ViTudy${cleanPath}`;
     }
   }
 
-  return `${envBasePath}${cleanPath}`;
+  return cleanPath;
 }

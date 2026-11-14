@@ -2,7 +2,7 @@ name: Deploy Next.js to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
   workflow_dispatch:
 
 permissions:
@@ -43,7 +43,7 @@ jobs:
       - name: Build with Next.js (Static Export for GitHub Pages)
         env:
           GITHUB_PAGES: "true"
-          NEXT_PUBLIC_BASE_PATH: "/ViTudy"
+          NEXT_PUBLIC_BASE_PATH: "/${{ github.event.repository.name }}"
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
