@@ -27,10 +27,13 @@ import {
   RefreshCw,
   UserMinus,
   Clock,
-  Send
+  Send,
+  Link2
 } from 'lucide-react';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
-import { parseUploadedDocumentFile } from '@/services/OfficeParserService';
+import { parseUploadedDocumentResult } from '@/services/OfficeParserService';
+import { importDocumentFromUrl, UrlSharePermissionError } from '@/services/UrlDocumentService';
+import type { PresentationData, SpreadsheetData } from '@/types/studyspace';
 import { formatUploadedDocTitle } from '@/utils/documentNaming';
 
 interface PendingDocument {
@@ -40,6 +43,8 @@ interface PendingDocument {
   pages: { title?: string; text: string; image?: string }[];
   fileSize: string;
   fileType: string;
+  spreadsheetData?: SpreadsheetData;
+  presentationData?: PresentationData;
 }
 
 export function BottomLeftKnowledge() {
@@ -53,6 +58,11 @@ export function BottomLeftKnowledge() {
     setMounted(true);
   }, []);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [urlTitleInput, setUrlTitleInput] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [urlError, setUrlError] = useState<{ message: string; guideSteps?: string[] } | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [roomPermission, setRoomPermission] = useState<'view_only' | 'edit'>('view_only');
@@ -319,15 +329,23 @@ export function BottomLeftKnowledge() {
     setIsParsingDoc(true);
 
     try {
-      const parsedPages = await parseUploadedDocumentFile(file, rawName);
+      const parsed = await parseUploadedDocumentResult(file, rawName);
 
       setPendingDoc({
         file,
         title: rawName,
         description: '',
-        pages: parsedPages,
+        pages: parsed.pages,
         fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-        fileType: file.name.split('.').pop()?.toUpperCase() || 'TỆP'
+        fileType: file.name.split('.').pop()?.toUpperCase() || 'TỆP',
+        spreadsheetData:
+          parsed.kind === 'spreadsheet'
+            ? { sheets: parsed.sheets, activeSheetIndex: 0 }
+            : undefined,
+        presentationData:
+          parsed.kind === 'presentation'
+            ? { slides: parsed.slides, currentSlideIndex: 0 }
+            : undefined,
       });
 
       setIsConfirmModalOpen(true);
@@ -349,9 +367,49 @@ export function BottomLeftKnowledge() {
       title: p.title || pendingDoc.title
     }));
 
-    addUploadedDocument(pendingDoc.title, pages);
+    addUploadedDocument(pendingDoc.title, pages, {
+      spreadsheetData: pendingDoc.spreadsheetData,
+      presentationData: pendingDoc.presentationData,
+    });
     setIsConfirmModalOpen(false);
     setPendingDoc(null);
+  };
+
+  const handleImportFromUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!urlInput.trim() || isFetchingUrl) return;
+    setIsFetchingUrl(true);
+    setUrlError(null);
+
+    try {
+      const result = await importDocumentFromUrl(urlInput, urlTitleInput);
+      const { parsed, title, sourceUrl } = result;
+      if (parsed.kind === 'spreadsheet') {
+        addUploadedDocument(title, parsed.pages, {
+          spreadsheetData: { sheets: parsed.sheets, activeSheetIndex: 0, sourceUrl },
+        });
+      } else if (parsed.kind === 'presentation') {
+        addUploadedDocument(title, parsed.pages, {
+          presentationData: { slides: parsed.slides, currentSlideIndex: 0, sourceUrl },
+        });
+      } else {
+        addUploadedDocument(title, parsed.pages);
+      }
+      setIsUrlModalOpen(false);
+      setUrlInput('');
+      setUrlTitleInput('');
+      setUrlError(null);
+    } catch (err: any) {
+      if (err instanceof UrlSharePermissionError) {
+        setUrlError({ message: err.message, guideSteps: err.guideSteps });
+      } else {
+        setUrlError({
+          message: err?.message || 'Không thể tải tài liệu từ đường liên kết này.',
+        });
+      }
+    } finally {
+      setIsFetchingUrl(false);
+    }
   };
 
   const handleCopyShareLink = () => {
@@ -368,7 +426,7 @@ export function BottomLeftKnowledge() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.txt,.md,.epub,image/*"
+        accept=".pdf,.doc,.docx,.xlsx,.xls,.csv,.ods,.pptx,.txt,.md,.epub,image/*"
         className="hidden"
         onChange={handleFileSelect}
       />
@@ -378,7 +436,7 @@ export function BottomLeftKnowledge() {
         data-tour="upload-btn"
         disabled={isParsingDoc}
         onClick={() => fileInputRef.current?.click()}
-        title={isParsingDoc ? "Đang trích xuất tài liệu..." : "Tải lên tài liệu (PDF, Word, Text, Ảnh...)"}
+        title={isParsingDoc ? "Đang trích xuất tài liệu..." : "Tải lên tài liệu (PDF, Word, Excel, PowerPoint, Ảnh...)"}
         className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
       >
         {isParsingDoc ? (
@@ -388,11 +446,24 @@ export function BottomLeftKnowledge() {
         )}
       </button>
 
+      {/* 1b. Button: Nhập tài liệu từ URL (Google Docs, Sheets, Slides, Link trực tiếp) */}
+      <button
+        type="button"
+        onClick={() => {
+          setUrlError(null);
+          setIsUrlModalOpen(true);
+        }}
+        title="Đưa tài liệu từ URL (Google Docs, Sheets, Slides...)"
+        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-slate-700 hover:text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group"
+      >
+        <Link2 className="w-4.5 h-4.5 stroke-[2.2] group-hover:scale-110 transition-transform" />
+      </button>
+
       {/* Parsing PDF Indicator Toast */}
       {isParsingDoc && mounted && createPortal(
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] bg-white text-slate-800 px-4 py-2.5 rounded-full shadow-xl border border-orange-200 flex items-center gap-2.5 font-sans text-xs font-semibold animate-pulse">
           <Loader2 className="w-4 h-4 text-[#E0562D] animate-spin flex-shrink-0" />
-          <span>Đang trích xuất các trang tài liệu PDF...</span>
+          <span>Đang trích xuất các trang tài liệu...</span>
         </div>,
         document.body
       )}
@@ -957,6 +1028,102 @@ export function BottomLeftKnowledge() {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* MODAL 4: Nhập tài liệu từ URL (Google Docs, Sheets, Slides, Link trực tiếp) */}
+      {isUrlModalOpen && mounted && createPortal(
+        <div
+          data-overlay="true"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4"
+        >
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+            <button
+              type="button"
+              onClick={() => {
+                setIsUrlModalOpen(false);
+                setUrlError(null);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="w-5 h-5 text-[#E0562D]" />
+              <h3 className="text-sm font-bold text-slate-900">Đưa tài liệu từ liên kết (URL)</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Hỗ trợ Google Docs, Google Sheets (nhiều sheet), Google Slides và liên kết trực tiếp (.pdf, .docx, .xlsx, .csv, .pptx). Tài liệu gốc cần được bật chia sẻ công khai để mọi người có thể tải về.
+            </p>
+
+            <form onSubmit={handleImportFromUrl} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Đường liên kết tài liệu</label>
+                <input
+                  type="url"
+                  required
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://docs.google.com/document/d/... hoặc link tệp"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#E0562D] transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                  Tên hiển thị trên bàn học <span className="text-slate-400 font-normal">(tùy chọn)</span>
+                </label>
+                <input
+                  type="text"
+                  value={urlTitleInput}
+                  onChange={(e) => setUrlTitleInput(e.target.value)}
+                  placeholder="Tự động nhận diện nếu để trống..."
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#E0562D] transition-colors"
+                />
+              </div>
+
+              {urlError && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs font-semibold leading-relaxed">{urlError.message}</p>
+                  </div>
+                  {urlError.guideSteps && urlError.guideSteps.length > 0 && (
+                    <div className="pl-6 pt-1 border-t border-rose-200/70">
+                      <p className="text-[11px] font-bold text-rose-800 mb-1">Hướng dẫn bật chia sẻ rồi đưa vào lại:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px] text-rose-800 leading-relaxed">
+                        {urlError.guideSteps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUrlModalOpen(false);
+                    setUrlError(null);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="submit"
+                  disabled={isFetchingUrl}
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#E0562D] hover:bg-[#c9451e] text-white transition-colors shadow-sm cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+                >
+                  {isFetchingUrl && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{urlError ? 'Thử đưa vào lại' : 'Đưa vào bàn học'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body

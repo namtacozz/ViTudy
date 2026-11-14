@@ -43,6 +43,10 @@ export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInse
     extraDataJson = item.artboardData as unknown as Json;
   } else if (item.type === 'board_game' && item.boardGameData) {
     extraDataJson = item.boardGameData as unknown as Json;
+  } else if (item.type === 'spreadsheet' && item.spreadsheetData) {
+    extraDataJson = item.spreadsheetData as unknown as Json;
+  } else if (item.type === 'presentation' && item.presentationData) {
+    extraDataJson = item.presentationData as unknown as Json;
   }
 
   return {
@@ -110,6 +114,8 @@ export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): 
     stickerData: row.item_type === 'sticker' && row.exam_data ? (row.exam_data as any) : undefined,
     artboardData: (row.item_type as string) === 'artboard' && row.exam_data ? (row.exam_data as any) : undefined,
     boardGameData: (row.item_type as string) === 'board_game' && row.exam_data ? (row.exam_data as any) : undefined,
+    spreadsheetData: (row.item_type as string) === 'spreadsheet' && row.exam_data ? (row.exam_data as any) : undefined,
+    presentationData: (row.item_type as string) === 'presentation' && row.exam_data ? (row.exam_data as any) : undefined,
   };
 }
 

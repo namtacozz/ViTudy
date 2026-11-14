@@ -12,7 +12,21 @@ import { useStudySpace } from '@/context/StudySpaceContext';
 import { ModalErrorBoundary } from '@/components/common/ModalErrorBoundary';
 
 const StudySpaceDeskView = dynamic(
-  () => import('@/components/canvas/StudySpaceDeskView'),
+  () =>
+    import('@/components/canvas/StudySpaceDeskView').catch((err) => {
+      if (typeof window !== 'undefined') {
+        try {
+          const lastReload = Number(sessionStorage.getItem('vitudy_chunk_reload_ts') || '0');
+          if (Date.now() - lastReload > 15_000) {
+            sessionStorage.setItem('vitudy_chunk_reload_ts', String(Date.now()));
+            window.location.reload();
+          }
+        } catch {
+          window.location.reload();
+        }
+      }
+      throw err;
+    }),
   { ssr: false }
 );
 

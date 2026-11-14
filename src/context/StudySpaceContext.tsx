@@ -9,6 +9,8 @@ import { StudySpaceService, ensureUUID } from '@/services/StudySpaceService';
 import { sanitizeDocumentText } from '@/services/OfficeParserService';
 import { OfflineQueue } from '@/services/OfflineQueue';
 import { cleanupDeskItemsOnDelete } from '@/lib/boardGameEngine';
+import { getActiveStroke, setActiveStroke } from '@/lib/activeStrokeStore';
+import { segmentStrokeByDeskItems } from '@/utils/strokeSegmentation';
 
 export interface CreationPlacementTemplate {
   itemType?: import('@/types/studyspace').ItemType;
@@ -79,9 +81,17 @@ interface StudySpaceContextType {
   updateStickyNoteTextAlign?: (id: string, align: 'left' | 'center' | 'right') => void;
   updateStickyNoteIsBold?: (id: string, isBold: boolean) => void;
   addStickyNote: (text?: string, x?: number, y?: number, color?: string, width?: number, height?: number) => string;
-  addUploadedDocument: (title: string, pages: { title?: string; text: string; image?: string }[]) => void;
+  addUploadedDocument: (
+    title: string,
+    pages: { title?: string; text: string; image?: string }[],
+    options?: {
+      spreadsheetData?: import('@/types/studyspace').SpreadsheetData;
+      presentationData?: import('@/types/studyspace').PresentationData;
+    }
+  ) => void;
   addMarketItemToSpace: (spaceId: string, marketItem: import('@/data/marketMockData').MarketItem) => void;
   removeDeskItem: (id: string) => void;
+  updateDeskItem: (id: string, patch: Partial<DeskItem>) => void;
   setSearchQuery: (query: string) => void;
   togglePanLock: () => void;
   // Drawing & Note creation tools
@@ -281,7 +291,6 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
   const [stickyCreationTemplate, setStickyCreationTemplate] = useState<CreationPlacementTemplate | null>(null);
   const [strokes, setStrokes] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
-  const [currentStroke, setCurrentStroke] = useState<import('@/types/studyspace').DrawingStroke | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Auto-flush offline queue when back online
@@ -289,13 +298,14 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     return OfflineQueue.initAutoFlush();
   }, []);
 
+  const createStrokeId = () =>
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : ensureUUID(`stroke-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`);
+
   const startStroke = (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => {
-    const strokeId =
-      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : ensureUUID(`stroke-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`);
-    setCurrentStroke({
-      id: strokeId,
+    setActiveStroke({
+      id: createStrokeId(),
       points: [point],
       color,
       width,
@@ -304,8 +314,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const appendPoint = (point: { x: number; y: number }) => {
-    setCurrentStroke(prev => {
+    setActiveStroke(prev => {
       if (!prev) return null;
+      const last = prev.points[prev.points.length - 1];
+      if (last && Math.hypot(point.x - last.x, point.y - last.y) < 2) {
+        return prev;
+      }
       return {
         ...prev,
         points: [...prev.points, point]
@@ -315,7 +329,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   const snapCurrentStroke = (): import('@/utils/smartShape').RecognizedShapeResult | null => {
     let result: import('@/utils/smartShape').RecognizedShapeResult | null = null;
-    setCurrentStroke(prev => {
+    setActiveStroke(prev => {
       if (!prev || prev.points.length < 5) return prev;
       const res = recognizeSmartShapeDetailed(prev.points);
       if (res.shape !== 'none') {
@@ -334,7 +348,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const revertCurrentStroke = () => {
-    setCurrentStroke(prev => {
+    setActiveStroke(prev => {
       if (!prev || !prev.originalPoints) return prev;
       return {
         ...prev,
@@ -347,87 +361,50 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const finishStroke = () => {
-    setCurrentStroke(prev => {
-      if (prev && prev.points.length > 1) {
-        let finalPoints = prev.points;
-        let isSmart = prev.isSmartShape ?? false;
-        let origPts = prev.originalPoints;
-        let sType = prev.shapeType;
+    const prev = getActiveStroke();
+    setActiveStroke(null);
+    if (!prev || prev.points.length <= 1) return;
 
-        if (activeTool === 'smart_shape' && !isSmart) {
-          const res = recognizeSmartShapeDetailed(prev.points);
-          if (res.shape !== 'none') {
-            finalPoints = res.points;
-            isSmart = true;
-            origPts = [...prev.points];
-            sType = res.shape;
-          }
-        }
+    let finalPoints = prev.points;
+    let isSmart = prev.isSmartShape ?? false;
+    let origPts = prev.originalPoints;
+    let sType = prev.shapeType;
 
-        // Check if stroke started over a desk document (book, paper, or sticky note)
-        const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
-        const sortedItems = [...(curSpace?.items || [])].sort((a, b) => b.zIndex - a.zIndex);
-        const p0 = finalPoints[0];
-
-        let targetItem: import('@/types/studyspace').DeskItem | null = null;
-        let localPoints = finalPoints;
-        let localOriginalPoints = origPts;
-
-        for (const item of sortedItems) {
-          const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 380 : 360) : (item.width || 220);
-          const h = item.type === 'book' ? 640 : item.type === 'paper' ? (item.isExamSheet ? 490 : 500) : (item.height || 200);
-
-          const dx = p0.x - item.x;
-          const dy = p0.y - item.y;
-          const rad = (-item.rotation * Math.PI) / 180;
-          const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
-          const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
-
-          if (localX >= -10 && localX <= w + 10 && localY >= -10 && localY <= h + 10) {
-            targetItem = item;
-            localPoints = finalPoints.map(p => {
-              const pdx = p.x - item.x;
-              const pdy = p.y - item.y;
-              return {
-                x: Math.round((pdx * Math.cos(rad) - pdy * Math.sin(rad)) * 10) / 10,
-                y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
-              };
-            });
-            if (origPts) {
-              localOriginalPoints = origPts.map(p => {
-                const pdx = p.x - item.x;
-                const pdy = p.y - item.y;
-                return {
-                  x: Math.round((pdx * Math.cos(rad) - pdy * Math.sin(rad)) * 10) / 10,
-                  y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
-                };
-              });
-            }
-            break;
-          }
-        }
-
-        const newStroke: import('@/types/studyspace').DrawingStroke = {
-          ...prev,
-          points: targetItem ? localPoints : finalPoints,
-          attachedToItemId: targetItem ? targetItem.id : undefined,
-          isSmartShape: isSmart,
-          originalPoints: targetItem ? localOriginalPoints : origPts,
-          shapeType: sType
-        };
-
-        setStrokes(s => {
-          const updatedStrokes = [...s, newStroke];
-          try {
-            const uId = user?.id;
-            const userPrefix = uId ? `user_${uId}_` : 'guest_';
-            localStorage.setItem(`${userPrefix}vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
-            localStorage.setItem(`vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
-          } catch {}
-          return updatedStrokes;
-        });
+    if (activeTool === 'smart_shape' && !isSmart) {
+      const res = recognizeSmartShapeDetailed(prev.points);
+      if (res.shape !== 'none') {
+        finalPoints = res.points;
+        isSmart = true;
+        origPts = [...prev.points];
+        sType = res.shape;
       }
-      return null;
+    }
+
+    const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
+    const baseStroke: import('@/types/studyspace').DrawingStroke = {
+      ...prev,
+      points: finalPoints,
+      isSmartShape: isSmart,
+      originalPoints: origPts,
+      shapeType: sType
+    };
+
+    const segmentedStrokes = segmentStrokeByDeskItems(
+      baseStroke,
+      curSpace?.items || [],
+      createStrokeId
+    );
+    if (segmentedStrokes.length === 0) return;
+
+    setStrokes(s => {
+      const updatedStrokes = [...s, ...segmentedStrokes];
+      try {
+        const uId = user?.id;
+        const userPrefix = uId ? `user_${uId}_` : 'guest_';
+        localStorage.setItem(`${userPrefix}vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
+        localStorage.setItem(`vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
+      } catch {}
+      return updatedStrokes;
     });
   };
 
@@ -1586,6 +1563,21 @@ Trong đó:
     });
   };
 
+  const updateDeskItem = (id: string, patch: Partial<DeskItem>) => {
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          updatedAt: new Date().toISOString(),
+          items: s.items.map(item => (item.id === id ? { ...item, ...patch } : item))
+        };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+  };
+
   const updateItemDimensions = (id: string, width: number, height: number) => {
     setSpaces(sList => {
       const nextList = sList.map(s => {
@@ -2452,10 +2444,23 @@ Trong đó:
     return stickyId;
   };
 
-  const addUploadedDocument = (title: string, rawPages: { title?: string; text: string; image?: string }[]) => {
+  const addUploadedDocument = (
+    title: string,
+    rawPages: { title?: string; text: string; image?: string }[],
+    options?: {
+      spreadsheetData?: import('@/types/studyspace').SpreadsheetData;
+      presentationData?: import('@/types/studyspace').PresentationData;
+    }
+  ) => {
     if (isViewerSession()) return;
     const pageCount = rawPages.length;
-    const type: 'paper' | 'book' = pageCount < 5 ? 'paper' : 'book';
+    const type: import('@/types/studyspace').ItemType = options?.spreadsheetData
+      ? 'spreadsheet'
+      : options?.presentationData
+      ? 'presentation'
+      : pageCount < 5
+      ? 'paper'
+      : 'book';
 
     const pages: PageContent[] = rawPages.map((p, idx) => ({
       id: `p-${Date.now()}-${idx}`,
@@ -2471,13 +2476,24 @@ Trong đó:
       title: normalizeNFC(title),
       x: 320 + Math.random() * 80,
       y: 200 + Math.random() * 60,
-      rotation: Math.floor(Math.random() * 6) - 3,
+      rotation: type === 'spreadsheet' || type === 'presentation' ? 0 : Math.floor(Math.random() * 6) - 3,
       scale: 1,
       zIndex: maxZIndex + 1,
       pageCount,
       currentPageIndex: 0,
       pages,
-      colorTheme: type === 'book' ? '#1e3a8a' : '#047857'
+      width: type === 'spreadsheet' ? 580 : type === 'presentation' ? 620 : undefined,
+      height: type === 'spreadsheet' ? 400 : type === 'presentation' ? 400 : undefined,
+      spreadsheetData: options?.spreadsheetData,
+      presentationData: options?.presentationData,
+      colorTheme:
+        type === 'spreadsheet'
+          ? '#059669'
+          : type === 'presentation'
+          ? '#E0562D'
+          : type === 'book'
+          ? '#1e3a8a'
+          : '#047857'
     };
 
     setSpaces(sList => {
@@ -2812,6 +2828,7 @@ Trong đó:
         gradeExam,
         resetExam,
         removeDeskItem,
+        updateDeskItem,
         setSearchQuery,
         togglePanLock,
         activeTool,
@@ -2825,7 +2842,7 @@ Trong đó:
         stickyCreationTemplate,
         setStickyCreationTemplate,
         strokes,
-        currentStroke,
+        currentStroke: null,
         startStroke,
         appendPoint,
         snapCurrentStroke,

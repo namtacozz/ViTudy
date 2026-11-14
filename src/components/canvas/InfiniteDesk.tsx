@@ -12,13 +12,15 @@ import { MindMapNodeItem } from '../objects/MindMapNodeItem';
 import { StickerItem } from '../objects/StickerItem';
 import { FourCornerArtboard } from '../objects/FourCornerArtboard';
 import { BoardGameArena } from '../objects/BoardGameArena';
+import { SpreadsheetItem } from '../objects/SpreadsheetItem';
+import { PresentationItem } from '../objects/PresentationItem';
 import { MindMapConnectors } from './MindMapConnectors';
 import { VisualLinkThreads } from './VisualLinkThreads';
 import { DeskDrawingCanvas } from './DeskDrawingCanvas';
 import { DeskDrawingInteractionLayer } from './DeskDrawingInteractionLayer';
 import { MultiplayerCursorsLayer } from './MultiplayerCursorsLayer';
 import { isItemVisible } from '@/lib/viewportCulling';
-import { parseUploadedDocumentFile } from '@/services/OfficeParserService';
+import { parseUploadedDocumentResult } from '@/services/OfficeParserService';
 import { formatUploadedDocTitle } from '@/utils/documentNaming';
 
 export function InfiniteDesk() {
@@ -344,13 +346,21 @@ export function InfiniteDesk() {
       const docTitle = formatUploadedDocTitle(file.name, isImage);
 
       try {
-        const parsedPages = await parseUploadedDocumentFile(file, docTitle);
-        if (parsedPages.length > 0) {
-          addUploadedDocument(docTitle, parsedPages);
+        const parsed = await parseUploadedDocumentResult(file, docTitle);
+        if (parsed.kind === 'spreadsheet') {
+          addUploadedDocument(docTitle, parsed.pages, {
+            spreadsheetData: { sheets: parsed.sheets, activeSheetIndex: 0 },
+          });
+        } else if (parsed.kind === 'presentation') {
+          addUploadedDocument(docTitle, parsed.pages, {
+            presentationData: { slides: parsed.slides, currentSlideIndex: 0 },
+          });
+        } else if (parsed.pages.length > 0) {
+          addUploadedDocument(docTitle, parsed.pages);
         }
       } catch (err: any) {
         console.error('Lỗi nạp tệp kéo thả vào bàn học:', err);
-        alert(err?.message || 'Không thể đọc tệp này. Vui lòng kiểm tra lại định dạng (.pdf, .docx, .pptx, .txt, ảnh).');
+        alert(err?.message || 'Không thể đọc tệp này. Vui lòng kiểm tra lại định dạng (.pdf, .docx, .xlsx, .csv, .pptx, .txt, ảnh).');
       }
     }
   };
@@ -423,8 +433,26 @@ export function InfiniteDesk() {
               {
                 x: item.x,
                 y: item.y,
-                width: item.width || (item.type === 'book' ? 980 : item.type === 'paper' ? 480 : 260),
-                height: item.height || (item.type === 'book' ? 640 : item.type === 'paper' ? 640 : 260),
+                width:
+                  item.width ||
+                  (item.type === 'book'
+                    ? 980
+                    : item.type === 'presentation'
+                    ? 620
+                    : item.type === 'spreadsheet'
+                    ? 580
+                    : item.type === 'paper'
+                    ? 480
+                    : 260),
+                height:
+                  item.height ||
+                  (item.type === 'book'
+                    ? 640
+                    : item.type === 'presentation' || item.type === 'spreadsheet'
+                    ? 400
+                    : item.type === 'paper'
+                    ? 640
+                    : 260),
                 rotation: item.rotation,
               },
               {
@@ -462,6 +490,12 @@ export function InfiniteDesk() {
           }
           if (item.type === 'board_game') {
             return <BoardGameArena key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'spreadsheet') {
+            return <SpreadsheetItem key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'presentation') {
+            return <PresentationItem key={item.id} item={item} isSelected={isSelected} />;
           }
           return null;
         })}

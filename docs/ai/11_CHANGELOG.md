@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-11-14 11:01 — uncommitted (Bổ sung Upload từ URL, Bảng tính đa sheet & Trình chiếu Slide đồng bộ)
+- Task: Cho phép đưa tài liệu từ URL (Google Docs/Sheets/Slides, link trực tiếp) kèm kiểm tra quyền chia sẻ công khai và hướng dẫn bật chia sẻ; thêm vật thể Bảng tính đa sheet (`spreadsheet`) và Trình chiếu Slide (`presentation`) hỗ trợ Full View / Tập trung và đồng bộ phòng học multiplayer.
+- Changed:
+  - `package.json`: Thêm thư viện `xlsx` (`0.18.5`).
+  - `src/types/studyspace.ts` & `src/services/StudySpaceService.ts`: Thêm `ItemType` `'spreadsheet' | 'presentation'`, `SpreadsheetSheet`, `SpreadsheetData`, `PresentationSlide`, `PresentationData` và ánh xạ lưu/đọc với Supabase.
+  - `src/services/OfficeParserService.ts`: Thêm `parseSpreadsheetFile`, `parsePptxPresentation`, `parseUploadedDocumentResult` (hỗ trợ `.xlsx`, `.xls`, `.csv`, `.ods`, `.pptx`).
+  - `src/services/UrlDocumentService.ts`: Hỗ trợ chuyển đổi link Google Docs/Sheets/Slides/Drive và link trực tiếp, phát hiện tài liệu chưa bật chia sẻ công khai để ném `UrlSharePermissionError` kèm hướng dẫn từng bước.
+  - `src/components/objects/{SpreadsheetItem,PresentationItem}.tsx` & `src/components/canvas/InfiniteDesk.tsx` & `src/context/StudySpaceContext.tsx`: Hiển thị bảng đa sheet (chuyển tab sheet, lọc dữ liệu, Full View), khung trình chiếu slide 16:9 (Full View, phím mũi tên/Space/Esc, ghi chú diễn giả, đồng bộ phòng học `?room=`), thêm `updateDeskItem`.
+  - `src/components/hud/BottomLeftKnowledge.tsx`: Mở rộng `accept` cho Excel/CSV/PPTX, thêm nút nhập từ URL và modal hướng dẫn chia sẻ khi bị chặn quyền.
+  - `src/services/{OfficeParserService,UrlDocumentService}.test.ts` & `src/utils/strokeSegmentation.ts`: Bổ sung test đa sheet, slide + speaker notes, và kiểm tra lỗi quyền chia sẻ URL.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (27/27 files, 118/118 tests pass), `pnpm run docs:index`, `pnpm run docs:check` (`[CHECK OK]`, 418 symbols).
+
+## 2026-11-14 10:53 — uncommitted (Cắt tách nét vẽ theo từng bề mặt, giảm lag khi vẽ & tự phục hồi lỗi ChunkLoadError)
+- Task: Sửa tình trạng lag khi vẽ, tách nét bút theo từng bề mặt (sách / tờ giấy / desk) để không bị dính thành một cục khi di chuyển, và xử lý lỗi `Loading chunk ... failed` sau khi deploy bản mới.
+- Changed:
+  - `src/lib/activeStrokeStore.ts`: Tạo store pub/sub riêng cho nét vẽ đang kéo (`getActiveStroke`, `setActiveStroke`, `subscribeActiveStroke`), tách `currentStroke` khỏi React state của `StudySpaceContext` để `pointermove` không gây re-render toàn bộ bàn học.
+  - `src/utils/strokeSegmentation.ts`: Bổ sung `segmentStrokeByDeskItems` chia nhỏ nét vẽ tại ranh giới từng vật thể (tính theo `zIndex` cao nhất và góc xoay), giữ phần trên desk ở tọa độ desk và chuyển phần trên sách/tờ giấy/ghi chú sang tọa độ cục bộ của vật thể đó; dùng chung `pointsToSvgPath`.
+  - `src/context/StudySpaceContext.tsx`: Dùng `activeStrokeStore`, lọc bớt điểm trùng (`< 2px`) trong `appendPoint`, và gọi `segmentStrokeByDeskItems` trong `finishStroke`.
+  - `src/components/canvas/{DeskDrawingCanvas,ItemDrawingOverlay}.tsx`: Dùng `ActiveStrokeLayer` với `useSyncExternalStore`, bọc `React.memo` và đặt `overflow-hidden` trên `ItemDrawingOverlay`.
+  - `src/components/common/ModalErrorBoundary.tsx` & `src/app/page.tsx`: Tự động nhận diện `ChunkLoadError` / `Loading chunk ... failed` và reload trang (có chốt chống lặp `vitudy_chunk_reload_ts` 15s) kèm thông báo cập nhật phiên bản mới.
+  - `src/utils/strokeSegmentation.test.ts`: Bổ sung 2 test kiểm chứng tách nét qua nhiều bề mặt và ưu tiên `zIndex` khi chồng lấn.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (26/26 files, 114/114 tests pass), `pnpm run docs:index`, `pnpm run docs:check` (`[CHECK OK]`, 402 symbols).
+
+## 2026-11-14 10:48 — uncommitted (Tách trang chính xác cho tệp Word `.docx` để phân loại Sách / Tờ giấy)
+- Task: Sửa lỗi tệp `.docx` nhiều trang bị gom thành 1 trang (`paper`) khi tải lên bàn học thay vì hiển thị thành sách (`book`) khi nhiều trang.
+- Changed:
+  - `src/services/OfficeParserService.ts`: Thêm `extractDocxPagesFromXml`, `extractPlainTextFromWordXmlChunk`, `decodeXmlEntities`, `splitTextIntoApproximatePages`, và nâng cấp `paginatePlainText` để tách trang `.docx` theo ngắt trang Word XML (`<w:br w:type="page"/>`, `<w:lastRenderedPageBreak/>`, `<w:pageBreakBefore/>`), fallback theo `docProps/app.xml` (`<Pages>`) và phân trang cả văn bản dùng `\n` đơn hoặc đoạn dài > 1600 ký tự.
+  - `src/components/hud/BottomLeftKnowledge.tsx`: Sửa nhãn toast đang tải từ `"Đang trích xuất các trang tài liệu PDF..."` thành `"Đang trích xuất các trang tài liệu..."`.
+  - `src/services/OfficeParserService.test.ts`: Bổ sung 2 test mới kiểm chứng tách trang `.docx` nhiều trang theo XML page breaks và theo `docProps/app.xml` `<Pages>`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (25/25 files, 112/112 tests pass), `pnpm run docs:index`, `pnpm run docs:check` (`[CHECK OK]`, 393 symbols).
+
 ## 2026-11-14 09:42 — main (Đa dụng hóa Board Game Studio cho mọi thể loại Board Game)
 - Task: Mở rộng Board Game Studio từ mô hình Cờ Tỷ Phú thành engine & giao diện bàn chơi đa năng hỗ trợ Thẻ bài (UNO, TCG, Mèo Nổ), Cờ lưới (Cờ vua, Caro, Cờ vây), Chiến thuật lục giác (Catan), Đường đua nút (Cá ngựa, Rắn leo thang) và Sandbox tự do.
 - Changed:

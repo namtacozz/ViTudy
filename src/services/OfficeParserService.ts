@@ -1,7 +1,14 @@
 import JSZip from 'jszip';
 // @ts-ignore
 import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
+import type { PresentationSlide, SpreadsheetSheet } from '@/types/studyspace';
 import { ParsedPage, parsePdfFile } from './PdfParserService';
+
+export type UploadedParseResult =
+  | { kind: 'document'; pages: ParsedPage[] }
+  | { kind: 'spreadsheet'; sheets: SpreadsheetSheet[]; pages: ParsedPage[] }
+  | { kind: 'presentation'; slides: PresentationSlide[]; pages: ParsedPage[] };
 
 const CORRUPTED_BINARY_NOTICE =
   'Tài liệu này chứa dữ liệu nhị phân bị lỗi khi tải lên trước đây. Vui lòng xóa và tải lại tệp đúng định dạng (.docx, .pdf, .pptx, .txt).';
@@ -59,63 +66,202 @@ export function isBinaryOrCorrupted(buffer: ArrayBuffer, previewText?: string): 
 /**
  * Chia một văn bản dài thành các trang có độ dài vừa vặn (~1.500 ký tự / trang)
  */
-function paginatePlainText(fullText: string, defaultTitlePrefix = 'Trang'): ParsedPage[] {
+function paginatePlainText(fullText: string, defaultTitlePrefix = 'Trang', startPageNumber = 1): ParsedPage[] {
   const clean = fullText.replace(/\r\n/g, '\n').trim();
   if (!clean) {
-    return [{ id: `page-1-${Date.now()}`, pageNumber: 1, title: `${defaultTitlePrefix} 1`, text: 'Trang trống không có văn bản.' }];
+    return [{ id: `page-${startPageNumber}-${Date.now()}`, pageNumber: startPageNumber, title: `${defaultTitlePrefix} ${startPageNumber}`, text: 'Trang trống không có văn bản.' }];
   }
 
   // Nếu văn bản có chứa các heading ##, ưu tiên chia theo heading
   const headingSections = clean.split(/(?=^##\s+)/m);
   if (headingSections.length > 1) {
     const pages: ParsedPage[] = [];
-    headingSections.forEach((sec, idx) => {
+    headingSections.forEach((sec) => {
       const trimmed = sec.trim();
       if (!trimmed) return;
       const firstLine = trimmed.split('\n')[0].replace(/^##\s+/, '').trim();
+      const pageNum = startPageNumber + pages.length;
       pages.push({
-        id: `page-${pages.length + 1}-${Date.now()}`,
-        pageNumber: pages.length + 1,
-        title: firstLine ? `${firstLine}` : `${defaultTitlePrefix} ${pages.length + 1}`,
+        id: `page-${pageNum}-${Date.now()}`,
+        pageNumber: pageNum,
+        title: firstLine ? `${firstLine}` : `${defaultTitlePrefix} ${pageNum}`,
         text: trimmed
       });
     });
     if (pages.length > 0) return pages;
   }
 
-  // Chia theo đoạn văn với ngưỡng tối đa ~1.500 ký tự
-  const paragraphs = clean.split(/\n\n+/);
+  // Chia theo đoạn văn (\n\n+); nếu không có đoạn kép thì chia theo từng dòng (\n)
+  const rawUnits = clean.split(/\n\n+/);
+  const units = rawUnits.length === 1 && clean.includes('\n') ? clean.split(/\n+/) : rawUnits;
+  const separator = rawUnits.length === 1 && clean.includes('\n') ? '\n' : '\n\n';
+
+  // Tách nhỏ các đoạn đơn lẻ quá dài (> 1600 ký tự) theo ranh giới câu/từ
+  const normalizedUnits: string[] = [];
+  for (const unit of units) {
+    if (unit.length <= 1600) {
+      normalizedUnits.push(unit);
+      continue;
+    }
+    let remaining = unit;
+    while (remaining.length > 1600) {
+      let splitIdx = remaining.lastIndexOf('. ', 1500);
+      if (splitIdx < 800) splitIdx = remaining.lastIndexOf(' ', 1500);
+      if (splitIdx < 400) splitIdx = 1500;
+      normalizedUnits.push(remaining.slice(0, splitIdx + 1).trim());
+      remaining = remaining.slice(splitIdx + 1).trim();
+    }
+    if (remaining) normalizedUnits.push(remaining);
+  }
+
   const pages: ParsedPage[] = [];
   let currentText = '';
 
-  for (const p of paragraphs) {
+  for (const p of normalizedUnits) {
     if (currentText.length + p.length > 1600 && currentText.length > 0) {
+      const pageNum = startPageNumber + pages.length;
       pages.push({
-        id: `page-${pages.length + 1}-${Date.now()}`,
-        pageNumber: pages.length + 1,
-        title: `${defaultTitlePrefix} ${pages.length + 1}`,
+        id: `page-${pageNum}-${Date.now()}`,
+        pageNumber: pageNum,
+        title: `${defaultTitlePrefix} ${pageNum}`,
         text: currentText.trim()
       });
-      currentText = p + '\n\n';
+      currentText = p + separator;
     } else {
-      currentText += p + '\n\n';
+      currentText += p + separator;
     }
   }
 
   if (currentText.trim().length > 0) {
+    const pageNum = startPageNumber + pages.length;
     pages.push({
-      id: `page-${pages.length + 1}-${Date.now()}`,
-      pageNumber: pages.length + 1,
-      title: `${defaultTitlePrefix} ${pages.length + 1}`,
+      id: `page-${pageNum}-${Date.now()}`,
+      pageNumber: pageNum,
+      title: `${defaultTitlePrefix} ${pageNum}`,
       text: currentText.trim()
     });
   }
 
-  return pages.length > 0 ? pages : [{ id: `page-1-${Date.now()}`, pageNumber: 1, title: `${defaultTitlePrefix} 1`, text: clean }];
+  return pages.length > 0
+    ? pages
+    : [{ id: `page-${startPageNumber}-${Date.now()}`, pageNumber: startPageNumber, title: `${defaultTitlePrefix} ${startPageNumber}`, text: clean }];
+}
+
+function decodeXmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+function extractPlainTextFromWordXmlChunk(xmlChunk: string): string {
+  const cleaned = xmlChunk
+    .replace(/<w:del\b[\s\S]*?<\/w:del>/g, '')
+    .replace(/<w:instrText\b[\s\S]*?<\/w:instrText>/g, '');
+
+  const tokens = cleaned.match(
+    /<\/w:p>|<\/w:tr>|<\/w:tc>|<w:tab\b[^>]*\/?>|<w:cr\b[^>]*\/?>|<w:br\b[^>]*\/?>|<w:t\b[^>]*>[\s\S]*?<\/w:t>/g
+  );
+  if (!tokens) return '';
+
+  let out = '';
+  for (const token of tokens) {
+    if (token === '</w:p>') {
+      out += '\n\n';
+    } else if (token === '</w:tr>') {
+      out += '\n';
+    } else if (token === '</w:tc>') {
+      out += '  ';
+    } else if (token.startsWith('<w:tab')) {
+      out += '\t';
+    } else if (token.startsWith('<w:cr') || token.startsWith('<w:br')) {
+      out += '\n';
+    } else if (token.startsWith('<w:t')) {
+      const inner = token.replace(/^<w:t\b[^>]*>/, '').replace(/<\/w:t>$/, '');
+      out += decodeXmlEntities(inner);
+    }
+  }
+
+  return out.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function extractDocxPagesFromXml(arrayBuffer: ArrayBuffer): Promise<{ pages: ParsedPage[] | null; declaredPages: number }> {
+  try {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    let declaredPages = 0;
+
+    const appXmlFile = zip.file('docProps/app.xml');
+    if (appXmlFile) {
+      const appXml = await appXmlFile.async('text');
+      const pagesMatch = appXml.match(/<Pages>(\d+)<\/Pages>/);
+      if (pagesMatch) {
+        declaredPages = parseInt(pagesMatch[1], 10) || 0;
+      }
+    }
+
+    const docXmlFile = zip.file('word/document.xml');
+    if (!docXmlFile) return { pages: null, declaredPages };
+
+    const docXml = await docXmlFile.async('text');
+    const pageBreakRegex =
+      /<w:br\b[^>]*w:type=["']page["'][^>]*\/?>|<w:lastRenderedPageBreak\b[^>]*\/?>|<w:pageBreakBefore\b(?![^>]*w:val=["'](?:0|false)["'])[^>]*\/?>/g;
+
+    const chunks = docXml.split(pageBreakRegex);
+    if (chunks.length < 2) {
+      return { pages: null, declaredPages };
+    }
+
+    const pages: ParsedPage[] = [];
+    for (const chunk of chunks) {
+      const chunkText = extractPlainTextFromWordXmlChunk(chunk);
+      if (!chunkText) continue;
+
+      if (chunkText.length > 2500) {
+        const subPages = paginatePlainText(chunkText, 'Trang', pages.length + 1);
+        pages.push(...subPages);
+      } else {
+        const pageNum = pages.length + 1;
+        pages.push({
+          id: `page-${pageNum}-${Date.now()}`,
+          pageNumber: pageNum,
+          title: `Trang ${pageNum}`,
+          text: chunkText
+        });
+      }
+    }
+
+    return { pages: pages.length >= 2 ? pages : null, declaredPages };
+  } catch {
+    return { pages: null, declaredPages: 0 };
+  }
+}
+
+function splitTextIntoApproximatePages(text: string, targetPages: number): ParsedPage[] {
+  const lines = text.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2 || targetPages < 2) {
+    return paginatePlainText(text, 'Trang');
+  }
+  const pageCount = Math.min(targetPages, lines.length);
+  const linesPerPage = Math.ceil(lines.length / pageCount);
+  const pages: ParsedPage[] = [];
+  for (let i = 0; i < lines.length; i += linesPerPage) {
+    const pageNum = pages.length + 1;
+    pages.push({
+      id: `page-${pageNum}-${Date.now()}`,
+      pageNumber: pageNum,
+      title: `Trang ${pageNum}`,
+      text: lines.slice(i, i + linesPerPage).join('\n\n')
+    });
+  }
+  return pages;
 }
 
 /**
- * Bóc tách tệp Word .docx bằng mammoth
+ * Bóc tách tệp Word .docx ưu tiên theo ngắt trang thực tế trong XML, fallback sang mammoth
  */
 export async function parseDocxFile(file: File): Promise<ParsedPage[]> {
   const arrayBuffer = await file.arrayBuffer();
@@ -130,6 +276,11 @@ export async function parseDocxFile(file: File): Promise<ParsedPage[]> {
   }
 
   try {
+    const { pages: xmlPages, declaredPages } = await extractDocxPagesFromXml(arrayBuffer);
+    if (xmlPages && xmlPages.length >= 2) {
+      return xmlPages;
+    }
+
     const isNodeRuntime = typeof process !== 'undefined' && Boolean(process.versions?.node) && typeof Buffer !== 'undefined';
     const mammothInput = isNodeRuntime
       ? { buffer: Buffer.from(arrayBuffer) }
@@ -141,16 +292,81 @@ export async function parseDocxFile(file: File): Promise<ParsedPage[]> {
       throw new Error('Tệp Word .docx không chứa nội dung văn bản có thể trích xuất.');
     }
 
-    return paginatePlainText(rawText, 'Trang');
+    const paginated = paginatePlainText(rawText, 'Trang');
+    if (paginated.length === 1 && declaredPages > 1) {
+      return splitTextIntoApproximatePages(rawText, declaredPages);
+    }
+    return paginated;
   } catch (err: any) {
     throw new Error(err.message || 'Không thể đọc nội dung tệp .docx');
   }
 }
 
 /**
- * Bóc tách tệp PowerPoint .pptx bằng JSZip trích xuất văn bản từng slide
+ * Bóc tách tệp bảng tính (.xlsx, .xls, .csv, .ods) thành các sheet dữ liệu
  */
-export async function parsePptxFile(file: File): Promise<ParsedPage[]> {
+export async function parseSpreadsheetFile(
+  file: File
+): Promise<{ sheets: SpreadsheetSheet[]; pages: ParsedPage[] }> {
+  const arrayBuffer = await file.arrayBuffer();
+  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+    throw new Error('Tệp bảng tính rỗng hoặc không hợp lệ.');
+  }
+
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+    throw new Error('Tệp bảng tính không chứa trang tính (sheet) nào.');
+  }
+
+  const sheets: SpreadsheetSheet[] = [];
+  const pages: ParsedPage[] = [];
+
+  workbook.SheetNames.forEach((sheetName, idx) => {
+    const ws = workbook.Sheets[sheetName];
+    if (!ws) return;
+    const rawRows = XLSX.utils.sheet_to_json<unknown[]>(ws, {
+      header: 1,
+      defval: '',
+      raw: false,
+    });
+
+    // Giới hạn tối đa 1.000 dòng x 40 cột mỗi sheet để đảm bảo hiệu năng bàn học
+    const trimmedRows: string[][] = rawRows
+      .slice(0, 1000)
+      .map((row) =>
+        (Array.isArray(row) ? row : []).slice(0, 40).map((cell) => String(cell ?? '').trim())
+      );
+
+    // Xóa các dòng trống ở cuối
+    while (trimmedRows.length > 0 && trimmedRows[trimmedRows.length - 1].every((c) => !c)) {
+      trimmedRows.pop();
+    }
+
+    const safeRows = trimmedRows.length > 0 ? trimmedRows : [['(Trang tính trống)']];
+    sheets.push({ name: sheetName, rows: safeRows });
+
+    const previewLines = safeRows.slice(0, 30).map((r) => r.join(' | ')).join('\n');
+    pages.push({
+      id: `sheet-${idx + 1}-${Date.now()}`,
+      pageNumber: idx + 1,
+      title: sheetName,
+      text: `## Sheet: ${sheetName}\n\n${previewLines}`,
+    });
+  });
+
+  if (sheets.length === 0) {
+    throw new Error('Không thể đọc dữ liệu từ bảng tính này.');
+  }
+
+  return { sheets, pages };
+}
+
+/**
+ * Bóc tách tệp PowerPoint .pptx thành cả danh sách slide trình chiếu lẫn trang văn bản
+ */
+export async function parsePptxPresentation(
+  file: File
+): Promise<{ slides: PresentationSlide[]; pages: ParsedPage[] }> {
   const arrayBuffer = await file.arrayBuffer();
 
   const binaryCheck = isBinaryOrCorrupted(arrayBuffer);
@@ -159,11 +375,10 @@ export async function parsePptxFile(file: File): Promise<ParsedPage[]> {
   }
 
   const zip = await JSZip.loadAsync(arrayBuffer);
-  const slideFiles = Object.keys(zip.files).filter(path => 
-    path.startsWith('ppt/slides/slide') && path.endsWith('.xml')
+  const slideFiles = Object.keys(zip.files).filter(
+    (path) => path.startsWith('ppt/slides/slide') && path.endsWith('.xml')
   );
 
-  // Sắp xếp các slide theo số thứ tự tự nhiên (slide1, slide2, ..., slide10)
   slideFiles.sort((a, b) => {
     const numA = parseInt(a.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
     const numB = parseInt(b.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
@@ -174,26 +389,109 @@ export async function parsePptxFile(file: File): Promise<ParsedPage[]> {
     throw new Error('Tệp PowerPoint .pptx không chứa slide nào.');
   }
 
+  const slides: PresentationSlide[] = [];
   const pages: ParsedPage[] = [];
 
   for (let i = 0; i < slideFiles.length; i++) {
     const xmlPath = slideFiles[i];
     const xmlContent = await zip.files[xmlPath].async('text');
+    const slideNumMatch = xmlPath.match(/slide(\d+)\.xml/);
+    const slideNum = slideNumMatch ? parseInt(slideNumMatch[1], 10) : i + 1;
 
-    // Trích xuất các thẻ <a:t>...</a:t> chứa text của slide
-    const textMatches = xmlContent.match(/<a:t[^>]*>([\s\S]*?)<\/a:t>/g) || [];
-    const slideTexts = textMatches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
-    const slideBody = slideTexts.join('\n');
+    // Tách theo từng đoạn <a:p> để giữ cấu trúc dòng trên slide
+    const paragraphs = xmlContent.match(/<a:p\b[\s\S]*?<\/a:p>/g) || [];
+    const lines: string[] = [];
+    for (const para of paragraphs) {
+      const textTokens = para.match(/<a:t[^>]*>([\s\S]*?)<\/a:t>/g) || [];
+      const lineText = textTokens
+        .map((t) => decodeXmlEntities(t.replace(/<[^>]+>/g, '')))
+        .join('')
+        .trim();
+      if (lineText) lines.push(lineText);
+    }
+
+    const slideTitle = lines[0] || `Slide ${i + 1}`;
+    const slideBody = lines.slice(1).join('\n');
+
+    // Đọc ghi chú diễn giả (speaker notes) nếu có
+    let notesText = '';
+    const notesFile = zip.file(`ppt/notesSlides/notesSlide${slideNum}.xml`);
+    if (notesFile) {
+      const notesXml = await notesFile.async('text');
+      const noteTokens = notesXml.match(/<a:t[^>]*>([\s\S]*?)<\/a:t>/g) || [];
+      notesText = noteTokens
+        .map((t) => decodeXmlEntities(t.replace(/<[^>]+>/g, '').trim()))
+        .filter((t) => t && !/^\d+$/.test(t))
+        .join(' ')
+        .trim();
+    }
+
+    const fullSlideText = lines.join('\n');
+    slides.push({
+      id: `slide-${i + 1}-${Date.now()}`,
+      slideNumber: i + 1,
+      title: slideTitle,
+      body: slideBody || (lines.length === 1 ? '' : '(Slide hình ảnh hoặc không có văn bản)'),
+      notes: notesText || undefined,
+    });
 
     pages.push({
       id: `slide-${i + 1}-${Date.now()}`,
       pageNumber: i + 1,
-      title: `Slide ${i + 1}`,
-      text: slideBody ? `## Slide ${i + 1}\n\n${slideBody}` : `## Slide ${i + 1}\n\n(Slide hình ảnh hoặc không có văn bản)`
+      title: `Slide ${i + 1}: ${slideTitle}`,
+      text: fullSlideText
+        ? `## ${slideTitle}\n\n${slideBody || ''}`
+        : `## Slide ${i + 1}\n\n(Slide hình ảnh hoặc không có văn bản)`,
     });
   }
 
+  return { slides, pages };
+}
+
+/**
+ * Bóc tách tệp PowerPoint .pptx bằng JSZip trích xuất văn bản từng slide
+ */
+export async function parsePptxFile(file: File): Promise<ParsedPage[]> {
+  const { pages } = await parsePptxPresentation(file);
   return pages;
+}
+
+/**
+ * Bộ phân tích tệp trả về phân loại chuẩn (tài liệu, bảng tính đa sheet, hoặc slide trình chiếu)
+ */
+export async function parseUploadedDocumentResult(
+  file: File,
+  formattedTitle: string
+): Promise<UploadedParseResult> {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const isSpreadsheet =
+    ext === 'xlsx' ||
+    ext === 'xls' ||
+    ext === 'csv' ||
+    ext === 'ods' ||
+    file.type.includes('spreadsheetml') ||
+    file.type === 'text/csv' ||
+    file.type === 'application/vnd.ms-excel';
+  const isPptx = ext === 'pptx' || file.type.includes('presentationml');
+
+  if (ext === 'ppt') {
+    throw new Error(
+      'Định dạng PowerPoint .ppt cũ (97-2003) chưa được hỗ trợ trực tiếp. Vui lòng lưu sang .pptx hoặc .pdf rồi tải lại.'
+    );
+  }
+
+  if (isSpreadsheet) {
+    const { sheets, pages } = await parseSpreadsheetFile(file);
+    return { kind: 'spreadsheet', sheets, pages };
+  }
+
+  if (isPptx) {
+    const { slides, pages } = await parsePptxPresentation(file);
+    return { kind: 'presentation', slides, pages };
+  }
+
+  const pages = await parseUploadedDocumentFile(file, formattedTitle);
+  return { kind: 'document', pages };
 }
 
 /**
