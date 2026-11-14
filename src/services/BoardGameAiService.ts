@@ -1,7 +1,14 @@
 import { askAi, refundAiRequest } from '@/lib/aiClient';
 import { getSupabase } from '@/lib/supabase';
 import { AiConfig } from '@/types/vitoken';
-import { GameCardItem } from '@/types/boardgame';
+import {
+  BoardGamePackage,
+  BoardGameTemplateId,
+  BoardRuleMode,
+  GameCardItem,
+  ResourceDefinition,
+  createBoardGameFromTemplate,
+} from '@/types/boardgame';
 
 export interface ValidatedAiDeckCard {
   title: string;
@@ -372,4 +379,204 @@ Trả về DUY NHẤT mảng JSON hợp lệ gồm ${count} phần tử:
   });
 
   return { items, usedFallback: true, refunded, requestId };
+}
+
+export interface UniversalAiGameSpec {
+  title: string;
+  description: string;
+  templateId: BoardGameTemplateId;
+  ruleMode: BoardRuleMode;
+  resources: ResourceDefinition[];
+  cards: GameCardItem[];
+  tileTitles: string[];
+}
+
+function extractJsonObject(raw: string): Record<string, unknown> | null {
+  try {
+    const trimmed = raw.trim();
+    const start = trimmed.indexOf('{');
+    const end = trimmed.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    const parsed = JSON.parse(trimmed.slice(start, end + 1));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+const VALID_TEMPLATES: BoardGameTemplateId[] = [
+  'monopoly',
+  'grid_chess',
+  'card_table',
+  'hex_strategy',
+  'node_track',
+  'sandbox',
+];
+const VALID_MODES: BoardRuleMode[] = ['monopoly', 'turn_based', 'sandbox'];
+
+/**
+ * AI đồng thiết kế bất kỳ thể loại Board Game nào (thẻ bài, lục giác, cờ lưới, đường đua nút, sandbox).
+ */
+export async function generateUniversalGamePackWithAi(params: {
+  prompt: string;
+  aiConfig: AiConfig;
+  boardId: string;
+  onBalanceUpdate?: (balanceAfter?: number) => void;
+}): Promise<{
+  pkg: BoardGamePackage;
+  usedFallback: boolean;
+  refunded?: boolean;
+  requestId: string;
+}> {
+  const requestId =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `bg-univ-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const basePrompt = `Hãy thiết kế cấu trúc một Board Game theo ý tưởng: "${params.prompt}".
+Trả về DUY NHẤT một JSON object hợp lệ:
+{
+  "title": "Tên trò chơi ngắn gọn",
+  "description": "Mô tả luật chơi 1-2 câu",
+  "templateId": "monopoly" | "grid_chess" | "card_table" | "hex_strategy" | "node_track" | "sandbox",
+  "ruleMode": "monopoly" | "turn_based" | "sandbox",
+  "resources": [{ "id": "hp", "name": "Máu", "unit": "HP", "color": "#dc2626", "initialAmount": 10 }],
+  "cards": [{ "title": "Tên lá bài", "description": "Tác dụng lá bài", "color": "#2563eb" }],
+  "tileTitles": ["Ô 1", "Ô 2"]
+}`;
+
+  const modelName = params.aiConfig.model || 'gpt-4o-mini';
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const prompt =
+        attempt === 1
+          ? basePrompt
+          : `${basePrompt}\n\nCHÚ Ý: Chỉ trả JSON object hợp lệ, templateId thuộc 6 giá trị trên, initialAmount >= 0.`;
+      const res = await askAi({
+        provider: params.aiConfig.provider,
+        model: modelName,
+        prompt,
+        context: 'Thiết kế Board Game đa năng',
+        maxTokens: 3000,
+        requestId,
+      });
+
+      const obj = extractJsonObject(res.reply);
+      if (obj && typeof obj.title === 'string' && obj.title.trim()) {
+        const templateId = VALID_TEMPLATES.includes(obj.templateId as BoardGameTemplateId)
+          ? (obj.templateId as BoardGameTemplateId)
+          : 'sandbox';
+        const ruleMode = VALID_MODES.includes(obj.ruleMode as BoardRuleMode)
+          ? (obj.ruleMode as BoardRuleMode)
+          : templateId === 'monopoly'
+          ? 'monopoly'
+          : 'turn_based';
+
+        const basePkg = createBoardGameFromTemplate(templateId, params.boardId);
+        const rawResources = Array.isArray(obj.resources) ? obj.resources : [];
+        const resources: ResourceDefinition[] = rawResources
+          .filter((r): r is Record<string, unknown> => Boolean(r && typeof r === 'object'))
+          .slice(0, 6)
+          .map((r, idx) => ({
+            id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : `res-${idx + 1}`,
+            name: typeof r.name === 'string' && r.name.trim() ? r.name.trim() : `Tài nguyên ${idx + 1}`,
+            unit: typeof r.unit === 'string' ? r.unit : undefined,
+            color: typeof r.color === 'string' && HEX_COLOR_RE.test(r.color) ? r.color : '#E0562D',
+            initialAmount:
+              typeof r.initialAmount === 'number' && Number.isFinite(r.initialAmount) && r.initialAmount >= 0
+                ? Math.round(r.initialAmount)
+                : 0,
+          }));
+
+        const rawCards = Array.isArray(obj.cards) ? obj.cards : [];
+        const cards: GameCardItem[] = rawCards
+          .filter((c): c is Record<string, unknown> => Boolean(c && typeof c === 'object'))
+          .slice(0, 16)
+          .map((c, idx) => ({
+            id: `card-ai-${Date.now()}-${idx}`,
+            title: typeof c.title === 'string' && c.title.trim() ? c.title.trim() : `Lá ${idx + 1}`,
+            description: typeof c.description === 'string' ? c.description.trim() : '',
+            color: typeof c.color === 'string' && HEX_COLOR_RE.test(c.color) ? c.color : '#2563eb',
+            faceUp: true,
+          }));
+
+        const rawTitles = Array.isArray(obj.tileTitles)
+          ? obj.tileTitles.filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
+          : [];
+        const tiles = basePkg.tiles.map((t, idx) =>
+          rawTitles[idx] ? { ...t, title: rawTitles[idx].trim() } : t
+        );
+
+        const decks =
+          cards.length > 0
+            ? [
+                {
+                  id: `deck-ai-${Date.now()}`,
+                  name: 'Bộ bài chính',
+                  deckType: 'standard_deck' as const,
+                  color: '#1e293b',
+                  relX: 24,
+                  relY: 24,
+                  width: 96,
+                  height: 128,
+                  cards,
+                },
+              ]
+            : basePkg.decks;
+
+        if (typeof res.balanceAfter === 'number') {
+          params.onBalanceUpdate?.(res.balanceAfter);
+        }
+
+        return {
+          pkg: {
+            ...basePkg,
+            title: obj.title.trim(),
+            description:
+              typeof obj.description === 'string' && obj.description.trim()
+                ? obj.description.trim()
+                : basePkg.description,
+            ruleMode,
+            resources: resources.length > 0 ? resources : basePkg.resources,
+            decks,
+            tiles,
+          },
+          usedFallback: false,
+          requestId,
+        };
+      }
+    } catch {
+      // Retry / Fallback
+    }
+  }
+
+  let refunded = false;
+  if (params.aiConfig.provider === 'system') {
+    const refundRes = await refundAiRequest(requestId);
+    refunded = refundRes.refunded;
+    if (typeof refundRes.balanceAfter === 'number') {
+      params.onBalanceUpdate?.(refundRes.balanceAfter);
+    }
+  }
+
+  const lower = params.prompt.toLowerCase();
+  const fallbackTemplate: BoardGameTemplateId = lower.includes('thẻ') || lower.includes('uno') || lower.includes('bài')
+    ? 'card_table'
+    : lower.includes('lục giác') || lower.includes('catan') || lower.includes('hex')
+    ? 'hex_strategy'
+    : lower.includes('cá ngựa') || lower.includes('rắn') || lower.includes('đua')
+    ? 'node_track'
+    : lower.includes('cờ') || lower.includes('caro')
+    ? 'grid_chess'
+    : 'sandbox';
+
+  return {
+    pkg: createBoardGameFromTemplate(fallbackTemplate, params.boardId),
+    usedFallback: true,
+    refunded,
+    requestId,
+  };
 }

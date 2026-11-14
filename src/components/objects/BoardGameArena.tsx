@@ -5,27 +5,41 @@ import { createPortal } from 'react-dom';
 import { DeskItem } from '@/types/studyspace';
 import {
   BoardGamePackage,
+  BoardGameTemplateId,
   BoardTile,
   GameCardDeck,
   GamePawn,
   SavedDrawingAsset,
+  createBoardGameFromTemplate,
   createStarterVndBalance,
 } from '@/types/boardgame';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
 import { GameCabinetStorage } from '@/services/GameCabinetStorage';
+import { generateUniversalGamePackWithAi } from '@/services/BoardGameAiService';
+import { useViToken } from '@/context/ViTokenContext';
 import {
+  adjustPlayerResource,
   applyTransfer,
   buyProperty,
   declareBankruptcy,
   deleteBoardTileSafe,
+  drawCardToHand,
   endTurn,
   getActivePlayerId,
   initMatch,
   mortgageProperty,
   payRent,
+  playCardFromHand,
   redoMatchMove,
+  returnTableCardToDeck,
+  reverseTurnOrder,
   rollAndMove,
+  shuffleDeck,
+  spawnFromSupplyPawn,
+  togglePawnFlip,
+  toggleTableCardFlip,
+  toggleTableCardTap,
   undoMatchMove,
   upgradeHouse,
 } from '@/lib/boardGameEngine';
@@ -39,6 +53,8 @@ import { ActionPanel } from './boardgame/ActionPanel';
 import { TileFormEditorModal } from './boardgame/TileFormEditorModal';
 import { DeckAndDeedModal } from './boardgame/DeckAndDeedModal';
 import { CurrencyAndBankPanel } from './boardgame/CurrencyAndBankPanel';
+import { PrivateHandTray } from './boardgame/PrivateHandTray';
+import { UniversalSetupModal } from './boardgame/UniversalSetupModal';
 import {
   Gamepad2,
   Play,
@@ -49,6 +65,7 @@ import {
   Trash2,
   X,
   Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface BoardGameArenaProps {
@@ -93,6 +110,9 @@ export const BoardGameArena = React.memo(function BoardGameArena({
   const [connectSourceId, setConnectSourceId] = useState<string | null>(null);
   const [draftMousePos, setDraftMousePos] = useState<{ x: number; y: number } | null>(null);
   const [pendingFitPawnAsset, setPendingFitPawnAsset] = useState<SavedDrawingAsset | null>(null);
+  const [isUniversalSetupOpen, setIsUniversalSetupOpen] = useState(false);
+  const [isGeneratingUniversalAi, setIsGeneratingUniversalAi] = useState(false);
+  const { aiConfig, syncBalanceFromServer } = useViToken();
 
   const arenaRef = useRef<HTMLDivElement>(null);
 
@@ -789,6 +809,15 @@ export const BoardGameArena = React.memo(function BoardGameArena({
 
           <button
             type="button"
+            onClick={() => setIsUniversalSetupOpen(true)}
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3 h-3 text-[#E0562D]" />
+            <span>Thiết lập</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setIsBankOpen(true)}
             className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
           >
@@ -849,6 +878,17 @@ export const BoardGameArena = React.memo(function BoardGameArena({
           showToast('Đã cập nhật bộ xúc xắc!');
         }}
         onStartDragPawn={handleStartDragPawn}
+        onFlipPawn={(pawnId) => commitAndSyncHost(togglePawnFlip(pkg, pawnId))}
+        onSpawnSupplyPawn={(pawnId) => {
+          const res = spawnFromSupplyPawn(pkg, pawnId);
+          if (res.ok) {
+            commitAndSyncHost(res.pkg);
+            showToast('Đã nhân bản thêm 1 quân mới!');
+          }
+        }}
+        onFlipTableCard={(instanceId) => commitAndSyncHost(toggleTableCardFlip(pkg, instanceId))}
+        onTapTableCard={(instanceId) => commitAndSyncHost(toggleTableCardTap(pkg, instanceId))}
+        onReturnTableCard={(instanceId) => commitAndSyncHost(returnTableCardToDeck(pkg, instanceId))}
       />
 
       {/* CÁC BỘ THẺ / SỔ ĐỎ */}
@@ -1049,6 +1089,40 @@ export const BoardGameArena = React.memo(function BoardGameArena({
               },
             })
           }
+          onAdjustResource={(pawnId, resourceId, delta) =>
+            commitAndSyncHost(adjustPlayerResource(pkg, pawnId, resourceId, delta))
+          }
+          onReverseTurn={() => {
+            commitAndSyncHost(reverseTurnOrder(pkg));
+            showToast('Đã đảo chiều lượt chơi!');
+          }}
+        />
+      )}
+
+      {!isEditMode && ((pkg.decks && pkg.decks.length > 0) || Object.keys(pkg.matchState?.playerHands || {}).length > 0) && (
+        <PrivateHandTray
+          pawns={pkg.pawns}
+          activePawnId={activePlayerId}
+          decks={pkg.decks}
+          playerHands={pkg.matchState?.playerHands || {}}
+          onDrawCard={(deckId, pawnId) => {
+            const res = drawCardToHand(pkg, deckId, pawnId, 1);
+            if (!res.ok) return showToast(res.error || 'Không thể rút bài.');
+            commitAndSyncHost(res.pkg);
+          }}
+          onShuffleDeck={(deckId) => {
+            commitAndSyncHost(shuffleDeck(pkg, deckId));
+            showToast('Đã xào lại bộ bài!');
+          }}
+          onPlayCard={(pawnId, cardId, faceUp) => {
+            const playArea = pkg.tiles.find((t) => t.zoneType === 'play_area');
+            const res = playCardFromHand(pkg, pawnId, cardId, {
+              faceUp,
+              zoneTileId: playArea?.id,
+            });
+            if (!res.ok) return showToast(res.error || 'Không thể đánh lá bài.');
+            commitAndSyncHost(res.pkg);
+          }}
         />
       )}
 
@@ -1275,6 +1349,52 @@ export const BoardGameArena = React.memo(function BoardGameArena({
           </div>,
           document.body
         )}
+      <UniversalSetupModal
+        isOpen={isUniversalSetupOpen}
+        pkg={pkg}
+        onClose={() => setIsUniversalSetupOpen(false)}
+        onApplyTemplate={(templateId: BoardGameTemplateId) => {
+          const nextPkg = createBoardGameFromTemplate(templateId, pkg.id, {
+            width: pkg.mapConfig.width,
+            height: pkg.mapConfig.height,
+          });
+          commitAndSyncHost(nextPkg);
+          showToast('Đã chuyển mẫu bàn chơi!');
+        }}
+        onUpdateRuleConfig={({ ruleMode, resources, triggerRules }) => {
+          commitAndSyncHost({
+            ...pkg,
+            ruleMode,
+            resources,
+            triggerRules,
+          });
+          showToast('Đã lưu cấu hình luật & tài nguyên!');
+        }}
+        isGeneratingAi={isGeneratingUniversalAi}
+        onGenerateAiUniversal={async (prompt) => {
+          setIsGeneratingUniversalAi(true);
+          try {
+            const res = await generateUniversalGamePackWithAi({
+              prompt,
+              aiConfig,
+              boardId: pkg.id,
+              onBalanceUpdate: (balanceAfter) => {
+                if (typeof balanceAfter === 'number') {
+                  syncBalanceFromServer?.(balanceAfter);
+                }
+              },
+            });
+            commitAndSyncHost(res.pkg);
+            showToast(
+              res.usedFallback
+                ? 'Đã tạo bàn chơi theo mẫu gần nhất (offline).'
+                : `AI đã tạo "${res.pkg.title}"!`
+            );
+          } finally {
+            setIsGeneratingUniversalAi(false);
+          }
+        }}
+      />
     </div>
   );
 });

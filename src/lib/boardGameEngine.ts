@@ -4,7 +4,10 @@ import {
   BoardGamePackage,
   BoardTile,
   GameCardItem,
+  GamePawn,
+  GameTriggerRule,
   MatchSnapshot,
+  TableCardInstance,
   breakAmountIntoVndNotes,
   calculateBalanceTotal,
   createEmptyBalance,
@@ -894,10 +897,11 @@ export function endTurn(pkg: BoardGamePackage): BoardGamePackage {
     };
   }
 
-  let nextIdx = ((pkg.matchState.currentTurnIndex ?? 0) + 1) % order.length;
+  const dir = pkg.matchState.turnDirection ?? 1;
+  let nextIdx = ((pkg.matchState.currentTurnIndex ?? 0) + dir + order.length) % order.length;
   for (let guard = 0; guard < order.length; guard++) {
     if (!bankruptSet.has(order[nextIdx])) break;
-    nextIdx = (nextIdx + 1) % order.length;
+    nextIdx = (nextIdx + dir + order.length) % order.length;
   }
 
   return {
@@ -909,4 +913,415 @@ export function endTurn(pkg: BoardGamePackage): BoardGamePackage {
       turnPhase: 'roll',
     },
   };
+}
+
+// -----------------------------------------------------------------------------
+// UNIVERSAL TABLETOP ENGINE (Cards, Private Hands, Resources, Pieces, Triggers)
+// -----------------------------------------------------------------------------
+
+function appendUniversalLog(
+  logs: BankTransactionLog[] | undefined,
+  reason: string,
+  from = 'system',
+  to = 'system',
+  amount = 0
+): BankTransactionLog[] {
+  const entry: BankTransactionLog = {
+    id: `tx-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    timestamp: new Date().toISOString(),
+    message: reason,
+    fromId: from,
+    toId: to,
+    amount,
+    reason,
+  };
+  return [entry, ...(logs || [])].slice(0, 60);
+}
+
+/**
+ * Xào ngẫu nhiên thứ tự các lá trong một bộ bài (Fisher-Yates).
+ */
+export function shuffleDeck(pkg: BoardGamePackage, deckId: string): BoardGamePackage {
+  const deck = pkg.decks.find((d) => d.id === deckId);
+  if (!deck || deck.cards.length <= 1) return pkg;
+  const snap = createSnapshot(pkg);
+  const shuffled = [...deck.cards];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const nextDecks = pkg.decks.map((d) => (d.id === deckId ? { ...d, cards: shuffled } : d));
+  return pushUndoSnapshot(
+    {
+      ...pkg,
+      updatedAt: new Date().toISOString(),
+      decks: nextDecks,
+      matchState: {
+        ...pkg.matchState,
+        logs: appendUniversalLog(pkg.matchState.logs, `Xào bộ bài "${deck.name}"`),
+      },
+    },
+    snap
+  );
+}
+
+/**
+ * Rút `count` lá từ bộ bài lên Tay bài bí mật (Private Hand) của người chơi.
+ */
+export function drawCardToHand(
+  pkg: BoardGamePackage,
+  deckId: string,
+  pawnId: string,
+  count = 1
+): { ok: boolean; error?: string; drawnCards: GameCardItem[]; pkg: BoardGamePackage } {
+  const deck = pkg.decks.find((d) => d.id === deckId);
+  if (!deck) return { ok: false, error: 'Không tìm thấy bộ bài.', drawnCards: [], pkg };
+  const n = Math.max(1, Math.min(count, deck.cards.length));
+  if (deck.cards.length === 0) {
+    return { ok: false, error: 'Bộ bài đã hết lá.', drawnCards: [], pkg };
+  }
+
+  const snap = createSnapshot(pkg);
+  const drawn = deck.cards.slice(0, n);
+  const remaining = deck.cards.slice(n);
+  const nextDecks = pkg.decks.map((d) => (d.id === deckId ? { ...d, cards: remaining } : d));
+  const currentHands = pkg.matchState.playerHands || {};
+  const pawnHand = currentHands[pawnId] || [];
+  const pawnName = pkg.pawns.find((p) => p.id === pawnId)?.name || pawnId;
+
+  const nextPkg: BoardGamePackage = {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    decks: nextDecks,
+    matchState: {
+      ...pkg.matchState,
+      playerHands: {
+        ...currentHands,
+        [pawnId]: [...pawnHand, ...drawn],
+      },
+      lastDrawnCard: {
+        deckId,
+        deckName: deck.name,
+        card: drawn[drawn.length - 1],
+        drawnAt: Date.now(),
+      },
+      logs: appendUniversalLog(
+        pkg.matchState.logs,
+        `${pawnName} rút ${drawn.length} lá từ "${deck.name}"`,
+        deckId,
+        pawnId
+      ),
+    },
+  };
+
+  return { ok: true, drawnCards: drawn, pkg: pushUndoSnapshot(nextPkg, snap) };
+}
+
+/**
+ * Đánh 1 lá từ tay bài bí mật của người chơi ra mặt bàn (úp hoặc ngửa).
+ */
+export function playCardFromHand(
+  pkg: BoardGamePackage,
+  pawnId: string,
+  cardId: string,
+  opts: {
+    deckId?: string;
+    zoneTileId?: string;
+    faceUp?: boolean;
+    relX?: number;
+    relY?: number;
+  } = {}
+): { ok: boolean; error?: string; instance?: TableCardInstance; pkg: BoardGamePackage } {
+  const hands = pkg.matchState.playerHands || {};
+  const pawnHand = hands[pawnId] || [];
+  const cardIdx = pawnHand.findIndex((c) => c.id === cardId);
+  if (cardIdx < 0) {
+    return { ok: false, error: 'Không tìm thấy lá bài trên tay.', pkg };
+  }
+
+  const snap = createSnapshot(pkg);
+  const card = pawnHand[cardIdx];
+  const nextHand = pawnHand.filter((_, idx) => idx !== cardIdx);
+  const zone = opts.zoneTileId ? pkg.tiles.find((t) => t.id === opts.zoneTileId) : undefined;
+  const existingOnTable = pkg.matchState.tableCards || [];
+  const defaultX = zone
+    ? zone.relX + Math.round(zone.width * 0.25) + (existingOnTable.length % 4) * 18
+    : Math.round(pkg.mapConfig.width * 0.38) + (existingOnTable.length % 5) * 18;
+  const defaultY = zone
+    ? zone.relY + Math.round(zone.height * 0.25) + (existingOnTable.length % 3) * 14
+    : Math.round(pkg.mapConfig.height * 0.35) + (existingOnTable.length % 4) * 14;
+
+  const instance: TableCardInstance = {
+    instanceId: `tc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    card,
+    deckId: opts.deckId || pkg.decks[0]?.id || 'deck-default',
+    ownerPawnId: pawnId,
+    zoneTileId: opts.zoneTileId,
+    relX: opts.relX ?? defaultX,
+    relY: opts.relY ?? defaultY,
+    faceUp: opts.faceUp ?? true,
+    tapped: false,
+  };
+
+  const pawnName = pkg.pawns.find((p) => p.id === pawnId)?.name || pawnId;
+  let nextPkg: BoardGamePackage = {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    matchState: {
+      ...pkg.matchState,
+      playerHands: {
+        ...hands,
+        [pawnId]: nextHand,
+      },
+      tableCards: [...existingOnTable, instance],
+      logs: appendUniversalLog(
+        pkg.matchState.logs,
+        `${pawnName} đánh lá ${instance.faceUp ? `"${card.title}"` : '(úp)'} ra bàn`,
+        pawnId,
+        'table'
+      ),
+    },
+  };
+
+  nextPkg = evaluateTriggerRules(nextPkg, { when: 'on_play_card', pawnId, tileId: opts.zoneTileId });
+  return { ok: true, instance, pkg: pushUndoSnapshot(nextPkg, snap) };
+}
+
+/**
+ * Lật ngửa / úp 1 lá bài đang nằm trên bàn.
+ */
+export function toggleTableCardFlip(pkg: BoardGamePackage, instanceId: string): BoardGamePackage {
+  const tableCards = pkg.matchState.tableCards || [];
+  if (!tableCards.some((tc) => tc.instanceId === instanceId)) return pkg;
+  return {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    matchState: {
+      ...pkg.matchState,
+      tableCards: tableCards.map((tc) =>
+        tc.instanceId === instanceId ? { ...tc, faceUp: !tc.faceUp } : tc
+      ),
+    },
+  };
+}
+
+/**
+ * Xoay 90° (Tap/Untap) 1 lá bài đang nằm trên bàn (cho TCG / Magic / Yugioh).
+ */
+export function toggleTableCardTap(pkg: BoardGamePackage, instanceId: string): BoardGamePackage {
+  const tableCards = pkg.matchState.tableCards || [];
+  if (!tableCards.some((tc) => tc.instanceId === instanceId)) return pkg;
+  return {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    matchState: {
+      ...pkg.matchState,
+      tableCards: tableCards.map((tc) =>
+        tc.instanceId === instanceId ? { ...tc, tapped: !tc.tapped } : tc
+      ),
+    },
+  };
+}
+
+/**
+ * Thu hồi 1 lá bài trên bàn về lại cuối bộ bài.
+ */
+export function returnTableCardToDeck(
+  pkg: BoardGamePackage,
+  instanceId: string,
+  targetDeckId?: string
+): BoardGamePackage {
+  const tableCards = pkg.matchState.tableCards || [];
+  const target = tableCards.find((tc) => tc.instanceId === instanceId);
+  if (!target) return pkg;
+  const deckId = targetDeckId || target.deckId;
+  const nextDecks = pkg.decks.map((d) =>
+    d.id === deckId ? { ...d, cards: [...d.cards, target.card] } : d
+  );
+  return {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    decks: nextDecks,
+    matchState: {
+      ...pkg.matchState,
+      tableCards: tableCards.filter((tc) => tc.instanceId !== instanceId),
+    },
+  };
+}
+
+/**
+ * Thay đổi số lượng tài nguyên tùy chỉnh (Gỗ, Vàng, HP, Điểm thắng...) của người chơi.
+ */
+export function adjustPlayerResource(
+  pkg: BoardGamePackage,
+  pawnId: string,
+  resourceId: string,
+  delta: number
+): BoardGamePackage {
+  const def = (pkg.resources || []).find((r) => r.id === resourceId);
+  const allRes = pkg.matchState.playerResources || {};
+  const pawnRes = allRes[pawnId] || {};
+  const current = pawnRes[resourceId] ?? def?.initialAmount ?? 0;
+  const nextVal = Math.max(0, current + delta);
+  const pawnName = pkg.pawns.find((p) => p.id === pawnId)?.name || pawnId;
+  const resName = def?.name || resourceId;
+
+  return {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    matchState: {
+      ...pkg.matchState,
+      playerResources: {
+        ...allRes,
+        [pawnId]: {
+          ...pawnRes,
+          [resourceId]: nextVal,
+        },
+      },
+      logs: appendUniversalLog(
+        pkg.matchState.logs,
+        `${pawnName}: ${delta >= 0 ? '+' : ''}${delta} ${resName} (còn ${nextVal})`,
+        'system',
+        pawnId,
+        delta
+      ),
+    },
+  };
+}
+
+/**
+ * Đảo chiều lượt chơi (1 <-> -1), dùng cho UNO / Party Games.
+ */
+export function reverseTurnOrder(pkg: BoardGamePackage): BoardGamePackage {
+  const nextDir: 1 | -1 = (pkg.matchState.turnDirection ?? 1) === 1 ? -1 : 1;
+  return {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    matchState: {
+      ...pkg.matchState,
+      turnDirection: nextDir,
+      logs: appendUniversalLog(
+        pkg.matchState.logs,
+        nextDir === -1 ? 'Đảo chiều lượt chơi (ngược chiều)' : 'Đảo chiều lượt chơi (thuận chiều)'
+      ),
+    },
+  };
+}
+
+/**
+ * Nhân bản 1 quân cờ mới từ quân nguồn vô tận (Caro X/O, Cờ vây, Đường Catan).
+ */
+export function spawnFromSupplyPawn(
+  pkg: BoardGamePackage,
+  templatePawnId: string,
+  relX?: number,
+  relY?: number
+): { ok: boolean; error?: string; spawnedPawn?: GamePawn; pkg: BoardGamePackage } {
+  const template = pkg.pawns.find((p) => p.id === templatePawnId);
+  if (!template) return { ok: false, error: 'Không tìm thấy quân nguồn.', pkg };
+  const snap = createSnapshot(pkg);
+  const spawned: GamePawn = {
+    ...template,
+    id: `pawn-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    isInfiniteSupply: false,
+    relX: relX ?? template.relX + 36,
+    relY: relY ?? template.relY + 36,
+  };
+  return {
+    ok: true,
+    spawnedPawn: spawned,
+    pkg: pushUndoSnapshot(
+      {
+        ...pkg,
+        updatedAt: new Date().toISOString(),
+        pawns: [...pkg.pawns, spawned],
+      },
+      snap
+    ),
+  };
+}
+
+/**
+ * Lật mặt quân cờ / token 2 mặt (Othello, Cờ Úp, Stratego).
+ */
+export function togglePawnFlip(pkg: BoardGamePackage, pawnId: string): BoardGamePackage {
+  if (!pkg.pawns.some((p) => p.id === pawnId)) return pkg;
+  return {
+    ...pkg,
+    updatedAt: new Date().toISOString(),
+    pawns: pkg.pawns.map((p) =>
+      p.id === pawnId ? { ...p, faceUp: p.faceUp === false } : p
+    ),
+  };
+}
+
+/**
+ * Đánh giá và thực thi các luật "Nếu - Thì" (GameTriggerRule) khi có sự kiện xảy ra.
+ */
+export function evaluateTriggerRules(
+  pkg: BoardGamePackage,
+  event: {
+    when: GameTriggerRule['when'];
+    pawnId: string;
+    tileId?: string;
+    rollValue?: number;
+  }
+): BoardGamePackage {
+  const rules = (pkg.triggerRules || []).filter((r) => {
+    if (r.when !== event.when) return false;
+    if (r.sourceTileId && r.sourceTileId !== event.tileId) return false;
+    if (typeof r.rollValue === 'number' && r.rollValue !== event.rollValue) return false;
+    return true;
+  });
+
+  if (rules.length === 0) return pkg;
+  let working = pkg;
+
+  for (const rule of rules) {
+    if (rule.action === 'teleport' && rule.targetTileId) {
+      const targetTile = working.tiles.find((t) => t.id === rule.targetTileId);
+      if (targetTile) {
+        working = {
+          ...working,
+          pawns: working.pawns.map((p) =>
+            p.id === event.pawnId
+              ? {
+                  ...p,
+                  currentTileId: targetTile.id,
+                  relX: targetTile.relX + Math.round((targetTile.width - p.width) / 2),
+                  relY: targetTile.relY + Math.round((targetTile.height - p.height) / 2),
+                }
+              : p
+          ),
+          matchState: {
+            ...working.matchState,
+            logs: appendUniversalLog(
+              working.matchState.logs,
+              rule.label || `Dịch chuyển tới "${targetTile.title || targetTile.id}"`
+            ),
+          },
+        };
+      }
+    } else if (rule.action === 'resource_delta' && rule.resourceId) {
+      working = adjustPlayerResource(working, event.pawnId, rule.resourceId, rule.amount ?? 1);
+    } else if (rule.action === 'draw_cards' && working.decks.length > 0) {
+      const drawRes = drawCardToHand(working, working.decks[0].id, event.pawnId, rule.amount ?? 1);
+      if (drawRes.ok) working = drawRes.pkg;
+    } else if (rule.action === 'reverse_turn') {
+      working = reverseTurnOrder(working);
+    } else if (rule.action === 'skip_turn') {
+      working = endTurn(working);
+    } else if (rule.action === 'extra_turn') {
+      working = {
+        ...working,
+        matchState: {
+          ...working.matchState,
+          turnPhase: 'roll',
+          logs: appendUniversalLog(working.matchState.logs, rule.label || 'Được thêm 1 lượt chơi'),
+        },
+      };
+    }
+  }
+
+  return working;
 }

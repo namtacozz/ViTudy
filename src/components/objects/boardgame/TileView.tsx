@@ -140,9 +140,22 @@ export const TileView = React.memo(function TileView({
   }
 
   const isDrawTile = tile.role === 'draw_card_tile';
+  const isCardZone = tile.role === 'card_zone';
+  const isTrackNode = tile.role === 'track_node';
   const headerBg = tile.form?.headerBgColor || (isDrawTile ? '#9333ea' : '#E0562D');
   const houses = tile.propertyDetails?.currentHouses || 0;
   const isMortgaged = Boolean(tile.propertyDetails?.isMortgaged);
+
+  const shapeStyle: React.CSSProperties =
+    tile.shape === 'hex'
+      ? { clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' }
+      : {};
+  const shapeClass =
+    tile.shape === 'circle'
+      ? 'rounded-full'
+      : tile.shape === 'hex'
+      ? 'rounded-none'
+      : 'rounded-lg';
 
   return (
     <div
@@ -161,8 +174,9 @@ export const TileView = React.memo(function TileView({
         top: tile.relY,
         width: tile.width,
         height: tile.height,
+        ...shapeStyle,
       }}
-      className={`interactive-control rounded-lg bg-white overflow-hidden flex flex-col justify-between transition-all cursor-pointer group ${
+      className={`interactive-control ${shapeClass} bg-white overflow-hidden flex flex-col justify-between transition-all cursor-pointer group ${
         tile.form?.borderStyle === 'dashed' ? 'border border-dashed' : 'border'
       } ${
         isConnectSource
@@ -207,9 +221,15 @@ export const TileView = React.memo(function TileView({
           <span className="text-[9px] font-black text-rose-600">Ô TÙ</span>
         ) : tile.role === 'penalty_tile' ? (
           <span className="text-[9px] font-black text-amber-700">NỘP PHẠT</span>
+        ) : isCardZone ? (
+          <span className="text-[10px] font-semibold text-slate-500 text-center px-2">
+            {tile.content || 'Khu vực thẻ'}
+          </span>
+        ) : isTrackNode ? (
+          <span className="text-[9px] font-bold text-slate-500">Nút</span>
         ) : (
           <span className="text-[8px] text-slate-300 font-semibold">
-            {tile.hasFunction ? 'Ô đất' : ''}
+            {tile.hasFunction ? 'Ô' : ''}
           </span>
         )}
 

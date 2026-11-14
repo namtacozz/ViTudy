@@ -7,7 +7,7 @@ import {
   findDeedForTile,
   getActivePlayerId,
 } from '@/lib/boardGameEngine';
-import { Undo2, Redo2, SkipForward, Home, Trophy, Move } from 'lucide-react';
+import { Undo2, Redo2, SkipForward, Home, Trophy, Move, ArrowLeftRight } from 'lucide-react';
 
 interface ActionPanelProps {
   pkg: BoardGamePackage;
@@ -21,6 +21,8 @@ interface ActionPanelProps {
   onUndoMove: () => void;
   onRedoMove: () => void;
   onToggleFreeDrag: () => void;
+  onAdjustResource?: (pawnId: string, resourceId: string, delta: number) => void;
+  onReverseTurn?: () => void;
 }
 
 export const ActionPanel = React.memo(function ActionPanel({
@@ -35,7 +37,11 @@ export const ActionPanel = React.memo(function ActionPanel({
   onUndoMove,
   onRedoMove,
   onToggleFreeDrag,
+  onAdjustResource,
+  onReverseTurn,
 }: ActionPanelProps) {
+  const ruleMode = pkg.ruleMode || 'monopoly';
+  const isMonopoly = ruleMode === 'monopoly';
   const activeId = getActivePlayerId(pkg);
   const activePawn = pkg.pawns.find((p) => p.id === activeId);
   const currentTile = activePawn?.currentTileId
@@ -84,9 +90,11 @@ export const ActionPanel = React.memo(function ActionPanel({
         <span className="text-xs font-bold text-slate-800 truncate">
           Lượt: {activePawn?.name || 'Chưa có quân'}
         </span>
-        <span className="text-[11px] font-mono text-slate-500">
-          {balance.toLocaleString('vi-VN')}đ
-        </span>
+        {isMonopoly && (
+          <span className="text-[11px] font-mono text-slate-500">
+            {balance.toLocaleString('vi-VN')}đ
+          </span>
+        )}
         {currentTile && (
           <span className="text-[11px] text-slate-500 truncate hidden sm:inline">
             • Đứng tại <b>{currentTile.title || currentTile.id}</b>
@@ -95,8 +103,9 @@ export const ActionPanel = React.memo(function ActionPanel({
       </div>
 
       {!isViewer && activePawn && (
-        <div className="flex items-center gap-1.5 shrink-0">
-          {currentTile &&
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+          {isMonopoly &&
+            currentTile &&
             currentTile.role === 'normal_cell' &&
             currentTile.price &&
             currentTile.price > 0 &&
@@ -110,7 +119,7 @@ export const ActionPanel = React.memo(function ActionPanel({
               </button>
             )}
 
-          {currentTile && ownerId === activePawn.id && (
+          {isMonopoly && currentTile && ownerId === activePawn.id && (
             <>
               <button
                 type="button"
@@ -132,7 +141,7 @@ export const ActionPanel = React.memo(function ActionPanel({
             </>
           )}
 
-          {currentTile && ownerId && ownerId !== activePawn.id && ownerPawn && (
+          {isMonopoly && currentTile && ownerId && ownerId !== activePawn.id && ownerPawn && (
             <button
               type="button"
               onClick={() => onPayRent(activePawn.id, currentTile.id)}
@@ -173,13 +182,61 @@ export const ActionPanel = React.memo(function ActionPanel({
             <Move className="w-3 h-3" />
             <span>Tự do</span>
           </button>
-          {balance <= 0 && (
+          {isMonopoly && balance <= 0 && (
             <button
               type="button"
               onClick={() => onDeclareBankruptcy(activePawn.id)}
               className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold cursor-pointer"
             >
               Phá sản
+            </button>
+          )}
+          {!isMonopoly &&
+            (pkg.resources || []).map((res) => {
+              const val =
+                pkg.matchState.playerResources?.[activePawn.id]?.[res.id] ?? res.initialAmount;
+              return (
+                <div
+                  key={res.id}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-[10px]"
+                >
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: res.color }}
+                  />
+                  <span className="font-semibold text-slate-700">
+                    {res.name}: {val}
+                  </span>
+                  {onAdjustResource && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onAdjustResource(activePawn.id, res.id, -1)}
+                        className="px-1 rounded hover:bg-slate-100 font-bold text-slate-600"
+                      >
+                        -
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onAdjustResource(activePawn.id, res.id, 1)}
+                        className="px-1 rounded hover:bg-slate-100 font-bold text-[#E0562D]"
+                      >
+                        +
+                      </button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          {!isMonopoly && onReverseTurn && (
+            <button
+              type="button"
+              onClick={onReverseTurn}
+              title="Đảo chiều lượt chơi"
+              className="px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <ArrowLeftRight className="w-3 h-3" />
+              <span>{(pkg.matchState.turnDirection ?? 1) === -1 ? 'Ngược' : 'Thuận'}</span>
             </button>
           )}
           <button

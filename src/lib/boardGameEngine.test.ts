@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   BoardGamePackage,
+  BoardGameTemplateId,
   calculateBalanceTotal,
+  createBoardGameFromTemplate,
   createDefaultBoardGamePackage,
   breakAmountIntoVndNotes,
 } from '@/types/boardgame';
 import {
+  adjustPlayerResource,
   applyTransfer,
   buyProperty,
   cleanupBoardGameOrphans,
@@ -13,14 +16,24 @@ import {
   computeTileRent,
   declareBankruptcy,
   deleteBoardTileSafe,
+  drawCardToHand,
   endTurn,
+  evaluateTriggerRules,
   getActivePlayerId,
   getOrderedBoardTrack,
   initMatch,
   mortgageProperty,
   payRent,
+  playCardFromHand,
   redoMatchMove,
+  returnTableCardToDeck,
+  reverseTurnOrder,
   rollAndMove,
+  shuffleDeck,
+  spawnFromSupplyPawn,
+  togglePawnFlip,
+  toggleTableCardFlip,
+  toggleTableCardTap,
   undoMatchMove,
   upgradeHouse,
   verifyLedgerIntegrity,
@@ -446,5 +459,128 @@ describe('boardGameEngine & Money Ledger', () => {
       'bg-del-1'
     );
     expect(remainingItems).toHaveLength(0);
+  });
+
+  it('creates all 6 universal board game templates cleanly', () => {
+    const templates: BoardGameTemplateId[] = [
+      'monopoly',
+      'grid_chess',
+      'card_table',
+      'hex_strategy',
+      'node_track',
+      'sandbox',
+    ];
+    for (const tpl of templates) {
+      const pkg = createBoardGameFromTemplate(tpl, `tpl-${tpl}`);
+      expect(pkg.templateId).toBe(tpl);
+      expect(pkg.id).toBe(`tpl-${tpl}`);
+      if (tpl === 'hex_strategy') {
+        expect(pkg.tiles.every((t) => t.shape === 'hex')).toBe(true);
+      }
+      if (tpl === 'card_table') {
+        expect(pkg.tiles.some((t) => t.zoneType === 'draw_pile')).toBe(true);
+        expect(pkg.decks.length).toBeGreaterThan(0);
+      }
+      if (tpl === 'node_track') {
+        expect(pkg.links.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('supports universal card hand, playing face-up/down, flip, tap, and return to deck', () => {
+    let pkg = createBoardGameFromTemplate('card_table', 'card-test');
+    const deckId = pkg.decks[0].id;
+    const pawnId = pkg.pawns[0].id;
+    const initialCount = pkg.decks[0].cards.length;
+
+    pkg = shuffleDeck(pkg, deckId);
+    expect(pkg.decks[0].cards.length).toBe(initialCount);
+
+    const drawRes = drawCardToHand(pkg, deckId, pawnId, 2);
+    expect(drawRes.ok).toBe(true);
+    expect(drawRes.drawnCards.length).toBe(2);
+    pkg = drawRes.pkg;
+    expect(pkg.matchState.playerHands?.[pawnId]?.length).toBe(2);
+    expect(pkg.decks[0].cards.length).toBe(initialCount - 2);
+
+    const cardToPlay = pkg.matchState.playerHands![pawnId][0];
+    const playRes = playCardFromHand(pkg, pawnId, cardToPlay.id, { faceUp: false });
+    expect(playRes.ok).toBe(true);
+    pkg = playRes.pkg;
+    expect(pkg.matchState.playerHands?.[pawnId]?.length).toBe(1);
+    expect(pkg.matchState.tableCards?.length).toBe(1);
+    const instId = pkg.matchState.tableCards![0].instanceId;
+    expect(pkg.matchState.tableCards![0].faceUp).toBe(false);
+
+    pkg = toggleTableCardFlip(pkg, instId);
+    expect(pkg.matchState.tableCards![0].faceUp).toBe(true);
+
+    pkg = toggleTableCardTap(pkg, instId);
+    expect(pkg.matchState.tableCards![0].tapped).toBe(true);
+
+    pkg = returnTableCardToDeck(pkg, instId, deckId);
+    expect(pkg.matchState.tableCards?.length).toBe(0);
+    expect(pkg.decks[0].cards.length).toBe(initialCount - 1);
+  });
+
+  it('supports custom resources, turn reversal, infinite supply spawning, pawn flip, and trigger rules', () => {
+    let pkg = createBoardGameFromTemplate('hex_strategy', 'univ-test');
+    const p1 = pkg.pawns[0].id;
+    const p2 = pkg.pawns[1].id;
+    pkg = {
+      ...pkg,
+      pawns: [
+        ...pkg.pawns,
+        {
+          id: 'p3',
+          name: 'P3',
+          imageUrl: '',
+          color: '#16a34a',
+          width: 28,
+          height: 28,
+          relX: 200,
+          relY: 200,
+          isInfiniteSupply: true,
+          faceUp: true,
+        },
+      ],
+      matchState: {
+        ...pkg.matchState,
+        turnOrder: [p1, p2, 'p3'],
+        currentTurnIndex: 0,
+      },
+      triggerRules: [
+        {
+          id: 'r1',
+          when: 'on_enter_tile',
+          sourceTileId: pkg.tiles[0].id,
+          action: 'resource_delta',
+          resourceId: 'wood',
+          amount: 3,
+        },
+      ],
+    };
+
+    pkg = adjustPlayerResource(pkg, p1, 'wood', 2);
+    expect(pkg.matchState.playerResources?.[p1]?.wood).toBe(4);
+
+    pkg = evaluateTriggerRules(pkg, {
+      when: 'on_enter_tile',
+      pawnId: p1,
+      tileId: pkg.tiles[0].id,
+    });
+    expect(pkg.matchState.playerResources?.[p1]?.wood).toBe(7);
+
+    pkg = reverseTurnOrder(pkg);
+    expect(pkg.matchState.turnDirection).toBe(-1);
+    pkg = endTurn(pkg);
+    expect(pkg.matchState.currentTurnIndex).toBe(2);
+
+    const spawnRes = spawnFromSupplyPawn(pkg, 'p3', 300, 300);
+    expect(spawnRes.ok).toBe(true);
+    expect(spawnRes.spawnedPawn?.isInfiniteSupply).toBe(false);
+    pkg = togglePawnFlip(spawnRes.pkg, spawnRes.spawnedPawn!.id);
+    const flipped = pkg.pawns.find((p) => p.id === spawnRes.spawnedPawn!.id);
+    expect(flipped?.faceUp).toBe(false);
   });
 });

@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-11-14 09:42 — main (Đa dụng hóa Board Game Studio cho mọi thể loại Board Game)
+- Task: Mở rộng Board Game Studio từ mô hình Cờ Tỷ Phú thành engine & giao diện bàn chơi đa năng hỗ trợ Thẻ bài (UNO, TCG, Mèo Nổ), Cờ lưới (Cờ vua, Caro, Cờ vây), Chiến thuật lục giác (Catan), Đường đua nút (Cá ngựa, Rắn leo thang) và Sandbox tự do.
+- Changed:
+  - `src/types/boardgame.ts`: Thêm `BoardRuleMode`, `BoardMapLayoutMode` (`hex_grid`, `node_graph`, `card_table`, `freeform`), `BoardGameTemplateId`, `ResourceDefinition`, `GameTriggerRule`, `TableCardInstance`, mở rộng `generateMapTiles` và thêm `createBoardGameFromTemplate`.
+  - `src/lib/boardGameEngine.ts`: Cập nhật `endTurn` theo `turnDirection` (`1 | -1`), thêm `shuffleDeck`, `drawCardToHand`, `playCardFromHand`, `toggleTableCardFlip`, `toggleTableCardTap`, `returnTableCardToDeck`, `adjustPlayerResource`, `reverseTurnOrder`, `spawnFromSupplyPawn`, `togglePawnFlip`, `evaluateTriggerRules`.
+  - `src/services/BoardGameAiService.ts`: Thêm `generateUniversalGamePackWithAi` thiết kế bộ bài, tài nguyên, bản đồ theo mọi ý tưởng game với retry + hoàn tiền idempotent.
+  - `src/components/objects/boardgame/{PrivateHandTray,TableCardsLayer,UniversalSetupModal}.tsx` & `{TileView,PawnLayer,ActionPanel,BoardCanvas}.tsx` & `BoardGameArena.tsx`: Hỗ trợ tay bài bí mật từng người, lá bài trên bàn (lật/xoay 90°/thu về), ô lục giác (`hex`), nguồn quân vô tận & lật mặt, bộ đếm tài nguyên, đảo chiều lượt và modal thiết lập đa năng.
+  - `src/lib/boardGameEngine.test.ts`: Bổ sung 3 unit test mới cho 6 template, hệ thống tay bài/lật/xoay lá, tài nguyên, đảo chiều, nhân bản quân và luật Nếu–Thì.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (25/25 files, 109/109 tests pass), `pnpm run docs:index`, `pnpm run docs:check`, `pnpm run build:pages`.
+
+---
+
 ## 2026-11-14 08:40 — main (Nghiệm thu & Vá lỗ hổng sau vòng 2 Board Game / Bảng Vẽ)
 - Task: Đảm bảo trừ/hoàn ViToken idempotent 100% trên server, chuyển multiplayer sang Host-Authoritative (bao gồm `UNDO`/`REDO`), chống trùng `SyncService.migrateToCloud`, xác nhận read-back IndexedDB trước khi xóa `localStorage` cũ, kiểm thử E2E 2 tab trên Chrome CDP 9222 và đo FPS bàn 20×20.
 - Changed:

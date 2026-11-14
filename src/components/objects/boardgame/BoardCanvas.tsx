@@ -7,6 +7,7 @@ import { GameLinkLayer } from './GameLinkLayer';
 import { TileView } from './TileView';
 import { DiceLayer } from './DiceLayer';
 import { PawnLayer } from './PawnLayer';
+import { TableCardsLayer } from './TableCardsLayer';
 
 interface BoardCanvasProps {
   pkg: BoardGamePackage;
@@ -26,6 +27,11 @@ interface BoardCanvasProps {
   onRollComplete: (tileId: string, values: number[], total: number) => void;
   onUpdateDiceConfig?: (tileId: string, config: NonNullable<BoardTile['diceConfig']>) => void;
   onStartDragPawn: (e: React.PointerEvent, pawn: GamePawn) => void;
+  onFlipPawn?: (pawnId: string) => void;
+  onSpawnSupplyPawn?: (pawnId: string) => void;
+  onFlipTableCard?: (instanceId: string) => void;
+  onTapTableCard?: (instanceId: string) => void;
+  onReturnTableCard?: (instanceId: string) => void;
 }
 
 export const BoardCanvas = React.memo(function BoardCanvas({
@@ -46,6 +52,11 @@ export const BoardCanvas = React.memo(function BoardCanvas({
   onRollComplete,
   onUpdateDiceConfig,
   onStartDragPawn,
+  onFlipPawn,
+  onSpawnSupplyPawn,
+  onFlipTableCard,
+  onTapTableCard,
+  onReturnTableCard,
 }: BoardCanvasProps) {
   const deckById = useMemo(() => {
     const map = new Map(pkg.decks.map((d) => [d.id, d]));
@@ -148,12 +159,22 @@ export const BoardCanvas = React.memo(function BoardCanvas({
         onUpdateDiceConfig={onUpdateDiceConfig}
       />
 
+      <TableCardsLayer
+        tableCards={pkg.matchState?.tableCards || []}
+        isPlayMode={!isEditMode}
+        onFlipCard={(id) => onFlipTableCard?.(id)}
+        onTapCard={(id) => onTapTableCard?.(id)}
+        onReturnCard={(id) => onReturnTableCard?.(id)}
+      />
+
       <PawnLayer
         pawns={pkg.pawns}
         activePlayerId={activePlayerId}
         bankruptPlayerIds={pkg.matchState?.bankruptPlayerIds || []}
         canDragPawns={canDragPawns}
         onStartDragPawn={onStartDragPawn}
+        onFlipPawn={onFlipPawn}
+        onSpawnSupplyPawn={onSpawnSupplyPawn}
       />
     </div>
   );
