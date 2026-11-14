@@ -169,8 +169,8 @@ export default function StudySpaceDeskView() {
       <div 
         className={clsx(
           "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          // Mobile Portrait: Dock ngang đáy
-          "max-sm:portrait:bottom-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
+          // Mobile Portrait: Dock ngang sát đáy duy nhất
+          "max-sm:portrait:bottom-1.5 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
           // Landscape & Desktop: Cột dọc mép trái (Bắt đầu từ top-13 dưới header, dừng trước đáy để không đè BottomLeftKnowledge)
           "sm:left-1 sm:top-14 sm:translate-y-0 max-sm:landscape:left-1 max-sm:landscape:top-12 max-sm:landscape:translate-y-0",
           isFocusMode && !showLeftInFocus 
@@ -227,7 +227,7 @@ export default function StudySpaceDeskView() {
       {/* ================= 5. BOTTOM-RIGHT TOOLKIT HUD (Zoom, Xoay, Map) ================= */}
       <div 
         className={clsx(
-          "fixed bottom-1 right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          "fixed max-sm:portrait:bottom-14 max-sm:portrait:right-1.5 sm:bottom-1 sm:right-1 max-sm:landscape:bottom-1 max-sm:landscape:right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
           isFocusMode && !showBottomRightInFocus ? "translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >

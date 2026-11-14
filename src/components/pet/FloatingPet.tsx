@@ -21,52 +21,41 @@ export const FloatingPet: React.FC = () => {
 
   const dragStartRef = useRef<{ pointerX: number; pointerY: number; petX: number; petY: number } | null>(null);
   const hasMovedRef = useRef(false);
-  const [petSize, setPetSize] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 64 : 80));
+  const petSize = 88;
 
   const stageConfig = useMemo(() => {
     return getStageConfig(status?.stage || 1);
   }, [status?.stage]);
 
-  // Khởi tạo vị trí ban đầu từ localStorage hoặc góc phải màn hình (tránh khu vực Toolkit / Minimap đáy)
+  // Khởi tạo vị trí ban đầu từ localStorage hoặc góc phải màn hình
   useEffect(() => {
     setMounted(true);
-    const isMobile = window.innerWidth < 640;
-    const currentSize = isMobile ? 64 : 80;
-    setPetSize(currentSize);
-
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          // Kiểm tra nếu vị trí cũ bị chèn vào góc dưới thì dịch lên
-          const safeY = Math.min(parsed.y, window.innerHeight - currentSize - (isMobile ? 90 : 120));
-          setPosition({ x: parsed.x, y: Math.max(70, safeY) });
+          setPosition(parsed);
           return;
         }
       }
     } catch {}
 
-    const defaultX = typeof window !== 'undefined' ? Math.max(14, window.innerWidth - currentSize - 12) : 280;
-    // Đặt Pet ở tầm 35% - 40% chiều cao màn hình (nửa trên), cách xa góc dưới bên phải
-    const defaultY = typeof window !== 'undefined' ? Math.max(90, Math.floor(window.innerHeight * 0.38)) : 220;
+    const defaultX = typeof window !== 'undefined' ? Math.max(16, window.innerWidth - petSize - 16) : 280;
+    const defaultY = typeof window !== 'undefined' ? Math.max(80, window.innerHeight - 200) : 400;
     setPosition({ x: defaultX, y: defaultY });
   }, []);
 
   // Đảm bảo vị trí luôn nằm trong viewport khi thay đổi kích thước cửa sổ
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 640;
-      const currentSize = isMobile ? 64 : 80;
-      setPetSize(currentSize);
-
       setPosition((prev) => {
         if (!prev) return null;
-        const maxX = window.innerWidth - currentSize - 12;
-        const maxY = window.innerHeight - currentSize - (isMobile ? 90 : 120);
+        const maxX = window.innerWidth - petSize - 14;
+        const maxY = window.innerHeight - petSize - 24;
         return {
-          x: Math.min(Math.max(12, prev.x), Math.max(12, maxX)),
-          y: Math.min(Math.max(70, prev.y), Math.max(70, maxY)),
+          x: Math.min(Math.max(14, prev.x), Math.max(14, maxX)),
+          y: Math.min(Math.max(24, prev.y), Math.max(24, maxY)),
         };
       });
     };
@@ -121,13 +110,11 @@ export const FloatingPet: React.FC = () => {
     // Snap vào mép trái hoặc mép phải màn hình gần nhất
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    const isMobile = screenWidth < 640;
-    const paddingX = 12;
-    const paddingY = 70;
-    const bottomReserve = isMobile ? 90 : 120;
+    const paddingX = 14;
+    const paddingY = 24;
 
     const snapX = position.x + petSize / 2 < screenWidth / 2 ? paddingX : screenWidth - petSize - paddingX;
-    const clampedY = Math.min(Math.max(paddingY, position.y), screenHeight - petSize - bottomReserve);
+    const clampedY = Math.min(Math.max(paddingY, position.y), screenHeight - petSize - paddingY);
 
     const finalPos = { x: snapX, y: clampedY };
     setPosition(finalPos);
@@ -169,7 +156,7 @@ export const FloatingPet: React.FC = () => {
     <>
       {/* Vùng Pet nổi - wrapper có pointer-events-none để tuyệt đối không chặn click xung quanh */}
       <div
-        className="fixed inset-0 pointer-events-none z-35 overflow-hidden select-none font-sans"
+        className="fixed inset-0 pointer-events-none z-[9990] overflow-hidden select-none font-sans"
         aria-hidden="false"
         style={{
           background: 'transparent',
@@ -195,9 +182,9 @@ export const FloatingPet: React.FC = () => {
           className="absolute top-0 left-0 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group bg-transparent border-0 shadow-none outline-none p-0"
           title={isAsleep ? 'Bấm để đánh thức và điểm danh hôm nay' : 'Bấm để xem bộ sưu tập'}
         >
-          {/* Vỏ Pet & Animation Container — Kích thước responsive không đè lên màn hình */}
+          {/* Vỏ Pet & Animation Container — Chỉ giữ lại hình ảnh thú cưng tự nhiên */}
           <div
-            className={`relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-transparent border-0 shadow-none outline-none p-0 ${
+            className={`relative w-[88px] h-[88px] flex items-center justify-center bg-transparent border-0 shadow-none outline-none p-0 ${
               isWakingUp
                 ? 'pet-wake-animation'
                 : isAsleep

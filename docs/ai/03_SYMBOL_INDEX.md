@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `9b58a9c`  
+> **Commit Hash:** `d8d1c60`  
 > **Cập nhật lần cuối:** `2026-11-14`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -351,7 +351,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `FeatureGrid` | `component` | [src/components/landing/FeatureGrid.tsx:L75-L160](file:////home/nhat/Documents/DUT/ViTudy/src/components/landing/FeatureGrid.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `fetchModelViTokenCost` | `fn` | [src/services/BoardGameAiService.ts:L170-L184](file:////home/nhat/Documents/DUT/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FlashcardReview` | `type` | [src/services/FlashcardService.ts:L4-L16](file:////home/nhat/Documents/DUT/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `FloatingPet` | `component` | [src/components/pet/FloatingPet.tsx:L13-L296](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/FloatingPet.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `FloatingPet` | `component` | [src/components/pet/FloatingPet.tsx:L13-L283](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/FloatingPet.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCabinetStorage` | `component` | [src/services/GameCabinetStorage.ts:L158-L247](file:////home/nhat/Documents/DUT/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCardDeck` | `type` | [src/types/boardgame.ts:L274-L284](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCardEffect` | `type` | [src/types/boardgame.ts:L245-L248](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

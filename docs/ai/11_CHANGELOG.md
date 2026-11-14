@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-11-15 01:05 — uncommitted (Khắc phục triệt để lỗi button Undo/Delete đè lên Panel nút vẽ & Tạo ghi chú, hoàn trả Thú cưng về như cũ)
+- Task: Khắc phục triệt để lỗi nút Undo/Redo/Delete đè lên chính giữa thanh panel công cụ (che khuất nút Bút vẽ và Tạo ghi chú), hoàn trả 100% Thú cưng `FloatingPet` về nguyên bản như cũ theo yêu cầu của Sếp, và hoàn thiện phân tầng các panel trên mobile portrait.
+- Changed:
+  - `src/components/pet/FloatingPet.tsx`: Khôi phục 100% code thú cưng về nguyên trạng (vị trí ban đầu góc dưới phải `window.innerHeight - 200`, kích thước 88px, `z-[9990]`).
+  - `src/components/hud/LeftCreationBar.tsx`: Gộp nhóm nút thao tác (Hoàn tác `Undo2`, Làm lại `Redo2`, Xóa toàn bộ nét `Trash2`) vào TRONG cùng một khung đảo công cụ duy nhất (`Tool Island`) sau nút Khóa bàn; loại bỏ hoàn toàn thẻ `div` pill lơ lửng bên dưới để triệt tiêu vĩnh viễn hiện tượng nút Undo/Delete bay lên đè lên các nút Bút vẽ và Tạo ghi chú.
+  - `src/app/globals.css`: Xóa bỏ các thuộc tính phá vỡ layout (`position: fixed !important; top: 50% !important; transform: translateY(-50%) !important;`) trong class `.landscape-fixed-toolbar`.
+  - `src/components/canvas/StudySpaceDeskView.tsx`: Phân tầng chuẩn trên mobile portrait: Đáy dành riêng cho `LeftCreationBar` (`bottom-1.5 left-1/2 -translate-x-1/2`), đưa cả `BottomLeftKnowledge` và `BottomRightToolkit` lên tầng trên (`bottom-14`) ở hai góc trái/phải đối xứng, không bao giờ đè lên thanh đáy.
+  - `AGENTS.md`: Tự động cập nhật quy chuẩn "Đảo Công Cụ Sáng Tạo Thống Nhất (`LeftCreationBar`) — Chống đè nút Undo/Delete lên Panel" và "Bảo toàn nguyên bản Thú Cưng (`FloatingPet`)".
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test --run` (35/35 suites, 157/157 tests pass 100%), `pnpm run docs:index && pnpm run docs:check` (437 symbols).
+
+
 ## 2026-11-14 19:30 — uncommitted (Khắc phục triệt để lỗi HUD chèn đè lên nhau trên Landscape & Mobile Portrait)
 - Task: Khắc phục triệt để lỗi các thành phần HUD chèn đè lên nhau (TopLeftNav vs TopRightWallet, LeftCreationBar vs BottomLeftKnowledge, BottomLeftKnowledge vs BottomRightToolkit, FloatingPet vs Minimap/Toolkit) trên cả màn hình ngang (Landscape) và màn hình dọc di động (Portrait), đồng thời sửa lỗi ảnh avatar bị vỡ và tối ưu hóa không gian hiển thị.
 - Changed:

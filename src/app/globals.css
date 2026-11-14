@@ -164,11 +164,7 @@ html[data-device="mobile"] .mobile-flex-forced {
 /* Landscape Phone Layout Optimizations (@media (max-height: 500px) and (orientation: landscape)) */
 @media (max-height: 500px) and (orientation: landscape) {
   .landscape-fixed-toolbar {
-    position: fixed !important;
-    left: max(env(safe-area-inset-left, 0px) + 4px, 4px) !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    max-height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 75px) !important;
     overflow-y: auto !important;
     overflow-x: visible !important;
     scrollbar-width: none;

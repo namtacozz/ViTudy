@@ -238,7 +238,7 @@ export function LeftCreationBar() {
       className="relative flex max-sm:portrait:flex-row flex-col items-center gap-1.5 pointer-events-auto select-none"
     >
       {/* Tool Island: Horizontal bottom dock on mobile portrait, vertical on landscape and desktop */}
-      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 relative max-sm:landscape:max-h-[calc(100dvh-75px)] sm:max-h-[calc(100dvh-120px)] overflow-y-auto no-scrollbar landscape-fixed-toolbar">
+      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-lg backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 relative max-sm:landscape:max-h-[calc(100dvh-75px)] sm:max-h-[calc(100dvh-120px)] max-sm:portrait:max-w-[calc(100vw-16px)] overflow-y-auto max-sm:portrait:overflow-x-auto no-scrollbar landscape-fixed-toolbar">
         {/* Select (Cursor) Tool */}
         <button
           title="Con trỏ điều hướng (Kéo di chuyển bàn / Chọn vật thể)"
@@ -368,6 +368,48 @@ export function LeftCreationBar() {
         >
           {isPanLocked ? <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" /> : <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 stroke-[2.4]" />}
         </button>
+
+        {/* Gạch chia vùng trước Undo/Redo/Trash */}
+        <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
+
+        {/* Hoàn tác nét vẽ (Undo • Ctrl+Z) */}
+        <button
+          title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
+          onClick={undoStroke}
+          disabled={strokes.length === 0}
+          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+            strokes.length > 0
+              ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
+              : 'text-slate-300 cursor-not-allowed'
+          }`}
+        >
+          <Undo2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
+        </button>
+
+        {/* Làm lại nét vẽ (Redo • Ctrl+Y) */}
+        <button
+          title="Làm lại nét vẽ (Redo • Ctrl+Y)"
+          onClick={redoStroke}
+          disabled={redoStack.length === 0}
+          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
+            redoStack.length > 0
+              ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
+              : 'text-slate-300 cursor-not-allowed'
+          }`}
+        >
+          <Redo2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
+        </button>
+
+        {/* Xóa toàn bộ nét vẽ (Trash) */}
+        {strokes.length > 0 && (
+          <button
+            title="Xóa toàn bộ nét vẽ"
+            onClick={clearStrokes}
+            className="w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95 landscape-compact-btn"
+          >
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
+          </button>
+        )}
 
         {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
         {isNoteFlyoutOpen && (
@@ -599,48 +641,6 @@ export function LeftCreationBar() {
 
         {/* Thanh công cụ dọc Bút Trò Chơi (Game Pen) nằm cạnh thanh bên giống Pen/Highlight */}
         <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
-      </div>
-
-      {/* Grouped Undo & Redo Column Pill below toolbar */}
-      <div className="bg-white/95 border border-slate-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-md backdrop-blur-md flex max-sm:portrait:flex-row flex-col items-center gap-1 text-slate-900">
-        <button
-          title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
-          onClick={undoStroke}
-          disabled={strokes.length === 0}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
-            strokes.length > 0
-              ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
-              : 'text-slate-300 cursor-not-allowed'
-          }`}
-        >
-          <Undo2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
-        </button>
-
-        <button
-          title="Làm lại nét vẽ (Redo • Ctrl+Y)"
-          onClick={redoStroke}
-          disabled={redoStack.length === 0}
-          className={`w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center transition-all cursor-pointer landscape-compact-btn ${
-            redoStack.length > 0
-              ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
-              : 'text-slate-300 cursor-not-allowed'
-          }`}
-        >
-          <Redo2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
-        </button>
-
-        {strokes.length > 0 && (
-          <>
-            <div className="max-sm:portrait:w-[1px] max-sm:portrait:h-5 max-sm:portrait:my-auto max-sm:portrait:mx-0.5 w-5 sm:w-7 h-[1px] bg-slate-200 my-0.5" />
-            <button
-              title="Xóa toàn bộ nét vẽ"
-              onClick={clearStrokes}
-              className="w-8.5 h-8.5 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95 landscape-compact-btn"
-            >
-              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.4]" />
-            </button>
-          </>
-        )}
       </div>
 
       {/* Modal Tủ Trò Chơi & Kho Bản Vẽ Cá Nhân */}
