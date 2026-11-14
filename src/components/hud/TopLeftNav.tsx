@@ -90,7 +90,7 @@ export function TopLeftNav() {
   };
 
   // Filtered documents on current desk
-  const filteredDeskItems = activeSpace.items.filter(item => {
+  const filteredDeskItems = (activeSpace?.items || []).filter(item => {
     if (!searchQuery.trim()) return true;
     return item.title.toLowerCase().includes(searchQuery.toLowerCase().trim());
   });
@@ -367,44 +367,43 @@ export function TopLeftNav() {
         )}
 
         {/* Dashboard & User Account / Login Button */}
-        <div className="pl-2 border-l border-slate-200 flex items-center gap-1.5">
+        <div className="pl-1 sm:pl-2 border-l border-slate-200 flex items-center gap-1 sm:gap-1.5">
           <Link
             href="/dashboard"
             title="Thống kê học tập (Dashboard)"
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg hidden sm:flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
-            <BarChart2 className="w-4 h-4 stroke-[2.2]" />
+            <BarChart2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
           </Link>
 
           {user ? (
             <Link
               href="/profile?from=desk"
               title={`Hồ sơ cá nhân (${profile?.display_name || user.email})`}
-              className="w-7 h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs shrink-0"
-              style={{ width: '28px', height: '28px', minWidth: '28px', minHeight: '28px', maxWidth: '28px', maxHeight: '28px' }}
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden border border-slate-300 hover:border-[#E0562D] transition-colors flex items-center justify-center bg-[#FFF7ED] text-[#E0562D] font-bold text-xs shadow-xs shrink-0"
+              style={{ width: '24px', height: '24px', minWidth: '24px', minHeight: '24px', maxWidth: '28px', maxHeight: '28px' }}
             >
               {profile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
                   alt={profile?.display_name || 'Avatar'}
-                  width={28}
-                  height={28}
+                  width={24}
+                  height={24}
                   className="w-full h-full object-cover"
-                  style={{ width: '100%', height: '100%', maxWidth: '28px', maxHeight: '28px', objectFit: 'cover' }}
                 />
               ) : (
-                <span>{(profile?.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>
+                <span className="text-[11px] sm:text-xs">{(profile?.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>
               )}
             </Link>
           ) : (
             <Link
               href="/auth"
               title="Đăng nhập tài khoản"
-              className="px-2.5 py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+              className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E0562D] hover:bg-[#c9451e] text-white text-[11px] sm:text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-xs"
             >
-              <LogIn className="w-3.5 h-3.5 stroke-[2.4]" />
-              <span className="hidden sm:inline">Đăng nhập</span>
+              <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.4]" />
+              <span className="hidden md:inline">Đăng nhập</span>
             </Link>
           )}
         </div>

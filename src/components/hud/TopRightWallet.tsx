@@ -463,9 +463,9 @@ export function TopRightWallet() {
           )}
         </button>
 
-        <div className="w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="hidden sm:block w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
-        {/* Chợ Tài Liệu */}
+        {/* Chợ Tài Liệu (Ẩn trên mobile nhỏ để tránh đè lên TopLeftNav) */}
         <button
           id="market-trigger-btn"
           data-tour="market-btn"
@@ -475,7 +475,7 @@ export function TopRightWallet() {
           }}
           title="Chợ tài liệu"
           aria-label="Chợ tài liệu"
-          className={`flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer group ${
+          className={`hidden sm:flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer group ${
             isMarketOpen 
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -531,9 +531,9 @@ export function TopRightWallet() {
           </button>
         </div>
 
-        <div className="w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
+        <div className="hidden sm:block w-[1px] h-5 sm:h-6 bg-slate-200 my-auto mx-0.5" />
 
-        {/* AI Bot Pill */}
+        {/* AI Bot Pill (Ẩn trên mobile nhỏ để tránh đè lên TopLeftNav) */}
         <button
           id="ai-config-trigger-btn"
           data-tour="inteline-btn"
@@ -541,7 +541,7 @@ export function TopRightWallet() {
             closeAllModals();
             setIsAiModalOpen(true);
           }}
-          className={`flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer ${
+          className={`hidden sm:flex items-center justify-center w-8.5 h-8.5 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl transition-all cursor-pointer ${
             isAiModalOpen 
               ? 'bg-slate-200 text-slate-900' 
               : 'text-slate-900 hover:text-black hover:bg-slate-100'

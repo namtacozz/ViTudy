@@ -671,10 +671,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
               .catch(() => {});
           });
         } else {
-          // Tài khoản mới chưa tạo bàn học: giữ danh sách trống
-          setSpaces([]);
-          setActiveSpaceId('');
-          syncLocal([]);
+          // Tài khoản mới chưa tạo bàn học: Khởi tạo ngay 1 bàn học trắng sẵn sàng sử dụng
+          const initialBlankSpace: StudySpace = {
+            id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`,
+            name: 'Bàn học của tôi',
+            subject: 'Học tập',
+            description: 'Không gian bàn học tự do',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastOpenedAt: new Date().toISOString(),
+            starred: false,
+            items: []
+          };
+          setSpaces([initialBlankSpace]);
+          setActiveSpaceId(initialBlankSpace.id);
+          syncLocal([initialBlankSpace]);
+          StudySpaceService.saveSpace(initialBlankSpace, user.id).catch(() => {});
         }
 
         if (targetId) {
@@ -703,6 +715,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
         : cleanGuestSpaces[0].id;
       setActiveSpaceId(targetId);
       loadLocalStrokes(targetId);
+    } else {
+      // Khách mới chưa có bàn học: Khởi tạo ngay 1 bàn học trắng sẵn sàng sử dụng
+      const initialBlankSpace: StudySpace = {
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`,
+        name: 'Bàn học của tôi',
+        subject: 'Học tập',
+        description: 'Không gian bàn học tự do',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastOpenedAt: new Date().toISOString(),
+        starred: false,
+        items: []
+      };
+      setSpaces([initialBlankSpace]);
+      setActiveSpaceId(initialBlankSpace.id);
+      syncLocal([initialBlankSpace]);
     }
     setIsLoaded(true);
   }, [status, user?.id, syncLocal]);

@@ -188,9 +188,12 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     return formatRelativeTimeVN(space.lastOpenedAt || space.updatedAt || space.createdAt);
   };
 
-  // Filter spaces: Chỉ hiển thị các bàn học có tài liệu hoặc ghi chú thực sự (loại bỏ các bàn học rỗng demo/thử nghiệm)
+  // Filter spaces: Giữ lại toàn bộ bàn học do người dùng tạo (kể cả bàn học trống mới tạo), chỉ loại bỏ các bàn học mẫu demo rỗng
   const validSpaces = useMemo(() => {
-    return spaces.filter(s => s.items && s.items.length > 0);
+    return spaces.filter(s => {
+      const isGhostDemo = (!s.items || s.items.length === 0) && ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm'].includes(s.name.trim());
+      return !isGhostDemo;
+    });
   }, [spaces]);
 
   const filteredSpaces = validSpaces.filter((s) => {
@@ -699,10 +702,10 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           </div>
         )}
 
-        {/* Top Cockpit Section: [Quote] [Thẻ tiếp tục học] [Tạo bàn trống mới] */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3 flex-shrink-0">
-          {/* Card 1: Câu quote random tạo động lực (Bên trái) */}
-          <div className="md:col-span-5 bg-gradient-to-br from-white via-orange-50/25 to-amber-50/35 border border-stone-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+        {/* Top Cockpit Section: [Quote] [Thẻ tiếp tục học] [Tạo bàn trống mới] (Tối ưu 2 cột trên Mobile để không che khuất danh sách bàn học) */}
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-2 sm:gap-3 mb-2 sm:mb-3 flex-shrink-0">
+          {/* Card 1: Câu quote random tạo động lực (Ẩn trên màn hình mobile nhỏ để tiết kiệm không gian, hiện từ sm trở lên) */}
+          <div className="hidden sm:flex md:col-span-5 bg-gradient-to-br from-white via-orange-50/25 to-amber-50/35 border border-stone-200/90 rounded-2xl p-4 shadow-2xs flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-2 h-2 rounded-full bg-[#E0562D]" />
@@ -719,55 +722,55 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           </div>
 
           {/* Card 2: Tiếp tục bàn học mới đây nhất (Bên phải - Thẻ 1) */}
-          <div className="md:col-span-4 bg-white border border-stone-200/90 hover:border-[#E0562D]/60 rounded-2xl p-4 shadow-2xs flex flex-col justify-between transition-all">
+          <div className="col-span-1 md:col-span-4 bg-white border border-stone-200/90 hover:border-[#E0562D]/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col justify-between transition-all">
             {latestSpace ? (
               <>
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8431A] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60">
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#B8431A] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60 truncate">
                       Tiếp tục học
                     </span>
-                    <span className="text-[10px] text-stone-600">
+                    <span className="text-[9px] sm:text-[10px] text-stone-500 font-mono hidden min-[400px]:inline">
                       {getRecentTimeString(latestSpace)}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-stone-900 truncate mt-1">
+                  <h3 className="text-xs sm:text-sm font-bold text-stone-900 truncate mt-0.5 sm:mt-1">
                     {latestSpace.name.replace(/\(Demo\)/i, '').trim()}
                   </h3>
-                  <p className="text-[11px] text-stone-600 mt-1 truncate">
+                  <p className="text-[10px] sm:text-[11px] text-stone-600 mt-0.5 sm:mt-1 truncate">
                     {getSpaceSummary(latestSpace)}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleOpenSpace(latestSpace.id)}
-                  className="w-full mt-3 px-3 py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                  className="w-full mt-2 sm:mt-3 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-[#E0562D] hover:bg-[#c9451e] text-white text-[11px] sm:text-xs font-bold rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95"
                 >
                   <span>Vào bàn học</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
               </>
             ) : (
               <>
                 <div>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">
-                      Bàn học gần đây
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">
+                      Gần đây
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-stone-700 mt-1">
-                    Chưa có bàn học gần đây
+                  <h3 className="text-xs sm:text-sm font-bold text-stone-700 mt-0.5 sm:mt-1 truncate">
+                    Chưa có bàn học
                   </h3>
-                  <p className="text-[11px] text-stone-600 mt-1">
-                    Bàn học bạn mở sẽ tự động xuất hiện tại đây
+                  <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 sm:mt-1 truncate">
+                    Tạo bàn để bắt đầu
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleSelectTemplate('blank')}
-                  className="w-full mt-3 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  className="w-full mt-2 sm:mt-3 px-2 sm:px-3 py-1.5 sm:py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] sm:text-xs font-bold rounded-lg sm:rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-colors"
                 >
-                  <span>Mở bàn học đầu tiên</span>
+                  <span>Mở bàn đầu tiên</span>
                 </button>
               </>
             )}
@@ -776,22 +779,22 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
           {/* Card 3: Bàn học trống (Bên phải - Thẻ 2) */}
           <div
             onClick={() => handleSelectTemplate('blank')}
-            className="md:col-span-3 bg-white border border-dashed border-stone-300 hover:border-[#E0562D] hover:bg-orange-50/20 rounded-2xl p-4 shadow-2xs flex flex-col justify-between transition-all cursor-pointer group"
+            className="col-span-1 md:col-span-3 bg-white border border-dashed border-stone-300 hover:border-[#E0562D] hover:bg-orange-50/20 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col justify-between transition-all cursor-pointer group"
           >
             <div>
-              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#E0562D] group-hover:scale-105 transition-transform">
-                <Plus className="w-4 h-4 stroke-[2.5]" />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#E0562D] group-hover:scale-105 transition-transform">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
               </div>
-              <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#B8431A] mt-2.5">
+              <h3 className="text-xs sm:text-sm font-bold text-stone-900 group-hover:text-[#B8431A] mt-1.5 sm:mt-2.5 truncate">
                 Bàn học trống
               </h3>
-              <p className="text-[11px] text-stone-600 mt-1">
-                Không gian mở tự do kéo thả tài liệu
+              <p className="text-[10px] sm:text-[11px] text-stone-600 mt-0.5 sm:mt-1 truncate">
+                Mặt bàn trắng tự do
               </p>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs font-bold text-[#E0562D] group-hover:underline">
-              <span>Tạo bàn mới</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <div className="mt-2 sm:mt-3 flex items-center justify-between text-[11px] sm:text-xs font-bold text-[#E0562D] group-hover:underline">
+              <span>Tạo mới</span>
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         </div>
@@ -1228,8 +1231,15 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
         {/* Tab 2: Bàn học */}
         <button
           type="button"
-          onClick={() => onEnterDesk(latestSpace?.id)}
-          className="flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors text-stone-500 hover:text-stone-800"
+          onClick={() => {
+            const targetId = latestSpace?.id || (validSpaces.length > 0 ? validSpaces[0].id : (spaces.length > 0 ? spaces[0].id : undefined));
+            if (targetId) {
+              handleOpenSpace(targetId);
+            } else {
+              handleSelectTemplate('blank');
+            }
+          }}
+          className="flex flex-col items-center justify-center flex-1 h-full touch-target transition-colors text-stone-500 hover:text-stone-800 cursor-pointer active:scale-95"
         >
           <BookOpen className="w-5 h-5 stroke-[1.8]" />
           <span className="text-[10px] mt-0.5">Bàn học</span>

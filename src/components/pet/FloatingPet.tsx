@@ -212,9 +212,9 @@ export const FloatingPet: React.FC = () => {
                 display: 'block',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
-                WebkitUserDrag: 'none' as any,
                 filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))',
                 WebkitTapHighlightColor: 'transparent',
+                ...({ WebkitUserDrag: 'none' } as any),
               }}
               className="w-full h-full object-contain pointer-events-none"
             />
