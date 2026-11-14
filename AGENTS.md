@@ -258,7 +258,14 @@ Tài liệu này lưu giữ toàn bộ các quy tắc, quyết định kiến tr
       * **Pinch-to-zoom 2 ngón tay mượt mà (Zero Deadzone):** Tính toán tỷ lệ zoom `factor = currentDist / prevDist` tức thì quanh trung điểm `currentMid`, cập nhật trực tiếp `setTransform` mà không dùng bộ lọc ngưỡng (`deadzone threshold`), bảo đảm phản hồi chính xác từng micromet di chuyển ngón tay.
       * **Tách biệt hoàn toàn Touch và Pointer Events:** Sự kiện `pointermove` tự động bỏ qua nếu `e.pointerType === 'touch'`, triệt tiêu hiện tượng 2 bộ điều khiển cùng nhảy vào `setTransform` gây giật lag hoặc tranh chấp state.
       * **2-Finger Pan:** Kéo di chuyển bàn học bằng 2 ngón tay đồng thời mà không kích hoạt nét vẽ.
-      * **Bộ lọc trễ 40ms (`touch delay buffer`):** Khi chạm 1 ngón tay, hệ thống giữ độ trễ 40ms để kiểm tra ngón thứ 2; nếu phát hiện $\ge 2$ ngón thì gọi `cancelStroke()` ngay lập tức, ngăn chặn hoàn toàn nét vẽ rác nối giữa 2 ngón tay.
+      * **Quy chuẩn Pointer Events & Cách ly con trỏ vẽ (`activePointersRef` & `drawingPointerIdRef`):**
+        * Dùng `activePointersRef` (Map theo `pointerId`) lưu trữ chính xác danh sách con trỏ đang chạm trên canvas.
+        * Khi phát hiện $\ge 2$ con trỏ hoặc con trỏ phụ (`!e.isPrimary`): lập tức hủy bỏ bộ đếm 40ms, gọi `cancelStroke()` hủy nét vẽ dở (không lưu vào history/undo), và chuyển sang pinch-zoom / 2-finger pan.
+        * Chỉ bắt đầu nét vẽ khi đúng 1 con trỏ và `e.isPrimary === true`, áp dụng độ trễ ~40ms cho thao tác chạm ngón tay để phát hiện ngón thứ 2.
+        * Khóa con trỏ vẽ (`drawingPointerIdRef`): chỉ duy nhất con trỏ đã bắt đầu nét vẽ mới được phép gọi `appendPoint()`. Bất kỳ con trỏ nào khác di chuyển trong khi đang vẽ sẽ kích hoạt hủy nét vẽ ngay lập tức, triệt tiêu 100% hiện tượng nối đường thẳng giữa 2 điểm chạm.
+        * Hỗ trợ đầy đủ `pointerType: pen` vẽ tức thì, `touch` pan/zoom khi `isFingerDrawingEnabled === false` (Palm Rejection).
+        * Xử lý triệt để `pointercancel`, `pointerup` và `blur` trên cả component lẫn window để reset trạng thái sạch sẽ, tránh kẹt ngón.
+        * Áp dụng `touch-action: none` trên toàn bộ canvas và lớp đón bắt vẽ.
       * **Chống tì tay thông minh (Palm Rejection):** Khi chế độ chỉ vẽ bằng bút Stylus (`isFingerDrawingEnabled === false`) được kích hoạt, các thao tác chạm bằng ngón tay (`pointerType === 'touch'`) chỉ dùng để di chuyển và phóng to thu nhỏ bàn học, chỉ nhận nét vẽ từ bút cảm ứng (`pointerType === 'pen'`).
       * **Tự động căn chỉnh mở bàn học (`fitAllToScreen`):** Khi người dùng mở bàn học trên điện thoại hoặc máy tính bảng, hệ thống tự động tính toán bounding box toàn bộ tài liệu và phóng to vừa vặn màn hình mà không cần zoom thủ công.
     * **Tối ưu HUD Bàn Học Trên Thiết Bị Di Động:**

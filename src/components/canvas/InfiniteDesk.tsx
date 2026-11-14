@@ -251,6 +251,12 @@ export function InfiniteDesk() {
     };
 
     const handleTouchStartCapture = (e: TouchEvent) => {
+      // If drawing or creation tools are active, let DeskDrawingInteractionLayer handle pinch & stroke cancellation
+      if (activeTool !== 'cursor') {
+        pinchBaseline = null;
+        return;
+      }
+
       // Don't intercept touches if interacting inside an overlay modal dialog
       const target = e.target as HTMLElement | null;
       if (
@@ -278,6 +284,8 @@ export function InfiniteDesk() {
     };
 
     const handleTouchMoveCapture = (e: TouchEvent) => {
+      if (activeTool !== 'cursor') return;
+
       if (e.touches.length >= 2) {
         // CRITICAL: Prevent default browser zoom/bounce/scroll on iOS Safari & Chrome Android
         if (e.cancelable) {

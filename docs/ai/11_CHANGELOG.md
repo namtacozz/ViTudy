@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-11-14 09:25 — dev (Khắc Phục Nối Nét 2 Ngón Khi Vẽ & Cách Ly Pointer Events Chuẩn Xác)
+- **Task:** Khắc phục triệt để lỗi khi đang dùng công cụ vẽ, đặt 2 ngón tay lên canvas thì tạo ra đường thẳng nối 2 điểm chạm thay vì zoom/pan:
+  1. **Quản lý con trỏ theo Map (`activePointersRef`):** Lưu trữ chính xác danh sách con trỏ đang hoạt động theo `pointerId`.
+  2. **Hủy nét vẽ dở khi phát hiện $\ge 2$ con trỏ:** Hủy timer 40ms, gọi `cancelStroke()` ngay lập tức để không lưu vào history/undo, chuyển sang chế độ pinch-zoom và 2-finger pan.
+  3. **Khóa con trỏ vẽ (`drawingPointerIdRef`):** Chỉ bắt đầu nét vẽ khi đúng 1 con trỏ và `e.isPrimary === true`, có độ trễ ~40ms phát hiện ngón thứ 2. Chỉ con trỏ đã khởi tạo nét vẽ mới được phép gọi `appendPoint()`; bất kỳ con trỏ nào khác di chuyển trong khi vẽ sẽ lập tức hủy nét vẽ, triệt tiêu 100% đường nối 2 điểm chạm.
+  4. **Hỗ trợ Stylus & Touch Palm Rejection:** Bút vẽ (`pointerType: pen`) vẽ tức thì không trễ, chạm ngón tay (`pointerType: touch`) chuyển thành pan/zoom khi `isFingerDrawingEnabled === false`.
+  5. **Xử lý `pointercancel`, `pointerup`, `blur`:** Reset toàn diện trạng thái con trỏ, chống kẹt ngón trên cả element và window.
+  6. **Cấu hình `touch-action: none`:** Áp dụng nghiêm ngặt trên toàn bộ canvas và lớp đón bắt vẽ.
+- **Changed:**
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`
+  - `src/components/canvas/DrawingGestureMultiTouch.test.tsx`
+  - `src/components/canvas/InfiniteDesk.tsx`
+  - `AGENTS.md`
+  - `docs/ai/11_CHANGELOG.md`
+
+---
+
 ## 2026-11-14 00:20 — dev (Bóc Nền Trắng Ảnh PNG Thú Cưng Thành Kênh Alpha Thật & Chuẩn Hóa Widget Trong Suốt)
 - **Task:** Xử lý triệt để ô vuông màu trắng đằng sau nhân vật theo lựa chọn Phương án 2 của Sếp:
   1. **Tự động bóc nền trắng bằng Python script (`scripts/remove_pet_bg.py`):**

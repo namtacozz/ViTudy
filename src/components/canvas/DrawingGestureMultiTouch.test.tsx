@@ -283,4 +283,86 @@ describe('Drawing Multi-Touch Gestures & Pointer Events', () => {
     expect(mockCancelStroke).toHaveBeenCalledTimes(1);
     expect(mockFinishStroke).not.toHaveBeenCalled();
   });
+
+  it('strictly blocks non-primary pointers from starting or appending to strokes', () => {
+    const { container } = render(<DeskDrawingInteractionLayer />);
+    const plane = container.querySelector('div.fixed.inset-0')!;
+
+    // Non-primary touch lands
+    fireEvent.pointerDown(plane, {
+      pointerId: 99,
+      pointerType: 'touch',
+      clientX: 200,
+      clientY: 200,
+      isPrimary: false,
+      button: 0,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(mockStartStroke).not.toHaveBeenCalled();
+    expect(mockAppendPoint).not.toHaveBeenCalled();
+  });
+
+  it('guarantees no straight line connects two simultaneous touch points', () => {
+    const { container } = render(<DeskDrawingInteractionLayer />);
+    const plane = container.querySelector('div.fixed.inset-0')!;
+
+    // Two fingers land simultaneously (e.g. pinch to zoom)
+    fireEvent.pointerDown(plane, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 100,
+      clientY: 100,
+      isPrimary: true,
+      button: 0,
+    });
+    fireEvent.pointerDown(plane, {
+      pointerId: 2,
+      pointerType: 'touch',
+      clientX: 300,
+      clientY: 300,
+      isPrimary: false,
+      button: 0,
+    });
+
+    // Advance any timers
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // Both fingers move (zooming/panning)
+    fireEvent.pointerMove(plane, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 90,
+      clientY: 90,
+    });
+    fireEvent.pointerMove(plane, {
+      pointerId: 2,
+      pointerType: 'touch',
+      clientX: 320,
+      clientY: 320,
+    });
+
+    // One finger releases
+    fireEvent.pointerUp(plane, {
+      pointerId: 2,
+      pointerType: 'touch',
+    });
+
+    // Second finger releases
+    fireEvent.pointerUp(plane, {
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+
+    // Stroke MUST NEVER have started, appended, or finished
+    expect(mockStartStroke).not.toHaveBeenCalled();
+    expect(mockAppendPoint).not.toHaveBeenCalled();
+    expect(mockFinishStroke).not.toHaveBeenCalled();
+    expect(mockSetTransform).toHaveBeenCalled();
+  });
 });
