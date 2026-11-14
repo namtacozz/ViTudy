@@ -186,9 +186,16 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     return formatRelativeTimeVN(space.lastOpenedAt || space.updatedAt || space.createdAt);
   };
 
-  // Filter spaces: Chỉ hiển thị các bàn học có tài liệu hoặc ghi chú thực sự (loại bỏ các bàn học rỗng demo/thử nghiệm)
+  // Hiển thị tất cả bàn học của người dùng (kể cả bàn trống mới tạo), sắp xếp theo lần mở/cập nhật gần nhất
   const validSpaces = useMemo(() => {
-    return spaces.filter(s => s.items && s.items.length > 0);
+    const legacyGhostNames = new Set(['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm']);
+    return [...spaces]
+      .filter((s) => (s.items && s.items.length > 0) || !legacyGhostNames.has(s.name.trim()))
+      .sort((a, b) => {
+        const ta = new Date(a.lastOpenedAt || a.updatedAt || a.createdAt || 0).getTime();
+        const tb = new Date(b.lastOpenedAt || b.updatedAt || b.createdAt || 0).getTime();
+        return tb - ta;
+      });
   }, [spaces]);
 
   const filteredSpaces = validSpaces.filter((s) => {
