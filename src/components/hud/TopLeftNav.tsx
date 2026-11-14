@@ -28,7 +28,8 @@ import {
   Square,
   Cloud,
   Check,
-  Loader2
+  Loader2,
+  Pencil
 } from 'lucide-react';
 import { getAssetPath } from '@/lib/assets';
 
@@ -39,6 +40,7 @@ export function TopLeftNav() {
     activeSpace, 
     switchSpace, 
     createSpace,
+    renameSpace,
     searchQuery,
     setSearchQuery,
     selectItem,
@@ -54,6 +56,8 @@ export function TopLeftNav() {
   const router = useRouter();
 
   const [isSpaceMenuOpen, setIsSpaceMenuOpen] = useState(false);
+  const [isRenamingCurrent, setIsRenamingCurrent] = useState(false);
+  const [renamingValue, setRenamingValue] = useState('');
   const [isNewSpaceModalOpen, setIsNewSpaceModalOpen] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
   const [newSpaceSubject, setNewSpaceSubject] = useState('');
@@ -159,16 +163,62 @@ export function TopLeftNav() {
           </Link>
         </div>
 
-        {/* Space Dropdown Button */}
-        <div className="relative">
-          <button
-            onClick={() => setIsSpaceMenuOpen(!isSpaceMenuOpen)}
-            className="flex items-center gap-1.5 text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
-          >
-            <BookMarked className="w-4 h-4 text-slate-800 stroke-[2.4]" />
-            <span className="max-w-[220px] truncate">{activeSpace.name}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
-          </button>
+        {/* Space Dropdown & Inline Rename */}
+        <div className="relative flex items-center gap-0.5">
+          {isRenamingCurrent ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (renamingValue.trim() && renameSpace && activeSpaceId) {
+                  renameSpace(activeSpaceId, renamingValue.trim());
+                }
+                setIsRenamingCurrent(false);
+              }}
+              className="flex items-center gap-1"
+            >
+              <input
+                type="text"
+                autoFocus
+                value={renamingValue}
+                onChange={(e) => setRenamingValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setIsRenamingCurrent(false);
+                }}
+                onBlur={() => {
+                  if (renamingValue.trim() && renameSpace && activeSpaceId) {
+                    renameSpace(activeSpaceId, renamingValue.trim());
+                  }
+                  setIsRenamingCurrent(false);
+                }}
+                className="w-40 px-2 py-0.5 text-sm font-bold text-slate-900 bg-white border border-[#E0562D] rounded-lg focus:outline-none"
+              />
+            </form>
+          ) : (
+            <>
+              <button
+                onClick={() => setIsSpaceMenuOpen(!isSpaceMenuOpen)}
+                className="flex items-center gap-1.5 text-sm font-bold text-slate-900 hover:text-black transition-colors px-1 py-0.5 rounded-lg cursor-pointer"
+              >
+                <BookMarked className="w-4 h-4 text-slate-800 stroke-[2.4]" />
+                <span className="max-w-[200px] truncate">{activeSpace.name}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.4]" />
+              </button>
+              {renameSpace && activeSpaceId && (
+                <button
+                  type="button"
+                  title="Đổi tên bàn học hiện tại"
+                  onClick={() => {
+                    setRenamingValue(activeSpace.name);
+                    setIsRenamingCurrent(true);
+                    setIsSpaceMenuOpen(false);
+                  }}
+                  className="p-1 rounded-md text-slate-400 hover:text-[#E0562D] hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
+            </>
+          )}
 
           {/* Spaces Menu */}
           {isSpaceMenuOpen && (
