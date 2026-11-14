@@ -6,12 +6,14 @@ import { DeskItem } from '@/types/studyspace';
 import {
   BoardGamePackage,
   BoardGameTemplateId,
+  BoardShape,
   BoardTile,
   GameCardDeck,
   GamePawn,
   SavedDrawingAsset,
   createBoardGameFromTemplate,
   createStarterVndBalance,
+  getBoardShapeClipPath,
 } from '@/types/boardgame';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
@@ -775,8 +777,13 @@ export const BoardGameArena = React.memo(function BoardGameArena({
         zIndex: item.zIndex,
         transform: `rotate(${item.rotation}deg)`,
         cursor: pendingFitPawnAsset ? 'crosshair' : isDragging ? 'grabbing' : 'default',
+        ...(getBoardShapeClipPath(pkg.mapConfig.mapShape)
+          ? { clipPath: getBoardShapeClipPath(pkg.mapConfig.mapShape) }
+          : {}),
       }}
-      className={`rounded-2xl bg-slate-50/90 border-2 shadow-xl transition-shadow select-none ${
+      className={`${
+        pkg.mapConfig.mapShape === 'circle' ? 'rounded-full' : 'rounded-2xl'
+      } bg-slate-50/90 border-2 shadow-xl transition-shadow select-none ${
         isSelected ? 'border-[#E0562D] ring-4 ring-[#E0562D]/15' : 'border-slate-300'
       }`}
     >
@@ -787,8 +794,14 @@ export const BoardGameArena = React.memo(function BoardGameArena({
       >
         <div className="flex items-center gap-2 min-w-0">
           <Gamepad2 className="w-4 h-4 text-[#E0562D] shrink-0" />
-          <span className="text-xs font-black text-slate-900 truncate">{pkg.title}</span>
-          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600">
+          <input
+            type="text"
+            value={pkg.title}
+            placeholder="Đặt tên bàn..."
+            onChange={(e) => commitPkg({ ...pkg, title: e.target.value })}
+            className="text-xs font-black text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-[#E0562D] focus:outline-none truncate max-w-[160px]"
+          />
+          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 shrink-0">
             {pkg.mapConfig.rows}×{pkg.mapConfig.cols}
           </span>
         </div>
@@ -816,14 +829,16 @@ export const BoardGameArena = React.memo(function BoardGameArena({
             <span>Thiết lập</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setIsBankOpen(true)}
-            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-          >
-            <Landmark className="w-3 h-3 text-[#E0562D]" />
-            <span>Ngân hàng</span>
-          </button>
+          {(pkg.ruleMode === 'monopoly' || pkg.tiles.some((t) => t.role === 'bank_zone')) && (
+            <button
+              type="button"
+              onClick={() => setIsBankOpen(true)}
+              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <Landmark className="w-3 h-3 text-[#E0562D]" />
+              <span>Ngân hàng</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -1361,14 +1376,22 @@ export const BoardGameArena = React.memo(function BoardGameArena({
           commitAndSyncHost(nextPkg);
           showToast('Đã chuyển mẫu bàn chơi!');
         }}
-        onUpdateRuleConfig={({ ruleMode, resources, triggerRules }) => {
+        onUpdateRuleConfig={({ ruleMode, resources, triggerRules, mapShape, tileShape }) => {
+          const nextTiles = tileShape
+            ? pkg.tiles.map((t) => (t.role === 'normal_cell' ? { ...t, shape: tileShape } : t))
+            : pkg.tiles;
           commitAndSyncHost({
             ...pkg,
             ruleMode,
             resources,
             triggerRules,
+            mapConfig: {
+              ...pkg.mapConfig,
+              mapShape: mapShape ?? pkg.mapConfig.mapShape,
+            },
+            tiles: nextTiles,
           });
-          showToast('Đã lưu cấu hình luật & tài nguyên!');
+          showToast('Đã lưu cấu hình bàn chơi!');
         }}
         isGeneratingAi={isGeneratingUniversalAi}
         onGenerateAiUniversal={async (prompt) => {

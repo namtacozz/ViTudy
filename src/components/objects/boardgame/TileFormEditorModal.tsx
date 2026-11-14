@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { BoardTile, TileFormTemplate } from '@/types/boardgame';
+import { BOARD_SHAPE_OPTIONS, BoardShape, BoardTile, TileFormTemplate } from '@/types/boardgame';
 import { useViToken } from '@/context/ViTokenContext';
 import { generateTilesContentWithAi } from '@/services/BoardGameAiService';
 import { X, Wand2, Layers, Check, Loader2 } from 'lucide-react';
@@ -32,6 +32,7 @@ export function TileFormEditorModal({
   const [mounted, setMounted] = useState(false);
 
   const [title, setTitle] = useState('');
+  const [shape, setShape] = useState<BoardShape>('square');
   const [price, setPrice] = useState<string>('');
   const [imageUrl, setImageUrl] = useState('');
   const [hasFunction, setHasFunction] = useState(true);
@@ -60,6 +61,7 @@ export function TileFormEditorModal({
   useEffect(() => {
     if (tile) {
       setTitle(tile.title || '');
+      setShape(tile.shape || 'square');
       setPrice(tile.price !== undefined ? String(tile.price) : '');
       setImageUrl(tile.imageUrl || '');
       setHasFunction(tile.hasFunction);
@@ -87,6 +89,7 @@ export function TileFormEditorModal({
     const numPrice = price.trim() === '' ? undefined : Math.max(0, Number(price) || 0);
     onSaveTile({
       ...tile,
+      shape,
       title: title.trim(),
       price: numPrice,
       imageUrl: imageUrl.trim() || undefined,
@@ -170,6 +173,18 @@ export function TileFormEditorModal({
           </label>
 
           {/* Form fields */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Hình dạng ô</label>
+            <select
+              value={shape}
+              onChange={(e) => setShape(e.target.value as BoardShape)}
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white font-semibold focus:border-[#E0562D] outline-none"
+            >
+              {BOARD_SHAPE_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Tên địa điểm / Tiêu đề</label>

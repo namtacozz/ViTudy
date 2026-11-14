@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, Sparkles } from 'lucide-react';
 import {
+  BOARD_SHAPE_OPTIONS,
   BoardGamePackage,
   BoardGameTemplateId,
   BoardRuleMode,
+  BoardShape,
   GameTriggerRule,
   ResourceDefinition,
 } from '@/types/boardgame';
@@ -20,6 +22,8 @@ interface UniversalSetupModalProps {
     ruleMode: BoardRuleMode;
     resources: ResourceDefinition[];
     triggerRules: GameTriggerRule[];
+    mapShape?: BoardShape;
+    tileShape?: BoardShape;
   }) => void;
   onGenerateAiUniversal?: (prompt: string) => Promise<void>;
   isGeneratingAi?: boolean;
@@ -44,7 +48,9 @@ export function UniversalSetupModal({
   isGeneratingAi = false,
 }: UniversalSetupModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [ruleMode, setRuleMode] = useState<BoardRuleMode>(pkg.ruleMode || 'monopoly');
+  const [ruleMode, setRuleMode] = useState<BoardRuleMode>(pkg.ruleMode || 'sandbox');
+  const [mapShape, setMapShape] = useState<BoardShape>(pkg.mapConfig.mapShape || 'square');
+  const [tileShape, setTileShape] = useState<BoardShape>(pkg.tiles[0]?.shape || 'square');
   const [resources, setResources] = useState<ResourceDefinition[]>(pkg.resources || []);
   const [triggerRules, setTriggerRules] = useState<GameTriggerRule[]>(pkg.triggerRules || []);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -55,11 +61,13 @@ export function UniversalSetupModal({
 
   useEffect(() => {
     if (isOpen) {
-      setRuleMode(pkg.ruleMode || 'monopoly');
+      setRuleMode(pkg.ruleMode || 'sandbox');
+      setMapShape(pkg.mapConfig.mapShape || 'square');
+      setTileShape(pkg.tiles[0]?.shape || 'square');
       setResources(pkg.resources || []);
       setTriggerRules(pkg.triggerRules || []);
     }
-  }, [isOpen, pkg.ruleMode, pkg.resources, pkg.triggerRules]);
+  }, [isOpen, pkg.ruleMode, pkg.mapConfig.mapShape, pkg.tiles, pkg.resources, pkg.triggerRules]);
 
   if (!isOpen || !mounted) return null;
 
@@ -170,7 +178,37 @@ export function UniversalSetupModal({
           </section>
 
           <section className="space-y-2 border-t border-slate-100 pt-4">
-            <h3 className="text-xs font-bold text-slate-800">2. Chế độ luật chơi</h3>
+            <h3 className="text-xs font-bold text-slate-800">2. Hình dạng bàn cờ & tất cả ô (Đa giác / Tròn)</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Hình dạng bàn</label>
+                <select
+                  value={mapShape}
+                  onChange={(e) => setMapShape(e.target.value as BoardShape)}
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-semibold"
+                >
+                  {BOARD_SHAPE_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Hình dạng ô</label>
+                <select
+                  value={tileShape}
+                  onChange={(e) => setTileShape(e.target.value as BoardShape)}
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-semibold"
+                >
+                  {BOARD_SHAPE_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-2 border-t border-slate-100 pt-4">
+            <h3 className="text-xs font-bold text-slate-800">3. Chế độ luật chơi</h3>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
@@ -345,7 +383,7 @@ export function UniversalSetupModal({
           <button
             type="button"
             onClick={() => {
-              onUpdateRuleConfig({ ruleMode, resources, triggerRules });
+              onUpdateRuleConfig({ ruleMode, resources, triggerRules, mapShape, tileShape });
               onClose();
             }}
             className="px-4 py-1.5 rounded-lg bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold"

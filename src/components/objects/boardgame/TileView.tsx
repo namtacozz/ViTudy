@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BoardTile, GameCardDeck, GamePawn } from '@/types/boardgame';
+import { BoardTile, GameCardDeck, GamePawn, getBoardShapeClipPath } from '@/types/boardgame';
 import { Home, Landmark, Layers, Link2, Sparkles, Trash2 } from 'lucide-react';
 
 interface TileViewProps {
@@ -146,14 +146,12 @@ export const TileView = React.memo(function TileView({
   const houses = tile.propertyDetails?.currentHouses || 0;
   const isMortgaged = Boolean(tile.propertyDetails?.isMortgaged);
 
-  const shapeStyle: React.CSSProperties =
-    tile.shape === 'hex'
-      ? { clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' }
-      : {};
+  const clip = getBoardShapeClipPath(tile.shape);
+  const shapeStyle: React.CSSProperties = clip ? { clipPath: clip } : {};
   const shapeClass =
     tile.shape === 'circle'
       ? 'rounded-full'
-      : tile.shape === 'hex'
+      : clip
       ? 'rounded-none'
       : 'rounded-lg';
 
@@ -227,11 +225,11 @@ export const TileView = React.memo(function TileView({
           </span>
         ) : isTrackNode ? (
           <span className="text-[9px] font-bold text-slate-500">Nút</span>
-        ) : (
-          <span className="text-[8px] text-slate-300 font-semibold">
-            {tile.hasFunction ? 'Ô' : ''}
+        ) : tile.title ? (
+          <span className="text-[9px] font-bold text-slate-700 text-center px-1 truncate max-w-full">
+            {tile.title}
           </span>
-        )}
+        ) : null}
 
         {deedOwnerPawn && (
           <div

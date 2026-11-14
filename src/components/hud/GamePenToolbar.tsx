@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
-import { GamePenTool } from '@/types/boardgame';
+import { BOARD_SHAPE_OPTIONS, BoardShape, GamePenTool } from '@/types/boardgame';
 import {
   Grid,
   Dices,
@@ -30,6 +30,8 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
   } = useStudySpace();
 
   const [mapLayout, setMapLayout] = useState<'perimeter_ring' | 'full_grid'>('perimeter_ring');
+  const [mapShape, setMapShape] = useState<BoardShape>('square');
+  const [tileShape, setTileShape] = useState<BoardShape>('square');
   const [mapRows, setMapRows] = useState(11);
   const [mapCols, setMapCols] = useState(11);
   const [showMapConfig, setShowMapConfig] = useState(false);
@@ -43,8 +45,8 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
       itemType: 'board_game',
       width: mapCols * 70,
       height: mapRows * 70,
-      typeLabel: `Map ${mapRows}×${mapCols} (${mapLayout === 'perimeter_ring' ? 'Ô viền' : 'Full ô'})`,
-      text: JSON.stringify({ layoutMode: mapLayout, rows: mapRows, cols: mapCols }),
+      typeLabel: `Map ${mapRows}×${mapCols}`,
+      text: JSON.stringify({ layoutMode: mapLayout, rows: mapRows, cols: mapCols, mapShape, tileShape }),
     });
     setActiveTool('create_note');
   };
@@ -98,8 +100,8 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
               >
-                <div className="text-[11px] font-bold">Ô vuông viền</div>
-                <div className="text-[10px] opacity-80">Kiểu Cờ Tỷ Phú</div>
+                <div className="text-[11px] font-bold">Vòng viền</div>
+                <div className="text-[10px] opacity-80">Các ô chạy viền</div>
               </button>
               <button
                 type="button"
@@ -110,9 +112,35 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
               >
-                <div className="text-[11px] font-bold">Full ô vuông</div>
-                <div className="text-[10px] opacity-80">Cờ Vua / Caro</div>
+                <div className="text-[11px] font-bold">Lưới đầy đủ</div>
+                <div className="text-[10px] opacity-80">Full ô trắng</div>
               </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Hình dạng bàn</label>
+                <select
+                  value={mapShape}
+                  onChange={(e) => setMapShape(e.target.value as BoardShape)}
+                  className="w-full px-2 py-1 text-[11px] rounded-lg border border-slate-200 font-semibold bg-white"
+                >
+                  {BOARD_SHAPE_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Hình dạng ô</label>
+                <select
+                  value={tileShape}
+                  onChange={(e) => setTileShape(e.target.value as BoardShape)}
+                  className="w-full px-2 py-1 text-[11px] rounded-lg border border-slate-200 font-semibold bg-white"
+                >
+                  {BOARD_SHAPE_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>

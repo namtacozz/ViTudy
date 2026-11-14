@@ -137,10 +137,48 @@ export interface PropertyDetails {
   upgradeRuleText?: string;
 }
 
+export type BoardShape =
+  | 'square'
+  | 'rect'
+  | 'circle'
+  | 'triangle'
+  | 'diamond'
+  | 'pentagon'
+  | 'hex'
+  | 'octagon';
+
+export const BOARD_SHAPE_OPTIONS: { id: BoardShape; label: string }[] = [
+  { id: 'square', label: 'Vuông' },
+  { id: 'rect', label: 'Chữ nhật' },
+  { id: 'circle', label: 'Tròn' },
+  { id: 'triangle', label: 'Tam giác' },
+  { id: 'diamond', label: 'Tứ giác thoi' },
+  { id: 'pentagon', label: 'Ngũ giác' },
+  { id: 'hex', label: 'Lục giác' },
+  { id: 'octagon', label: 'Bát giác' },
+];
+
+export function getBoardShapeClipPath(shape?: BoardShape): string | undefined {
+  switch (shape) {
+    case 'triangle':
+      return 'polygon(50% 0%, 0% 100%, 100% 100%)';
+    case 'diamond':
+      return 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+    case 'pentagon':
+      return 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)';
+    case 'hex':
+      return 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
+    case 'octagon':
+      return 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)';
+    default:
+      return undefined;
+  }
+}
+
 export interface BoardTile {
   id: string;
   role: BoardTileRole;
-  shape: 'square' | 'circle' | 'rect' | 'hex';
+  shape: BoardShape;
   gridRow?: number;
   gridCol?: number;
   relX: number;
@@ -318,6 +356,7 @@ export interface BoardGamePackage {
   updatedAt: string;
   mapConfig: {
     layoutMode: BoardMapLayoutMode;
+    mapShape?: BoardShape;
     rows: number;
     cols: number;
     tileSize: number;
@@ -414,13 +453,18 @@ export function generateMapTiles(params: {
   totalWidth: number;
   totalHeight: number;
   hasFunction?: boolean;
+  blank?: boolean;
+  tileShape?: BoardShape;
+  mapShape?: BoardShape;
 }): BoardTile[] {
   const rows = Math.max(2, Math.min(20, params.rows));
   const cols = Math.max(2, Math.min(20, params.cols));
   const cellW = Math.round(params.totalWidth / cols);
   const cellH = Math.round(params.totalHeight / rows);
   const tiles: BoardTile[] = [];
-  const hasFn = params.hasFunction ?? params.layoutMode === 'perimeter_ring';
+  const isBlank = Boolean(params.blank);
+  const tileShape: BoardShape = params.tileShape || 'square';
+  const hasFn = params.hasFunction ?? (isBlank ? false : params.layoutMode === 'perimeter_ring');
 
   if (params.layoutMode === 'freeform') {
     return [];
@@ -582,7 +626,7 @@ export function generateMapTiles(params: {
         tiles.push({
           id: `tile-${r}-${c}-${idx}`,
           role: 'normal_cell',
-          shape: 'square',
+          shape: tileShape,
           gridRow: r,
           gridCol: c,
           relX: c * cellW,
@@ -590,10 +634,82 @@ export function generateMapTiles(params: {
           width: cellW,
           height: cellH,
           hasFunction: hasFn,
-          title: hasFn ? `Ô ${idx}` : '',
+          title: isBlank ? '' : hasFn ? `Ô ${idx}` : '',
+          form: isBlank
+            ? {
+                hasHeader: false,
+                headerBgColor: '#ffffff',
+                hasBodyImage: false,
+                hasFooterPrice: false,
+                borderStyle: 'solid',
+              }
+            : undefined,
         });
         idx++;
       }
+    }
+    return tiles;
+  }
+
+  // Nếu mapShape là đa giác đều hoặc hình tròn -> phân bố các ô quanh chu vi đa giác/vòng tròn đó
+  const polySides: Record<string, number> = {
+    triangle: 3,
+    diamond: 4,
+    pentagon: 5,
+    hex: 6,
+    octagon: 8,
+  };
+  if (params.mapShape && (params.mapShape === 'circle' || polySides[params.mapShape])) {
+    const ringCount = Math.max(8, (rows + cols - 2) * 2);
+    const tileW = Math.max(38, Math.min(cellW, cellH, 64));
+    const tileH = tileW;
+    const cx = params.totalWidth / 2;
+    const cy = params.totalHeight / 2;
+    const rx = Math.max(40, params.totalWidth / 2 - tileW * 0.72);
+    const ry = Math.max(40, params.totalHeight / 2 - tileH * 0.72);
+    const sides = polySides[params.mapShape];
+
+    for (let i = 0; i < ringCount; i++) {
+      let x = cx;
+      let y = cy;
+      if (!sides) {
+        const theta = (i / ringCount) * Math.PI * 2 - Math.PI / 2;
+        x = cx + Math.cos(theta) * rx;
+        y = cy + Math.sin(theta) * ry;
+      } else {
+        const perSide = ringCount / sides;
+        const sideIdx = Math.min(sides - 1, Math.floor(i / perSide));
+        const t = (i - sideIdx * perSide) / perSide;
+        const a1 = (sideIdx / sides) * Math.PI * 2 - Math.PI / 2;
+        const a2 = ((sideIdx + 1) / sides) * Math.PI * 2 - Math.PI / 2;
+        const p1x = cx + Math.cos(a1) * rx;
+        const p1y = cy + Math.sin(a1) * ry;
+        const p2x = cx + Math.cos(a2) * rx;
+        const p2y = cy + Math.sin(a2) * ry;
+        x = p1x + (p2x - p1x) * t;
+        y = p1y + (p2y - p1y) * t;
+      }
+
+      tiles.push({
+        id: `tile-poly-${i + 1}`,
+        role: 'normal_cell',
+        shape: tileShape,
+        gridRow: 0,
+        gridCol: i,
+        relX: Math.round(x - tileW / 2),
+        relY: Math.round(y - tileH / 2),
+        width: tileW,
+        height: tileH,
+        hasFunction: hasFn,
+        title: isBlank ? '' : `Ô ${i + 1}`,
+        form: {
+          hasHeader: !isBlank,
+          headerBgColor: isBlank ? '#ffffff' : '#E0562D',
+          hasBodyImage: false,
+          hasFooterPrice: false,
+          borderStyle: 'solid',
+        },
+      });
     }
     return tiles;
   }
@@ -608,17 +724,18 @@ export function generateMapTiles(params: {
   coords.forEach(({ r, c }, idx) => {
     const isCorner =
       (r === 0 || r === rows - 1) && (c === 0 || c === cols - 1);
-    const defaultTitle =
-      idx === 0
-        ? 'Xuất phát'
-        : isCorner
-        ? `Góc ${idx + 1}`
-        : `Ô đất ${idx}`;
+    const defaultTitle = isBlank
+      ? ''
+      : idx === 0
+      ? 'Xuất phát'
+      : isCorner
+      ? `Góc ${idx + 1}`
+      : `Ô đất ${idx}`;
 
     tiles.push({
       id: `tile-ring-${r}-${c}-${idx + 1}`,
       role: 'normal_cell',
-      shape: 'square',
+      shape: tileShape,
       gridRow: r,
       gridCol: c,
       relX: c * cellW,
@@ -627,16 +744,24 @@ export function generateMapTiles(params: {
       height: cellH,
       hasFunction: hasFn,
       title: defaultTitle,
-      price: isCorner || idx === 0 ? undefined : (idx % 5 + 1) * 50000,
-      form: {
-        hasHeader: !isCorner && idx !== 0,
-        headerBgColor: ['#E0562D', '#2563eb', '#16a34a', '#9333ea', '#ca8a04'][
-          Math.floor(idx / Math.max(1, Math.floor(coords.length / 5))) % 5
-        ],
-        hasBodyImage: false,
-        hasFooterPrice: !isCorner && idx !== 0,
-        borderStyle: 'solid',
-      },
+      price: isBlank || isCorner || idx === 0 ? undefined : (idx % 5 + 1) * 50000,
+      form: isBlank
+        ? {
+            hasHeader: false,
+            headerBgColor: '#ffffff',
+            hasBodyImage: false,
+            hasFooterPrice: false,
+            borderStyle: 'solid',
+          }
+        : {
+            hasHeader: !isCorner && idx !== 0,
+            headerBgColor: ['#E0562D', '#2563eb', '#16a34a', '#9333ea', '#ca8a04'][
+              Math.floor(idx / Math.max(1, Math.floor(coords.length / 5))) % 5
+            ],
+            hasBodyImage: false,
+            hasFooterPrice: !isCorner && idx !== 0,
+            borderStyle: 'solid',
+          },
     });
   });
 
@@ -650,29 +775,43 @@ export function createDefaultBoardGamePackage(params: {
   cols: number;
   width: number;
   height: number;
+  blank?: boolean;
+  mapShape?: BoardShape;
+  tileShape?: BoardShape;
 }): BoardGamePackage {
+  const isBlank = Boolean(params.blank);
   const tiles = generateMapTiles({
     layoutMode: params.layoutMode,
     rows: params.rows,
     cols: params.cols,
     totalWidth: params.width,
     totalHeight: params.height,
+    blank: isBlank,
+    tileShape: params.tileShape,
+    mapShape: params.mapShape,
   });
 
   const now = new Date().toISOString();
-  const isMonopoly = params.layoutMode === 'perimeter_ring';
+  const isMonopoly = !isBlank && params.layoutMode === 'perimeter_ring';
   return {
     id: params.id,
-    title: isMonopoly ? 'Bàn Cờ Tỷ Phú Mới' : 'Bàn Cờ Đa Năng Mới',
-    description: 'Board game tự thiết kế trên ViTudy Studio.',
-    ruleMode: isMonopoly ? 'monopoly' : 'sandbox',
-    templateId: isMonopoly ? 'monopoly' : 'sandbox',
+    title: isBlank
+      ? 'Board Game chưa đặt tên'
+      : isMonopoly
+      ? 'Bàn Cờ Tỷ Phú Mới'
+      : 'Bàn Cờ Đa Năng Mới',
+    description: isBlank
+      ? 'Không gian bàn chơi tùy biến tự do.'
+      : 'Board game tự thiết kế trên ViTudy Studio.',
+    ruleMode: isBlank ? 'sandbox' : isMonopoly ? 'monopoly' : 'sandbox',
+    templateId: isBlank ? 'sandbox' : isMonopoly ? 'monopoly' : 'sandbox',
     minPlayers: 2,
     maxPlayers: 4,
     createdAt: now,
     updatedAt: now,
     mapConfig: {
       layoutMode: params.layoutMode,
+      mapShape: params.mapShape || 'square',
       rows: params.rows,
       cols: params.cols,
       tileSize: Math.round(params.width / params.cols),

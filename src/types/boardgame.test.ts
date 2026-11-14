@@ -74,4 +74,23 @@ describe('Board Game Studio Core Logic', () => {
     await GameCabinetStorage.deleteGame('game-test-1');
     expect(await GameCabinetStorage.listGames()).toHaveLength(0);
   });
+
+  it('creates clean blank customizable board with polygon shapes when blank is true', () => {
+    const pkg = createDefaultBoardGamePackage({
+      id: 'blank-poly-1',
+      layoutMode: 'perimeter_ring',
+      rows: 6,
+      cols: 6,
+      width: 480,
+      height: 480,
+      blank: true,
+      mapShape: 'pentagon',
+      tileShape: 'triangle',
+    });
+    expect(pkg.title).toBe('Board Game chưa đặt tên');
+    expect(pkg.ruleMode).toBe('sandbox');
+    expect(pkg.mapConfig.mapShape).toBe('pentagon');
+    expect(pkg.tiles.every((t) => t.title === '' && !t.hasFunction && !t.price && t.shape === 'triangle')).toBe(true);
+    expect(pkg.tiles.every((t) => t.form?.hasHeader === false && t.form?.hasFooterPrice === false)).toBe(true);
+  });
 });
