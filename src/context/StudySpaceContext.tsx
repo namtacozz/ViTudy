@@ -524,18 +524,21 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     );
   };
 
+  const activeSpaceIdRef = useRef(activeSpaceId);
+  activeSpaceIdRef.current = activeSpaceId;
+
   // Helper lưu nhanh và an toàn vào localStorage ngay lập tức
   const syncLocal = useCallback((spacesList: StudySpace[], targetActiveId?: string) => {
     try {
       const uId = user?.id;
       const userPrefix = uId ? `user_${uId}_` : 'guest_';
-      const actId = targetActiveId || activeSpaceId;
+      const actId = targetActiveId || activeSpaceIdRef.current;
       localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(spacesList));
       localStorage.setItem(`${userPrefix}vitudy_active_space_id`, actId);
       localStorage.setItem('vitudy_spaces', JSON.stringify(spacesList));
       localStorage.setItem('vitudy_active_space_id', actId);
     } catch {}
-  }, [user?.id, activeSpaceId]);
+  }, [user?.id]);
 
   // Deep NFC normalization & binary sanitizer for persistent storage safety (preserves emojis for emoji stickers/notes)
   const normalizeNFC = (text: string) => (text ? sanitizeDocumentText(text).normalize('NFC') : '');
@@ -606,10 +609,10 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           if (cancelled) return;
           let targetId = '';
 
-          // Lọc bỏ các bàn học rỗng demo/thử nghiệm cũ
+          // Lọc bỏ các bàn học rỗng demo/thử nghiệm cũ (không xóa "Bàn học trống" do user chủ động tạo)
           const isGhostEmpty = (s: StudySpace) =>
             (!s.items || s.items.length === 0) &&
-            ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm', 'Bàn học trống'].includes(s.name.trim());
+            ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm'].includes(s.name.trim());
 
           // Dọn dẹp trên cloud cho các bàn học rỗng
           cloudSpaces.forEach(cs => {
