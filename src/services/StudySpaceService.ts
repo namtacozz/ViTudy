@@ -233,7 +233,19 @@ export class StudySpaceService {
 
     try {
       const safeSpaceId = ensureUUID(spaceId);
-      await supabase.from('study_spaces').delete().eq('id', safeSpaceId);
+      // Xóa dữ liệu con trước để tránh lỗi FK nếu bảng chưa cấu hình ON DELETE CASCADE
+      await Promise.allSettled([
+        supabase.from('desk_strokes').delete().eq('space_id', safeSpaceId),
+        supabase.from('desk_documents').delete().eq('space_id', safeSpaceId),
+        supabase.from('study_threads').delete().eq('space_id', safeSpaceId),
+        supabase.from('study_space_members').delete().eq('space_id', safeSpaceId),
+      ]);
+      const { error } = await supabase.from('study_spaces').delete().eq('id', safeSpaceId);
+      if (error && safeSpaceId !== spaceId) {
+        await supabase.from('study_spaces').delete().eq('id', spaceId);
+      } else if (error) {
+        console.warn('Lỗi deleteSpace Supabase:', error.message);
+      }
     } catch (err) {
       console.warn('Lỗi deleteSpace:', err);
     }

@@ -612,7 +612,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           // Lọc bỏ các bàn học rỗng demo/thử nghiệm cũ (không xóa "Bàn học trống" do user chủ động tạo)
           const isGhostEmpty = (s: StudySpace) =>
             (!s.items || s.items.length === 0) &&
-            ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm'].includes(s.name.trim());
+            ['Ôn thi giữa kỳ', 'Giáo trình + đề thi', 'Học nhóm', 'Toán cho Trí tuệ Nhân tạo'].includes(s.name.trim());
 
           // Dọn dẹp trên cloud cho các bàn học rỗng
           cloudSpaces.forEach(cs => {
