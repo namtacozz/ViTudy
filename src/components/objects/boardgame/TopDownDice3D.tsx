@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dices } from 'lucide-react';
+import { PhysicsDiceBox } from '@/lib/physicsDiceBox';
 
 interface TopDownDice3DProps {
   diceCount: number;
@@ -10,119 +11,126 @@ interface TopDownDice3DProps {
   size?: number;
 }
 
-const DOT_POSITIONS: Record<number, number[]> = {
-  1: [4],
-  2: [0, 8],
-  3: [0, 4, 8],
-  4: [0, 2, 6, 8],
-  5: [0, 2, 4, 6, 8],
-  6: [0, 2, 3, 5, 6, 8],
-};
-
-function DieFace({ value, faceSize }: { value: number; faceSize: number }) {
-  const dots = DOT_POSITIONS[value] || [4];
-  return (
-    <div
-      style={{ width: faceSize, height: faceSize }}
-      className="grid grid-cols-3 grid-rows-3 gap-0.5 p-1.5 bg-white rounded-lg border border-slate-300 shadow-inner"
-    >
-      {Array.from({ length: 9 }).map((_, idx) => (
-        <div key={idx} className="flex items-center justify-center">
-          {dots.includes(idx) && (
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                value === 1 ? 'bg-[#E0562D] scale-125' : 'bg-slate-900'
-              }`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function TopDownDice3D({
   diceCount,
   lastValues = [],
   onRollComplete,
 }: TopDownDice3DProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const boxRef = useRef<PhysicsDiceBox | null>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const [webglReady, setWebglReady] = useState(false);
   const [isRolling, setIsRolling] = useState(false);
   const [displayValues, setDisplayValues] = useState<number[]>(
     lastValues.length === diceCount ? lastValues : Array.from({ length: diceCount }, () => 1)
   );
-  const [rotations, setRotations] = useState<{ rx: number; ry: number; rz: number; scale: number }[]>(
-    () => Array.from({ length: diceCount }, () => ({ rx: 0, ry: 0, rz: 0, scale: 1 }))
-  );
 
-  const handleRoll = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Sync external lastValues updates (e.g. from STATE_SYNC in multiplayer)
+  useEffect(() => {
+    if (lastValues.length === diceCount && !isRolling) {
+      setDisplayValues(lastValues);
+      boxRef.current?.showStaticValues(lastValues);
+    }
+  }, [lastValues, diceCount, isRolling]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let box: PhysicsDiceBox | null = null;
+    try {
+      box = new PhysicsDiceBox(el);
+      boxRef.current = box;
+      setWebglReady(true);
+      const initial =
+        lastValues.length === diceCount ? lastValues : Array.from({ length: diceCount }, () => 1);
+      box.showStaticValues(initial);
+    } catch {
+      // Fallback gracefully if WebGL is unavailable in headless/test environments
+      setWebglReady(false);
+    }
+
+    const ro = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => box?.resize())
+      : null;
+    ro?.observe(el);
+
+    return () => {
+      ro?.disconnect();
+      box?.dispose();
+      boxRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diceCount]);
+
+  const triggerRoll = (swipeVector?: { x: number; y: number }) => {
     if (isRolling) return;
     setIsRolling(true);
 
-    // Hiệu ứng rơi 3D từ phía người nhìn trên cao xuống mặt bàn
-    setRotations(
-      Array.from({ length: diceCount }, () => ({
-        rx: (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 180),
-        ry: (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 180),
-        rz: Math.round((Math.random() - 0.5) * 60),
-        scale: 1.45,
-      }))
-    );
+    if (boxRef.current && webglReady) {
+      boxRef.current.startThrow(
+        diceCount,
+        (finalVals) => {
+          setDisplayValues(finalVals);
+          setIsRolling(false);
+          onRollComplete(finalVals);
+        },
+        swipeVector
+      );
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setDisplayValues(Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1));
-    }, 90);
-
+    // Fallback when WebGL is unavailable
     setTimeout(() => {
-      clearInterval(interval);
       const finalVals = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
       setDisplayValues(finalVals);
-      setRotations(
-        Array.from({ length: diceCount }, () => ({
-          rx: 0,
-          ry: 0,
-          rz: Math.round((Math.random() - 0.5) * 24),
-          scale: 1,
-        }))
-      );
       setIsRolling(false);
       onRollComplete(finalVals);
-    }, 680);
+    }, 450);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    swipeStartRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start) {
+      triggerRoll();
+      return;
+    }
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    triggerRoll(Math.hypot(dx, dy) > 8 ? { x: dx, y: dy } : undefined);
   };
 
   const total = displayValues.reduce((a, b) => a + b, 0);
 
   return (
     <div
-      onClick={handleRoll}
-      style={{ perspective: '600px' }}
-      title="Nhấp để thả xúc xắc 3D từ trên cao xuống"
-      className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer select-none group"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      title="Nhấp hoặc vuốt để tung xúc xắc vật lý 3D"
+      className="relative w-full h-full flex items-center justify-center cursor-pointer select-none group overflow-hidden rounded-full"
     >
-      <div className="flex items-center justify-center gap-2.5 flex-wrap">
-        {Array.from({ length: diceCount }).map((_, idx) => {
-          const r = rotations[idx] || { rx: 0, ry: 0, rz: 0, scale: 1 };
-          return (
-            <div
-              key={idx}
-              style={{
-                transformStyle: 'preserve-3d',
-                transform: `scale(${r.scale}) rotateX(${r.rx}deg) rotateY(${r.ry}deg) rotateZ(${r.rz}deg)`,
-                transition: isRolling ? 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)' : 'transform 260ms ease-out',
-                boxShadow: isRolling
-                  ? '0 18px 28px rgba(15,23,42,0.28)'
-                  : '0 4px 10px rgba(15,23,42,0.18)',
-              }}
-              className="rounded-lg"
-            >
-              <DieFace value={displayValues[idx] || 1} faceSize={38} />
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-900 text-white text-[11px] font-bold shadow-sm group-hover:bg-[#E0562D] transition-colors">
-        <Dices className="w-3 h-3" />
-        <span>{isRolling ? 'Đang tung...' : `Tổng: ${total} điểm`}</span>
+      {/* WebGL + cannon-es 3D Dice Arena */}
+      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* Fallback badge if WebGL unavailable */}
+      {!webglReady && (
+        <div className="relative z-10 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white border border-slate-300 shadow text-xs font-black text-slate-900">
+          {displayValues.join(' + ')}
+        </div>
+      )}
+
+      {/* Total pill */}
+      <div className="relative z-10 mt-auto mb-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900/90 text-white text-[10px] font-bold shadow pointer-events-none">
+        <Dices className="w-3 h-3 text-[#E0562D]" />
+        <span>{isRolling ? 'Đang lăn...' : `Tổng: ${total} điểm`}</span>
       </div>
     </div>
   );

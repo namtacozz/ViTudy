@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `a0d15d5`  
+> **Commit Hash:** `a75fb7f`  
 > **Cập nhật lần cuối:** `2026-11-14`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -50,7 +50,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StickyNoteItemComponent` | `component` | [src/components/objects/StickyNoteItem.tsx:L40-L1147](file:///F:/AppMaking/ViTudy/src/components/objects/StickyNoteItem.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `TileFormEditorModal` | `component` | [src/components/objects/boardgame/TileFormEditorModal.tsx:L22-L358](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TileFormEditorModal.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 | `TileView` | `component` | [src/components/objects/boardgame/TileView.tsx:L21-L263](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TileView.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
-| `TopDownDice3D` | `component` | [src/components/objects/boardgame/TopDownDice3D.tsx:L44-L129](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TopDownDice3D.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
+| `TopDownDice3D` | `component` | [src/components/objects/boardgame/TopDownDice3D.tsx:L14-L137](file:///F:/AppMaking/ViTudy/src/components/objects/boardgame/TopDownDice3D.tsx) | Thành phần nghiệp vụ của phân hệ Objects (Sách, Giấy, Note) |
 
 ### HUD & Overlays
 
