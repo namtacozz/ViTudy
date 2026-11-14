@@ -6,6 +6,7 @@
 > 3. **If docs and code disagree:** Code wins; fix the docs and log it in the changelog.
 > 4. **Auto-Update Directives:** Bất cứ khi nào người dùng đề cập, thảo luận hoặc đưa ra yêu cầu chỉnh sửa liên quan đến một quy tắc thiết kế hay kỹ thuật nào, Agent **BẮT BUỘC TỰ ĐỘNG CẬP NHẬT NGAY** vào file `AGENTS.md` này mà không cần đợi người dùng phải nhắc.
 > 5. **Single Source of Truth:** Codebase này chỉ sử dụng duy nhất file `AGENTS.md` cho các chỉ dẫn của Agent. Tuyệt đối không tạo hay sử dụng file `CLAUDE.md`.
+> 6. **Quy Tắc Quản Trị Nhánh Git (Git Branch Governance - Bất Di Bất Dịch):** TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỘNG VÀO NHÁNH MAIN. Nghiêm cấm tuyệt đối mọi hành vi merge, rebase, push, commit hoặc can thiệp vào nhánh `main` dưới bất kỳ hình thức nào. Nhánh `main` hoàn toàn do Sếp toàn quyền kiểm soát và quản lý. Mọi tác vụ phát triển, thử nghiệm, commit và push của Agent CHỈ ĐƯỢC PHÉP thực hiện trên nhánh `dev`.
 
 ---
 
