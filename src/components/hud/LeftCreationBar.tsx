@@ -120,6 +120,12 @@ export function LeftCreationBar() {
       icon: <Palette className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
     },
     {
+      id: 'game_pen',
+      title: 'Bút Trò Chơi (BETA)',
+      desc: 'Kho 6 game mẫu, soạn luật tiếng Việt & AI Architect',
+      icon: <Gamepad2 className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
+    },
+    {
       id: 'game_cabinet',
       title: 'Tủ Trò Chơi Cá Nhân',
       desc: 'Lấy Board Game đã thiết kế ra bàn chơi hoặc sửa lại',
@@ -172,6 +178,10 @@ export function LeftCreationBar() {
         typeLabel: 'Bảng Vẽ 4 Góc (Artboard)'
       });
       setActiveTool('create_note');
+      return;
+    }
+    if (toolId === 'game_pen') {
+      setActiveTool('game_pen');
       return;
     }
     if (toolId === 'game_cabinet') {
@@ -298,24 +308,6 @@ export function LeftCreationBar() {
           {currentPenIcon}
         </button>
 
-        {/* Bút Trò Chơi (Game Pen) */}
-        <button
-          title="Bút Trò Chơi (Thiết kế Board Game: Tạo Map, Ô, Xúc xắc 3D, Thẻ, Tiền VNĐ)"
-          onClick={() => {
-            setActiveTool(activeTool === 'game_pen' ? 'cursor' : 'game_pen');
-            setIsNoteFlyoutOpen(false);
-            setIsPenFlyoutOpen(false);
-            setIsMoreToolsOpen(false);
-          }}
-          className={`${toolBtnBase} ${
-            activeTool === 'game_pen'
-              ? 'bg-[#E0562D] text-white shadow-xs font-bold'
-              : 'text-slate-800 hover:text-[#E0562D] hover:bg-orange-50'
-          }`}
-        >
-          <Gamepad2 className={toolIconClass} />
-        </button>
-
         {/* Bảng Vẽ 4 Góc */}
         <button
           title="Bảng Vẽ 4 Góc (Vẽ tranh, kéo ảnh & tạo quân cờ)"
@@ -341,14 +333,14 @@ export function LeftCreationBar() {
 
         {/* Nút + Công cụ mở rộng (More tools) */}
         <button
-          title="Công cụ mở rộng (Shapes, Stickers, Code, Table, Mind map...)"
+          title="Công cụ mở rộng (Shapes, Stickers, Code, Table, Mind map, Bút Trò Chơi BETA...)"
           onClick={() => {
             setIsMoreToolsOpen(!isMoreToolsOpen);
             setIsNoteFlyoutOpen(false);
             setIsPenFlyoutOpen(false);
           }}
           className={`${toolBtnBase} ${
-            isMoreToolsOpen
+            isMoreToolsOpen || activeTool === 'game_pen'
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
