@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { InfiniteDesk } from './InfiniteDesk';
@@ -17,8 +17,20 @@ import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import { getAssetPath } from '@/lib/assets';
 
 export default function StudySpaceDeskView() {
-  const { focusedItemId, isDeskReady } = useStudySpace();
+  const { focusedItemId, isDeskReady, fitAllToScreen, activeSpaceId } = useStudySpace();
   const isFocusMode = !!focusedItemId;
+
+  // Auto-fit content to screen and center upon opening the desk
+  const autoFittedSpaceRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeSpaceId && autoFittedSpaceRef.current !== activeSpaceId) {
+      autoFittedSpaceRef.current = activeSpaceId;
+      const timer = setTimeout(() => {
+        fitAllToScreen?.();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSpaceId, fitAllToScreen]);
 
   // Independent drawer states for each of the 5 HUD islands in focus mode
   const [showTopLeftInFocus, setShowTopLeftInFocus] = useState(false);
@@ -60,7 +72,10 @@ export default function StudySpaceDeskView() {
   }, []);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-white select-none">
+    <div 
+      className="relative w-screen h-[100dvh] overflow-hidden bg-white select-none touch-none overscroll-none"
+      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
+    >
       {/* Desk Loading Overlay: chờ tải đủ ghi chú, tài liệu, sticker, GIF và nét vẽ trước khi mở bàn */}
       {!isDeskReady && (
         <div
@@ -92,7 +107,6 @@ export default function StudySpaceDeskView() {
           </div>
         </div>
       )}
-
       {/* 2.5D Infinite Canvas Desk */}
       <InfiniteDesk />
 
@@ -101,68 +115,74 @@ export default function StudySpaceDeskView() {
         <VrFrameOverlay />
       </div>
 
-      {/* ================= 1. TOP-LEFT NAV HUD (ViTudy | Tên bàn học | Search) ================= */}
-      <div 
-        className={clsx(
-          "fixed top-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
-          isFocusMode && !showTopLeftInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
-        )}
+      {/* ================= 1 & 2. TOP HUD HEADER BAR (Chống đè 100% bằng Flex Row) ================= */}
+      <header 
+        className="fixed top-1 inset-x-1 sm:top-2 sm:inset-x-2 z-40 flex items-start justify-between gap-1 sm:gap-2 pointer-events-none landscape-phone:left-[56px]"
       >
-        <TopLeftNav />
+        {/* Top-Left: Brand & Space selector */}
+        <div
+          className={clsx(
+            "pointer-events-auto min-w-0 flex-shrink relative transition-transform duration-300 ease-out",
+            isFocusMode && !showTopLeftInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
+          )}
+        >
+          <TopLeftNav />
 
-        {/* Attached Pull/Retract Tab for Top-Left Nav in Focus Mode */}
-        {isFocusMode && (
-          <button
-            type="button"
-            onClick={() => setShowTopLeftInFocus(prev => !prev)}
-            title={showTopLeftInFocus ? "Thu gọn thanh tiêu đề lên trên" : "Mở thanh tiêu đề bàn học"}
-            className="absolute top-full left-6 mt-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
-          >
-            {showTopLeftInFocus ? (
-              <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
-            )}
-          </button>
-        )}
-      </div>
+          {/* Attached Pull/Retract Tab for Top-Left Nav in Focus Mode */}
+          {isFocusMode && (
+            <button
+              type="button"
+              onClick={() => setShowTopLeftInFocus(prev => !prev)}
+              title={showTopLeftInFocus ? "Thu gọn thanh tiêu đề lên trên" : "Mở thanh tiêu đề bàn học"}
+              className="absolute top-full left-6 mt-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+            >
+              {showTopLeftInFocus ? (
+                <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+              )}
+            </button>
+          )}
+        </div>
 
-      {/* ================= 2. TOP-RIGHT WALLET HUD (Chuỗi | Chợ | ViToken | AI) ================= */}
-      <div 
-        className={clsx(
-          "fixed top-1 right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
-          isFocusMode && !showTopRightInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
-        )}
-      >
-        <TopRightWallet />
+        {/* Top-Right: Wallet & AI */}
+        <div
+          className={clsx(
+            "pointer-events-auto shrink-0 relative transition-transform duration-300 ease-out",
+            isFocusMode && !showTopRightInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
+          )}
+        >
+          <TopRightWallet />
 
-        {/* Attached Pull/Retract Tab for Top-Right Wallet in Focus Mode */}
-        {isFocusMode && (
-          <button
-            type="button"
-            onClick={() => setShowTopRightInFocus(prev => !prev)}
-            title={showTopRightInFocus ? "Thu gọn thanh ví & chuỗi lên trên" : "Mở thanh ví & chuỗi điểm danh"}
-            className="absolute top-full right-6 mt-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
-          >
-            {showTopRightInFocus ? (
-              <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
-            )}
-          </button>
-        )}
-      </div>
+          {/* Attached Pull/Retract Tab for Top-Right Wallet in Focus Mode */}
+          {isFocusMode && (
+            <button
+              type="button"
+              onClick={() => setShowTopRightInFocus(prev => !prev)}
+              title={showTopRightInFocus ? "Thu gọn thanh ví & chuỗi lên trên" : "Mở thanh ví & chuỗi điểm danh"}
+              className="absolute top-full right-6 mt-1 bg-white/95 hover:bg-white text-slate-700 hover:text-[#E0562D] border border-slate-300 rounded-b-xl px-2.5 py-0.5 shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center pointer-events-auto"
+            >
+              {showTopRightInFocus ? (
+                <ChevronUp className="w-3.5 h-3.5 stroke-[2.4]" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+              )}
+            </button>
+          )}
+        </div>
+      </header>
 
-      {/* ================= 3. LEFT TOOL CREATION BAR (Responsive Floating Dock on Mobile) ================= */}
+      {/* ================= 3. TOOL CREATION BAR (Dock ngang đáy trên mobile portrait, Dọc mép trái trên landscape & desktop) ================= */}
       <div 
         className={clsx(
           "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          // Desktop & Tablet (Left centered)
-          "md:left-1 md:top-1/2 md:-translate-y-1/2",
-          isFocusMode && !showLeftInFocus ? "md:-translate-x-[calc(100%+12px)]" : "md:translate-x-0",
-          // Mobile (< 768px): Bottom floating dock
-          "max-md:bottom-2 max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-auto",
-          isFocusMode && !showLeftInFocus ? "max-md:translate-y-[calc(100%+24px)]" : "max-md:translate-y-0"
+          // Mobile Portrait: Dock ngang sát đáy duy nhất
+          "max-sm:portrait:bottom-1.5 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
+          // Landscape & Desktop: Cột dọc mép trái (Bắt đầu từ top-13 dưới header, dừng trước đáy để không đè BottomLeftKnowledge)
+          "sm:left-1 sm:top-14 sm:translate-y-0 max-sm:landscape:left-1 max-sm:landscape:top-12 max-sm:landscape:translate-y-0",
+          isFocusMode && !showLeftInFocus 
+            ? "max-sm:portrait:translate-y-[calc(100%+16px)] sm:-translate-x-[calc(100%+12px)] max-sm:landscape:-translate-x-[calc(100%+12px)]" 
+            : "max-sm:portrait:translate-y-0 sm:translate-x-0 max-sm:landscape:translate-x-0"
         )}
       >
         <LeftCreationBar />
@@ -184,10 +204,11 @@ export default function StudySpaceDeskView() {
         )}
       </div>
 
-      {/* ================= 4. BOTTOM-LEFT KNOWLEDGE HUD (Tải lên, Ghi hình, Chia sẻ) ================= */}
+      {/* ================= 4. BOTTOM-LEFT KNOWLEDGE HUD (Tải lên, Nhập URL, Chia sẻ) ================= */}
       <div 
         className={clsx(
-          "fixed bottom-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          // Trên mobile portrait: nâng lên bottom-14 (cách đáy 56px) để KHÔNG BAO GIỜ đè lên BottomRightToolkit đáy
+          "fixed max-sm:portrait:bottom-14 max-sm:portrait:left-1.5 sm:bottom-1 sm:left-1 max-sm:landscape:bottom-1 max-sm:landscape:left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
           isFocusMode && !showBottomLeftInFocus ? "translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >
@@ -213,7 +234,7 @@ export default function StudySpaceDeskView() {
       {/* ================= 5. BOTTOM-RIGHT TOOLKIT HUD (Zoom, Xoay, Map) ================= */}
       <div 
         className={clsx(
-          "fixed bottom-1 right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          "fixed max-sm:portrait:bottom-14 max-sm:portrait:right-1.5 sm:bottom-1 sm:right-1 max-sm:landscape:bottom-1 max-sm:landscape:right-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
           isFocusMode && !showBottomRightInFocus ? "translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >

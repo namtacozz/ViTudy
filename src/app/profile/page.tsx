@@ -33,12 +33,8 @@ function ProfilePageContent() {
     } catch {}
   }, [fromParam]);
 
-  useEffect(() => {
-    if (status === 'guest') {
-      router.replace('/auth');
-    }
-  }, [status, router]);
-
+  // Bỏ tự động redirect ép buộc sang /auth khi là guest. 
+  // Người dùng khách vẫn có thể xem thông tin, chỉnh cài đặt AI và chủ động bấm đăng nhập khi muốn.
   const handleSignOut = async () => {
     await signOut();
     router.replace('/');
@@ -56,13 +52,22 @@ function ProfilePageContent() {
     }
   };
 
-  if (status === 'loading' || !user) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-[#E0562D]" />
       </div>
     );
   }
+
+  const isGuest = !user;
+  const effectiveProfile: any = profile || {
+    id: 'guest',
+    email: 'khach@vitudy.local',
+    display_name: 'Khách trải nghiệm',
+    avatar_url: null,
+    vitoken_balance: 0,
+  };
 
   return (
     <div className="min-h-screen bg-[#faf8f5] py-6 px-4 sm:px-6 font-sans text-stone-900">
@@ -78,16 +83,43 @@ function ProfilePageContent() {
             <span>{returnLabel}</span>
           </Link>
 
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={isLoading}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-rose-600 transition-colors bg-white px-3 py-1.5 rounded-xl border border-stone-200/90 shadow-2xs cursor-pointer active:scale-95"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Đăng xuất</span>
-          </button>
+          {isGuest ? (
+            <Link
+              href="/auth"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#E0562D] hover:bg-[#c9451e] transition-colors px-3 py-1.5 rounded-xl shadow-2xs cursor-pointer active:scale-95"
+            >
+              <span>Đăng nhập</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={isLoading}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-rose-600 transition-colors bg-white px-3 py-1.5 rounded-xl border border-stone-200/90 shadow-2xs cursor-pointer active:scale-95"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Đăng xuất</span>
+            </button>
+          )}
         </div>
+
+        {/* Guest Notification Banner */}
+        {isGuest && (
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="text-xs text-stone-700">
+              <span className="font-bold text-[#B8431A]">Bạn đang ở Chế độ Khách:</span>
+              <p className="text-stone-600 mt-0.5">
+                Các cấu hình AI và nét vẽ được lưu trên trình duyệt này. Đăng nhập để lưu trữ vĩnh viễn trên đám mây và nhận 50 ViToken.
+              </p>
+            </div>
+            <Link
+              href="/auth"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0 self-start sm:self-center"
+            >
+              <span>Đăng nhập ngay</span>
+            </Link>
+          </div>
+        )}
 
         {/* Header Title: Profile settings (Ảnh 4) */}
         <div>
@@ -140,11 +172,11 @@ function ProfilePageContent() {
 
         {/* Main Tab Content */}
         {activeTab === 'profile' && (
-          <AccountSettings profile={profile} activeTab="profile" />
+          <AccountSettings profile={effectiveProfile} activeTab="profile" />
         )}
 
         {activeTab === 'ai' && (
-          <AccountSettings profile={profile} activeTab="ai" />
+          <AccountSettings profile={effectiveProfile} activeTab="ai" />
         )}
 
         {activeTab === 'payments' && (
@@ -172,10 +204,12 @@ function ProfilePageContent() {
           </div>
         )}
 
-        {/* Delete Account Zone at the bottom */}
-        <div className="pt-2">
-          <DeleteAccount userEmail={user.email || ''} />
-        </div>
+        {/* Delete Account Zone at the bottom (chỉ hiển thị khi đã đăng nhập) */}
+        {!isGuest && user && (
+          <div className="pt-2">
+            <DeleteAccount userEmail={user.email || ''} />
+          </div>
+        )}
 
         {/* Top Up Modal */}
         <TopUpModal 

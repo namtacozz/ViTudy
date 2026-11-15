@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // Test consumer component
@@ -15,14 +15,16 @@ function TestConsumer() {
 }
 
 describe('AuthContext', () => {
-  it('renders with null user and guest status when no session exists', () => {
+  it('renders with null user and guest status when no session exists', async () => {
     render(
       <AuthProvider>
         <TestConsumer />
       </AuthProvider>
     );
 
-    expect(screen.getByTestId('user')).toHaveTextContent('null');
-    expect(screen.getByTestId('status')).toHaveTextContent('guest');
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('null');
+      expect(screen.getByTestId('status')).toHaveTextContent('guest');
+    });
   });
 });

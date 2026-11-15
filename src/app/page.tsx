@@ -91,17 +91,17 @@ function StudySpacePageContent() {
     return <HomePage onEnterDesk={handleEnterDesk} />;
   }
 
-  // Mobile Mode (<768px): Mặc định mở Mobile Companion, có thể chuyển sang Canvas 2.5D
-  if (isMobile && mobileMode === 'companion') {
+  // Mobile Companion Mode (chỉ mở khi có tham số explicit ?view=companion)
+  if (viewParam === 'companion') {
     return (
-      <div className="w-full min-h-screen bg-white overflow-y-auto">
-        <MobileCompanionView onSwitchToCanvas={() => setMobileMode('canvas')} />
+      <div className="w-full min-h-[100dvh] bg-white overflow-y-auto">
+        <MobileCompanionView />
         <GuestBanner user={user} />
       </div>
     );
   }
 
-  // Desktop & Tablet (hoặc Mobile khi chọn chuyển sang Canvas 2.5D)
+  // Desktop, Tablet & Mobile 2.5D Infinite Workspace (Giống GreenLearn)
   return (
     <>
       {isMobile && mobileMode === 'canvas' && (
@@ -127,7 +127,7 @@ function StudySpacePageContent() {
 
 export default function StudySpacePage() {
   return (
-    <Suspense fallback={<div className="w-screen h-screen bg-[#e8ebf0]" />}>
+    <Suspense fallback={<div className="w-screen h-[100dvh] bg-[#e8ebf0]" />}>
       <StudySpacePageContent />
     </Suspense>
   );

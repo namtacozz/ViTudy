@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [status, setStatus] = useState<AuthStatus>('guest');
+  const [status, setStatus] = useState<AuthStatus>('loading');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
@@ -104,6 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setStatus('guest');
       }
+    }).catch((err) => {
+      console.warn('Lỗi khởi tạo phiên đăng nhập:', err);
+      setStatus('guest');
     });
 
     // Subscribe to auth state updates across tabs
@@ -214,8 +217,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       let basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-      if (!basePath && typeof window !== 'undefined' && window.location.pathname.startsWith('/ViTudy')) {
-        basePath = '/ViTudy';
+      if (!basePath && typeof window !== 'undefined') {
+        if (window.location.pathname.startsWith('/ViTudy-dev')) {
+          basePath = '/ViTudy-dev';
+        } else if (window.location.pathname.startsWith('/ViTudy')) {
+          basePath = '/ViTudy';
+        }
       }
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const redirectUrl = `${origin}${basePath}/auth/reset`;
@@ -245,10 +252,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       let basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-      if (!basePath && typeof window !== 'undefined' && window.location.pathname.startsWith('/ViTudy')) {
-        basePath = '/ViTudy';
+      if (!basePath && typeof window !== 'undefined') {
+        if (window.location.pathname.startsWith('/ViTudy-dev')) {
+          basePath = '/ViTudy-dev';
+        } else if (window.location.pathname.startsWith('/ViTudy')) {
+          basePath = '/ViTudy';
+        }
       }
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const isPrivateLanIp = /^(http:\/\/)?(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(origin.replace(/^https?:\/\//, ''));
+      if (isPrivateLanIp && provider === 'google') {
+        setIsLoading(false);
+        return {
+          success: false,
+          error: 'Google OAuth yêu cầu tên miền chính thức (không hỗ trợ địa chỉ IP mạng nội bộ). Vui lòng đăng nhập bằng Email và Mật khẩu bên dưới để tiếp tục.',
+        };
+      }
       const redirectUrl = `${origin}${basePath}/auth/callback`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({

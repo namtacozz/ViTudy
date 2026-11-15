@@ -342,3 +342,7 @@ export function useViToken() {
   }
   return context;
 }
+
+export function useOptionalViToken() {
+  return useContext(ViTokenContext);
+}

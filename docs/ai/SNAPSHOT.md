@@ -1,14 +1,14 @@
 # SNAPSHOT.md — Bản Tiêu Hóa Dự Án Toàn Diện ViTudy
 
-> **Commit Hash:** `Current Working Tree (Production Ready)` | **Ngày cập nhật:** `2026-11-14` | **Tác giả:** Senior Staff Engineer
+> **Commit Hash:** `Current Working Tree (Production Ready)` | **Ngày cập nhật:** `2026-11-15` | **Tác giả:** Senior Staff Engineer
 
 ---
 
 ## 1. Tóm Tắt Dự Án & Sức Khỏe Repo (Health Summary)
 * **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini, Claude, OpenAI System) qua tiền tệ ViToken, chợ tri thức KnowInherit 85/15, và Board Game Studio + Bảng Vẽ 4 Góc.
-* **Giai đoạn phát triển:** Hoàn thành đa dụng hóa Board Game Studio (Universal Tabletop Engine): hỗ trợ 6 mẫu thể loại (`monopoly`, `card_table`, `grid_chess`, `hex_strategy`, `node_track`, `sandbox`), tay bài bí mật (`PrivateHandTray`), lá bài trên bàn (lật/xoay/thu về), nguồn quân vô tận, bộ đếm tài nguyên tùy chỉnh, luật Nếu–Thì (`evaluateTriggerRules`), và AI đồng thiết kế đa thể loại (`generateUniversalGamePackWithAi`).
+* **Giai đoạn phát triển:** Hoàn thành hợp nhất nhánh `dev` (Mobile/Tablet/Landscape responsive, cử chỉ đa chạm 2 ngón Pinch-Zoom, Palm Rejection, Streak Pet, Guest Profile) với `main`, tối ưu dung lượng ảnh Pet (17.41 MB $\rightarrow$ 428.9 KB) và đồng bộ 100% tính năng trên mọi thiết bị.
 * **Sức khỏe Repo (Health):**
-  * `Unit & Integration Tests`: **Pass** (`pnpm test`: 27/27 files, 118/118 tests pass).
+  * `Unit & Integration Tests`: **Pass** (`pnpm test`: 35/35 files, 159/159 tests pass).
   * `TypeCheck`: **Pass** (`npx tsc --noEmit`: 0 lỗi).
   * `Build`: **Pass** (`pnpm run build:pages` biên dịch sạch 100%, xuất tĩnh `out/` sẵn sàng GitHub Pages).
 

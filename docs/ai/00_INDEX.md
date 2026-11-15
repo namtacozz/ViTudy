@@ -1,8 +1,8 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
 > **Commit Hash:** `Current Working Tree`  
-> **Cập nhật lần cuối:** `2026-11-14`  
-> **Trạng thái Codebase:** Đã sửa 9 lỗi báo cáo + 2 cải tiến UI/UX (desk, market, vitoken, stats), 27/27 test suites (118 tests) pass, `build:pages` pass, `docs:check` pass.
+> **Cập nhật lần cuối:** `2026-11-15`  
+> **Trạng thái Codebase:** Đã hợp nhất nhánh `origin/dev` (Mobile/Tablet/Landscape HUD, Pinch-Zoom 2 ngón, Streak Pet, Guest Profile) với `main` (`5d2c876`), sửa 5 lỗi tương tác/đồng bộ và tối ưu ảnh Pet (17.41 MB -> 428.9 KB). 35/35 test suites (159 tests) pass, `tsc --noEmit` 0 lỗi, `build:pages` pass, `docs:check` pass.
 
 ---
 
