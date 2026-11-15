@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-11-15 19:43 — dev (Tái cấu trúc toàn diện Board Game Engine tổ hợp v2 — Cụm A–L)
+- Task: Xây dựng Board Game Engine v2 thuần tất định, không phụ thuộc loại game; di trú v1→v2; sổ cái đa mệnh giá; multiplayer theo action log + `viewFor`; runtime UI, editor, trình soạn luật 2 tầng; AI Kiến trúc sư (`AiArchitect`); 6 Golden Games thuần dữ liệu và bộ mô phỏng bot headless.
+- Changed:
+  - `src/engine/boardgame/` (`schema/{types,validator,migrateV1toV2}.ts`, `core/{rng,checksum,denomination,spatial,counterHelpers,expressions,reducer}.ts`, `actions/`, `triggers/index.ts`, `view/viewFor.ts`, `log/actionLog.ts`, `net/multiplayerAdapter.ts`, `sim/runner.ts`, `templates/{monopoly,caro,uno,draughts,snakesAndLadders,catanLite}.ts`): Toàn bộ lõi engine tổ hợp v2, 12 triggers, 25 actions, `stateChecksum` O(1) + cache `RuleIndex`.
+  - `src/services/GameCabinetStorage.ts`: Bổ sung lưu trữ v2 (`vitudy_board_game_cabinet_v2`) và backup tự động v1 (`vitudy_board_game_v1_backup_v1`).
+  - `src/components/boardgame/` (`runtime/BoardRenderer.tsx`, `panels/{GeneratedActionBar,PromptDialog}.tsx`, `editor/{EntityInspector,QuickRuleLinker,TemplateLibraryModal}.tsx`, `rules/{ruleTranslator,RuleBuilderPanel}.tsx`): Giao diện chiếu state thuần, editor tags/fields/links/merge và trình soạn luật 2 tầng.
+  - `src/services/boardgame/AiArchitect.ts`: Pipeline AI sinh `GamePackageV2`, kiểm duyệt sâu + bot mô phỏng + tối đa 2 vòng tự sửa trước khi trừ ViToken.
+  - `docs/ai/{10_DECISIONS,11_CHANGELOG,00_INDEX,03_SYMBOL_INDEX}.md`: Ghi nhận ADR-023, ADR-024, ADR-025 và cập nhật chỉ mục ký hiệu.
+- Verified by: `npx vitest run src/engine/boardgame/ src/services/boardgame/AiArchitect.test.ts src/lib/boardGameEngine.test.ts`, `npx tsc --noEmit`, `pnpm run docs:index`, `pnpm run docs:check`.
+- Open follow-ups: Chưa gỡ bỏ hoàn toàn UI cũ trong `BoardGameArena.tsx` (giữ song song để tương thích ngược trong giai đoạn chuyển tiếp).
+
 ## 2026-11-15 15:36 — dev (Sửa toàn bộ 11 lỗi và 5 đề xuất UI/UX từ báo cáo lỗi)
 - Task: Điều tra và xử lý 11 lỗi chức năng (AI Codex 401/Inteline, OAuth `localhost:1455` UX, trừ nhầm ViToken, VietQR polling, Streak 2 dấu tích, mất gắn sao khi đăng xuất, thời gian học tuần, chuyển bàn học `TopLeftNav`, mất trang tách sách) và 5 đề xuất cải thiện UI/UX (`OnboardingTour`, `MarketModal`, `QRCodeDisplay`, `HomePage`).
 - Changed:

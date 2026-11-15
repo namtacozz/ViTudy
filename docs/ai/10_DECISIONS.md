@@ -245,3 +245,27 @@
      - Nút menu mở drawer di động (`responsive-mobile-menu-btn`) và khoảng đệm đáy an toàn `responsive-mobile-pb`.
   5. **Bảo tồn thương hiệu:** Duy trì 100% màu Cam ViT `#E0562D` và đồng tiền ViToken của ViTudy.
 * **Lý do:** Đáp ứng trọn vẹn yêu cầu đồng bộ trải nghiệm di động chuẩn mực từ GreenLearn sang ViTudy, giúp người dùng học tập mượt mà trên mọi thiết bị cảm ứng (điện thoại, iPad, máy tính bảng bảng vẽ Stylus) với độ tin cậy tuyệt đối và zero regression cho desktop.
+
+---
+
+### ADR-023: Kiến trúc Board Game Engine tổ hợp thuần tất định (`src/engine/boardgame/`)
+* **Ngày:** 2026-11-15
+* **Trạng thái:** Đã phê duyệt & Triển khai
+* **Quyết định:** Tách toàn bộ logic Board Game khỏi UI và khỏi các hàm đặc thù từng game. Engine chỉ vận hành trên `reduce(state, action, pkg) -> { state, events }` thuần túy, dùng PRNG `mulberry32` có seed (không `Math.random`, không `Date.now`, không `eval`), hàng đợi hiệu ứng giới hạn độ sâu `MAX_QUEUE_DEPTH = 64` chống lặp vô hạn, và cơ chế `pending` + `resolve_input` cho tương tác người chơi/bot.
+* **Lý do:** Bảo đảm replay cùng seed + log cho state giống nhau từng bit, hỗ trợ undo/redo, mô phỏng bot headless, và cho phép diễn đạt nhiều thể loại (Cờ Tỷ Phú, Caro, Cờ Đam, UNO, Rắn Leo Thang, Catan rút gọn) thuần bằng dữ liệu JSON.
+
+---
+
+### ADR-024: Mô hình `GamePackageV2` & Di trú Idempotent v1 → v2
+* **Ngày:** 2026-11-15
+* **Trạng thái:** Đã phê duyệt & Triển khai
+* **Quyết định:** Chuẩn hóa dữ liệu thành `GamePackageV2` (`schemaVersion: 2`) gồm `Zone`, `Piece`, `CounterDef` (`scalar | denominated`), `RandomizerDef`, `PlayerDef`, `TurnConfig`, `Rule` (`Trigger → Condition → Action[]`), và `UIBinding`. Cung cấp `migrateV1toV2` chạy idempotent và tự động sao lưu v1 (`vitudy_board_game_v1_backup_v1`) trong `GameCabinetStorage` trước khi ghi bản v2.
+* **Lý do:** Loại bỏ việc hardcode nghiệp vụ và các loại link cố định; bảo toàn ván đang chơi dở và tủ game cũ của người dùng.
+
+---
+
+### ADR-025: Multiplayer Host-Authoritative theo Action Log & `viewFor`
+* **Ngày:** 2026-11-15
+* **Trạng thái:** Đã phê duyệt & Triển khai
+* **Quyết định:** Giữ mô hình host-authoritative (ADR-021), nâng cấp từ đồng bộ cả state sang client gửi `ClientIntent`, host chạy `reduce` và phát `ActionLogDelta` kèm `stateChecksum` O(1). Mọi dữ liệu gửi đi đều đi qua `viewFor(state, viewerPlayerId)` để che giấu thông tin ở zone `hidden` và `owner`; khóa thao tác ở chế độ `?mode=view`.
+* **Lý do:** Giảm băng thông đồng bộ, hỗ trợ bắt kịp lại (`getDeltaSince`) khi mất kết nối, và ngăn rò rỉ bài ẩn của đối thủ.

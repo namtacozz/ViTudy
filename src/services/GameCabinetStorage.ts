@@ -1,8 +1,11 @@
 import { BoardGamePackage, SavedDrawingAsset } from '@/types/boardgame';
+import { GamePackageV2, migrateV1toV2 } from '@/engine/boardgame';
 import { idbGet, idbSet } from '@/lib/indexeddb';
 
 export const DRAWING_ASSETS_KEY = 'vitudy_drawing_assets_v1';
 export const BOARD_GAMES_KEY = 'vitudy_board_game_cabinet_v1';
+export const BOARD_GAMES_V2_KEY = 'vitudy_board_game_cabinet_v2';
+export const BOARD_GAMES_V1_BACKUP_KEY = 'vitudy_board_game_v1_backup_v1';
 const MAX_IMAGE_SIDE_PX = 1024;
 
 const memoryFallbackStore = new Map<string, unknown>();
@@ -243,5 +246,46 @@ export const GameCabinetStorage = {
     const next = list.filter((x) => x.id !== id);
     await writeStore(BOARD_GAMES_KEY, next);
     return next;
+  },
+
+  async listGamesV2(): Promise<GamePackageV2[]> {
+    return readStore<GamePackageV2>(BOARD_GAMES_V2_KEY);
+  },
+
+  async saveGameV2(pkg: GamePackageV2): Promise<StorageSaveResult<GamePackageV2>> {
+    const list = await this.listGamesV2();
+    const idx = list.findIndex((x) => x.id === pkg.id);
+    const next = [...list];
+    if (idx >= 0) {
+      next[idx] = pkg;
+    } else {
+      next.unshift(pkg);
+    }
+    const writeRes = await writeStore(BOARD_GAMES_V2_KEY, next);
+    if (!writeRes.ok) {
+      return { ok: false, items: list, error: writeRes.error };
+    }
+    return { ok: true, items: next };
+  },
+
+  async migrateCabinetV1toV2(): Promise<{ backedUpCount: number; migratedCount: number }> {
+    const v1List = await this.listGames();
+    if (v1List.length === 0) {
+      return { backedUpCount: 0, migratedCount: 0 };
+    }
+    // Backup v1 before writing v2
+    await writeStore(BOARD_GAMES_V1_BACKUP_KEY, v1List);
+    const existingV2 = await this.listGamesV2();
+    const existingIds = new Set(existingV2.map((g) => g.id));
+    const newlyMigrated: GamePackageV2[] = [];
+    for (const v1 of v1List) {
+      if (!existingIds.has(v1.id)) {
+        newlyMigrated.push(migrateV1toV2(v1).pkg);
+      }
+    }
+    if (newlyMigrated.length > 0) {
+      await writeStore(BOARD_GAMES_V2_KEY, [...newlyMigrated, ...existingV2]);
+    }
+    return { backedUpCount: v1List.length, migratedCount: newlyMigrated.length };
   },
 };

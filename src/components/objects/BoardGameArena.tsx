@@ -57,6 +57,8 @@ import { DeckAndDeedModal } from './boardgame/DeckAndDeedModal';
 import { CurrencyAndBankPanel } from './boardgame/CurrencyAndBankPanel';
 import { PrivateHandTray } from './boardgame/PrivateHandTray';
 import { UniversalSetupModal } from './boardgame/UniversalSetupModal';
+import { BoardGameStudioV2 } from '../boardgame/BoardGameStudioV2';
+import { GamePackageV2, migrateV1toV2 } from '@/engine/boardgame';
 import {
   Gamepad2,
   Play,
@@ -113,6 +115,7 @@ export const BoardGameArena = React.memo(function BoardGameArena({
   const [draftMousePos, setDraftMousePos] = useState<{ x: number; y: number } | null>(null);
   const [pendingFitPawnAsset, setPendingFitPawnAsset] = useState<SavedDrawingAsset | null>(null);
   const [isUniversalSetupOpen, setIsUniversalSetupOpen] = useState(false);
+  const [studioV2Pkg, setStudioV2Pkg] = useState<GamePackageV2 | null>(null);
   const [isGeneratingUniversalAi, setIsGeneratingUniversalAi] = useState(false);
   const { aiConfig, syncBalanceFromServer } = useViToken();
 
@@ -842,6 +845,14 @@ export const BoardGameArena = React.memo(function BoardGameArena({
 
           <button
             type="button"
+            onClick={() => setStudioV2Pkg(migrateV1toV2(pkg).pkg)}
+            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+          >
+            <span>Studio v2</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               setPkgTitle(pkg.title);
               setPkgDesc(pkg.description);
@@ -1308,6 +1319,13 @@ export const BoardGameArena = React.memo(function BoardGameArena({
         onClose={() => setIsBankOpen(false)}
         onUpdatePackage={commitPkg}
       />
+
+      {studioV2Pkg && (
+        <BoardGameStudioV2
+          initialPkg={studioV2Pkg}
+          onClose={() => setStudioV2Pkg(null)}
+        />
+      )}
 
       {isPackageModalOpen &&
         typeof document !== 'undefined' &&
