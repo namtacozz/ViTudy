@@ -27,7 +27,8 @@ export function useDeskItemInteraction({
     updateItemPosition, 
     setItemRotation, 
     selectItem, 
-    bringToFront 
+    bringToFront,
+    flushSyncLocal
   } = useStudySpace();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -98,7 +99,7 @@ export function useDeskItemInteraction({
 
       if (!rafId) {
         rafId = requestAnimationFrame(() => {
-          updateItemPosition(itemId, newX, newY);
+          updateItemPosition(itemId, dragRef.current.latestX, dragRef.current.latestY);
           rafId = null;
         });
       }
@@ -114,6 +115,7 @@ export function useDeskItemInteraction({
       window.removeEventListener('mouseup', handleMouseUp);
 
       updateItemPosition(itemId, dragRef.current.latestX, dragRef.current.latestY);
+      flushSyncLocal?.();
       if (onDropCheck) {
         onDropCheck(dragRef.current.latestX, dragRef.current.latestY);
       }
@@ -121,9 +123,9 @@ export function useDeskItemInteraction({
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [itemId, itemX, itemY, transform.scale, transform.rotation, bringToFront, selectItem, updateItemPosition, onDropCheck]);
+  }, [itemId, itemX, itemY, transform.scale, transform.rotation, bringToFront, selectItem, updateItemPosition, flushSyncLocal, onDropCheck]);
 
-  // Continuous 360 rotation handle
+  // Continuous 360 rotation handle with RAF throttling
   const handleRotateMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -144,6 +146,9 @@ export function useDeskItemInteraction({
     const startMouseAngle = Math.atan2(e.clientY - itemCenterY, e.clientX - itemCenterX) * (180 / Math.PI);
     const startItemRotation = rotation;
 
+    let rotRafId: number | null = null;
+    let latestRot = rotation;
+
     const handleRotateMouseMove = (moveEvent: MouseEvent) => {
       const currentMouseAngle = Math.atan2(moveEvent.clientY - itemCenterY, moveEvent.clientX - itemCenterX) * (180 / Math.PI);
       const deltaAngle = currentMouseAngle - startMouseAngle;
@@ -153,23 +158,37 @@ export function useDeskItemInteraction({
       if (normalizedMod <= 2.5 || normalizedMod >= 357.5) {
         rawRot = 0;
       }
-      setItemRotation(itemId, rawRot);
+      latestRot = rawRot;
+
+      if (!rotRafId) {
+        rotRafId = requestAnimationFrame(() => {
+          setItemRotation(itemId, latestRot);
+          rotRafId = null;
+        });
+      }
     };
 
     const handleRotateMouseUp = () => {
+      if (rotRafId) {
+        cancelAnimationFrame(rotRafId);
+        rotRafId = null;
+      }
+      setItemRotation(itemId, latestRot);
+      flushSyncLocal?.();
       window.removeEventListener('mousemove', handleRotateMouseMove);
       window.removeEventListener('mouseup', handleRotateMouseUp);
     };
 
     window.addEventListener('mousemove', handleRotateMouseMove);
     window.addEventListener('mouseup', handleRotateMouseUp);
-  }, [itemId, itemX, itemY, width, height, rotation, transform.scale, transform.rotation, transform.x, transform.y, bringToFront, selectItem, setItemRotation]);
+  }, [itemId, itemX, itemY, width, height, rotation, transform.scale, transform.rotation, transform.x, transform.y, bringToFront, selectItem, setItemRotation, flushSyncLocal]);
 
   const handleRotateDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setItemRotation(itemId, 0);
-  }, [itemId, setItemRotation]);
+    flushSyncLocal?.();
+  }, [itemId, setItemRotation, flushSyncLocal]);
 
   return {
     isDragging,

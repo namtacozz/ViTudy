@@ -167,6 +167,7 @@ interface StudySpaceContextType {
   resetExam: (itemId: string) => void;
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
   saveCurrentSpaceImmediately: (isManual?: boolean) => Promise<boolean>;
+  flushSyncLocal: () => void;
   isDeskReady: boolean;
 }
 
@@ -526,18 +527,68 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const activeSpaceIdRef = useRef(activeSpaceId);
   activeSpaceIdRef.current = activeSpaceId;
 
-  // Helper lưu nhanh và an toàn vào localStorage ngay lập tức
+  // Lưu trữ an toàn và hiệu năng cao vào localStorage (có debounce cho thao tác tần số cao như kéo thả/xoay)
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSyncRef = useRef<{ spaces: StudySpace[]; activeId?: string } | null>(null);
+
+  const flushSyncLocal = useCallback(() => {
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = null;
+    }
+    if (!pendingSyncRef.current) return;
+    try {
+      const uId = user?.id;
+      const userPrefix = uId ? `user_${uId}_` : 'guest_';
+      const { spaces: spacesList, activeId } = pendingSyncRef.current;
+      const actId = activeId || activeSpaceIdRef.current;
+      const json = JSON.stringify(spacesList);
+      localStorage.setItem(`${userPrefix}vitudy_spaces`, json);
+      localStorage.setItem(`${userPrefix}vitudy_active_space_id`, actId);
+      localStorage.setItem('vitudy_spaces', json);
+      localStorage.setItem('vitudy_active_space_id', actId);
+    } catch {}
+    pendingSyncRef.current = null;
+  }, [user?.id]);
+
+  const debouncedSyncLocal = useCallback((spacesList: StudySpace[], targetActiveId?: string, delayMs = 350) => {
+    pendingSyncRef.current = { spaces: spacesList, activeId: targetActiveId };
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => {
+      flushSyncLocal();
+    }, delayMs);
+  }, [flushSyncLocal]);
+
+  // Helper lưu nhanh ngay lập tức (cho các hành động dứt điểm: xóa, thêm mới, chuyển bàn)
   const syncLocal = useCallback((spacesList: StudySpace[], targetActiveId?: string) => {
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = null;
+    }
+    pendingSyncRef.current = null;
     try {
       const uId = user?.id;
       const userPrefix = uId ? `user_${uId}_` : 'guest_';
       const actId = targetActiveId || activeSpaceIdRef.current;
-      localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(spacesList));
+      const json = JSON.stringify(spacesList);
+      localStorage.setItem(`${userPrefix}vitudy_spaces`, json);
       localStorage.setItem(`${userPrefix}vitudy_active_space_id`, actId);
-      localStorage.setItem('vitudy_spaces', JSON.stringify(spacesList));
+      localStorage.setItem('vitudy_spaces', json);
       localStorage.setItem('vitudy_active_space_id', actId);
     } catch {}
   }, [user?.id]);
+
+  // Luôn flush dữ liệu trước khi thoát trang hoặc đóng tab
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      flushSyncLocal();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      flushSyncLocal();
+    };
+  }, [flushSyncLocal]);
 
   // Deep NFC normalization & binary sanitizer for persistent storage safety (preserves emojis for emoji stickers/notes)
   const normalizeNFC = (text: string) => (text ? sanitizeDocumentText(text).normalize('NFC') : '');
@@ -1601,7 +1652,7 @@ Trong đó:
           items: s.items.map(item => (item.id === id ? { ...item, x, y } : item))
         };
       });
-      syncLocal(nextList);
+      debouncedSyncLocal(nextList);
       return nextList;
     });
   };
@@ -1616,7 +1667,7 @@ Trong đó:
           items: s.items.map(item => (item.id === id ? { ...item, ...patch } : item))
         };
       });
-      syncLocal(nextList);
+      debouncedSyncLocal(nextList);
       return nextList;
     });
   };
@@ -2936,6 +2987,7 @@ Trong đó:
         setIsViewRotateMode,
         saveStatus,
         saveCurrentSpaceImmediately,
+        flushSyncLocal,
         isDeskReady: isLoaded && !isSwitchingSpace
       }}
     >
