@@ -410,8 +410,9 @@ export function LeftCreationBar() {
             <Trash2 className={toolIconClass} />
           </button>
         )}
+      </div>
 
-        {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
+      {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
         {isNoteFlyoutOpen && (
           <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:top-auto max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:mb-2 max-sm:portrait:ml-0 max-sm:portrait:flex-row sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 sm:flex-col bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-xl flex gap-2 z-50 animate-fade-in max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
             {stickyColors.map(c => (
@@ -639,9 +640,8 @@ export function LeftCreationBar() {
           onSelect={handleSelectStickerItem}
         />
 
-        {/* Thanh công cụ dọc Bút Trò Chơi (Game Pen) nằm cạnh thanh bên giống Pen/Highlight */}
-        <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
-      </div>
+      {/* Thanh công cụ dọc Bút Trò Chơi (Game Pen) nằm cạnh thanh bên giống Pen/Highlight */}
+      <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
 
       {/* Modal Tủ Trò Chơi & Kho Bản Vẽ Cá Nhân */}
       <GameCabinetModal

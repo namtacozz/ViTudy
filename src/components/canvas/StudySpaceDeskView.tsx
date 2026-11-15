@@ -185,8 +185,8 @@ export default function StudySpaceDeskView() {
           "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
           // Mobile Portrait: Dock ngang sát đáy duy nhất
           "max-sm:portrait:bottom-1.5 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
-          // Landscape & Desktop: Cột dọc mép trái (Bắt đầu từ top-13 dưới header, dừng trước đáy để không đè BottomLeftKnowledge)
-          "sm:left-1 sm:top-14 sm:translate-y-0 max-sm:landscape:left-1 max-sm:landscape:top-12 max-sm:landscape:translate-y-0",
+          // Landscape & Desktop: Cột dọc căn giữa theo chiều dọc, sát mép trái (màn hình ngang cực thấp giữ top-12 để không đè BottomLeftKnowledge)
+          "sm:left-1.5 sm:top-1/2 sm:-translate-y-1/2 max-sm:landscape:left-1 max-sm:landscape:top-12 max-sm:landscape:translate-y-0",
           isFocusMode && !showLeftInFocus 
             ? "max-sm:portrait:translate-y-[calc(100%+16px)] sm:-translate-x-[calc(100%+12px)] max-sm:landscape:-translate-x-[calc(100%+12px)]" 
             : "max-sm:portrait:translate-y-0 sm:translate-x-0 max-sm:landscape:translate-x-0"
