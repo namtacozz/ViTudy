@@ -456,16 +456,17 @@ export function MarketModal({ isOpen, onClose, onEnterDesk }: MarketModalProps) 
 
         {/* Warning / Error notice */}
         {errorMessage && (
-          <div className="mt-2 bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-xl text-xs flex items-center justify-between gap-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <div className="mt-2.5 bg-red-50 border-2 border-red-300 text-red-800 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 shrink-0 shadow-xs animate-fade-in">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
               <span>{errorMessage}</span>
             </div>
             <button 
               onClick={() => setErrorMessage(null)} 
-              className="text-red-500 hover:text-red-800 font-bold text-xs cursor-pointer"
+              className="p-1 rounded-lg text-red-500 hover:text-red-800 hover:bg-red-100 font-bold cursor-pointer transition-colors"
+              aria-label="Đóng thông báo lỗi"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}

@@ -52,7 +52,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
   }, []);
 
   // Status hook
-  const { status, secondsLeft } = usePaymentStatus(
+  const { status, secondsLeft, isChecking, checkNow } = usePaymentStatus(
     currentRequest?.id || null,
     currentRequest?.expiresAt || null
   );
@@ -315,6 +315,8 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                 <QRCodeDisplay
                   request={currentRequest}
                   secondsLeft={secondsLeft}
+                  isChecking={isChecking}
+                  onCheckNow={checkNow}
                   onSimulateSuccess={() => {
                     refreshWallet();
                     setStep('success');

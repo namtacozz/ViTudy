@@ -115,16 +115,18 @@ export function OnboardingTour() {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] pointer-events-none select-none">
-      {/* Dimmed background overlay */}
+      {/* Dimmed background overlay: only dim full screen when there is no spotlight target */}
       <div 
         onClick={finishTour}
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] transition-opacity duration-300 pointer-events-auto"
+        className={`absolute inset-0 transition-opacity duration-300 pointer-events-auto ${
+          targetRect ? 'bg-transparent' : 'bg-slate-900/45 backdrop-blur-[1px]'
+        }`}
       />
 
       {/* Spotlight cutout if target element exists */}
       {targetRect && (
         <div
-          className="absolute rounded-xl border-2 border-[#E0562D] shadow-[0_0_0_9999px_rgba(15,23,42,0.45)] transition-all duration-300 pointer-events-none"
+          className="absolute rounded-xl border-2 border-[#E0562D] ring-4 ring-[#E0562D]/25 bg-white/10 shadow-[0_0_0_9999px_rgba(15,23,42,0.52)] transition-all duration-300 pointer-events-none"
           style={{
             top: targetRect.top - 4,
             left: targetRect.left - 4,

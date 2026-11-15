@@ -564,19 +564,17 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
                       </button>
                     </div>
 
-                    {hasOpenedPkceWindow && (
-                      <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-[11px] text-amber-900 leading-relaxed space-y-1">
-                        <div className="font-bold flex items-center gap-1 text-amber-950">
-                          <span>Lưu ý:</span>
-                        </div>
-                        <p>
-                          Trình duyệt báo <code className="font-mono bg-white px-1 py-0.5 rounded border border-amber-200 text-slate-800">localhost:1455 không truy cập được</code> là <strong>bình thường</strong>.
-                        </p>
-                        <p>
-                          Hãy sao chép link trên trình duyệt đó, quay lại đây bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
-                        </p>
+                    <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-[11px] text-amber-900 leading-relaxed space-y-1">
+                      <div className="font-bold flex items-center gap-1 text-amber-950">
+                        <span>Hướng dẫn (bình thường nếu thấy lỗi localhost:1455):</span>
                       </div>
-                    )}
+                      <p>
+                        Sau khi đăng nhập ChatGPT, trình duyệt sẽ chuyển về <code className="font-mono bg-white px-1 py-0.5 rounded border border-amber-200 text-slate-800">localhost:1455</code> và báo <strong>không truy cập được</strong> (<code className="font-mono">ERR_CONNECTION_REFUSED</code>). Đây là <strong>hoàn toàn bình thường</strong>.
+                      </p>
+                      <p>
+                        Chỉ cần <strong>sao chép toàn bộ URL trên thanh địa chỉ</strong> của tab đó, quay lại đây và bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
+                      </p>
+                    </div>
 
                     <div className="flex items-center gap-2">
                       <input

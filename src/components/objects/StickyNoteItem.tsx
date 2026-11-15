@@ -49,7 +49,7 @@ export function StickyNoteItemComponent({ item, isSelected }: StickyNoteItemProp
     addStickyNote
   } = useStudySpace();
 
-  const { spendTokens, aiConfig } = useViToken();
+  const { syncBalanceFromServer, aiConfig } = useViToken();
 
   const [text, setText] = useState(item.stickyText || '');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>(item.textAlign || 'left');
@@ -209,8 +209,6 @@ Ghi chú: "${selectionPopover.text}"
 Câu hỏi: "${q}"
 Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối đa 3-4 câu).`;
 
-      spendTokens?.(2, 'Hỏi nhanh AI Inteline');
-
       const data = await askAi({
         provider: aiConfig?.provider || 'system',
         model: aiConfig?.model,
@@ -221,10 +219,14 @@ Câu hỏi: "${q}"
 Trả lời trực tiếp, ngắn gọn, súc tích, dễ hiểu nhất (tối đa 3-4 câu).`,
       });
 
+      if (typeof data.balanceAfter === 'number') {
+        syncBalanceFromServer?.(data.balanceAfter);
+      }
+
       const reply = data.reply || 'Không nhận được câu trả lời từ AI. Vui lòng thử lại.';
       setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: reply } : null);
-    } catch {
-      setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: 'Lỗi kết nối máy chủ AI.' } : null);
+    } catch (err: any) {
+      setSelectionPopover(prev => prev ? { ...prev, loading: false, answer: err?.message || 'Lỗi kết nối máy chủ AI.' } : null);
     }
   };
 

@@ -9,6 +9,8 @@ export interface UsePaymentStatusResult {
   secondsLeft: number;
   paymentData: PaymentHistoryItem | null;
   error: string | null;
+  isChecking: boolean;
+  checkNow: () => Promise<void>;
 }
 
 export function usePaymentStatus(
@@ -18,6 +20,7 @@ export function usePaymentStatus(
   const [status, setStatus] = useState<PaymentHistoryItem['status'] | 'loading'>('loading');
   const [paymentData, setPaymentData] = useState<PaymentHistoryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number>(() => {
     if (!initialExpiresAt) return 15 * 60;
     const diff = Math.floor((new Date(initialExpiresAt).getTime() - Date.now()) / 1000);
@@ -25,6 +28,17 @@ export function usePaymentStatus(
   });
 
   const isTerminalRef = useRef(false);
+  const checkFnRef = useRef<(() => Promise<void>) | null>(null);
+
+  const checkNow = async () => {
+    if (!checkFnRef.current) return;
+    setIsChecking(true);
+    try {
+      await checkFnRef.current();
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   // Update seconds left countdown every 1s
   useEffect(() => {
@@ -48,11 +62,15 @@ export function usePaymentStatus(
 
   useEffect(() => {
     if (!requestId) {
+      isTerminalRef.current = false;
+      checkFnRef.current = null;
       setStatus('loading');
       setPaymentData(null);
       setError(null);
       return;
     }
+
+    isTerminalRef.current = false;
 
     const supabase = getSupabase();
     if (!supabase) {
@@ -105,6 +123,8 @@ export function usePaymentStatus(
       }
     };
 
+    checkFnRef.current = checkStatus;
+
     // Initial check
     checkStatus();
 
@@ -153,6 +173,7 @@ export function usePaymentStatus(
 
     return () => {
       isMounted = false;
+      checkFnRef.current = null;
       if (pollTimer) clearInterval(pollTimer);
       supabase.removeChannel(channel);
     };
@@ -163,5 +184,7 @@ export function usePaymentStatus(
     secondsLeft,
     paymentData,
     error,
+    isChecking,
+    checkNow,
   };
 }

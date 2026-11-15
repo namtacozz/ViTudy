@@ -412,10 +412,14 @@ export function KnowInheritPublishModal({
                     <div className="text-base font-bold text-[#E0562D] font-mono mt-0.5">{auditResult.price} ViToken</div>
                   </div>
                   <div className="bg-white p-2.5 rounded-xl border border-emerald-300 text-center bg-emerald-50/30">
-                    <div className="text-emerald-700 text-[10px] font-semibold">Bạn nhận (85%)</div>
-                    <div className="text-base font-black text-emerald-700 font-mono mt-0.5">+{auditResult.authorEarn} V</div>
+                    <div className="text-emerald-700 text-[10px] font-semibold">Bạn nhận (85% / lượt mua)</div>
+                    <div className="text-base font-black text-emerald-700 font-mono mt-0.5">+{auditResult.authorEarn} V / lượt</div>
                   </div>
                 </div>
+
+                <p className="mt-2 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/70 rounded-lg px-2.5 py-1.5 font-medium">
+                  Bạn sẽ nhận <strong>+{auditResult.authorEarn} ViToken</strong> (85%) mỗi khi có học viên khác mua tài liệu này trên Chợ (không cộng ngay khi đăng).
+                </p>
 
                 <div className="mt-3 text-[11px] text-slate-600 bg-white/80 p-2 rounded-lg border border-slate-100 flex items-center justify-between">
                   <span>Môn: <strong>{subject}</strong></span>

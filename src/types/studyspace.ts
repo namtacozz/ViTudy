@@ -88,6 +88,11 @@ export interface DeskItem {
   pages: PageContent[];
   colorTheme?: string;
   isBinder?: boolean; // Combined notebook
+  detachedFrom?: {
+    bookId: string;
+    pageIndex: number;
+    page: PageContent;
+  };
   sourceDocuments?: { id: string; title: string; pageCount: number }[];
   stickyText?: string;
   stickyColor?: string;

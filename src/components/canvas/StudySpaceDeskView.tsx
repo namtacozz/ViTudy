@@ -55,12 +55,16 @@ export default function StudySpaceDeskView() {
     const handleActivity = () => {
       lastActivityTime = Date.now();
     };
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('pointerdown', handleActivity);
+    window.addEventListener('mousemove', handleActivity, { passive: true });
+    window.addEventListener('keydown', handleActivity, { passive: true });
+    window.addEventListener('pointerdown', handleActivity, { passive: true });
+    window.addEventListener('wheel', handleActivity, { passive: true });
+    window.addEventListener('scroll', handleActivity, { passive: true });
+    window.addEventListener('touchmove', handleActivity, { passive: true });
 
     const stopHeartbeat = ActivityService.startHeartbeat(() => {
-      return Date.now() - lastActivityTime < 60000;
+      const isVisible = typeof document === 'undefined' || document.visibilityState === 'visible';
+      return isVisible && Date.now() - lastActivityTime < 300000;
     });
 
     return () => {
@@ -68,6 +72,9 @@ export default function StudySpaceDeskView() {
       window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('pointerdown', handleActivity);
+      window.removeEventListener('wheel', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+      window.removeEventListener('touchmove', handleActivity);
     };
   }, []);
 

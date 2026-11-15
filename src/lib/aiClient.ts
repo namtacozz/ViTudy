@@ -267,10 +267,11 @@ export async function askAi(req: AskAiRequest): Promise<AskAiResult> {
     undefined;
 
   // Nếu là oauth_chatgpt, tự động đảm bảo token còn hạn (auto-refresh nếu cần)
+  let oauthSession: OpenAiOAuthSession | null = null;
   let resolvedOAuthToken = req.accessToken || '';
   let resolvedAccountId = '';
   if (req.provider === 'oauth_chatgpt') {
-    const oauthSession = await ensureValidOpenAiSession();
+    oauthSession = await ensureValidOpenAiSession();
     if (oauthSession) {
       resolvedOAuthToken = oauthSession.accessToken;
       resolvedAccountId = oauthSession.accountId || '';
@@ -316,26 +317,51 @@ Giải đáp:
 
   const endpoint = `${supabaseUrl}/functions/v1/ai-chat`;
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authBearer}`,
-    },
-    body: JSON.stringify({
-      provider: req.provider,
-      model: req.model || 'gpt-4o-mini',
-      prompt: req.prompt,
-      context: req.context || '',
-      apiKey: resolvedApiKey || '',
-      accessToken: resolvedOAuthToken,
-      accountId: resolvedAccountId,
-      maxTokens: req.maxTokens,
-      requestId: req.requestId,
-    }),
-  });
+  const sendGatewayRequest = async (oauthToken: string, acctId: string) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authBearer}`,
+      },
+      body: JSON.stringify({
+        provider: req.provider,
+        model: req.model || 'gpt-4o-mini',
+        prompt: req.prompt,
+        context: req.context || '',
+        apiKey: resolvedApiKey || '',
+        accessToken: oauthToken,
+        accountId: acctId,
+        maxTokens: req.maxTokens,
+        requestId: req.requestId,
+      }),
+    });
 
-  const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
+    return { response, data };
+  };
+
+  let { response, data } = await sendGatewayRequest(resolvedOAuthToken, resolvedAccountId);
+
+  // Auto-refresh ChatGPT OAuth once if Codex Gateway returned 401 / invalid_jwt
+  const rawErrDetails = `${data.details || ''} ${data.message || ''} ${data.error || ''}`;
+  if (
+    !response.ok &&
+    req.provider === 'oauth_chatgpt' &&
+    (response.status === 401 || /Codex Gateway \(401\)|invalid_jwt|unauthorized/i.test(rawErrDetails))
+  ) {
+    if (oauthSession?.refreshToken) {
+      try {
+        const refreshed = await refreshOpenAiSession(oauthSession.refreshToken);
+        ({ response, data } = await sendGatewayRequest(
+          refreshed.accessToken,
+          refreshed.accountId || resolvedAccountId
+        ));
+      } catch {
+        // Fall through to friendly error message below
+      }
+    }
+  }
 
   if (!response.ok) {
     if (response.status === 429) {
@@ -343,6 +369,15 @@ Giải đáp:
     }
     if (response.status === 402) {
       throw new Error('Số dư ViToken không đủ để thực hiện yêu cầu này. Vui lòng nạp thêm ViToken.');
+    }
+    const finalErrDetails = `${data.details || ''} ${data.message || ''} ${data.error || ''}`;
+    if (
+      req.provider === 'oauth_chatgpt' &&
+      (response.status === 401 || /Codex Gateway \(401\)|invalid_jwt|unauthorized/i.test(finalErrDetails))
+    ) {
+      throw new Error(
+        'Phiên đăng nhập ChatGPT đã hết hạn hoặc không hợp lệ. Vui lòng mở Cài đặt AI → Kết nối lại tài khoản ChatGPT.'
+      );
     }
     const errorMsg = data.details
       ? `${data.message || 'Lỗi AI Gateway'} (${data.details})`

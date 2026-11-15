@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-11-15 15:36 — dev (Sửa toàn bộ 11 lỗi và 5 đề xuất UI/UX từ báo cáo lỗi)
+- Task: Điều tra và xử lý 11 lỗi chức năng (AI Codex 401/Inteline, OAuth `localhost:1455` UX, trừ nhầm ViToken, VietQR polling, Streak 2 dấu tích, mất gắn sao khi đăng xuất, thời gian học tuần, chuyển bàn học `TopLeftNav`, mất trang tách sách) và 5 đề xuất cải thiện UI/UX (`OnboardingTour`, `MarketModal`, `QRCodeDisplay`, `HomePage`).
+- Changed:
+  - `src/lib/aiClient.ts`: Tự động refresh ChatGPT OAuth token một lần khi gặp `Codex Gateway (401)` / `invalid_jwt` và chuẩn hóa thông báo lỗi tiếng Việt rõ ràng.
+  - `src/components/objects/{BookSpread,PaperSheet,StickyNoteItem}.tsx`: Gỡ bỏ lời gọi `spendTokens(2)` thừa trước `askAi` (tránh trừ kép ViToken và mất token khi gọi AI lỗi), đồng bộ `balanceAfter` từ server và hiển thị chi tiết lỗi AI thực tế.
+  - `src/components/modals/AiConfigModal.tsx` & `src/components/hud/TopRightWallet.tsx`: Hiển thị thường trực hướng dẫn xử lý chuyển hướng `localhost:1455` (`ERR_CONNECTION_REFUSED`) ngay tại bước kết nối ChatGPT OAuth; sửa công thức `isPastClaimed` trong modal điểm danh để không đánh dấu 2 ngày ở chuỗi 1 ngày.
+  - `src/components/modals/KnowInheritPublishModal.tsx`: Làm rõ nhãn `Bạn nhận (85% / lượt mua)` và ghi chú cộng ViToken khi có người mua (không cộng ngay khi đăng).
+  - `src/hooks/usePaymentStatus.ts`, `src/components/payment/{TopUpModal,QRCodeDisplay}.tsx`: Reset `isTerminalRef` khi đổi `requestId`, bổ sung nút kiểm tra giao dịch ngay (`checkNow`), và làm nổi bật mã nội dung chuyển khoản VietQR.
+  - `src/context/StudySpaceContext.tsx` & `src/types/studyspace.ts`: Cập nhật `updatedAt` khi `toggleStarSpace` và bảo toàn trạng thái `starred` khi merge cloud/local; lưu `detachedFrom` khi tách trang sách (`detachPageFromBinder`) để tự động hoàn trả trang vào sách gốc khi xóa tờ rời (`removeDeskItem`).
+  - `src/components/canvas/StudySpaceDeskView.tsx`: Mở rộng lắng nghe hoạt động (`wheel`, `scroll`, `touchmove`) và ngưỡng nhàn rỗi 5 phút khi tab đang hiển thị để ghi nhận chính xác thời gian đọc tài liệu.
+  - `src/app/page.tsx`: Dùng `lastSyncedSpaceParamRef` để chỉ đồng bộ `?space=` khi URL param thực sự thay đổi, không ghi đè `switchSpace` từ `TopLeftNav`.
+  - `src/components/onboarding/OnboardingTour.tsx`, `src/components/modals/MarketModal.tsx`, `src/components/home/HomePage.tsx`: Tối ưu tương phản spotlight hướng dẫn, làm nổi bật banner lỗi thiếu ViToken trên Chợ, và cân đối mật độ sidebar/danh sách bàn học Trang chủ.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (35/35 files, 159/159 tests pass), `pnpm run build:pages` (16/16 pages), `pnpm run docs:index` (438 symbols), `pnpm run docs:check`.
+- Open follow-ups: Không.
+
 ## 2026-11-15 15:27 — dev/main (Hợp nhất nhánh `origin/dev`, vá 5 lỗi tương tác/đồng bộ & tối ưu ảnh Pet)
 - Task: Hợp nhất toàn bộ tính năng Mobile/Tablet/Landscape, Pinch-Zoom 2 ngón, Streak Pet và Guest Mode từ `origin/dev` vào `dev` & `main`, xử lý các lỗi tiềm ẩn và tối ưu dung lượng tài nguyên trước khi deploy.
 - Changed:

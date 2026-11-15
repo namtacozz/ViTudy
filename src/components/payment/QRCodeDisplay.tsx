@@ -23,6 +23,8 @@ import { SUPPORT_EMAIL, SUPPORT_TELEGRAM } from '@/lib/constants';
 interface QRCodeDisplayProps {
   request: PaymentRequestResult;
   secondsLeft: number;
+  isChecking?: boolean;
+  onCheckNow?: () => void;
   onSimulateSuccess?: () => void;
   onRetry?: () => void;
 }
@@ -30,6 +32,8 @@ interface QRCodeDisplayProps {
 export function QRCodeDisplay({
   request,
   secondsLeft,
+  isChecking = false,
+  onCheckNow,
   onSimulateSuccess,
   onRetry,
 }: QRCodeDisplayProps) {
@@ -175,13 +179,13 @@ export function QRCodeDisplay({
 
         {/* Transfer Details Column */}
         <div className="space-y-2.5 text-xs">
-          {/* Transfer Code Highlight: Xếp thành 2 tầng */}
-          <div className="p-3 bg-orange-50/70 border border-orange-200 rounded-2xl">
-            <div className="text-xs font-black text-[#E0562D] uppercase tracking-wider">
-              Nội dung chuyển khoản (bắt buộc)
+          {/* Transfer Code Highlight: Nổi bật hơn, dễ kiểm tra khi chuyển khoản */}
+          <div className="p-3.5 bg-orange-50 border-2 border-[#E0562D]/50 rounded-2xl shadow-2xs">
+            <div className="text-xs font-black text-[#E0562D] uppercase tracking-wider flex items-center gap-1.5">
+              <span>Nội dung chuyển khoản (BẮT BUỘC CHÍNH XÁC)</span>
             </div>
-            <div className="text-[11px] text-slate-600 font-medium mt-0.5">
-              Nhập đúng nội dung này để hệ thống tự động nhận diện và cộng ViToken
+            <div className="text-[11px] text-slate-700 font-semibold mt-0.5">
+              Giữ nguyên mã này để hệ thống tự động cộng ViToken ngay lập tức
             </div>
             <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-orange-200/60">
               <span className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 select-all">
@@ -279,10 +283,22 @@ export function QRCodeDisplay({
             </div>
           </div>
 
-          {/* Trạng thái chờ xử lý thời gian thực */}
-          <div className="flex items-center justify-center gap-2 py-1.5 text-xs text-slate-600 font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#E0562D] animate-ping" />
-            <span>Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
+          {/* Trạng thái chờ xử lý thời gian thực + nút kiểm tra ngay */}
+          <div className="flex flex-col items-center justify-center gap-2 py-1.5 text-xs text-slate-600 font-medium">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#E0562D] animate-ping" />
+              <span>Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
+            </div>
+            {onCheckNow && !isExpired && (
+              <button
+                type="button"
+                onClick={onCheckNow}
+                disabled={isChecking}
+                className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-[11px] font-bold transition-all cursor-pointer disabled:opacity-60 shadow-2xs"
+              >
+                {isChecking ? 'Đang kiểm tra giao dịch...' : 'Tôi đã chuyển khoản · Kiểm tra ngay'}
+              </button>
+            )}
           </div>
 
           {/* Academic Simulation Button - Chỉ hiện trong môi trường test/dev */}

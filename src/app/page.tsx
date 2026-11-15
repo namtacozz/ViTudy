@@ -50,14 +50,22 @@ function StudySpacePageContent() {
   const roomParam = searchParams.get('room');
   const spaceParam = searchParams.get('space');
   const { switchSpace, activeSpaceId } = useStudySpace();
+  const lastSyncedSpaceParamRef = React.useRef<string | null>(null);
 
   // URL có view=desk hoặc có room tham gia hoặc có space -> hiển thị Bàn học; ngược lại (view=home hoặc link gốc) -> Trang chủ
   const isDeskView = viewParam === 'desk' || Boolean(roomParam) || Boolean(spaceParam);
 
-  // Đồng bộ space từ URL vào activeSpaceId của StudySpaceContext
+  // Đồng bộ space từ URL vào activeSpaceId của StudySpaceContext (chỉ khi URL param thực sự thay đổi, không ghi đè switchSpace từ TopLeftNav)
   useEffect(() => {
-    if (spaceParam && isDeskView && spaceParam !== activeSpaceId) {
-      switchSpace(spaceParam);
+    if (!isDeskView) {
+      lastSyncedSpaceParamRef.current = null;
+      return;
+    }
+    if (spaceParam && spaceParam !== lastSyncedSpaceParamRef.current) {
+      lastSyncedSpaceParamRef.current = spaceParam;
+      if (spaceParam !== activeSpaceId) {
+        switchSpace(spaceParam);
+      }
     }
   }, [spaceParam, isDeskView, activeSpaceId, switchSpace]);
 

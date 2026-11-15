@@ -600,8 +600,9 @@ export function TopRightWallet() {
                 const isPast = idx < currentDayOfWeek;
                 const isClaimedToday = isToday && isTodayClaimed;
                 const isSunday = day.key === 'sun';
-                // A past day was claimed if user's streak includes it
-                const isPastClaimed = isPast && (wallet.streakDays >= (currentDayOfWeek - idx));
+                // A past day was claimed only if prior streak days (excluding today when already claimed) cover the gap
+                const priorStreakDays = isTodayClaimed ? Math.max(0, wallet.streakDays - 1) : wallet.streakDays;
+                const isPastClaimed = isPast && (priorStreakDays >= (currentDayOfWeek - idx));
                 const isClaimed = isClaimedToday || isPastClaimed;
                 const isMissed = isPast && !isClaimed;
 
@@ -1000,19 +1001,17 @@ export function TopRightWallet() {
                           </button>
                         </div>
 
-                        {hasOpenedPkceWindow && (
-                          <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-[11px] text-amber-900 leading-relaxed space-y-1">
-                            <div className="font-bold flex items-center gap-1 text-amber-950">
-                              <span>Lưu ý quan trọng:</span>
-                            </div>
-                            <p>
-                              Trình duyệt báo <code className="font-mono bg-white px-1 py-0.5 rounded border border-amber-200 text-slate-800">Trang web này hiện không truy cập được (localhost:1455)</code> là <strong>hoàn toàn bình thường</strong>.
-                            </p>
-                            <p>
-                              Bạn chỉ cần <strong>sao chép toàn bộ dòng địa chỉ đó</strong> trên trình duyệt, quay lại đây và bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
-                            </p>
+                        <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-[11px] text-amber-900 leading-relaxed space-y-1">
+                          <div className="font-bold flex items-center gap-1 text-amber-950">
+                            <span>Hướng dẫn (bình thường nếu thấy lỗi localhost:1455):</span>
                           </div>
-                        )}
+                          <p>
+                            Sau khi đăng nhập ChatGPT, trình duyệt sẽ chuyển về <code className="font-mono bg-white px-1 py-0.5 rounded border border-amber-200 text-slate-800">localhost:1455</code> và báo <strong>không truy cập được</strong> (<code className="font-mono">ERR_CONNECTION_REFUSED</code>). Đây là <strong>hoàn toàn bình thường</strong>.
+                          </p>
+                          <p>
+                            Chỉ cần <strong>sao chép toàn bộ dòng địa chỉ đó</strong> trên trình duyệt, quay lại đây và bấm <strong>Bước 2: Dán & Kết nối ngay</strong>.
+                          </p>
+                        </div>
 
                         <div className="flex items-center gap-2">
                           <input

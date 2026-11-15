@@ -631,14 +631,17 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
               const localTime = new Date(localMatch.updatedAt || localMatch.lastOpenedAt || 0).getTime();
               const cloudTime = new Date(cs.updatedAt || cs.lastOpenedAt || 0).getTime();
               if (localMatch.items && (cs.items.length === 0 || localTime >= cloudTime || localMatch.items.length >= cs.items.length)) {
-                StudySpaceService.saveSpace(localMatch, user.id)
-                  .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
-                  .catch(() => {});
-                return {
+                const resolvedStarred = localTime >= cloudTime ? Boolean(localMatch.starred) : Boolean(cs.starred);
+                const mergedSpace = {
                   ...cs,
                   ...localMatch,
+                  starred: resolvedStarred,
                   items: localMatch.items
                 };
+                StudySpaceService.saveSpace(mergedSpace, user.id)
+                  .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
+                  .catch(() => {});
+                return mergedSpace;
               }
               return cs;
             });
@@ -956,14 +959,16 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const toggleStarSpace = (spaceId: string) => {
+    const nowIso = new Date().toISOString();
     setSpaces(prev => {
       const updated = prev.map(s => {
         if (s.id !== spaceId) return s;
         const nextStar = !s.starred;
+        const nextSpace = { ...s, starred: nextStar, updatedAt: nowIso };
         if (status === 'authenticated' && user?.id) {
-          StudySpaceService.saveSpace({ ...s, starred: nextStar }, user.id).catch(() => {});
+          StudySpaceService.saveSpace(nextSpace, user.id).catch(() => {});
         }
-        return { ...s, starred: nextStar };
+        return nextSpace;
       });
       const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
       try {
@@ -1982,7 +1987,12 @@ Trong đó:
       pageCount: 1,
       currentPageIndex: 0,
       colorTheme: book.colorTheme,
-      pages: [{ ...detachedPage, pageNumber: 1 }]
+      pages: [{ ...detachedPage, pageNumber: 1 }],
+      detachedFrom: {
+        bookId,
+        pageIndex,
+        page: detachedPage,
+      },
     };
 
     setSpaces(sList =>
@@ -2782,10 +2792,32 @@ Trong đó:
     setSpaces(sList => {
       const nextList = sList.map(s => {
         if (s.id !== activeSpaceId) return s;
+        const deletedItem = s.items.find(item => item.id === id);
+        let nextItems = cleanupDeskItemsOnDelete(s.items, id);
+
+        // If a detached page is deleted and its source book still exists, restore the page back into the book
+        if (deletedItem?.detachedFrom) {
+          const { bookId, pageIndex, page } = deletedItem.detachedFrom;
+          nextItems = nextItems.map(item => {
+            if (item.id !== bookId) return item;
+            const safeIdx = Math.max(0, Math.min(pageIndex, item.pages.length));
+            const restoredPages = [
+              ...item.pages.slice(0, safeIdx),
+              page,
+              ...item.pages.slice(safeIdx),
+            ].map((p, idx) => ({ ...p, pageNumber: idx + 1 }));
+            return {
+              ...item,
+              pageCount: restoredPages.length,
+              pages: restoredPages,
+            };
+          });
+        }
+
         return {
           ...s,
           updatedAt: new Date().toISOString(),
-          items: cleanupDeskItemsOnDelete(s.items, id),
+          items: nextItems,
           threads: (s.threads || []).filter(t => t.sourceItemId !== id && t.targetStickyId !== id),
         };
       });

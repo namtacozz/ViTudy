@@ -6,7 +6,7 @@
 
 ## 1. Tóm Tắt Dự Án & Sức Khỏe Repo (Health Summary)
 * **Định nghĩa (5 dòng):** ViTudy là không gian học thức số hóa tích hợp AI mô phỏng mặt bàn thực tế theo góc nhìn 2.5D kết hợp giao diện HUD kiểu kính VR. Nền tảng kết hợp động cơ xử lý học thuật độc lập không tốn phí (Non-AI: OCR, TextRank, Cloze Quiz, Flashcard), cổng kết nối đa mô hình AI (ChatGPT Codex, Gemini, Claude, OpenAI System) qua tiền tệ ViToken, chợ tri thức KnowInherit 85/15, và Board Game Studio + Bảng Vẽ 4 Góc.
-* **Giai đoạn phát triển:** Hoàn thành hợp nhất nhánh `dev` (Mobile/Tablet/Landscape responsive, cử chỉ đa chạm 2 ngón Pinch-Zoom, Palm Rejection, Streak Pet, Guest Profile) với `main`, tối ưu dung lượng ảnh Pet (17.41 MB $\rightarrow$ 428.9 KB) và đồng bộ 100% tính năng trên mọi thiết bị.
+* **Giai đoạn phát triển:** Hoàn thành xử lý 11 lỗi và 5 đề xuất UI/UX trên nhánh `dev` (AI OAuth auto-refresh, sửa trừ kép ViToken, sửa điểm danh chuỗi ngày, bảo toàn gắn sao và trang tách sách, đồng bộ chuyển bàn học `TopLeftNav`, tối ưu đo thời gian học và polling VietQR).
 * **Sức khỏe Repo (Health):**
   * `Unit & Integration Tests`: **Pass** (`pnpm test`: 35/35 files, 159/159 tests pass).
   * `TypeCheck`: **Pass** (`npx tsc --noEmit`: 0 lỗi).
