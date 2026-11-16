@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeMultiplayer, PeerUser } from '@/hooks/useRealtimeMultiplayer';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig } from '@/lib/supabase';
 import { 
@@ -21,7 +22,13 @@ import {
 } from 'lucide-react';
 
 export function MultiplayerBar() {
-  const { activeSpace, setTransform } = useStudySpace();
+  const { activeSpace, strokes, setTransform } = useStudySpace();
+  const { user, profile } = useAuth();
+  const isHost = !activeSpace.isSharedGuest;
+  const displayName =
+    profile?.display_name ||
+    user?.email?.split('@')[0] ||
+    (isHost ? 'Bạn (Chủ bàn)' : 'Bạn học');
   const [mounted, setMounted] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -43,8 +50,20 @@ export function MultiplayerBar() {
     setIsFollowPresenter,
     toggleSimulation,
     leaveRoom,
-    broadcastCursor
-  } = useRealtimeMultiplayer(activeSpace.id, 'Bạn (Chủ bàn)', true);
+    broadcastCursor,
+    broadcastDeskUpdate
+  } = useRealtimeMultiplayer(activeSpace.id, displayName, isHost, Boolean(activeSpace.isShared));
+
+  // Khi có bạn mới vào phòng, chủ bàn phát ngay trạng thái tài liệu & nét vẽ hiện tại
+  useEffect(() => {
+    if (!isHost) return;
+    const onPeerJoined = () => {
+      broadcastDeskUpdate('items', activeSpace.items);
+      broadcastDeskUpdate('strokes', strokes);
+    };
+    window.addEventListener('vitudy:peer-joined', onPeerJoined);
+    return () => window.removeEventListener('vitudy:peer-joined', onPeerJoined);
+  }, [isHost, activeSpace.items, strokes, broadcastDeskUpdate]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('vitudy_peers_update', { detail: peers }));

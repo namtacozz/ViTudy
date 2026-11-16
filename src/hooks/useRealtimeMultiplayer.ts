@@ -84,13 +84,23 @@ const DEFAULT_MOCK_PEERS: PeerUser[] = [
   { id: 'mock-2', name: 'Minh Thư (Toán Tin)', avatarColor: '#64748b', status: 'Đang làm bài', role: 'viewer' }
 ];
 
-export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn (Chủ bàn)', isHost = true) {
+export function useRealtimeMultiplayer(
+  spaceId: string,
+  currentUserName = 'Bạn (Chủ bàn)',
+  isHost = true,
+  isSpaceShared = false
+) {
   const [peers, setPeers] = useState<PeerUser[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [isFollowPresenter, setIsFollowPresenter] = useState(false);
   const [hasPeers, setHasPeers] = useState(false);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('room');
+  });
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const prevPeerCountRef = useRef(0);
 
   // Check Supabase config on mount
   useEffect(() => {
@@ -100,13 +110,31 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
 
   const userId = useRef<string>(`user-${Math.random().toString(36).substring(2, 9)}`).current;
 
-  // Initialize Realtime Channel only when room query param is present or explicitly active
+  // Listen for host room activation (when copying/opening share link without reloading)
   useEffect(() => {
-    const hasRoomQuery = typeof window !== 'undefined' && window.location.search.includes('room=');
-    if (!hasRoomQuery && !hasPeers) {
+    if (typeof window === 'undefined') return;
+    const onActivateRoom = (e: Event) => {
+      const detail = (e as CustomEvent<{ roomId?: string }>).detail;
+      if (detail?.roomId) {
+        setActiveRoomId(detail.roomId);
+      }
+    };
+    window.addEventListener('vitudy:activate-room', onActivateRoom);
+    return () => window.removeEventListener('vitudy:activate-room', onActivateRoom);
+  }, []);
+
+  // Initialize Realtime Channel when room query param, activated room, or shared space is active
+  useEffect(() => {
+    const searchRoom = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('room')
+      : null;
+    const effectiveRoom = activeRoomId || searchRoom;
+
+    if (!effectiveRoom && !isSpaceShared && !hasPeers) {
       // User is in solo mode, do not join room or track presence
       setIsConnected(false);
       setPeers([]);
+      prevPeerCountRef.current = 0;
       return;
     }
 
@@ -116,10 +144,7 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
       return;
     }
 
-    const searchRoom = typeof window !== 'undefined' 
-      ? new URLSearchParams(window.location.search).get('room') 
-      : null;
-    const effectiveSpaceId = searchRoom || spaceId || 'default';
+    const effectiveSpaceId = effectiveRoom || spaceId || 'default';
     const roomId = `room-${effectiveSpaceId}`;
     const channel = supabase.channel(roomId, {
       config: {
@@ -164,7 +189,11 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
       setPeers(peerList);
       if (peerList.length > 0) {
         setHasPeers(true);
+        if (isHost && peerList.length > prevPeerCountRef.current && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('vitudy:peer-joined', { detail: { peers: peerList } }));
+        }
       }
+      prevPeerCountRef.current = peerList.length;
     });
 
     // 2. Cursor Broadcast
@@ -218,7 +247,7 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [spaceId, currentUserName, isHost, userId]);
+  }, [spaceId, currentUserName, isHost, userId, activeRoomId, isSpaceShared, hasPeers]);
 
   // Broadcast mouse cursor
   const broadcastCursor = useCallback((x: number, y: number) => {
@@ -306,6 +335,19 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     });
   }, []);
 
+  // Bridge cho StudySpaceContext phát cập nhật vật thể / nét vẽ lên Supabase Broadcast
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ type: 'items' | 'strokes'; data: any }>).detail;
+      if (detail?.type && detail?.data !== undefined) {
+        broadcastDeskUpdate(detail.type, detail.data);
+      }
+    };
+    window.addEventListener('vitudy:broadcast-desk-sync', handler);
+    return () => window.removeEventListener('vitudy:broadcast-desk-sync', handler);
+  }, [broadcastDeskUpdate]);
+
   // Explicitly leave the room and return to solo desk mode
   const leaveRoom = useCallback(() => {
     if (channelRef.current) {
@@ -317,13 +359,23 @@ export function useRealtimeMultiplayer(spaceId: string, currentUserName = 'Bạn
     }
     setPeers([]);
     setHasPeers(false);
+    setActiveRoomId(null);
+    prevPeerCountRef.current = 0;
     setIsConnected(false);
     setIsFollowPresenter(false);
 
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
+      let changed = false;
       if (url.searchParams.has('room')) {
         url.searchParams.delete('room');
+        changed = true;
+      }
+      if (url.searchParams.has('perm')) {
+        url.searchParams.delete('perm');
+        changed = true;
+      }
+      if (changed) {
         window.history.replaceState({}, '', url.toString());
       }
     }

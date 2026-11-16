@@ -6,6 +6,7 @@ import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { recognizeSmartShape, recognizeSmartShapeDetailed } from '@/utils/smartShape';
 import { useAuth } from '@/hooks/useAuth';
 import { StudySpaceService, ensureUUID } from '@/services/StudySpaceService';
+import { extractSpaceIdFromRoomParam } from '@/lib/multiplayerRoom';
 import { sanitizeDocumentText } from '@/services/OfficeParserService';
 import { OfflineQueue } from '@/services/OfflineQueue';
 import { cleanupDeskItemsOnDelete } from '@/lib/boardGameEngine';
@@ -37,6 +38,7 @@ interface StudySpaceContextType {
   spaces: StudySpace[];
   activeSpaceId: string;
   activeSpace: StudySpace;
+  isLoaded: boolean;
   threads: IntelineThread[];
   transform: CanvasTransform;
   selectedItemId: string | null;
@@ -48,6 +50,8 @@ interface StudySpaceContextType {
   exitFocusMode: () => void;
   triggerFocusNotice: () => void;
   switchSpace: (spaceId: string) => void;
+  joinSharedSpace: (roomParam: string) => Promise<void>;
+  markSpaceShared: (spaceId: string) => void;
   toggleStarSpace: (spaceId: string) => void;
   createSpace: (name: string, subject: string) => string;
   createSpaceFromTemplate?: (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string) => string;
@@ -832,20 +836,23 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     const uId = user?.id;
     const userPrefix = uId ? `user_${uId}_` : 'guest_';
 
-    // 1. Lưu tức thì vào localStorage theo tài khoản
-    try {
-      localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(spaces));
-      localStorage.setItem(`${userPrefix}vitudy_active_space_id`, activeSpaceId);
-      localStorage.setItem(`${userPrefix}vitudy_strokes_${curSpace.id}`, JSON.stringify(strokes));
-      // Dự phòng key chung
-      localStorage.setItem('vitudy_spaces', JSON.stringify(spaces));
-      localStorage.setItem('vitudy_active_space_id', activeSpaceId);
-    } catch (err) {
-      console.warn('Lỗi lưu localStorage:', err);
+    // 1. Lưu tức thì vào localStorage theo tài khoản (bỏ qua bàn học khách đang xem tạm)
+    if (!curSpace.isSharedGuest) {
+      const ownSpaces = spaces.filter(s => !s.isSharedGuest);
+      try {
+        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(ownSpaces));
+        localStorage.setItem(`${userPrefix}vitudy_active_space_id`, activeSpaceId);
+        localStorage.setItem(`${userPrefix}vitudy_strokes_${curSpace.id}`, JSON.stringify(strokes));
+        // Dự phòng key chung
+        localStorage.setItem('vitudy_spaces', JSON.stringify(ownSpaces));
+        localStorage.setItem('vitudy_active_space_id', activeSpaceId);
+      } catch (err) {
+        console.warn('Lỗi lưu localStorage:', err);
+      }
     }
 
-    // 2. Lưu lên Supabase Cloud nếu đã đăng nhập
-    if (status === 'authenticated' && uId) {
+    // 2. Lưu lên Supabase Cloud nếu đã đăng nhập (chỉ chủ bàn mới lưu study_spaces)
+    if (status === 'authenticated' && uId && !curSpace.isSharedGuest) {
       if (isManual) setSaveStatus('saving');
       try {
         // Lưu space trước, sau đó items (để FK của threads/strokes tồn tại), rồi mới lưu threads & strokes
@@ -925,23 +932,95 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     return () => clearTimeout(timer);
   }, [spaces, strokes, saveCurrentSpaceImmediately, isLoaded, isSwitchingSpace]);
 
+  const isApplyingRemoteSyncRef = useRef(false);
+
   // Lắng nghe đồng bộ realtime bàn học khi học nhóm multiplayer
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handleMultiplayerSync = (e: Event) => {
       const customEvent = e as CustomEvent<{ type: string; data: any }>;
       const { type, data } = customEvent.detail || {};
+      isApplyingRemoteSyncRef.current = true;
       if (type === 'items' && Array.isArray(data)) {
         setSpaces(prev => prev.map(s => s.id === activeSpaceId ? { ...s, items: data } : s));
       } else if (type === 'strokes' && Array.isArray(data)) {
         setStrokes(data);
       }
+      setTimeout(() => {
+        isApplyingRemoteSyncRef.current = false;
+      }, 0);
     };
     window.addEventListener('vitudy:multiplayer-sync', handleMultiplayerSync);
     return () => window.removeEventListener('vitudy:multiplayer-sync', handleMultiplayerSync);
   }, [activeSpaceId]);
 
   const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0] || DEFAULT_EMPTY_SPACE;
+
+  // Phát thay đổi items/strokes lên kênh multiplayer khi đang trong phòng học nhóm
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isLoaded || isApplyingRemoteSyncRef.current) return;
+    if (!window.location.search.includes('room=') && !activeSpace.isShared) return;
+    window.dispatchEvent(
+      new CustomEvent('vitudy:broadcast-desk-sync', {
+        detail: { type: 'items', data: activeSpace.items },
+      })
+    );
+  }, [activeSpace.items, activeSpace.isShared, isLoaded]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isLoaded || isApplyingRemoteSyncRef.current) return;
+    if (!window.location.search.includes('room=') && !activeSpace.isShared) return;
+    window.dispatchEvent(
+      new CustomEvent('vitudy:broadcast-desk-sync', {
+        detail: { type: 'strokes', data: strokes },
+      })
+    );
+  }, [strokes, activeSpace.isShared, isLoaded]);
+
+  const markSpaceShared = useCallback((spaceId: string) => {
+    setSpaces(prev => prev.map(s => s.id === spaceId ? { ...s, isShared: true } : s));
+    if (status === 'authenticated' && user?.id) {
+      StudySpaceService.markSpacePublic(spaceId, user.id, true);
+    }
+  }, [status, user?.id]);
+
+  const joinSharedSpace = useCallback(async (roomParam: string) => {
+    const baseSpaceId = extractSpaceIdFromRoomParam(roomParam);
+    if (!baseSpaceId) return;
+
+    // Nếu người dùng đã sở hữu bàn này (hoặc đã tải vào state), chuyển sang ngay mà không ghi đè ?room=
+    if (spaces.some(s => s.id === baseSpaceId)) {
+      setActiveSpaceId(baseSpaceId);
+      setSelectedItemId(null);
+      return;
+    }
+
+    // Khách vào qua link chia sẻ: tải bàn học từ Supabase Cloud (is_public = true)
+    const remoteSpace = await StudySpaceService.loadSharedSpace(baseSpaceId);
+    const sharedSpace: StudySpace = remoteSpace
+      ? { ...remoteSpace, isShared: true, isSharedGuest: true }
+      : {
+          id: baseSpaceId,
+          name: 'Bàn học được chia sẻ',
+          subject: 'Học nhóm',
+          description: 'Không gian học nhóm trực tuyến',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isShared: true,
+          isSharedGuest: true,
+          items: [],
+          threads: [],
+        };
+
+    setSpaces(prev => {
+      if (prev.some(s => s.id === sharedSpace.id)) {
+        return prev.map(s => s.id === sharedSpace.id ? sharedSpace : s);
+      }
+      return [...prev, sharedSpace];
+    });
+    setActiveSpaceId(sharedSpace.id);
+    setSelectedItemId(null);
+  }, [spaces]);
 
   const switchSpace = (spaceId: string) => {
     if (spaces.some(s => s.id === spaceId)) {
@@ -2889,6 +2968,7 @@ Trong đó:
         spaces,
         activeSpaceId,
         activeSpace,
+        isLoaded,
         transform,
         selectedItemId,
         searchQuery,
@@ -2899,6 +2979,8 @@ Trong đó:
         exitFocusMode,
         triggerFocusNotice,
         switchSpace,
+        joinSharedSpace,
+        markSpaceShared,
         toggleStarSpace,
         createSpace,
         createSpaceFromTemplate,

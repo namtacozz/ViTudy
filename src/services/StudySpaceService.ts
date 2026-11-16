@@ -120,12 +120,98 @@ export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): 
 }
 
 export class StudySpaceService {
+  private static async hydrateSpaces(
+    supabase: NonNullable<ReturnType<typeof getSupabase>>,
+    spacesData: Database['public']['Tables']['study_spaces']['Row'][]
+  ): Promise<StudySpace[]> {
+    if (!spacesData || spacesData.length === 0) return [];
+    const spaceIds = spacesData.map(s => s.id);
+
+    // Batch-load all documents & threads across spaces in parallel (eliminates N+1 round-trips)
+    const [{ data: allDocsData }, { data: allThreadsData }] = await Promise.all([
+      supabase
+        .from('desk_documents')
+        .select('*')
+        .in('space_id', spaceIds)
+        .order('z_index', { ascending: true }),
+      supabase
+        .from('inteline_threads')
+        .select('*')
+        .in('space_id', spaceIds),
+    ]);
+
+    // Batch-load all document pages in one query
+    const allDocIds = (allDocsData || []).map(d => d.id);
+    const pagesByDocId: Record<string, PageContent[]> = {};
+
+    if (allDocIds.length > 0) {
+      const { data: pagesData } = await supabase
+        .from('document_pages')
+        .select('*')
+        .in('document_id', allDocIds)
+        .order('page_number', { ascending: true });
+
+      if (pagesData) {
+        for (const p of pagesData) {
+          if (!pagesByDocId[p.document_id]) {
+            pagesByDocId[p.document_id] = [];
+          }
+          pagesByDocId[p.document_id].push({
+            id: p.id,
+            pageNumber: p.page_number,
+            title: p.title || undefined,
+            text: p.content,
+          });
+        }
+      }
+    }
+
+    const docsBySpaceId: Record<string, DeskItem[]> = {};
+    for (const row of allDocsData || []) {
+      if (!docsBySpaceId[row.space_id]) docsBySpaceId[row.space_id] = [];
+      docsBySpaceId[row.space_id].push(
+        rowToDeskItem(row as DeskDocumentRow, pagesByDocId[row.id] || [])
+      );
+    }
+
+    const threadsBySpaceId: Record<string, IntelineThread[]> = {};
+    for (const t of allThreadsData || []) {
+      if (!threadsBySpaceId[t.space_id]) threadsBySpaceId[t.space_id] = [];
+      threadsBySpaceId[t.space_id].push({
+        id: t.id,
+        sourceItemId: t.source_item_id,
+        sourcePageNumber: t.source_page_number,
+        selectedText: t.selected_text,
+        sourceOffset: t.source_offset ? (t.source_offset as any) : undefined,
+        targetStickyId: t.target_sticky_id,
+        question: t.question,
+        answer: t.answer,
+        createdAt: t.created_at,
+      });
+    }
+
+    return spacesData.map(spaceRow => {
+      const cam = (spaceRow.camera_transform as Record<string, unknown> | null) || null;
+      return {
+        id: spaceRow.id,
+        name: spaceRow.name,
+        subject: spaceRow.subject,
+        description: '',
+        starred: Boolean(spaceRow.starred) || Boolean(cam?.starred),
+        isShared: Boolean(spaceRow.is_public),
+        createdAt: spaceRow.created_at,
+        updatedAt: spaceRow.updated_at,
+        items: docsBySpaceId[spaceRow.id] || [],
+        threads: threadsBySpaceId[spaceRow.id] || [],
+      };
+    });
+  }
+
   static async loadSpaces(userId: string): Promise<StudySpace[]> {
     const supabase = getSupabase();
     if (!supabase || !userId) return [];
 
     try {
-      // 1. Load all study spaces for user
       const { data: spacesData, error: spacesError } = await supabase
         .from('study_spaces')
         .select('*')
@@ -133,89 +219,47 @@ export class StudySpaceService {
         .order('created_at', { ascending: true });
 
       if (spacesError || !spacesData || spacesData.length === 0) return [];
-
-      const spaceIds = spacesData.map(s => s.id);
-
-      // 2. Batch-load all documents & threads across all spaces in parallel (eliminates N+1 round-trips)
-      const [{ data: allDocsData }, { data: allThreadsData }] = await Promise.all([
-        supabase
-          .from('desk_documents')
-          .select('*')
-          .in('space_id', spaceIds)
-          .order('z_index', { ascending: true }),
-        supabase
-          .from('inteline_threads')
-          .select('*')
-          .in('space_id', spaceIds),
-      ]);
-
-      // 3. Batch-load all document pages in one query
-      const allDocIds = (allDocsData || []).map(d => d.id);
-      const pagesByDocId: Record<string, PageContent[]> = {};
-
-      if (allDocIds.length > 0) {
-        const { data: pagesData } = await supabase
-          .from('document_pages')
-          .select('*')
-          .in('document_id', allDocIds)
-          .order('page_number', { ascending: true });
-
-        if (pagesData) {
-          for (const p of pagesData) {
-            if (!pagesByDocId[p.document_id]) {
-              pagesByDocId[p.document_id] = [];
-            }
-            pagesByDocId[p.document_id].push({
-              id: p.id,
-              pageNumber: p.page_number,
-              title: p.title || undefined,
-              text: p.content,
-            });
-          }
-        }
-      }
-
-      const docsBySpaceId: Record<string, DeskItem[]> = {};
-      for (const row of allDocsData || []) {
-        if (!docsBySpaceId[row.space_id]) docsBySpaceId[row.space_id] = [];
-        docsBySpaceId[row.space_id].push(
-          rowToDeskItem(row as DeskDocumentRow, pagesByDocId[row.id] || [])
-        );
-      }
-
-      const threadsBySpaceId: Record<string, IntelineThread[]> = {};
-      for (const t of allThreadsData || []) {
-        if (!threadsBySpaceId[t.space_id]) threadsBySpaceId[t.space_id] = [];
-        threadsBySpaceId[t.space_id].push({
-          id: t.id,
-          sourceItemId: t.source_item_id,
-          sourcePageNumber: t.source_page_number,
-          selectedText: t.selected_text,
-          sourceOffset: t.source_offset ? (t.source_offset as any) : undefined,
-          targetStickyId: t.target_sticky_id,
-          question: t.question,
-          answer: t.answer,
-          createdAt: t.created_at,
-        });
-      }
-
-      return spacesData.map(spaceRow => {
-        const cam = (spaceRow.camera_transform as Record<string, unknown> | null) || null;
-        return {
-          id: spaceRow.id,
-          name: spaceRow.name,
-          subject: spaceRow.subject,
-          description: '',
-          starred: Boolean(spaceRow.starred) || Boolean(cam?.starred),
-          createdAt: spaceRow.created_at,
-          updatedAt: spaceRow.updated_at,
-          items: docsBySpaceId[spaceRow.id] || [],
-          threads: threadsBySpaceId[spaceRow.id] || [],
-        };
-      });
+      return await this.hydrateSpaces(supabase, spacesData);
     } catch (err) {
       console.warn('Lỗi loadSpaces từ Supabase Cloud:', err);
       return [];
+    }
+  }
+
+  static async loadSharedSpace(spaceId: string): Promise<StudySpace | null> {
+    const supabase = getSupabase();
+    if (!supabase || !spaceId) return null;
+
+    try {
+      const safeSpaceId = ensureUUID(spaceId);
+      const { data: spaceRow, error } = await supabase
+        .from('study_spaces')
+        .select('*')
+        .eq('id', safeSpaceId)
+        .maybeSingle();
+
+      if (error || !spaceRow) return null;
+      const hydrated = await this.hydrateSpaces(supabase, [spaceRow]);
+      return hydrated[0] ? { ...hydrated[0], isShared: true } : null;
+    } catch (err) {
+      console.warn('Lỗi loadSharedSpace từ Supabase Cloud:', err);
+      return null;
+    }
+  }
+
+  static async markSpacePublic(spaceId: string, ownerId: string, isPublic = true): Promise<void> {
+    const supabase = getSupabase();
+    if (!supabase || !spaceId || !ownerId) return;
+
+    try {
+      const safeSpaceId = ensureUUID(spaceId);
+      await supabase
+        .from('study_spaces')
+        .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+        .eq('id', safeSpaceId)
+        .eq('owner_id', ownerId);
+    } catch (err) {
+      console.warn('Lỗi markSpacePublic:', err);
     }
   }
 
@@ -231,6 +275,7 @@ export class StudySpaceService {
         name: space.name,
         subject: space.subject,
         starred: Boolean(space.starred),
+        is_public: Boolean(space.isShared),
         camera_transform: { starred: Boolean(space.starred) },
         updated_at: new Date().toISOString(),
       });
@@ -241,6 +286,7 @@ export class StudySpaceService {
           owner_id: userId,
           name: space.name,
           subject: space.subject,
+          is_public: Boolean(space.isShared),
           camera_transform: { starred: Boolean(space.starred) },
           updated_at: new Date().toISOString(),
         });
@@ -427,8 +473,9 @@ export class StudySpaceService {
     if (!supabase || !spaceId || !userId) return;
 
     try {
+      const safeSpaceId = ensureUUID(spaceId);
       await supabase.from('space_members').upsert({
-        space_id: spaceId,
+        space_id: safeSpaceId,
         user_id: userId,
         role: role,
       }, { onConflict: 'space_id,user_id' });

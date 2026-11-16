@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-11-16 08:27 — dev (Sửa lỗi Multiplayer chia sẻ link vào phòng trống & chủ phòng không thấy ai)
+- Task: Khắc phục lỗi khi người dùng tạo link chia sẻ phòng học nhưng không thấy người tham gia, còn người nhận link nhấp vào bị rơi vào bàn học trống.
+- Changed:
+  - `src/lib/multiplayerRoom.ts`: Thêm `extractSpaceIdFromRoomParam` (tách `spaceId` gốc từ `?room=` có hoặc không có salt) và `activateHostRoom` (gắn `?room=` lên URL chủ phòng + phát sự kiện `vitudy:activate-room`).
+  - `src/hooks/useRealtimeMultiplayer.ts`: Kích hoạt kết nối Realtime khi có `vitudy:activate-room` hoặc `isSpaceShared`, phát `vitudy:peer-joined` khi có người mới vào phòng, lắng nghe `vitudy:broadcast-desk-sync`, và dọn sạch `?room=`/`?perm=` khi `leaveRoom`.
+  - `src/services/StudySpaceService.ts`: Tách `hydrateSpaces`, thêm `loadSharedSpace` & `markSpacePublic`, cập nhật `saveSpace` lưu `is_public`, và chuẩn hóa `ensureUUID` trong `joinSpace`.
+  - `src/context/StudySpaceContext.tsx` & `src/types/studyspace.ts`: Thêm `isSharedGuest`, `joinSharedSpace`, `markSpaceShared`, `isLoaded`; bảo vệ `saveCurrentSpaceImmediately` không ghi đè bàn chủ khi đang ở chế độ khách; đồng bộ hai chiều `items`/`strokes` qua `vitudy:broadcast-desk-sync` (tránh lặp echo bằng `isApplyingRemoteSyncRef`).
+  - `src/app/page.tsx`: Khi có `?room=` và `isLoaded`, tự động gọi `joinSharedSpace(roomParam)` cho cả khách lẫn người đã đăng nhập và gọi `StudySpaceService.joinSpace` với `baseSpaceId` đã tách salt.
+  - `src/components/hud/BottomLeftKnowledge.tsx`: Khi mở modal "Mời bạn cùng học" hoặc tạo link mới có salt, gọi `activateHostRoom(roomId)`, `markSpaceShared` và lưu bàn học lên Supabase; thay nút chia sẻ Zalo/Messenger sang logo SVG chính thức và hiển thị trạng thái kết quả nút "Thử kết nối" (`dbTestResult` / `dbSavedNotice`) trong Cấu hình máy chủ Realtime.
+  - `src/components/hud/MultiplayerBar.tsx`: Truyền tên người dùng thật từ `useAuth()`, `isHost = !activeSpace.isSharedGuest`, `isSpaceShared` vào `useRealtimeMultiplayer`, và phát ngay `items`/`strokes` hiện tại khi nhận `vitudy:peer-joined`.
+- Added/Removed: `src/lib/multiplayerRoom.ts`, `src/hooks/useRealtimeMultiplayer.test.tsx`, `src/components/hud/BottomLeftKnowledge.test.tsx`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `npx vitest run src/components/hud/BottomLeftKnowledge.test.tsx src/hooks/useRealtimeMultiplayer.test.tsx` (5/5 pass), `pnpm run docs:index`, `pnpm run docs:check`.
+- Open follow-ups: Kiểm thử thực tế 2 trình duyệt trên môi trường có Supabase Realtime bật để xác nhận độ trễ đồng bộ ban đầu.
+
 ## 2026-11-15 19:43 — dev (Tái cấu trúc toàn diện Board Game Engine tổ hợp v2 — Cụm A–L)
 - Task: Xây dựng Board Game Engine v2 thuần tất định, không phụ thuộc loại game; di trú v1→v2; sổ cái đa mệnh giá; multiplayer theo action log + `viewFor`; runtime UI, editor, trình soạn luật 2 tầng; AI Kiến trúc sư (`AiArchitect`); 6 Golden Games thuần dữ liệu và bộ mô phỏng bot headless.
 - Changed:

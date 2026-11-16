@@ -146,6 +146,7 @@ export interface StudySpace {
   lastOpenedAt?: string;
   starred?: boolean;
   isShared?: boolean;
+  isSharedGuest?: boolean;
   items: DeskItem[];
   threads?: IntelineThread[];
 }

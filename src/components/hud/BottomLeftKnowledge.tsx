@@ -35,6 +35,7 @@ import { parseUploadedDocumentResult } from '@/services/OfficeParserService';
 import { importDocumentFromUrl, UrlSharePermissionError } from '@/services/UrlDocumentService';
 import type { PresentationData, SpreadsheetData } from '@/types/studyspace';
 import { formatUploadedDocTitle } from '@/utils/documentNaming';
+import { activateHostRoom } from '@/lib/multiplayerRoom';
 
 interface PendingDocument {
   file: File;
@@ -48,7 +49,7 @@ interface PendingDocument {
 }
 
 export function BottomLeftKnowledge() {
-  const { addUploadedDocument, activeSpace } = useStudySpace();
+  const { addUploadedDocument, activeSpace, markSpaceShared, saveCurrentSpaceImmediately } = useStudySpace();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
   const [pendingDoc, setPendingDoc] = useState<PendingDocument | null>(null);
@@ -70,6 +71,17 @@ export function BottomLeftKnowledge() {
   const [roomSalt, setRoomSalt] = useState('');
   const [showQrCode, setShowQrCode] = useState(false);
   const [peersInRoom, setPeersInRoom] = useState<{ id: string; name: string; avatarColor: string }[]>([]);
+
+  // Khi mở modal chia sẻ hoặc tạo mã phòng mới: kích hoạt kênh phòng trên máy chủ bàn và đồng bộ công khai
+  useEffect(() => {
+    if (!isShareModalOpen || !activeSpace?.id) return;
+    const roomId = roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id;
+    activateHostRoom(roomId);
+    if (!activeSpace.isSharedGuest) {
+      markSpaceShared(activeSpace.id);
+      saveCurrentSpaceImmediately?.();
+    }
+  }, [isShareModalOpen, roomSalt, activeSpace?.id, activeSpace?.isSharedGuest, markSpaceShared, saveCurrentSpaceImmediately]);
 
   // Lắng nghe sự kiện mở modal mời và upload từ menu khác
   useEffect(() => {
@@ -120,13 +132,13 @@ export function BottomLeftKnowledge() {
   }, [isShareModalOpen]);
 
   const handleTestDatabase = async () => {
-    const url = supabaseUrlInput.trim();
+    const url = supabaseUrlInput.trim().replace(/\/+$/, '');
     const key = supabaseKeyInput.trim();
     if (!url || !key) {
       setDbTestResult({ status: 'error', message: 'Vui lòng nhập đầy đủ Supabase URL và Anon Key.' });
       return;
     }
-    setDbTestResult({ status: 'testing' });
+    setDbTestResult({ status: 'testing', message: 'Đang kiểm tra kết nối...' });
     try {
       const startTime = performance.now();
       const res = await fetch(`${url}/rest/v1/`, {
@@ -812,40 +824,65 @@ export function BottomLeftKnowledge() {
               </div>
 
               {/* Quick Share Buttons & Expiry Selector */}
-              <div className="flex items-center justify-between mt-2 pt-1 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500 font-medium">Chia sẻ nhanh:</span>
+              <div className="flex items-center justify-between gap-2 mt-2 pt-1 text-[11px]">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-slate-500 font-medium whitespace-nowrap">Chia sẻ nhanh:</span>
                   <button
                     type="button"
+                    aria-label="Chia sẻ qua Zalo"
+                    title="Chia sẻ qua Zalo"
                     onClick={() => {
                       const url = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}` : '';
                       window.open(`https://zalo.me/share?url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
                     }}
-                    className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold transition-colors cursor-pointer"
+                    className="w-7 h-7 rounded-lg bg-[#0068FF] hover:bg-[#0057d9] flex items-center justify-center shadow-2xs transition-transform active:scale-95 cursor-pointer shrink-0"
                   >
-                    Zalo
+                    <svg viewBox="0 0 48 48" className="w-4.5 h-4.5" aria-hidden="true">
+                      <path
+                        fill="#FFFFFF"
+                        d="M24 6C13.5 6 5 13.6 5 23c0 5.1 2.5 9.7 6.5 12.8-.3 2.3-1.2 4.6-2.5 6.3 2.9-.3 5.9-1.3 8.2-2.7 2.1.6 4.4.9 6.8.9 10.5 0 19-7.6 19-17S34.5 6 24 6z"
+                      />
+                      <text
+                        x="24"
+                        y="26.5"
+                        textAnchor="middle"
+                        fill="#0068FF"
+                        fontSize="11"
+                        fontWeight="900"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        Zalo
+                      </text>
+                    </svg>
                   </button>
                   <button
                     type="button"
+                    aria-label="Chia sẻ qua Messenger"
+                    title="Chia sẻ qua Messenger"
                     onClick={() => {
                       const url = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}` : '';
                       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
                     }}
-                    className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold transition-colors cursor-pointer"
+                    className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#0099FF] via-[#A033FF] to-[#FF5280] hover:opacity-90 flex items-center justify-center shadow-2xs transition-transform active:scale-95 cursor-pointer shrink-0"
                   >
-                    Messenger
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" aria-hidden="true">
+                      <path
+                        fill="#FFFFFF"
+                        d="M12 2C6.477 2 2 6.145 2 11.259c0 2.912 1.455 5.507 3.727 7.203V22l3.41-1.872c.91.252 1.873.39 2.863.39 5.523 0 10-4.145 10-9.259C22 6.145 17.523 2 12 2zm1.004 12.463l-2.548-2.718-4.97 2.718 5.468-5.803 2.61 2.718 4.908-2.718-5.468 5.803z"
+                      />
+                    </svg>
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowQrCode(!showQrCode)}
-                    className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold transition-colors cursor-pointer flex items-center gap-1"
+                    className="h-7 px-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap shrink-0"
                   >
-                    <QrCode className="w-3 h-3" />
+                    <QrCode className="w-3.5 h-3.5" />
                     <span>Mã QR</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1 text-slate-600 font-medium">
+                <div className="flex items-center gap-1 text-slate-600 font-medium whitespace-nowrap shrink-0">
                   <Clock className="w-3 h-3 text-slate-400" />
                   <select
                     value={roomLinkExpiry}
@@ -1022,17 +1059,38 @@ export function BottomLeftKnowledge() {
                     <button
                       type="button"
                       onClick={handleTestDatabase}
-                      className="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded-lg text-slate-700"
+                      disabled={dbTestResult.status === 'testing'}
+                      className="px-2.5 py-1 text-[11px] bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-slate-700 font-medium cursor-pointer disabled:opacity-60 flex items-center gap-1.5 transition-colors"
                     >
-                      Thử kết nối
+                      {dbTestResult.status === 'testing' && <Loader2 className="w-3 h-3 animate-spin" />}
+                      <span>{dbTestResult.status === 'testing' ? 'Đang kiểm tra...' : 'Thử kết nối'}</span>
                     </button>
                     <button
                       type="submit"
-                      className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold"
+                      className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
                     >
                       Lưu
                     </button>
                   </div>
+                  {dbTestResult.status !== 'idle' && dbTestResult.message && (
+                    <div
+                      role="status"
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium border ${
+                        dbTestResult.status === 'success'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                          : dbTestResult.status === 'error'
+                          ? 'bg-rose-50 border-rose-200 text-rose-700'
+                          : 'bg-slate-100 border-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {dbTestResult.message}
+                    </div>
+                  )}
+                  {dbSavedNotice && (
+                    <div className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
+                      Đã lưu cấu hình máy chủ! Đang tải lại...
+                    </div>
+                  )}
                 </form>
               )}
             </div>

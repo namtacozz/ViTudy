@@ -1,7 +1,7 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `369c4a8`  
-> **Cập nhật lần cuối:** `2026-11-15`  
+> **Commit Hash:** `960ad72`  
+> **Cập nhật lần cuối:** `2026-11-16`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
 <!-- manual:start -->
@@ -61,14 +61,14 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
-| `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L50-L1152](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
+| `BottomLeftKnowledge` | `component` | [src/components/hud/BottomLeftKnowledge.tsx:L51-L1210](file:///F:/AppMaking/ViTudy/src/components/hud/BottomLeftKnowledge.tsx) | HUD góc dưới-trái: nút tải tài liệu và mở chợ chia sẻ tri thức KnowInherit 85/15 |
 | `BottomRightToolkit` | `component` | [src/components/hud/BottomRightToolkit.tsx:L17-L208](file:///F:/AppMaking/ViTudy/src/components/hud/BottomRightToolkit.tsx) | HUD góc dưới-phải: công cụ bút dạ quang, tạo note, khoá góc nhìn, zoom 100% |
-| `GamePenToolbar` | `component` | [src/components/hud/GamePenToolbar.tsx:L23-L222](file:///F:/AppMaking/ViTudy/src/components/hud/GamePenToolbar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
+| `GamePenToolbar` | `component` | [src/components/hud/GamePenToolbar.tsx:L37-L438](file:///F:/AppMaking/ViTudy/src/components/hud/GamePenToolbar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `InviteModal` | `component` | [src/components/hud/InviteModal.tsx:L14-L132](file:///F:/AppMaking/ViTudy/src/components/hud/InviteModal.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
-| `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L36-L653](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
+| `LeftCreationBar` | `component` | [src/components/hud/LeftCreationBar.tsx:L36-L645](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `ModelGroup` | `type` | [src/components/hud/TopRightWallet.tsx:L67-L70](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
 | `ModelItem` | `type` | [src/components/hud/TopRightWallet.tsx:L61-L65](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | Thành phần nghiệp vụ của phân hệ Modals & Workflows |
-| `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L23-L404](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
+| `MultiplayerBar` | `component` | [src/components/hud/MultiplayerBar.tsx:L24-L423](file:///F:/AppMaking/ViTudy/src/components/hud/MultiplayerBar.tsx) | HUD cộng tác học nhóm thời gian thực: danh sách avatar, thả cảm xúc emoji |
 | `StickerEmojiPickerFlyout` | `component` | [src/components/hud/StickerEmojiPickerFlyout.tsx:L35-L731](file:///F:/AppMaking/ViTudy/src/components/hud/StickerEmojiPickerFlyout.tsx) | Thành phần nghiệp vụ của phân hệ HUD & Overlays |
 | `TopLeftNav` | `component` | [src/components/hud/TopLeftNav.tsx:L37-L529](file:///F:/AppMaking/ViTudy/src/components/hud/TopLeftNav.tsx) | HUD góc trên-trái: chuyển đổi bàn học, tìm kiếm tài liệu, đồng bộ góc nhìn |
 | `TopRightWallet` | `component` | [src/components/hud/TopRightWallet.tsx:L145-L1263](file:///F:/AppMaking/ViTudy/src/components/hud/TopRightWallet.tsx) | HUD góc trên-phải: hiển thị số dư ViToken, chuỗi điểm danh streak, chọn model AI |
@@ -109,15 +109,15 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `AuthProvider` | `context` | [src/context/AuthContext.tsx:L39-L325](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `AuthResult` | `type` | [src/context/AuthContext.tsx:L18-L21](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `AuthStatus` | `type` | [src/context/AuthContext.tsx:L8-L8](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `CreationPlacementTemplate` | `type` | [src/context/StudySpaceContext.tsx:L15-L34](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
+| `CreationPlacementTemplate` | `type` | [src/context/StudySpaceContext.tsx:L16-L35](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `PomodoroProvider` | `context` | [src/context/PomodoroContext.tsx:L35-L168](file:///F:/AppMaking/ViTudy/src/context/PomodoroContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L192-L2945](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
+| `StudySpaceProvider` | `context` | [src/context/StudySpaceContext.tsx:L197-L3079](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Provider quản lý toàn bộ state bàn học, tài liệu, toạ độ, nét vẽ, zIndex |
 | `useAuth` | `hook` | [src/context/AuthContext.tsx:L331-L337](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `useOptionalAuth` | `hook` | [src/context/AuthContext.tsx:L339-L341](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `useOptionalViToken` | `hook` | [src/context/ViTokenContext.tsx:L346-L348](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `usePomodoroContext` | `hook` | [src/context/PomodoroContext.tsx:L170-L176](file:///F:/AppMaking/ViTudy/src/context/PomodoroContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
 | `UserProfile` | `type` | [src/context/AuthContext.tsx:L10-L16](file:///F:/AppMaking/ViTudy/src/context/AuthContext.tsx) | Thành phần nghiệp vụ của phân hệ Context & State |
-| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L2947-L2953](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
+| `useStudySpace` | `hook` | [src/context/StudySpaceContext.tsx:L3081-L3087](file:///F:/AppMaking/ViTudy/src/context/StudySpaceContext.tsx) | Hook truy cập trạng thái không gian bàn học, camera, danh sách tài liệu |
 | `useViToken` | `hook` | [src/context/ViTokenContext.tsx:L338-L344](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Hook quản lý ví ViToken, chi tiêu token, điểm danh streak và cấu hình AI |
 | `ViTokenProvider` | `context` | [src/context/ViTokenContext.tsx:L47-L336](file:///F:/AppMaking/ViTudy/src/context/ViTokenContext.tsx) | Provider lưu trữ và đồng bộ ví ViToken, lịch sử giao dịch vào localStorage |
 
@@ -125,6 +125,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 
 | Ký hiệu (Symbol) | Loại (Kind) | Vị trí (File:Lines) | Vai trò chức năng |
 |---|---|---|---|
+| `activateHostRoom` | `fn` | [src/lib/multiplayerRoom.ts:L29-L45](file:///F:/AppMaking/ViTudy/src/lib/multiplayerRoom.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `adjustPlayerResource` | `fn` | [src/lib/boardGameEngine.ts:L1155-L1190](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `applyDiscordUrlMappings` | `fn` | [src/lib/discord/urlMappings.ts:L5-L39](file:///F:/AppMaking/ViTudy/src/lib/discord/urlMappings.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `applyTransfer` | `fn` | [src/lib/boardGameEngine.ts:L77-L148](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -163,6 +164,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `exchangeOpenAiCode` | `fn` | [src/lib/aiClient.ts:L120-L235](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `extractOpenAiJwtClaims` | `fn` | [src/lib/openaiOAuth.ts:L148-L186](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `extractOutlineAndRoadmap` | `fn` | [src/lib/nonAiEngine.ts:L311-L337](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thuật toán trích xuất tiêu đề dựng lộ trình học tương tác theo thời gian |
+| `extractSpaceIdFromRoomParam` | `fn` | [src/lib/multiplayerRoom.ts:L7-L23](file:///F:/AppMaking/ViTudy/src/lib/multiplayerRoom.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `findDeedForTile` | `fn` | [src/lib/boardGameEngine.ts:L455-L466](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `findTopItemAtPoint` | `fn` | [src/utils/strokeSegmentation.ts:L77-L86](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `fitCircle` | `fn` | [src/utils/smartShape.ts:L270-L332](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -184,7 +186,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `generateRectangleStroke` | `fn` | [src/utils/smartShape.test.ts:L165-L208](file:///F:/AppMaking/ViTudy/src/utils/smartShape.test.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `generateSquareStroke` | `fn` | [src/utils/smartShape.test.ts:L115-L163](file:///F:/AppMaking/ViTudy/src/utils/smartShape.test.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `generateTriangleStroke` | `fn` | [src/utils/smartShape.test.ts:L210-L258](file:///F:/AppMaking/ViTudy/src/utils/smartShape.test.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `getActivePlayerId` | `fn` | [src/lib/boardGameEngine.ts:L448-L453](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `getActivePlayerId` | `fn` | [src/lib/boardGameEngine.ts:L448-L453](file:///F:/AppMaking/ViTudy/src/lib/boardGameEngine.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getActiveStroke` | `fn` | [src/lib/activeStrokeStore.ts:L12-L14](file:///F:/AppMaking/ViTudy/src/lib/activeStrokeStore.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getAssetPath` | `fn` | [src/lib/assets.ts:L4-L25](file:///F:/AppMaking/ViTudy/src/lib/assets.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getDeskItemBounds` | `fn` | [src/utils/strokeSegmentation.ts:L40-L63](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -296,7 +298,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `ActionLogEntry` | `type` | [src/engine/boardgame/schema/types.ts:L310-L316](file:///F:/AppMaking/ViTudy/src/engine/boardgame/schema/types.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ActionSpec` | `type` | [src/engine/boardgame/schema/types.ts:L206-L209](file:///F:/AppMaking/ViTudy/src/engine/boardgame/schema/types.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ActionType` | `type` | [src/engine/boardgame/schema/types.ts:L179-L204](file:///F:/AppMaking/ViTudy/src/engine/boardgame/schema/types.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `ActiveToolType` | `type` | [src/types/studyspace.ts:L153-L162](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `ActiveToolType` | `type` | [src/types/studyspace.ts:L154-L163](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AI_MATERIAL_CATALOG` | `component` | [src/services/boardgame/AiArchitect.ts:L9-L24](file:///F:/AppMaking/ViTudy/src/services/boardgame/AiArchitect.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AiArchitectDeps` | `type` | [src/services/boardgame/AiArchitect.ts:L67-L70](file:///F:/AppMaking/ViTudy/src/services/boardgame/AiArchitect.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `AiArchitectResult` | `type` | [src/services/boardgame/AiArchitect.ts:L72-L78](file:///F:/AppMaking/ViTudy/src/services/boardgame/AiArchitect.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -339,7 +341,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `calculateStage` | `fn` | [src/components/pet/stages.ts:L56-L65](file:///F:/AppMaking/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `canDispatchIntent` | `fn` | [src/engine/boardgame/net/multiplayerAdapter.ts:L35-L44](file:///F:/AppMaking/ViTudy/src/engine/boardgame/net/multiplayerAdapter.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `canEmitGameEvent` | `fn` | [src/hooks/useRealtimeMultiplayer.ts:L31-L39](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `CanvasTransform` | `type` | [src/types/studyspace.ts:L176-L181](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `CanvasTransform` | `type` | [src/types/studyspace.ts:L177-L182](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `CheckinResult` | `type` | [src/components/pet/usePet.ts:L19-L22](file:///F:/AppMaking/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `clampCounterValue` | `fn` | [src/engine/boardgame/core/counterHelpers.ts:L32-L42](file:///F:/AppMaking/ViTudy/src/engine/boardgame/core/counterHelpers.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `ClientIntent` | `type` | [src/engine/boardgame/net/multiplayerAdapter.ts:L12-L17](file:///F:/AppMaking/ViTudy/src/engine/boardgame/net/multiplayerAdapter.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -383,7 +385,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `dispatchTimeline` | `fn` | [src/engine/boardgame/log/actionLog.ts:L28-L45](file:///F:/AppMaking/ViTudy/src/engine/boardgame/log/actionLog.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `drawAction` | `const` | [src/engine/boardgame/actions/cardActions.ts:L24-L43](file:///F:/AppMaking/ViTudy/src/engine/boardgame/actions/cardActions.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `DRAWING_ASSETS_KEY` | `component` | [src/services/GameCabinetStorage.ts:L5-L5](file:///F:/AppMaking/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `DrawingStroke` | `type` | [src/types/studyspace.ts:L164-L174](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `DrawingStroke` | `type` | [src/types/studyspace.ts:L165-L175](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `EditorEntityDiff` | `type` | [src/services/boardgame/AiArchitect.ts:L152-L158](file:///F:/AppMaking/ViTudy/src/services/boardgame/AiArchitect.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `EMOJI_CATEGORIES` | `component` | [src/data/stickersAndEmojis.ts:L65-L412](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `EmojiCategory` | `type` | [src/data/stickersAndEmojis.ts:L13-L18](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -433,7 +435,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `generateSingleEntityDiffWithAi` | `fn` | [src/services/boardgame/AiArchitect.ts:L163-L173](file:///F:/AppMaking/ViTudy/src/services/boardgame/AiArchitect.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `generateTilesContentWithAi` | `fn` | [src/services/BoardGameAiService.ts:L289-L382](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `generateUniversalGamePackWithAi` | `fn` | [src/services/BoardGameAiService.ts:L422-L582](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `getActivePlayerId` | `fn` | [src/engine/boardgame/core/counterHelpers.ts:L44-L48](file:///F:/AppMaking/ViTudy/src/engine/boardgame/core/counterHelpers.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `getActivePlayerId` | `fn` | [src/engine/boardgame/core/counterHelpers.ts:L44-L48](file:///F:/AppMaking/ViTudy/src/engine/boardgame/core/counterHelpers.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getBoardShapeClipPath` | `fn` | [src/types/boardgame.ts:L161-L176](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getCounterValue` | `fn` | [src/engine/boardgame/core/counterHelpers.ts:L22-L30](file:///F:/AppMaking/ViTudy/src/engine/boardgame/core/counterHelpers.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getDeltaSince` | `fn` | [src/engine/boardgame/net/multiplayerAdapter.ts:L79-L89](file:///F:/AppMaking/ViTudy/src/engine/boardgame/net/multiplayerAdapter.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -470,7 +472,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `MatchSnapshot` | `type` | [src/types/boardgame.ts:L314-L333](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MathRenderer` | `component` | [src/components/common/MathRenderer.tsx:L99-L245](file:///F:/AppMaking/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MAX_QUEUE_DEPTH` | `component` | [src/engine/boardgame/core/reducer.ts:L17-L17](file:///F:/AppMaking/ViTudy/src/engine/boardgame/core/reducer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `mergePackages` | `fn` | [src/components/boardgame/editor/TemplateLibraryModal.tsx:L14-L52](file:///F:/AppMaking/ViTudy/src/components/boardgame/editor/TemplateLibraryModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `mergePackages` | `fn` | [src/components/boardgame/editor/TemplateLibraryModal.tsx:L17-L55](file:///F:/AppMaking/ViTudy/src/components/boardgame/editor/TemplateLibraryModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `metadata` | `const` | [src/app/layout.tsx:L41-L52](file:///F:/AppMaking/ViTudy/src/app/layout.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `migrateV1toV2` | `fn` | [src/engine/boardgame/schema/migrateV1toV2.ts:L37-L414](file:///F:/AppMaking/ViTudy/src/engine/boardgame/schema/migrateV1toV2.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `MigrationDialog` | `component` | [src/components/auth/MigrationDialog.tsx:L10-L110](file:///F:/AppMaking/ViTudy/src/components/auth/MigrationDialog.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -576,12 +578,12 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StickerPickerItem` | `type` | [src/data/stickersAndEmojis.ts:L1-L11](file:///F:/AppMaking/ViTudy/src/data/stickersAndEmojis.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StorageSaveResult` | `type` | [src/services/GameCabinetStorage.ts:L155-L159](file:///F:/AppMaking/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StreakCalendar` | `component` | [src/components/dashboard/StreakCalendar.tsx:L19-L114](file:///F:/AppMaking/ViTudy/src/components/dashboard/StreakCalendar.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `StudySpace` | `type` | [src/types/studyspace.ts:L139-L151](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `StudySpacePage` | `component` | [src/app/page.tsx:L136-L142](file:///F:/AppMaking/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StudySpace` | `type` | [src/types/studyspace.ts:L139-L152](file:///F:/AppMaking/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StudySpacePage` | `component` | [src/app/page.tsx:L156-L162](file:///F:/AppMaking/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudyStats` | `component` | [src/components/dashboard/StudyStats.tsx:L14-L189](file:///F:/AppMaking/ViTudy/src/components/dashboard/StudyStats.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `sumNotes` | `fn` | [src/engine/boardgame/core/denomination.ts:L30-L37](file:///F:/AppMaking/ViTudy/src/engine/boardgame/core/denomination.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TableCardInstance` | `type` | [src/types/boardgame.ts:L262-L272](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `TemplateLibraryPanel` | `component` | [src/components/boardgame/editor/TemplateLibraryModal.tsx:L60-L102](file:///F:/AppMaking/ViTudy/src/components/boardgame/editor/TemplateLibraryModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `TemplateLibraryPanel` | `component` | [src/components/boardgame/editor/TemplateLibraryModal.tsx:L63-L111](file:///F:/AppMaking/ViTudy/src/components/boardgame/editor/TemplateLibraryModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TermsPage` | `component` | [src/app/terms/page.tsx:L8-L84](file:///F:/AppMaking/ViTudy/src/app/terms/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TileCustomField` | `type` | [src/types/boardgame.ts:L178-L184](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TileFormTemplate` | `type` | [src/types/boardgame.ts:L65-L71](file:///F:/AppMaking/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -605,7 +607,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `UniversalAiGameSpec` | `type` | [src/services/BoardGameAiService.ts:L384-L392](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UploadedParseResult` | `type` | [src/services/OfficeParserService.ts:L8-L11](file:///F:/AppMaking/ViTudy/src/services/OfficeParserService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UrlImportResult` | `type` | [src/services/UrlDocumentService.ts:L3-L7](file:///F:/AppMaking/ViTudy/src/services/UrlDocumentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `useDeskItemInteraction` | `hook` | [src/hooks/useDeskItemInteraction.ts:L16-L180](file:///F:/AppMaking/ViTudy/src/hooks/useDeskItemInteraction.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `useDeskItemInteraction` | `hook` | [src/hooks/useDeskItemInteraction.ts:L16-L199](file:///F:/AppMaking/ViTudy/src/hooks/useDeskItemInteraction.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `useDiscordActivity` | `hook` | [src/hooks/useDiscordActivity.ts:L22-L114](file:///F:/AppMaking/ViTudy/src/hooks/useDiscordActivity.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UseDiscordActivityResult` | `type` | [src/hooks/useDiscordActivity.ts:L8-L20](file:///F:/AppMaking/ViTudy/src/hooks/useDiscordActivity.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `usePaymentStatus` | `hook` | [src/hooks/usePaymentStatus.ts:L16-L190](file:///F:/AppMaking/ViTudy/src/hooks/usePaymentStatus.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -614,7 +616,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `usePomodoro` | `hook` | [src/hooks/usePomodoro.ts:L23-L83](file:///F:/AppMaking/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePomodoroOptions` | `type` | [src/hooks/usePomodoro.ts:L7-L11](file:///F:/AppMaking/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePomodoroResult` | `type` | [src/hooks/usePomodoro.ts:L13-L21](file:///F:/AppMaking/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `useRealtimeMultiplayer` | `hook` | [src/hooks/useRealtimeMultiplayer.ts:L87-L350](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `useRealtimeMultiplayer` | `hook` | [src/hooks/useRealtimeMultiplayer.ts:L87-L402](file:///F:/AppMaking/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `useResponsiveLayout` | `hook` | [src/hooks/useResponsiveLayout.ts:L149-L217](file:///F:/AppMaking/ViTudy/src/hooks/useResponsiveLayout.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `validateAiDeckCards` | `fn` | [src/services/BoardGameAiService.ts:L46-L107](file:///F:/AppMaking/ViTudy/src/services/BoardGameAiService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `validateAiPackageDeep` | `fn` | [src/services/boardgame/AiArchitect.ts:L34-L65](file:///F:/AppMaking/ViTudy/src/services/boardgame/AiArchitect.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

@@ -48,9 +48,11 @@ function StudySpacePageContent() {
 
   const viewParam = searchParams.get('view');
   const roomParam = searchParams.get('room');
+  const permParam = searchParams.get('perm');
   const spaceParam = searchParams.get('space');
-  const { switchSpace, activeSpaceId } = useStudySpace();
+  const { switchSpace, joinSharedSpace, activeSpaceId, isLoaded } = useStudySpace();
   const lastSyncedSpaceParamRef = React.useRef<string | null>(null);
+  const lastJoinedRoomRef = React.useRef<string | null>(null);
 
   // URL có view=desk hoặc có room tham gia hoặc có space -> hiển thị Bàn học; ngược lại (view=home hoặc link gốc) -> Trang chủ
   const isDeskView = viewParam === 'desk' || Boolean(roomParam) || Boolean(spaceParam);
@@ -78,14 +80,32 @@ function StudySpacePageContent() {
     }
   }, [isDeskView]);
 
-  // Xử lý liên kết mời bạn học (?room=spaceId)
+  // Xử lý liên kết mời bạn học (?room=spaceId) - tải bàn học được chia sẻ cho cả khách và người đã đăng nhập
+  useEffect(() => {
+    if (!roomParam) {
+      lastJoinedRoomRef.current = null;
+      return;
+    }
+    if (isLoaded && lastJoinedRoomRef.current !== roomParam) {
+      lastJoinedRoomRef.current = roomParam;
+      joinSharedSpace(roomParam);
+    }
+  }, [roomParam, isLoaded, joinSharedSpace]);
+
   useEffect(() => {
     if (roomParam && user?.id) {
-      import('@/services/StudySpaceService').then(({ StudySpaceService }) => {
-        StudySpaceService.joinSpace(roomParam, user.id, 'viewer');
+      Promise.all([
+        import('@/services/StudySpaceService'),
+        import('@/lib/multiplayerRoom'),
+      ]).then(([{ StudySpaceService }, { extractSpaceIdFromRoomParam }]) => {
+        const baseSpaceId = extractSpaceIdFromRoomParam(roomParam);
+        const role = permParam === 'edit' ? 'editor' : 'viewer';
+        if (baseSpaceId) {
+          StudySpaceService.joinSpace(baseSpaceId, user.id, role);
+        }
       });
     }
-  }, [roomParam, user?.id]);
+  }, [roomParam, permParam, user?.id]);
 
   const handleEnterDesk = (spaceId?: string) => {
     if (spaceId) {

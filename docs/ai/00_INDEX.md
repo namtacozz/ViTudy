@@ -1,7 +1,7 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
 > **Commit Hash:** `dev (BoardGame Engine v2)`  
-> **Cập nhật lần cuối:** `2026-11-15`  
+> **Cập nhật lần cuối:** `2026-11-16`  
 > **Trạng thái Codebase:** Đã hoàn thành tái cấu trúc Board Game Engine tổ hợp v2 (`src/engine/boardgame/`, 6 Golden Games thuần dữ liệu, `AiArchitect`, Editor/RuleBuilder/Runtime UI, di trú v1→v2, lưu trữ v2 + backup v1).
 
 ---
