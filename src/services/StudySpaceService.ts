@@ -336,14 +336,30 @@ export class StudySpaceService {
       for (const item of items) {
         if (item.pages && item.pages.length > 0) {
           const safeItemId = ensureUUID(item.id);
-          const pageRows = item.pages.map(p => ({
-            id: p.id.includes('-') && p.id.length === 36 ? p.id : undefined,
-            document_id: safeItemId,
-            page_number: p.pageNumber,
-            title: p.title ? sanitizeDocumentText(p.title) : null,
-            content: sanitizeDocumentText(p.text || ''),
-          }));
-          await supabase.from('document_pages').upsert(pageRows, { onConflict: 'document_id,page_number' });
+          const seenPageNumbers = new Set<number>();
+          const pageRows = item.pages
+            .map((p, idx) => {
+              const pageNum = Number.isFinite(p.pageNumber) ? p.pageNumber : idx + 1;
+              if (seenPageNumbers.has(pageNum)) return null;
+              seenPageNumbers.add(pageNum);
+              return {
+                id: ensureUUID(p.id || `${safeItemId}-page-${pageNum}`),
+                document_id: safeItemId,
+                page_number: pageNum,
+                title: p.title ? sanitizeDocumentText(p.title) : null,
+                content: sanitizeDocumentText(p.text || ''),
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row !== null);
+
+          if (pageRows.length > 0) {
+            const { error: pageErr } = await supabase
+              .from('document_pages')
+              .upsert(pageRows, { onConflict: 'document_id,page_number' });
+            if (pageErr) {
+              console.warn('Lỗi upsert document_pages:', pageErr.message, pageErr.details);
+            }
+          }
         }
       }
     } catch (err) {

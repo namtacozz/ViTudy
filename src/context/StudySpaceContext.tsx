@@ -698,7 +698,14 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
                   .catch(() => {});
                 return mergedSpace;
               }
-              return cs;
+              const hydratedCloudItems = cs.items.map(csItem => {
+                const localItem = localMatch.items?.find(li => li.id === csItem.id || ensureUUID(li.id) === csItem.id);
+                if (localItem?.pages && localItem.pages.length > 0 && (!csItem.pages || csItem.pages.length === 0)) {
+                  return { ...csItem, pages: localItem.pages };
+                }
+                return csItem;
+              });
+              return { ...cs, items: hydratedCloudItems };
             });
 
             // Chỉ merge các space local của chính user này nếu chưa có trên cloud
@@ -999,7 +1006,24 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           )
         );
       } else if (type === 'items' && Array.isArray(data)) {
-        setSpaces(prev => prev.map(s => s.id === activeSpaceId ? { ...s, items: data } : s));
+        setSpaces(prev =>
+          prev.map(s => {
+            if (s.id !== activeSpaceId) return s;
+            const mergedItems = (data as DeskItem[]).map(incoming => {
+              const existing = s.items.find(it => it.id === incoming.id);
+              if (
+                existing &&
+                existing.pages &&
+                existing.pages.length > 0 &&
+                (!incoming.pages || incoming.pages.length === 0)
+              ) {
+                return { ...incoming, pages: existing.pages };
+              }
+              return incoming;
+            });
+            return { ...s, items: mergedItems };
+          })
+        );
       } else if (type === 'strokes' && Array.isArray(data)) {
         setStrokes(data);
       }
@@ -1020,6 +1044,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       skipNextFullItemsSyncRef.current = false;
       return;
     }
+    const perm = new URLSearchParams(window.location.search).get('perm');
+    if (activeSpace.isSharedGuest && perm !== 'edit') return;
     if (!window.location.search.includes('room=') && !activeSpace.isShared) return;
     const timer = setTimeout(() => {
       window.dispatchEvent(
@@ -1029,17 +1055,19 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       );
     }, 120);
     return () => clearTimeout(timer);
-  }, [activeSpace.items, activeSpace.isShared, isLoaded]);
+  }, [activeSpace.items, activeSpace.isShared, activeSpace.isSharedGuest, isLoaded]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !isLoaded || isApplyingRemoteSyncRef.current) return;
+    const perm = new URLSearchParams(window.location.search).get('perm');
+    if (activeSpace.isSharedGuest && perm !== 'edit') return;
     if (!window.location.search.includes('room=') && !activeSpace.isShared) return;
     window.dispatchEvent(
       new CustomEvent('vitudy:broadcast-desk-sync', {
         detail: { type: 'strokes', data: strokes },
       })
     );
-  }, [strokes, activeSpace.isShared, isLoaded]);
+  }, [strokes, activeSpace.isShared, activeSpace.isSharedGuest, isLoaded]);
 
   const markSpaceShared = useCallback((spaceId: string) => {
     setSpaces(prev => prev.map(s => s.id === spaceId ? { ...s, isShared: true } : s));
@@ -1076,6 +1104,7 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
           threads: [],
         };
 
+    isApplyingRemoteSyncRef.current = true;
     setSpaces(prev => {
       if (prev.some(s => s.id === sharedSpace.id)) {
         return prev.map(s => s.id === sharedSpace.id ? sharedSpace : s);
@@ -1084,6 +1113,9 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     });
     setActiveSpaceId(sharedSpace.id);
     setSelectedItemId(null);
+    setTimeout(() => {
+      isApplyingRemoteSyncRef.current = false;
+    }, 50);
   }, [spaces]);
 
   const switchSpace = (spaceId: string) => {
