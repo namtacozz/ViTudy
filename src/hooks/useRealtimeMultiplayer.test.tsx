@@ -186,10 +186,12 @@ describe('Multiplayer Room Sharing & Presence Sync', () => {
 
     await act(async () => {
       host.current.broadcastDeskUpdate('items', [{ id: 'doc-1', title: 'Giáo trình' }]);
+      host.current.broadcastDeskUpdate('item_move', { id: 'doc-1', x: 320, y: 180 });
     });
 
     expect(syncEvents).toEqual([
       { type: 'items', data: [{ id: 'doc-1', title: 'Giáo trình' }] },
+      { type: 'item_move', data: { id: 'doc-1', x: 320, y: 180 } },
     ]);
 
     await act(async () => {

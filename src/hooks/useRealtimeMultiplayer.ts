@@ -260,7 +260,7 @@ export function useRealtimeMultiplayer(
   }, [isConnected, userId]);
 
   // Broadcast desk objects/strokes updates to peers
-  const broadcastDeskUpdate = useCallback((type: 'items' | 'strokes', data: any) => {
+  const broadcastDeskUpdate = useCallback((type: 'items' | 'strokes' | 'item_move', data: any) => {
     if (!channelRef.current || !isConnected) return;
     channelRef.current.send({
       type: 'broadcast',
@@ -339,7 +339,7 @@ export function useRealtimeMultiplayer(
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ type: 'items' | 'strokes'; data: any }>).detail;
+      const detail = (e as CustomEvent<{ type: 'items' | 'strokes' | 'item_move'; data: any }>).detail;
       if (detail?.type && detail?.data !== undefined) {
         broadcastDeskUpdate(detail.type, detail.data);
       }

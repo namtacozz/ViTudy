@@ -933,6 +933,50 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   }, [spaces, strokes, saveCurrentSpaceImmediately, isLoaded, isSwitchingSpace]);
 
   const isApplyingRemoteSyncRef = useRef(false);
+  const skipNextFullItemsSyncRef = useRef(false);
+  const itemMoveThrottleRef = useRef<{
+    lastSentAt: number;
+    timer: ReturnType<typeof setTimeout> | null;
+    pending: { id: string; x: number; y: number } | null;
+  }>({ lastSentAt: 0, timer: null, pending: null });
+
+  const broadcastItemMoveThrottled = useCallback((id: string, x: number, y: number) => {
+    if (typeof window === 'undefined') return;
+    if (!window.location.search.includes('room=')) return;
+
+    const now = Date.now();
+    const state = itemMoveThrottleRef.current;
+    const INTERVAL_MS = 45;
+
+    const sendNow = (payload: { id: string; x: number; y: number }) => {
+      state.lastSentAt = Date.now();
+      state.pending = null;
+      window.dispatchEvent(
+        new CustomEvent('vitudy:broadcast-desk-sync', {
+          detail: { type: 'item_move', data: payload },
+        })
+      );
+    };
+
+    if (now - state.lastSentAt >= INTERVAL_MS) {
+      if (state.timer) {
+        clearTimeout(state.timer);
+        state.timer = null;
+      }
+      sendNow({ id, x, y });
+    } else {
+      state.pending = { id, x, y };
+      if (!state.timer) {
+        const remaining = INTERVAL_MS - (now - state.lastSentAt);
+        state.timer = setTimeout(() => {
+          state.timer = null;
+          if (state.pending) {
+            sendNow(state.pending);
+          }
+        }, remaining);
+      }
+    }
+  }, []);
 
   // Lắng nghe đồng bộ realtime bàn học khi học nhóm multiplayer
   useEffect(() => {
@@ -941,7 +985,20 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       const customEvent = e as CustomEvent<{ type: string; data: any }>;
       const { type, data } = customEvent.detail || {};
       isApplyingRemoteSyncRef.current = true;
-      if (type === 'items' && Array.isArray(data)) {
+      if (type === 'item_move' && data && typeof data.id === 'string') {
+        setSpaces(prev =>
+          prev.map(s =>
+            s.id === activeSpaceId
+              ? {
+                  ...s,
+                  items: s.items.map(item =>
+                    item.id === data.id ? { ...item, x: data.x, y: data.y } : item
+                  ),
+                }
+              : s
+          )
+        );
+      } else if (type === 'items' && Array.isArray(data)) {
         setSpaces(prev => prev.map(s => s.id === activeSpaceId ? { ...s, items: data } : s));
       } else if (type === 'strokes' && Array.isArray(data)) {
         setStrokes(data);
@@ -956,15 +1013,22 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0] || DEFAULT_EMPTY_SPACE;
 
-  // Phát thay đổi items/strokes lên kênh multiplayer khi đang trong phòng học nhóm
+  // Phát thay đổi items/strokes lên kênh multiplayer khi đang trong phòng học nhóm (debounce để không nghẽn socket)
   useEffect(() => {
     if (typeof window === 'undefined' || !isLoaded || isApplyingRemoteSyncRef.current) return;
+    if (skipNextFullItemsSyncRef.current) {
+      skipNextFullItemsSyncRef.current = false;
+      return;
+    }
     if (!window.location.search.includes('room=') && !activeSpace.isShared) return;
-    window.dispatchEvent(
-      new CustomEvent('vitudy:broadcast-desk-sync', {
-        detail: { type: 'items', data: activeSpace.items },
-      })
-    );
+    const timer = setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('vitudy:broadcast-desk-sync', {
+          detail: { type: 'items', data: activeSpace.items },
+        })
+      );
+    }, 120);
+    return () => clearTimeout(timer);
   }, [activeSpace.items, activeSpace.isShared, isLoaded]);
 
   useEffect(() => {
@@ -1722,6 +1786,8 @@ Trong đó:
   };
 
   const updateItemPosition = (id: string, x: number, y: number) => {
+    skipNextFullItemsSyncRef.current = true;
+    broadcastItemMoveThrottled(id, x, y);
     setSpaces(sList => {
       const nextList = sList.map(s => {
         if (s.id !== activeSpaceId) return s;
