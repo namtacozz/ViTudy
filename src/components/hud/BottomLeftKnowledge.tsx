@@ -141,7 +141,7 @@ export function BottomLeftKnowledge() {
     setDbTestResult({ status: 'testing', message: 'Đang kiểm tra kết nối...' });
     try {
       const startTime = performance.now();
-      const res = await fetch(`${url}/rest/v1/`, {
+      const res = await fetch(`${url}/auth/v1/health`, {
         headers: {
           'apikey': key,
           'Authorization': `Bearer ${key}`

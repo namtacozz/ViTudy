@@ -61,7 +61,7 @@ describe('BottomLeftKnowledge Share Modal', () => {
       expect(screen.getByRole('status').textContent).toContain('Kết nối thành công!');
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      'https://demo.supabase.co/rest/v1/',
+      'https://demo.supabase.co/auth/v1/health',
       expect.objectContaining({
         headers: expect.objectContaining({ apikey: 'demo-anon-key' }),
       })
