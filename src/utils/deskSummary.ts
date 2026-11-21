@@ -10,7 +10,6 @@ export function formatDeskItemsSummary(items?: DeskItem[]): string {
   const exams = items.filter(i => i.type === 'exam_sheet' || (i.type === 'paper' && i.isExamSheet)).length;
   const papers = items.filter(i => i.type === 'paper' && !i.isExamSheet).length;
   const notes = items.filter(i => i.type === 'sticky_note').length;
-  const games = items.filter(i => i.type === 'board_game').length;
   const codeBlocks = items.filter(i => i.type === 'code_block').length;
   const mindMaps = items.filter(i => i.type === 'mind_map').length;
   const spreadsheets = items.filter(i => i.type === 'spreadsheet').length;
@@ -24,7 +23,6 @@ export function formatDeskItemsSummary(items?: DeskItem[]): string {
   if (papers > 0) parts.push(`${papers} tài liệu`);
   if (exams > 0) parts.push(`${exams} đề thi`);
   if (notes > 0) parts.push(`${notes} ghi chú`);
-  if (games > 0) parts.push(`${games} trò chơi`);
   if (codeBlocks > 0) parts.push(`${codeBlocks} khối mã`);
   if (mindMaps > 0) parts.push(`${mindMaps} sơ đồ`);
   if (spreadsheets > 0) parts.push(`${spreadsheets} bảng tính`);

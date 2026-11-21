@@ -2,10 +2,9 @@ import { StudySpace } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { StudySpaceService } from './StudySpaceService';
 import {
-  BOARD_GAMES_KEY,
   DRAWING_ASSETS_KEY,
-  GameCabinetStorage,
-} from './GameCabinetStorage';
+  ArtboardStorage,
+} from './ArtboardStorage';
 import { idbSet } from '@/lib/indexeddb';
 
 export interface MigrationResult {
@@ -31,9 +30,7 @@ export class SyncService {
     }
 
     const raw = localStorage.getItem('vitudy_spaces');
-    const hasCabinetLocal =
-      Boolean(localStorage.getItem(DRAWING_ASSETS_KEY)) ||
-      Boolean(localStorage.getItem(BOARD_GAMES_KEY));
+    const hasCabinetLocal = Boolean(localStorage.getItem(DRAWING_ASSETS_KEY));
 
     if (!raw) return hasCabinetLocal;
 
@@ -94,7 +91,7 @@ export class SyncService {
           id: newSpaceId,
         }, userId);
 
-        // Remap item IDs (giữ nguyên artboardData, boardGameData và cập nhật drawingAssetId nếu có)
+        // Remap item IDs
         const remappedItems = space.items.map(item => {
           const newItemId = item.id.length === 36 && item.id.includes('-')
             ? item.id
@@ -104,22 +101,6 @@ export class SyncService {
             ...item,
             id: newItemId,
           };
-        }).map(item => {
-          if (item.type === 'board_game' && item.boardGameData) {
-            return {
-              ...item,
-              boardGameData: {
-                ...item.boardGameData,
-                pawns: item.boardGameData.pawns.map(p => ({
-                  ...p,
-                  drawingAssetId: p.drawingAssetId
-                    ? (result.idMap[p.drawingAssetId] || p.drawingAssetId)
-                    : undefined,
-                })),
-              },
-            };
-          }
-          return item;
         });
 
         // Remap threads targets and source items
@@ -155,34 +136,21 @@ export class SyncService {
         result.migrated += remappedItems.length;
       }
 
-      // Migrate Kho bản vẽ & Tủ Game từ Guest sang tài khoản đăng nhập
+      // Migrate Kho bản vẽ từ Guest sang tài khoản đăng nhập
       try {
-        const [drawings, games] = await Promise.all([
-          GameCabinetStorage.listDrawings(),
-          GameCabinetStorage.listGames(),
-        ]);
+        const drawings = await ArtboardStorage.listDrawings();
 
         if (drawings.length > 0) {
           if (typeof indexedDB !== 'undefined') {
             await idbSet(`user_${userId}_${DRAWING_ASSETS_KEY}`, drawings);
           }
           for (const d of drawings) {
-            await GameCabinetStorage.saveDrawing(d);
+            await ArtboardStorage.saveDrawing(d);
           }
           result.migrated += drawings.length;
         }
-
-        if (games.length > 0) {
-          if (typeof indexedDB !== 'undefined') {
-            await idbSet(`user_${userId}_${BOARD_GAMES_KEY}`, games);
-          }
-          for (const g of games) {
-            await GameCabinetStorage.saveGame(g);
-          }
-          result.migrated += games.length;
-        }
       } catch (cabinetErr: any) {
-        result.errors.push(cabinetErr?.message || 'Lỗi di chuyển Kho bản vẽ / Tủ Game');
+        result.errors.push(cabinetErr?.message || 'Lỗi di chuyển Kho bản vẽ');
       }
 
       // Mark user as migrated

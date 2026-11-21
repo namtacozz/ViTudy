@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { DeskItem } from '@/types/studyspace';
-import { ArtboardStroke, ArtboardImageLayer, SavedDrawingAsset } from '@/types/boardgame';
+import { DeskItem, ArtboardStroke, ArtboardImageLayer, SavedDrawingAsset } from '@/types/studyspace';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { useDeskItemInteraction } from '@/hooks/useDeskItemInteraction';
-import { GameCabinetStorage } from '@/services/GameCabinetStorage';
+import { ArtboardStorage } from '@/services/ArtboardStorage';
 import {
   PenTool,
   Paintbrush,
@@ -16,7 +15,6 @@ import {
   BoxSelect,
   ImagePlus,
   Save,
-  Crosshair,
   Undo2,
   Redo2,
   Trash2,
@@ -337,9 +335,9 @@ export const FourCornerArtboard = React.memo(function FourCornerArtboard({
 
   const handleSaveAsset = async () => {
     const payload = exportAssetPayload();
-    const res = await GameCabinetStorage.saveDrawing(payload);
+    const res = await ArtboardStorage.saveDrawing(payload);
     if (!res.ok) {
-      setStorageError(res.error || 'Không thể lưu bản vẽ.');
+      setStorageError('Không thể lưu bản vẽ.');
       return;
     }
     setStorageError(null);
@@ -348,44 +346,23 @@ export const FourCornerArtboard = React.memo(function FourCornerArtboard({
     setTimeout(() => setSavedNotice(false), 1800);
   };
 
-  const handleCreatePawnFree = async () => {
+  const handleExportSticker = async () => {
     const payload = exportAssetPayload();
-    const res = await GameCabinetStorage.saveDrawing(payload);
-    if (!res.ok) setStorageError(res.error || null);
+    await ArtboardStorage.saveDrawing(payload);
     updateArtboard(item.id, payload);
-    // Phát sự kiện để BoardGameArena nhận làm quân cờ, hoặc tạo sticker nếu chưa có bàn cờ
-    const evt = new CustomEvent('vitudy:add-pawn-to-board', {
-      detail: { asset: payload, fitToTile: false },
-      cancelable: true,
-    });
-    const dispatched = window.dispatchEvent(evt);
-    if (dispatched) {
-      // Nếu không có bàn cờ nào hứng sự kiện thì thêm dạng Sticker quân cờ ra bàn
-      addSticker(
-        {
-          type: 'sticker',
-          name: payload.name,
-          content: payload.name,
-          url: payload.dataUrl,
-          width: 96,
-          height: 96,
-        },
-        item.x + w + 24,
-        item.y,
-        96,
-        96
-      );
-    }
-  };
-
-  const handleClickTileToFitPawn = async () => {
-    const payload = exportAssetPayload();
-    await GameCabinetStorage.saveDrawing(payload);
-    updateArtboard(item.id, payload);
-    window.dispatchEvent(
-      new CustomEvent('vitudy:start-fit-pawn-mode', {
-        detail: { asset: payload },
-      })
+    addSticker(
+      {
+        type: 'sticker',
+        name: payload.name,
+        content: payload.name,
+        url: payload.dataUrl,
+        width: 140,
+        height: 140,
+      },
+      item.x + w + 24,
+      item.y,
+      140,
+      140
     );
   };
 
@@ -874,7 +851,7 @@ export const FourCornerArtboard = React.memo(function FourCornerArtboard({
           type="button"
           title="Lấy bản vẽ cũ từ kho"
           onClick={async () => {
-            const list = await GameCabinetStorage.listDrawings();
+            const list = await ArtboardStorage.listDrawings();
             setSavedAssets(list);
             setShowSavedList((v) => !v);
           }}
@@ -892,7 +869,7 @@ export const FourCornerArtboard = React.memo(function FourCornerArtboard({
         />
       </div>
 
-      {/* ================= GÓC 4: DƯỚI-PHẢI (LƯU & XUẤT QUÂN CỜ) ================= */}
+      {/* ================= GÓC 4: DƯỚI-PHẢI (LƯU & XUẤT STICKER) ================= */}
       <div
         onMouseDown={(e) => e.stopPropagation()}
         className="interactive-control absolute bottom-2 right-2 bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl p-1 shadow-lg flex items-center gap-1"
@@ -908,21 +885,12 @@ export const FourCornerArtboard = React.memo(function FourCornerArtboard({
         </button>
         <button
           type="button"
-          title="Xuất thành quân cờ kích thước tự do"
-          onClick={handleCreatePawnFree}
-          className="h-7 px-2.5 rounded-lg flex items-center gap-1 text-[11px] font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#E0562D]" />
-          <span>Quân cờ</span>
-        </button>
-        <button
-          type="button"
-          title="Ấn vào 1 ô trên bản đồ game để quân cờ tự động vừa khít ô đó"
-          onClick={handleClickTileToFitPawn}
+          title="Xuất bản vẽ thành sticker dán lên bàn học"
+          onClick={handleExportSticker}
           className="h-7 px-2.5 rounded-lg flex items-center gap-1 text-[11px] font-bold bg-[#E0562D] hover:bg-[#c9451e] text-white cursor-pointer shadow-xs"
         >
-          <Crosshair className="w-3.5 h-3.5" />
-          <span>Khớp ô Map</span>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Xuất Sticker</span>
         </button>
       </div>
 

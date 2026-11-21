@@ -9,7 +9,6 @@ import { StudySpaceService, ensureUUID } from '@/services/StudySpaceService';
 import { extractSpaceIdFromRoomParam } from '@/lib/multiplayerRoom';
 import { sanitizeDocumentText } from '@/services/OfficeParserService';
 import { OfflineQueue } from '@/services/OfflineQueue';
-import { cleanupDeskItemsOnDelete } from '@/lib/boardGameEngine';
 import { getActiveStroke, setActiveStroke } from '@/lib/activeStrokeStore';
 import { segmentStrokeByDeskItems } from '@/utils/strokeSegmentation';
 
@@ -123,13 +122,9 @@ interface StudySpaceContextType {
     y?: number,
     width?: number,
     height?: number,
-    initialAsset?: import('@/types/boardgame').SavedDrawingAsset
+    initialAsset?: import('@/types/studyspace').SavedDrawingAsset
   ) => string;
-  updateArtboard: (id: string, asset: import('@/types/boardgame').SavedDrawingAsset) => void;
-  addBoardGame: (pkg: import('@/types/boardgame').BoardGamePackage, x?: number, y?: number) => string;
-  updateBoardGame: (id: string, pkg: import('@/types/boardgame').BoardGamePackage) => void;
-  activeGamePenTool: import('@/types/boardgame').GamePenTool;
-  setActiveGamePenTool: (tool: import('@/types/boardgame').GamePenTool) => void;
+  updateArtboard: (id: string, asset: import('@/types/studyspace').SavedDrawingAsset) => void;
   updateCodeBlock: (id: string, snippet: string, language?: string) => void;
   updateMindMapNode: (id: string, text: string, color?: string, shape?: 'pill' | 'rectangle' | 'cloud') => void;
   strokes: import('@/types/studyspace').DrawingStroke[];
@@ -293,7 +288,6 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
 
   // Drawing & Note creation tools state
   const [activeTool, setActiveTool] = useState<import('@/types/studyspace').ActiveToolType>('cursor');
-  const [activeGamePenTool, setActiveGamePenTool] = useState<import('@/types/boardgame').GamePenTool>('select');
   const [penColor, setPenColor] = useState<string>('#2563eb');
   const [penWidthLevel, setPenWidthLevel] = useState<'small' | 'medium' | 'large'>('medium');
   const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
@@ -2469,7 +2463,7 @@ Trong đó:
     y?: number,
     width = 480,
     height = 420,
-    initialAsset?: import('@/types/boardgame').SavedDrawingAsset
+    initialAsset?: import('@/types/studyspace').SavedDrawingAsset
   ): string => {
     const artId =
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -2489,7 +2483,7 @@ Trong đó:
     }
 
     const now = new Date().toISOString();
-    const asset: import('@/types/boardgame').SavedDrawingAsset = initialAsset || {
+    const asset: import('@/types/studyspace').SavedDrawingAsset = initialAsset || {
       id: artId,
       name: 'Bản vẽ mới',
       dataUrl: '',
@@ -2532,7 +2526,7 @@ Trong đó:
     return artId;
   };
 
-  const updateArtboard = (id: string, asset: import('@/types/boardgame').SavedDrawingAsset) => {
+  const updateArtboard = (id: string, asset: import('@/types/studyspace').SavedDrawingAsset) => {
     setSpaces(sList => {
       const nextList = sList.map(s => {
         if (s.id !== activeSpaceId) return s;
@@ -2541,83 +2535,6 @@ Trong đó:
           updatedAt: new Date().toISOString(),
           items: s.items.map(item =>
             item.id === id ? { ...item, title: asset.name, artboardData: asset } : item
-          ),
-        };
-      });
-      syncLocal(nextList);
-      return nextList;
-    });
-  };
-
-  const addBoardGame = (
-    pkg: import('@/types/boardgame').BoardGamePackage,
-    x?: number,
-    y?: number
-  ): string => {
-    const gameItemId =
-      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : ensureUUID(`game-${Date.now()}`);
-    const w = pkg.mapConfig.width || 770;
-    const h = pkg.mapConfig.height || 770;
-
-    let targetX = x;
-    let targetY = y;
-    if (targetX === undefined || targetY === undefined) {
-      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
-      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const curScale = transform.scale || 1;
-      targetX = Math.round((-transform.x + viewW / 2) / curScale - w / 2);
-      targetY = Math.round((-transform.y + viewH / 2) / curScale - h / 2);
-    }
-
-    const newItem: DeskItem = {
-      id: gameItemId,
-      type: 'board_game',
-      title: pkg.title,
-      x: targetX,
-      y: targetY,
-      rotation: 0,
-      scale: 1,
-      zIndex: maxZIndex + 1,
-      pageCount: 1,
-      currentPageIndex: 0,
-      pages: [],
-      width: w,
-      height: h,
-      boardGameData: pkg,
-    };
-
-    setSpaces(sList => {
-      const nextList = sList.map(s => {
-        if (s.id !== activeSpaceId) return s;
-        return { ...s, updatedAt: new Date().toISOString(), items: [...s.items, newItem] };
-      });
-      syncLocal(nextList);
-      return nextList;
-    });
-    setSelectedItemId(gameItemId);
-    recentAddedItemIdsRef.current.push(gameItemId);
-    return gameItemId;
-  };
-
-  const updateBoardGame = (id: string, pkg: import('@/types/boardgame').BoardGamePackage) => {
-    setSpaces(sList => {
-      const nextList = sList.map(s => {
-        if (s.id !== activeSpaceId) return s;
-        return {
-          ...s,
-          updatedAt: new Date().toISOString(),
-          items: s.items.map(item =>
-            item.id === id
-              ? {
-                  ...item,
-                  title: pkg.title,
-                  width: pkg.mapConfig.width,
-                  height: pkg.mapConfig.height,
-                  boardGameData: pkg,
-                }
-              : item
           ),
         };
       });
@@ -3021,7 +2938,7 @@ Trong đó:
       const nextList = sList.map(s => {
         if (s.id !== activeSpaceId) return s;
         const deletedItem = s.items.find(item => item.id === id);
-        let nextItems = cleanupDeskItemsOnDelete(s.items, id);
+        let nextItems = s.items.filter(item => item.id !== id);
 
         // If a detached page is deleted and its source book still exists, restore the page back into the book
         if (deletedItem?.detachedFrom) {
@@ -3117,10 +3034,6 @@ Trong đó:
         addSticker,
         addArtboard,
         updateArtboard,
-        addBoardGame,
-        updateBoardGame,
-        activeGamePenTool,
-        setActiveGamePenTool,
         updateCodeBlock,
         updateMindMapNode,
         addUploadedDocument,

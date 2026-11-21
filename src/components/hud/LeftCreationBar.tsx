@@ -24,14 +24,10 @@ import {
   Network,
   Video,
   X,
-  Gamepad2,
   Palette,
-  Archive,
   Hand
 } from 'lucide-react';
 import { StickerEmojiPickerFlyout, StickerPickerItem } from '@/components/hud/StickerEmojiPickerFlyout';
-import { GamePenToolbar } from '@/components/hud/GamePenToolbar';
-import { GameCabinetModal } from '@/components/modals/GameCabinetModal';
 
 export function LeftCreationBar() {
   const {
@@ -60,7 +56,6 @@ export function LeftCreationBar() {
   const [isPenColorPickerOpen, setIsPenColorPickerOpen] = useState(false);
   const [isMoreToolsOpen, setIsMoreToolsOpen] = useState(false);
   const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
-  const [isGameCabinetOpen, setIsGameCabinetOpen] = useState(false);
 
   // Note pastel colors
   const stickyColors = [
@@ -116,20 +111,8 @@ export function LeftCreationBar() {
     {
       id: 'artboard_4corner',
       title: 'Bảng Vẽ 4 Góc',
-      desc: 'Vẽ tranh, kéo ảnh & tạo quân cờ khớp ô Map',
+      desc: 'Vẽ tranh, kéo ảnh & tạo sticker trang trí',
       icon: <Palette className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
-    },
-    {
-      id: 'game_pen',
-      title: 'Bút Trò Chơi (BETA)',
-      desc: 'Kho 6 game mẫu, soạn luật tiếng Việt & AI Architect',
-      icon: <Gamepad2 className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
-    },
-    {
-      id: 'game_cabinet',
-      title: 'Tủ Trò Chơi Cá Nhân',
-      desc: 'Lấy Board Game đã thiết kế ra bàn chơi hoặc sửa lại',
-      icon: <Archive className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
     },
     {
       id: 'screen_record',
@@ -178,14 +161,6 @@ export function LeftCreationBar() {
         typeLabel: 'Bảng Vẽ 4 Góc (Artboard)'
       });
       setActiveTool('create_note');
-      return;
-    }
-    if (toolId === 'game_pen') {
-      setActiveTool('game_pen');
-      return;
-    }
-    if (toolId === 'game_cabinet') {
-      setIsGameCabinetOpen(true);
       return;
     }
     if (toolId === 'shapes_and_lines') {
@@ -333,14 +308,14 @@ export function LeftCreationBar() {
 
         {/* Nút + Công cụ mở rộng (More tools) */}
         <button
-          title="Công cụ mở rộng (Shapes, Stickers, Code, Table, Mind map, Bút Trò Chơi BETA...)"
+          title="Công cụ mở rộng (Shapes, Stickers, Code, Table, Mind map...)"
           onClick={() => {
             setIsMoreToolsOpen(!isMoreToolsOpen);
             setIsNoteFlyoutOpen(false);
             setIsPenFlyoutOpen(false);
           }}
           className={`${toolBtnBase} ${
-            isMoreToolsOpen || activeTool === 'game_pen'
+            isMoreToolsOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-800 hover:text-black hover:bg-slate-100'
           }`}
@@ -631,15 +606,6 @@ export function LeftCreationBar() {
           onClose={() => setIsStickerPickerOpen(false)}
           onSelect={handleSelectStickerItem}
         />
-
-      {/* Thanh công cụ dọc Bút Trò Chơi (Game Pen) nằm cạnh thanh bên giống Pen/Highlight */}
-      <GamePenToolbar onOpenCabinet={() => setIsGameCabinetOpen(true)} />
-
-      {/* Modal Tủ Trò Chơi & Kho Bản Vẽ Cá Nhân */}
-      <GameCabinetModal
-        isOpen={isGameCabinetOpen}
-        onClose={() => setIsGameCabinetOpen(false)}
-      />
     </div>
   );
 }

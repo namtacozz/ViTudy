@@ -50,9 +50,6 @@ export function getDeskItemBounds(item: DeskItem): { w: number; h: number } {
   if (item.type === 'artboard') {
     return { w: item.width || 600, h: item.height || 450 };
   }
-  if (item.type === 'board_game') {
-    return { w: item.width || 720, h: item.height || 720 };
-  }
   if (item.type === 'spreadsheet') {
     return { w: item.width || 580, h: item.height || 400 };
   }

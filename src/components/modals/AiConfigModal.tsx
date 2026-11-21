@@ -56,9 +56,8 @@ export const CHATGPT_MODEL_GROUPS: ModelGroup[] = [
 ];
 
 export const SYSTEM_MODEL_LIST: ModelItem[] = [
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Mặc định · Phản hồi nhanh và tiết kiệm' },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Tối ưu tóm tắt và sinh câu hỏi' },
-  { id: 'gpt-4o', name: 'GPT-4o', desc: 'Phân tích bài toán chuyên sâu' },
+  { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', desc: 'Mặc định · Mạnh nhất, phù hợp bài toán nhiều bước' },
+  { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', desc: 'Phản hồi sâu, xử lý tài liệu dài' },
 ];
 
 export const BYOK_GEMINI_MODELS: ModelItem[] = [
@@ -125,7 +124,12 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
   useEffect(() => {
     if (isOpen) {
       setSelectedProvider(aiConfig.provider);
-      setSelectedModel(aiConfig.model || 'gpt-4o-mini');
+      const validModels = PROVIDER_MODELS[aiConfig.provider] || [];
+      const fallbackModel = validModels[0]?.id || 'gpt-5.6-terra';
+      const initialModel = aiConfig.model && validModels.some(m => m.id === aiConfig.model)
+        ? aiConfig.model
+        : fallbackModel;
+      setSelectedModel(initialModel);
       if (aiConfig.provider === 'byok_gemini') {
         setApiKeyInput(ByokStore.get('gemini') || '');
       } else if (aiConfig.provider === 'byok_openai') {
@@ -159,6 +163,12 @@ export function AiConfigModal({ isOpen, onClose }: AiConfigModalProps) {
   const FREE_ALLOWED_MODELS = ['gpt-5.6-terra', 'gpt-5.6-luna'];
 
   useEffect(() => {
+    if (selectedProvider === 'system') {
+      if (!SYSTEM_MODEL_LIST.some(m => m.id === selectedModel)) {
+        setSelectedModel('gpt-5.6-terra');
+      }
+      return;
+    }
     if (selectedProvider === 'oauth_chatgpt' && !isPlusOrHigher) {
       if (!FREE_ALLOWED_MODELS.includes(selectedModel)) {
         setSelectedModel('gpt-5.6-terra');

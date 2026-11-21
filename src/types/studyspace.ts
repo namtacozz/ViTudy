@@ -1,4 +1,35 @@
-import type { BoardGamePackage, SavedDrawingAsset } from './boardgame';
+export interface ArtboardStroke {
+  id: string;
+  points: { x: number; y: number; pressure?: number }[];
+  color: string;
+  width: number;
+  opacity?: number;
+  tool: 'pen' | 'brush' | 'eraser' | 'line' | 'rect' | 'circle';
+}
+
+export interface ArtboardImageLayer {
+  id: string;
+  url: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  visible?: boolean;
+}
+
+export interface SavedDrawingAsset {
+  id: string;
+  name: string;
+  dataUrl: string;
+  strokes: ArtboardStroke[];
+  images: ArtboardImageLayer[];
+  backgroundColor: string;
+  width: number;
+  height: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export type ItemType =
   | 'paper'
@@ -10,7 +41,6 @@ export type ItemType =
   | 'mind_map'
   | 'sticker'
   | 'artboard'
-  | 'board_game'
   | 'spreadsheet'
   | 'presentation';
 
@@ -119,7 +149,6 @@ export interface DeskItem {
   purchased?: boolean;
   marketItemId?: string;
   artboardData?: SavedDrawingAsset;
-  boardGameData?: BoardGamePackage;
   spreadsheetData?: SpreadsheetData;
   presentationData?: PresentationData;
 }
@@ -159,7 +188,6 @@ export type ActiveToolType =
   | 'eraser'
   | 'area_eraser'
   | 'create_note'
-  | 'game_pen'
   | 'create_artboard';
 
 export interface DrawingStroke {

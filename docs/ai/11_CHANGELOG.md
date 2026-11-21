@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-11-21 16:45 — main (Giới hạn danh sách mô hình ViTudy AI còn GPT-5.6 Terra & Luna)
+- Task: Cập nhật danh sách mô hình cho nhà cung cấp `ViTudy (Hệ thống)` chỉ gồm `GPT-5.6 Terra` và `GPT-5.6 Luna`.
+- Changed:
+  - `src/components/modals/AiConfigModal.tsx`: Cập nhật `SYSTEM_MODEL_LIST` chỉ còn `gpt-5.6-terra` và `gpt-5.6-luna`; tự động chuẩn hóa `selectedModel` về `gpt-5.6-terra` nếu đang chọn mô hình cũ (như `gpt-4o-mini`).
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm run docs:index`, `pnpm run docs:check`.
+
+## 2026-11-21 16:43 — dev (Lược bỏ hoàn toàn Bút Trò Chơi / Board Game Engine khỏi dự án)
+- Task: Xóa bỏ hoàn toàn module Bút Trò Chơi (`game_pen`, `board_game`, `GameCabinet`, `BoardGameEngine`) để tập trung vào lõi MVC học tập, đồng thời giữ nguyên Bảng Vẽ 4 Góc (`FourCornerArtboard`).
+- Changed:
+  - `src/types/studyspace.ts` & `src/services/ArtboardStorage.ts`: Di chuyển `ArtboardStroke`, `ArtboardImageLayer`, `SavedDrawingAsset` sang `studyspace.ts` và tách riêng lưu trữ bản vẽ `ArtboardStorage` cho `FourCornerArtboard` và `SyncService`; xóa `board_game`, `boardGameData`, `game_pen`.
+  - `src/components/hud/LeftCreationBar.tsx`, `src/components/canvas/{InfiniteDesk,DeskDrawingInteractionLayer}.tsx`, `src/components/objects/FourCornerArtboard.tsx`, `src/context/StudySpaceContext.tsx`, `src/services/{StudySpaceService,SyncService}.ts`, `src/hooks/useRealtimeMultiplayer.ts`, `src/utils/{deskSummary,strokeSegmentation}.ts`: Gỡ bỏ toàn bộ menu, toolbar, modal, state và logic liên quan đến Bút Trò Chơi & Board Game.
+- Added/Removed:
+  - Added: `src/services/ArtboardStorage.ts`.
+  - Removed: `src/components/boardgame/`, `src/components/objects/boardgame/`, `src/components/objects/BoardGameArena.tsx`, `src/components/hud/GamePenToolbar.tsx`, `src/components/modals/GameCabinetModal.tsx`, `src/engine/boardgame/`, `src/services/boardgame/`, `src/services/BoardGameAiService*`, `src/services/GameCabinetStorage.ts`, `src/lib/boardGameEngine*`, `src/types/boardgame*`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (34/34 files, 127/127 tests pass), `pnpm run docs:index` (338 symbols), `pnpm run docs:check`.
+- Open follow-ups: Không có.
+
 ## 2026-11-16 08:27 — dev (Sửa lỗi Multiplayer chia sẻ link vào phòng trống & chủ phòng không thấy ai)
 - Task: Khắc phục lỗi khi người dùng tạo link chia sẻ phòng học nhưng không thấy người tham gia, còn người nhận link nhấp vào bị rơi vào bàn học trống.
 - Changed:

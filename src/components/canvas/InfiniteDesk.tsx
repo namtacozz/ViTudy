@@ -11,7 +11,6 @@ import { CodeBlockItem } from '../objects/CodeBlockItem';
 import { MindMapNodeItem } from '../objects/MindMapNodeItem';
 import { StickerItem } from '../objects/StickerItem';
 import { FourCornerArtboard } from '../objects/FourCornerArtboard';
-import { BoardGameArena } from '../objects/BoardGameArena';
 import { SpreadsheetItem } from '../objects/SpreadsheetItem';
 import { PresentationItem } from '../objects/PresentationItem';
 import { MindMapConnectors } from './MindMapConnectors';
@@ -748,9 +747,6 @@ export function InfiniteDesk() {
           if (item.type === 'artboard') {
             return <FourCornerArtboard key={item.id} item={item} isSelected={isSelected} />;
           }
-          if (item.type === 'board_game') {
-            return <BoardGameArena key={item.id} item={item} isSelected={isSelected} />;
-          }
           if (item.type === 'spreadsheet') {
             return <SpreadsheetItem key={item.id} item={item} isSelected={isSelected} />;
           }
@@ -774,7 +770,7 @@ export function InfiniteDesk() {
       </div>
 
       {/* Top-Level Full-Screen Drawing, Creation & Eraser Layer */}
-      {activeTool !== 'cursor' && activeTool !== 'game_pen' && (
+      {activeTool !== 'cursor' && (
         <DeskDrawingInteractionLayer />
       )}
 
