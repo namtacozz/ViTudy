@@ -189,7 +189,14 @@ function extractPlainTextFromWordXmlChunk(xmlChunk: string): string {
   return out.replace(/\n{3,}/g, '\n\n').trim();
 }
 
+const MAX_OFFICE_ARCHIVE_BYTES = 25 * 1024 * 1024; // 25 MB
+const MAX_XML_EXTRACT_CHARS = 5_000_000;
+const MAX_PPTX_SLIDES = 200;
+
 async function extractDocxPagesFromXml(arrayBuffer: ArrayBuffer): Promise<{ pages: ParsedPage[] | null; declaredPages: number }> {
+  if (arrayBuffer.byteLength > MAX_OFFICE_ARCHIVE_BYTES) {
+    return { pages: null, declaredPages: 0 };
+  }
   try {
     const zip = await JSZip.loadAsync(arrayBuffer);
     let declaredPages = 0;
@@ -207,6 +214,9 @@ async function extractDocxPagesFromXml(arrayBuffer: ArrayBuffer): Promise<{ page
     if (!docXmlFile) return { pages: null, declaredPages };
 
     const docXml = await docXmlFile.async('text');
+    if (docXml.length > MAX_XML_EXTRACT_CHARS) {
+      return { pages: null, declaredPages };
+    }
     const pageBreakRegex =
       /<w:br\b[^>]*w:type=["']page["'][^>]*\/?>|<w:lastRenderedPageBreak\b[^>]*\/?>|<w:pageBreakBefore\b(?![^>]*w:val=["'](?:0|false)["'])[^>]*\/?>/g;
 
@@ -368,6 +378,9 @@ export async function parsePptxPresentation(
   file: File
 ): Promise<{ slides: PresentationSlide[]; pages: ParsedPage[] }> {
   const arrayBuffer = await file.arrayBuffer();
+  if (arrayBuffer.byteLength > MAX_OFFICE_ARCHIVE_BYTES) {
+    throw new Error('Tệp PowerPoint vượt quá giới hạn dung lượng 25 MB.');
+  }
 
   const binaryCheck = isBinaryOrCorrupted(arrayBuffer);
   if (binaryCheck.isCorrupted) {
@@ -387,6 +400,9 @@ export async function parsePptxPresentation(
 
   if (slideFiles.length === 0) {
     throw new Error('Tệp PowerPoint .pptx không chứa slide nào.');
+  }
+  if (slideFiles.length > MAX_PPTX_SLIDES) {
+    throw new Error(`Tệp PowerPoint có quá nhiều slide (${slideFiles.length} > ${MAX_PPTX_SLIDES}).`);
   }
 
   const slides: PresentationSlide[] = [];

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { todayKey } from '@/lib/dateVN';
 import { calculateStage, calculateDaysToNextStage, PET_STAGES } from '@/components/pet/stages';
+import { decodeSignedPetCookie, encodeSignedPetCookie } from '@/lib/petCookie';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,22 +14,11 @@ export async function POST(request: Request) {
     const yesterday = todayKey(yesterdayDate);
 
     const cookieHeader = request.headers.get('cookie') || '';
-    const petDataMatch = cookieHeader.match(/vitudy_pet_streak=([^;]+)/);
-    
-    let currentStreak = 0;
-    let longestStreak = 0;
-    let lastCheckinDate = '';
+    const parsed = decodeSignedPetCookie(cookieHeader);
 
-    if (petDataMatch) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(petDataMatch[1]));
-        currentStreak = Number(parsed.current_streak) || 0;
-        longestStreak = Number(parsed.longest_streak) || 0;
-        lastCheckinDate = parsed.last_checkin_date || '';
-      } catch {
-        // use default
-      }
-    }
+    let currentStreak = parsed?.current_streak ?? 0;
+    let longestStreak = parsed?.longest_streak ?? 0;
+    let lastCheckinDate = parsed?.last_checkin_date ?? '';
 
     // 1. Idempotent: Nếu đã điểm danh hôm nay rồi thì không tăng streak
     if (lastCheckinDate === today) {
@@ -85,11 +75,12 @@ export async function POST(request: Request) {
       new_stage: newStage,
     });
 
-    // Lưu trạng thái vào cookie 30 ngày
-    response.cookies.set('vitudy_pet_streak', encodeURIComponent(JSON.stringify(updatedData)), {
+    // Lưu trạng thái vào cookie 30 ngày (ký HMAC + httpOnly)
+    response.cookies.set('vitudy_pet_streak', encodeSignedPetCookie(updatedData), {
       path: '/',
       maxAge: 30 * 24 * 60 * 60,
       sameSite: 'lax',
+      httpOnly: true,
     });
 
     return response;

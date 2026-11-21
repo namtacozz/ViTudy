@@ -1,11 +1,6 @@
 import { StudySpace } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { StudySpaceService } from './StudySpaceService';
-import {
-  DRAWING_ASSETS_KEY,
-  ArtboardStorage,
-} from './ArtboardStorage';
-import { idbSet } from '@/lib/indexeddb';
 
 export interface MigrationResult {
   migrated: number;
@@ -30,13 +25,11 @@ export class SyncService {
     }
 
     const raw = localStorage.getItem('vitudy_spaces');
-    const hasCabinetLocal = Boolean(localStorage.getItem(DRAWING_ASSETS_KEY));
-
-    if (!raw) return hasCabinetLocal;
+    if (!raw) return false;
 
     try {
       const spaces: StudySpace[] = JSON.parse(raw);
-      if (!Array.isArray(spaces) || spaces.length === 0) return hasCabinetLocal;
+      if (!Array.isArray(spaces) || spaces.length === 0) return false;
 
       // Ignore pure initial demo spaces
       const demoIds = new Set(INITIAL_SPACES.map(s => s.id));
@@ -46,9 +39,9 @@ export class SyncService {
       // Check if user has added custom items beyond the initial mock items
       const initialTotalItems = INITIAL_SPACES.reduce((sum, s) => sum + (s.items?.length || 0), 0);
       const currentTotalItems = spaces.reduce((sum, s) => sum + (s.items?.length || 0), 0);
-      return currentTotalItems > initialTotalItems || hasCabinetLocal;
+      return currentTotalItems > initialTotalItems;
     } catch {
-      return hasCabinetLocal;
+      return false;
     }
   }
 
@@ -134,23 +127,6 @@ export class SyncService {
         } catch {}
 
         result.migrated += remappedItems.length;
-      }
-
-      // Migrate Kho bản vẽ từ Guest sang tài khoản đăng nhập
-      try {
-        const drawings = await ArtboardStorage.listDrawings();
-
-        if (drawings.length > 0) {
-          if (typeof indexedDB !== 'undefined') {
-            await idbSet(`user_${userId}_${DRAWING_ASSETS_KEY}`, drawings);
-          }
-          for (const d of drawings) {
-            await ArtboardStorage.saveDrawing(d);
-          }
-          result.migrated += drawings.length;
-        }
-      } catch (cabinetErr: any) {
-        result.errors.push(cabinetErr?.message || 'Lỗi di chuyển Kho bản vẽ');
       }
 
       // Mark user as migrated

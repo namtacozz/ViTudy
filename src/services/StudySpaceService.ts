@@ -39,8 +39,6 @@ export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInse
   let extraDataJson: Json | null = (item.examData as unknown as Json) || null;
   if (item.type === 'sticker' && item.stickerData) {
     extraDataJson = item.stickerData as unknown as Json;
-  } else if (item.type === 'artboard' && item.artboardData) {
-    extraDataJson = item.artboardData as unknown as Json;
   } else if (item.type === 'spreadsheet' && item.spreadsheetData) {
     extraDataJson = item.spreadsheetData as unknown as Json;
   } else if (item.type === 'presentation' && item.presentationData) {
@@ -110,7 +108,6 @@ export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): 
     mindMapShape: row.item_type === 'mind_map' ? (row.color_theme as any) : undefined,
     mindMapParentId: row.item_type === 'mind_map' && row.source_documents ? (row.source_documents as any)?.parentId : undefined,
     stickerData: row.item_type === 'sticker' && row.exam_data ? (row.exam_data as any) : undefined,
-    artboardData: (row.item_type as string) === 'artboard' && row.exam_data ? (row.exam_data as any) : undefined,
     spreadsheetData: (row.item_type as string) === 'spreadsheet' && row.exam_data ? (row.exam_data as any) : undefined,
     presentationData: (row.item_type as string) === 'presentation' && row.exam_data ? (row.exam_data as any) : undefined,
   };

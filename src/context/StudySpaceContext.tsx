@@ -117,14 +117,6 @@ interface StudySpaceContextType {
     customWidth?: number,
     customHeight?: number
   ) => string;
-  addArtboard: (
-    x?: number,
-    y?: number,
-    width?: number,
-    height?: number,
-    initialAsset?: import('@/types/studyspace').SavedDrawingAsset
-  ) => string;
-  updateArtboard: (id: string, asset: import('@/types/studyspace').SavedDrawingAsset) => void;
   updateCodeBlock: (id: string, snippet: string, language?: string) => void;
   updateMindMapNode: (id: string, text: string, color?: string, shape?: 'pill' | 'rectangle' | 'cloud') => void;
   strokes: import('@/types/studyspace').DrawingStroke[];
@@ -2458,91 +2450,6 @@ Trong đó:
     return stickerId;
   };
 
-  const addArtboard = (
-    x?: number,
-    y?: number,
-    width = 480,
-    height = 420,
-    initialAsset?: import('@/types/studyspace').SavedDrawingAsset
-  ): string => {
-    const artId =
-      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : ensureUUID(`artboard-${Date.now()}`);
-    const w = Math.max(320, width);
-    const h = Math.max(280, height);
-
-    let targetX = x;
-    let targetY = y;
-    if (targetX === undefined || targetY === undefined) {
-      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
-      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const curScale = transform.scale || 1;
-      targetX = Math.round((-transform.x + viewW / 2) / curScale - w / 2);
-      targetY = Math.round((-transform.y + viewH / 2) / curScale - h / 2);
-    }
-
-    const now = new Date().toISOString();
-    const asset: import('@/types/studyspace').SavedDrawingAsset = initialAsset || {
-      id: artId,
-      name: 'Bản vẽ mới',
-      dataUrl: '',
-      strokes: [],
-      images: [],
-      backgroundColor: '#ffffff',
-      width: w,
-      height: h,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    const newItem: DeskItem = {
-      id: artId,
-      type: 'artboard',
-      title: asset.name,
-      x: targetX,
-      y: targetY,
-      rotation: 0,
-      scale: 1,
-      zIndex: maxZIndex + 1,
-      pageCount: 1,
-      currentPageIndex: 0,
-      pages: [],
-      width: w,
-      height: h,
-      artboardData: asset,
-    };
-
-    setSpaces(sList => {
-      const nextList = sList.map(s => {
-        if (s.id !== activeSpaceId) return s;
-        return { ...s, updatedAt: now, items: [...s.items, newItem] };
-      });
-      syncLocal(nextList);
-      return nextList;
-    });
-    setSelectedItemId(artId);
-    recentAddedItemIdsRef.current.push(artId);
-    return artId;
-  };
-
-  const updateArtboard = (id: string, asset: import('@/types/studyspace').SavedDrawingAsset) => {
-    setSpaces(sList => {
-      const nextList = sList.map(s => {
-        if (s.id !== activeSpaceId) return s;
-        return {
-          ...s,
-          updatedAt: new Date().toISOString(),
-          items: s.items.map(item =>
-            item.id === id ? { ...item, title: asset.name, artboardData: asset } : item
-          ),
-        };
-      });
-      syncLocal(nextList);
-      return nextList;
-    });
-  };
-
   const updateCodeBlock = (id: string, snippet: string, language?: string) => {
     setSpaces(sList =>
       sList.map(s => {
@@ -3032,8 +2939,6 @@ Trong đó:
         addCodeBlock,
         addMindMapNode,
         addSticker,
-        addArtboard,
-        updateArtboard,
         updateCodeBlock,
         updateMindMapNode,
         addUploadedDocument,

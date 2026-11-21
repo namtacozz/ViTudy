@@ -353,12 +353,27 @@ serve(async (req: Request) => {
         );
       }
       const supabaseAdmin = getServiceRoleClient();
+      const { data: refundLimit, error: refundLimitErr } = await supabaseAdmin.rpc('consume_rate_limit', {
+        p_user: user.id,
+        p_action: 'ai_refund_hour',
+        p_limit: 5,
+        p_window: '1 hour',
+      });
+      if (refundLimitErr || (refundLimit && !refundLimit[0]?.allowed)) {
+        return new Response(
+          JSON.stringify({ refunded: false, error: 'refund_rate_limited' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const twoMinutesAgoIso = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: debitTx } = await supabaseAdmin
         .from('vitoken_transactions')
         .select('amount')
         .eq('user_id', user.id)
         .eq('reference', reqId)
         .eq('transaction_type', 'ai_usage')
+        .gte('created_at', twoMinutesAgoIso)
         .maybeSingle();
 
       if (!debitTx || !debitTx.amount) {

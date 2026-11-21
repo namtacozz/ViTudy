@@ -10,7 +10,6 @@ import { StickyNoteItem } from '../objects/StickyNoteItem';
 import { CodeBlockItem } from '../objects/CodeBlockItem';
 import { MindMapNodeItem } from '../objects/MindMapNodeItem';
 import { StickerItem } from '../objects/StickerItem';
-import { FourCornerArtboard } from '../objects/FourCornerArtboard';
 import { SpreadsheetItem } from '../objects/SpreadsheetItem';
 import { PresentationItem } from '../objects/PresentationItem';
 import { MindMapConnectors } from './MindMapConnectors';
@@ -743,9 +742,6 @@ export function InfiniteDesk() {
           }
           if (item.type === 'sticker') {
             return <StickerItem key={item.id} item={item} isSelected={isSelected} />;
-          }
-          if (item.type === 'artboard') {
-            return <FourCornerArtboard key={item.id} item={item} isSelected={isSelected} />;
           }
           if (item.type === 'spreadsheet') {
             return <SpreadsheetItem key={item.id} item={item} isSelected={isSelected} />;

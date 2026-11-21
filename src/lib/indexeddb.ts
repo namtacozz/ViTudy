@@ -18,6 +18,9 @@ export async function getIDB(): Promise<IDBPDatabase | null> {
           db.createObjectStore('offline_ops', { keyPath: 'id', autoIncrement: true });
         }
       },
+    }).catch((err) => {
+      dbPromise = null;
+      throw err;
     });
   }
 

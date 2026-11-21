@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
-import { isDiscordActivity } from '@/lib/discord/detect';
 
 export type AuthStatus = 'loading' | 'guest' | 'authenticated';
 
@@ -80,27 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (initialSession?.user) {
         setStatus('authenticated');
         fetchProfile(initialSession.user.id);
-      } else if (isDiscordActivity()) {
-        // Trong iframe Discord Activity: tự động đăng nhập qua luồng SDK
-        try {
-          setStatus('loading');
-          const { initDiscord } = await import('@/lib/discord/sdk');
-          const discordData = await initDiscord();
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-          const res = await fetch(`${supabaseUrl}/functions/v1/discord-auth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: discordData.code }),
-          });
-          if (!res.ok) {
-            throw new Error('Discord auth failed');
-          }
-          const { token_hash } = await res.json();
-          await supabase.auth.verifyOtp({ token_hash, type: 'magiclink' });
-        } catch (err) {
-          console.warn('[Discord Auth] Auto-login failed:', err);
-          setStatus('guest');
-        }
       } else {
         setStatus('guest');
       }

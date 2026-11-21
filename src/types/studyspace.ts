@@ -1,36 +1,3 @@
-export interface ArtboardStroke {
-  id: string;
-  points: { x: number; y: number; pressure?: number }[];
-  color: string;
-  width: number;
-  opacity?: number;
-  tool: 'pen' | 'brush' | 'eraser' | 'line' | 'rect' | 'circle';
-}
-
-export interface ArtboardImageLayer {
-  id: string;
-  url: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation?: number;
-  visible?: boolean;
-}
-
-export interface SavedDrawingAsset {
-  id: string;
-  name: string;
-  dataUrl: string;
-  strokes: ArtboardStroke[];
-  images: ArtboardImageLayer[];
-  backgroundColor: string;
-  width: number;
-  height: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export type ItemType =
   | 'paper'
   | 'book'
@@ -40,7 +7,6 @@ export type ItemType =
   | 'code_block'
   | 'mind_map'
   | 'sticker'
-  | 'artboard'
   | 'spreadsheet'
   | 'presentation';
 
@@ -148,7 +114,6 @@ export interface DeskItem {
   author?: string;
   purchased?: boolean;
   marketItemId?: string;
-  artboardData?: SavedDrawingAsset;
   spreadsheetData?: SpreadsheetData;
   presentationData?: PresentationData;
 }
@@ -187,8 +152,7 @@ export type ActiveToolType =
   | 'smart_shape'
   | 'eraser'
   | 'area_eraser'
-  | 'create_note'
-  | 'create_artboard';
+  | 'create_note';
 
 export interface DrawingStroke {
   id: string;

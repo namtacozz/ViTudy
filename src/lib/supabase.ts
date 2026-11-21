@@ -1,5 +1,4 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { applyDiscordUrlMappings } from './discord/urlMappings';
 
 const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -45,9 +44,6 @@ export function getSupabase(): SupabaseClient | null {
   if (cachedClient) {
     return cachedClient;
   }
-
-  // Khởi tạo URL mapping nếu đang chạy trong Discord Embedded Activity trước khi gọi mạng
-  applyDiscordUrlMappings();
 
   try {
     cachedClient = createClient(url, anonKey, {

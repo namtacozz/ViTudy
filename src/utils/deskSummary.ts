@@ -14,7 +14,6 @@ export function formatDeskItemsSummary(items?: DeskItem[]): string {
   const mindMaps = items.filter(i => i.type === 'mind_map').length;
   const spreadsheets = items.filter(i => i.type === 'spreadsheet').length;
   const presentations = items.filter(i => i.type === 'presentation').length;
-  const artboards = items.filter(i => i.type === 'artboard').length;
   const roadmaps = items.filter(i => i.type === 'roadmap').length;
   const stickers = items.filter(i => i.type === 'sticker').length;
 
@@ -27,7 +26,6 @@ export function formatDeskItemsSummary(items?: DeskItem[]): string {
   if (mindMaps > 0) parts.push(`${mindMaps} sơ đồ`);
   if (spreadsheets > 0) parts.push(`${spreadsheets} bảng tính`);
   if (presentations > 0) parts.push(`${presentations} slide`);
-  if (artboards > 0) parts.push(`${artboards} bảng vẽ`);
   if (roadmaps > 0) parts.push(`${roadmaps} lộ trình`);
   if (stickers > 0) parts.push(`${stickers} hình dán`);
 

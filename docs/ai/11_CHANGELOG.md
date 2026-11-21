@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-11-21 17:32 — main (Tinh gọn dự án chuẩn MVP: gỡ Bảng Vẽ 4 Góc, Quay màn hình, Discord SDK; giữ Kho Sticker/Emoji/Giphy)
+- Task: Thực thi kế hoạch tinh gọn MVP theo báo cáo cuối kỳ (giữ nguyên Kho Sticker / Emoji / GIF Giphy; gỡ bỏ Bảng Vẽ 4 Góc, Quay màn hình & Ghi âm, và Discord Embedded Activity SDK).
+- Changed:
+  - `src/components/hud/LeftCreationBar.tsx`, `src/components/canvas/{InfiniteDesk,DeskDrawingInteractionLayer}.tsx`, `src/context/StudySpaceContext.tsx`, `src/services/{StudySpaceService,SyncService}.ts`, `src/types/studyspace.ts`, `src/utils/{deskSummary,strokeSegmentation}.ts`: Gỡ bỏ `artboard`, `artboardData`, `create_artboard`, `addArtboard`, `updateArtboard` và mục `screen_record`; bảo toàn đầy đủ `StickerEmojiPickerFlyout`, `StickerItem`, `GiphyService`.
+  - `src/components/hud/BottomLeftKnowledge.tsx`: Gỡ bỏ state, `MediaRecorder` và 2 modal quay màn hình (`isRecording`, `isSetupModalOpen`, `isFinishModalOpen`).
+  - `src/lib/supabase.ts` & `src/context/AuthContext.tsx`: Gỡ lời gọi `applyDiscordUrlMappings()` và nhánh auto-login iframe `isDiscordActivity()`.
+- Added/Removed:
+  - Removed: `src/components/objects/FourCornerArtboard.tsx`, `src/services/ArtboardStorage.ts`, `src/lib/discord/`, `src/hooks/useDiscordActivity.ts`, `supabase/functions/discord-auth/`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (32/32 files, 124/124 tests pass), `pnpm run docs:index` (324 symbols), `pnpm run docs:check`.
+
+## 2026-11-21 17:03 — main (Dọn sạch tàn dư PhysicsDiceBox & nhãn quân cờ)
+- Task: Xóa bỏ hoàn toàn các thành phần còn sót của hệ thống board game (`PhysicsDiceBox`, âm thanh xúc xắc, nhãn "tạo quân cờ").
+- Changed:
+  - `src/components/hud/LeftCreationBar.tsx`: Đổi `title` nút Bảng Vẽ 4 Góc thành `"Bảng Vẽ 4 Góc (Vẽ tranh, kéo ảnh & tạo sticker)"`.
+- Added/Removed:
+  - Removed: `src/lib/physicsDiceBox.ts`, `public/sounds/dice-roll.mp3`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm run docs:index` (339 symbols), `pnpm run docs:check`.
+
+## 2026-11-21 17:02 — main (Vá toàn bộ 9 lỗ hổng & lỗi tài nguyên từ Bug Hunter Audit)
+- Task: Khắc phục 7 lỗi `REAL_BUG` (`BUG-2`, `BUG-3`, `BUG-4`, `BUG-6`, `BUG-7`, `BUG-8`, `BUG-9`) và 2 hạng mục hardening (`BUG-1`, `BUG-5`) được phát hiện qua kiểm toán `bug-hunter`.
+- Changed:
+  - `supabase/migrations/0023_security_hardening_fixes.sql`: Thu hồi quyền thực thi `admin_simulate_payment` khỏi `PUBLIC, anon, authenticated` (`BUG-1`); siết kiểm tra quyền sở hữu/truy cập `p_space_id` và sửa cột `INSERT INTO study_spaces (owner_id, name, subject, camera_transform)` trong `join_activity_room` (`BUG-2`).
+  - `supabase/functions/ai-chat/index.ts`: Giới hạn `refund_ai_request` bằng rate limit `ai_refund_hour` (5 lần/giờ) và cửa sổ thời gian 2 phút gần nhất (`BUG-3`).
+  - `supabase/functions/discord-auth/index.ts`: Thay `auth.admin.listUsers()` không phân trang bằng truy vấn trực tiếp `profiles` theo `email` (`BUG-4`).
+  - `src/components/objects/StickerItem.tsx`: Thay `dangerouslySetInnerHTML` bằng `<img src="data:image/svg+xml;utf8,..." />` để chặn Stored/Multiplayer DOM XSS (`BUG-9`).
+  - `src/lib/physicsDiceBox.ts`: Gỡ `this.light.target`, giải phóng `this.light.shadow.map` và `this.floorMesh.material` trong `resize()` và `dispose()` (`BUG-7`).
+  - `src/lib/indexeddb.ts`: Reset `dbPromise = null` trong `.catch()` của `openDB()` để tránh treo vĩnh viễn IndexedDB khi lỗi tạm thời (`BUG-8`).
+  - `src/services/OfficeParserService.ts`: Giới hạn kích thước archive tối đa 25 MB, `MAX_XML_EXTRACT_CHARS = 5_000_000` và `MAX_PPTX_SLIDES = 200` khi đọc bằng `JSZip` (`BUG-5`).
+  - `src/lib/petCookie.ts` & `src/app/api/pet/{checkin,status}/route.ts`: Ký HMAC-SHA256 và bật `httpOnly: true` cho cookie `vitudy_pet_streak` (`BUG-6`).
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (34/34 files, 127/127 tests pass), `pnpm run docs:index` (341 symbols), `pnpm run docs:check`.
+
 ## 2026-11-21 16:45 — main (Giới hạn danh sách mô hình ViTudy AI còn GPT-5.6 Terra & Luna)
 - Task: Cập nhật danh sách mô hình cho nhà cung cấp `ViTudy (Hệ thống)` chỉ gồm `GPT-5.6 Terra` và `GPT-5.6 Luna`.
 - Changed:

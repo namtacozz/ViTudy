@@ -47,9 +47,6 @@ export function getDeskItemBounds(item: DeskItem): { w: number; h: number } {
       h: item.height || (item.isExamSheet ? 490 : 500),
     };
   }
-  if (item.type === 'artboard') {
-    return { w: item.width || 600, h: item.height || 450 };
-  }
   if (item.type === 'spreadsheet') {
     return { w: item.width || 580, h: item.height || 400 };
   }

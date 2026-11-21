@@ -20,7 +20,6 @@ export function DeskDrawingInteractionLayer() {
     addCodeBlock,
     addMindMapNode,
     addSticker,
-    addArtboard,
     startStroke, 
     appendPoint, 
     snapCurrentStroke,
@@ -605,8 +604,6 @@ export function DeskDrawingInteractionLayer() {
           addMindMapNode(template.text || '', finalX, finalY, undefined, template.mindMapColor || '#a855f7');
         } else if (template?.itemType === 'sticker' && template.stickerData) {
           addSticker(template.stickerData, finalX, finalY, finalW, finalH);
-        } else if (template?.itemType === 'artboard') {
-          addArtboard(finalX, finalY, Math.max(finalW, 420), Math.max(finalH, 360));
         } else {
           addStickyNote(noteText, finalX, finalY, noteColor, finalW, finalH);
         }

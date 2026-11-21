@@ -22,9 +22,7 @@ import {
   Code2,
   Table,
   Network,
-  Video,
   X,
-  Palette,
   Hand
 } from 'lucide-react';
 import { StickerEmojiPickerFlyout, StickerPickerItem } from '@/components/hud/StickerEmojiPickerFlyout';
@@ -107,18 +105,6 @@ export function LeftCreationBar() {
       title: 'Mind map',
       desc: 'Sơ đồ tư duy liên kết ý tưởng học tập',
       icon: <Network className="w-5 h-5 text-slate-800 stroke-[2.2]" />
-    },
-    {
-      id: 'artboard_4corner',
-      title: 'Bảng Vẽ 4 Góc',
-      desc: 'Vẽ tranh, kéo ảnh & tạo sticker trang trí',
-      icon: <Palette className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
-    },
-    {
-      id: 'screen_record',
-      title: 'Record screen',
-      desc: 'Ghi hình bài giảng & màn hình học tập',
-      icon: <Video className="w-5 h-5 text-rose-600 stroke-[2.2]" />
     }
   ];
 
@@ -149,20 +135,6 @@ export function LeftCreationBar() {
 
   const handleSelectExtraTool = (toolId: string) => {
     setIsMoreToolsOpen(false);
-    if (toolId === 'screen_record') {
-      window.dispatchEvent(new CustomEvent('vitudy:open-record-modal'));
-      return;
-    }
-    if (toolId === 'artboard_4corner') {
-      setStickyCreationTemplate?.({
-        itemType: 'artboard',
-        width: 520,
-        height: 440,
-        typeLabel: 'Bảng Vẽ 4 Góc (Artboard)'
-      });
-      setActiveTool('create_note');
-      return;
-    }
     if (toolId === 'shapes_and_lines') {
       setActiveTool('smart_shape');
       return;
@@ -281,26 +253,6 @@ export function LeftCreationBar() {
           }`}
         >
           {currentPenIcon}
-        </button>
-
-        {/* Bảng Vẽ 4 Góc */}
-        <button
-          title="Bảng Vẽ 4 Góc (Vẽ tranh, kéo ảnh & tạo quân cờ)"
-          onClick={() => {
-            setIsNoteFlyoutOpen(false);
-            setIsPenFlyoutOpen(false);
-            setIsMoreToolsOpen(false);
-            setStickyCreationTemplate?.({
-              itemType: 'artboard',
-              width: 520,
-              height: 440,
-              typeLabel: 'Bảng Vẽ 4 Góc (Artboard)'
-            });
-            setActiveTool('create_note');
-          }}
-          className={`${toolBtnBase} text-slate-800 hover:text-[#E0562D] hover:bg-orange-50`}
-        >
-          <Palette className={toolIconClass} />
         </button>
 
         {/* Divider 1: Phân tách nhóm công cụ sáng tạo với nhóm mở rộng */}

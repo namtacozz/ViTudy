@@ -161,9 +161,11 @@ export const StickerItem = React.memo(function StickerItem({ item, isSelected }:
         )}
 
         {!sticker?.url && sticker?.isSvg ? (
-          <div
-            className="w-full h-full flex items-center justify-center pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
-            dangerouslySetInnerHTML={{ __html: sticker.content }}
+          <img
+            src={`data:image/svg+xml;utf8,${encodeURIComponent(sticker.content || '')}`}
+            alt={sticker.name || 'Sticker'}
+            className="w-full h-full object-contain pointer-events-none select-none"
+            draggable={false}
           />
         ) : !sticker?.url ? (
           <div 
