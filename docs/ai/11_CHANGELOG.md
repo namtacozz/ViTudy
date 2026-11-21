@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-11-21 18:00 — main (Nâng cấp Smart Shape Engine bám sát nét vẽ mực)
+- Task: Nâng cấp thuật toán nhận diện và nắn nét Vẽ Hình Thông Minh (`smartShape`) để hình sau khi biến đổi bám khít nét tay thật, giữ đúng góc xoay và độ sắc nét đỉnh đa giác.
+- Changed:
+  - `src/utils/smartShape.ts`: Thêm `trimClosedStrokeOvershoot` (cắt phần đuôi lố/tự giao đầu-cuối); sửa lỗi xoay 90° khi `a < b` trong `fitEllipse` + chuẩn hóa bán trục theo trung vị; nâng cấp `fitCircle` bằng 2 bước lặp tâm + bán kính trung vị; nâng cấp `fitRotatedRectangle` lấy trung vị dải biên 18% bám tâm nét mực (tách `outerArea` chuẩn hóa `fillRatio` với biên `0.84` giữa ellipse và rectangle); nâng cấp `fitTriangle` tinh chỉnh đỉnh bằng giao điểm 3 đường thẳng TLS theo cạnh.
+  - `src/utils/strokeSegmentation.ts`, `src/components/canvas/DeskDrawingCanvas.tsx`, `src/components/canvas/ItemDrawingOverlay.tsx`: Bảo toàn nguyên số đỉnh đa giác `isSmartShape` khi `segmentStrokeByDeskItems` chạy trên cùng một bề mặt và render đoạn thẳng sắc nét (`pointsToSvgPath(points, true)`).
+  - `src/utils/smartShape.test.ts` & `src/utils/strokeSegmentation.test.ts`: Bổ sung 3 test cho elip đứng, hình chữ nhật có nét phình/đuôi thừa, và bảo toàn đỉnh đa giác smart-shape.
+- Verified by: `npx vitest run src/utils/smartShape.test.ts src/utils/strokeSegmentation.test.ts` (13/13 pass; benchmark 1400 mẫu đạt 97.9% — line/circle/square/rectangle/triangle 100%, ellipse 92.5%, none 93.0%, 1.296ms/nét), `npx tsc --noEmit` (0 lỗi), `pnpm run docs:index` (325 symbols), `pnpm run docs:check`.
+
 ## 2026-11-21 17:32 — main (Tinh gọn dự án chuẩn MVP: gỡ Bảng Vẽ 4 Góc, Quay màn hình, Discord SDK; giữ Kho Sticker/Emoji/Giphy)
 - Task: Thực thi kế hoạch tinh gọn MVP theo báo cáo cuối kỳ (giữ nguyên Kho Sticker / Emoji / GIF Giphy; gỡ bỏ Bảng Vẽ 4 Góc, Quay màn hình & Ghi âm, và Discord Embedded Activity SDK).
 - Changed:

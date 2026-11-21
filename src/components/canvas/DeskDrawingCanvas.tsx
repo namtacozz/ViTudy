@@ -28,7 +28,7 @@ const MemoizedStroke = React.memo(function MemoizedStroke({
     );
   }
 
-  const pathData = pointsToSvgPath(stroke.points);
+  const pathData = pointsToSvgPath(stroke.points, Boolean(stroke.isSmartShape));
   if (!pathData) return null;
 
   return (

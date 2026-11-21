@@ -39,7 +39,7 @@ export const ItemDrawingOverlay = React.memo(function ItemDrawingOverlay({
           );
         }
 
-        const pathData = pointsToSvgPath(stroke.points);
+        const pathData = pointsToSvgPath(stroke.points, Boolean(stroke.isSmartShape));
         if (!pathData) return null;
 
         return (

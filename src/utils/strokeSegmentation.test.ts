@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { DeskItem, DrawingStroke } from '@/types/studyspace';
-import { segmentStrokeByDeskItems } from './strokeSegmentation';
+import { segmentStrokeByDeskItems, pointsToSvgPath } from './strokeSegmentation';
 
 function makeItem(partial: Partial<DeskItem> & Pick<DeskItem, 'id' | 'type' | 'x' | 'y'>): DeskItem {
   return {
@@ -75,5 +75,33 @@ describe('segmentStrokeByDeskItems', () => {
     expect(segments[0].attachedToItemId).toBe('note-low');
     expect(segments[1].attachedToItemId).toBe('note-high');
     expect(segments[1].points[segments[1].points.length - 1]).toEqual({ x: 50, y: 50 });
+  });
+
+  it('preserves exact smart-shape rectangle vertex count without inserting mid-edge points', () => {
+    const paper = makeItem({ id: 'paper-1', type: 'paper', x: 0, y: 0, width: 600, height: 600, zIndex: 5 });
+    const rectPoints = [
+      { x: 50, y: 50 },
+      { x: 350, y: 50 },
+      { x: 350, y: 250 },
+      { x: 50, y: 250 },
+      { x: 50, y: 50 },
+    ];
+    const stroke: DrawingStroke = {
+      id: 'smart-rect',
+      color: '#2563eb',
+      width: 2.5,
+      isSmartShape: true,
+      shapeType: 'rectangle',
+      points: rectPoints,
+    };
+
+    const segments = segmentStrokeByDeskItems(stroke, [paper], () => 'seg-x');
+    expect(segments).toHaveLength(1);
+    expect(segments[0].points).toHaveLength(5);
+
+    const path = pointsToSvgPath(segments[0].points, true);
+    expect(path).not.toContain('Q ');
+    expect(path).toContain(' L ');
+    expect(path.endsWith(' Z')).toBe(true);
   });
 });

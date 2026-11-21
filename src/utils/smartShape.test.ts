@@ -453,6 +453,58 @@ describe('smartShape recognition test harness', () => {
     expect(det.shape).toBe('square');
   });
 
+  it('keeps vertical ellipse orientation instead of flipping 90 degrees', () => {
+    const verticalEllipse: Point[] = [];
+    const rx = 50;
+    const ry = 130;
+    for (let i = 0; i <= 48; i++) {
+      const th = (i / 48) * 2 * Math.PI * 0.96;
+      verticalEllipse.push({
+        x: 400 + rx * Math.cos(th),
+        y: 400 + ry * Math.sin(th),
+      });
+    }
+    const det = recognizeSmartShapeDetailed(verticalEllipse);
+    expect(det.shape).toBe('ellipse');
+    const xs = det.points.map(p => p.x);
+    const ys = det.points.map(p => p.y);
+    const outW = Math.max(...xs) - Math.min(...xs);
+    const outH = Math.max(...ys) - Math.min(...ys);
+    expect(outH).toBeGreaterThan(outW * 2.0);
+  });
+
+  it('hugs true rectangle ink edges even with slight edge bulge and overshoot tail', () => {
+    const rectWithBulgeAndTail: Point[] = [];
+    // Top edge: x=100..300, y=100 (bulges slightly upward at midpoint)
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      rectWithBulgeAndTail.push({ x: 100 + t * 200, y: 100 - Math.sin(t * Math.PI) * 4 });
+    }
+    // Right edge: x=300, y=100..220
+    for (let i = 1; i <= 10; i++) {
+      rectWithBulgeAndTail.push({ x: 300, y: 100 + (i / 10) * 120 });
+    }
+    // Bottom edge: x=300..100, y=220
+    for (let i = 1; i <= 12; i++) {
+      rectWithBulgeAndTail.push({ x: 300 - (i / 12) * 200, y: 220 });
+    }
+    // Left edge: x=100, y=220..100
+    for (let i = 1; i <= 10; i++) {
+      rectWithBulgeAndTail.push({ x: 100, y: 220 - (i / 10) * 120 });
+    }
+    // Overshoot tail extending past top-left corner
+    rectWithBulgeAndTail.push({ x: 120, y: 98 }, { x: 145, y: 97 });
+
+    const det = recognizeSmartShapeDetailed(rectWithBulgeAndTail);
+    expect(det.shape).toBe('rectangle');
+    const xs = det.points.map(p => p.x);
+    const ys = det.points.map(p => p.y);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(95);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(305);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(96);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(224);
+  });
+
   it('runs comprehensive synthetic noise benchmark across 7 classes', () => {
     const rng = createPRNG(42);
     const SAMPLES_PER_CLASS = 200;

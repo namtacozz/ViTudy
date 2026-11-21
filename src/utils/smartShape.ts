@@ -24,6 +24,7 @@ interface ShapeCandidate {
   points: Point[];
   error: number; // normalized mean distance / diagonal
   confidence: number;
+  outerArea?: number;
 }
 
 // ============================================================================
@@ -180,6 +181,92 @@ export function countSharpCorners(pts: Point[], diagonal: number): number {
   return count;
 }
 
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/**
+ * Trim self-overlapping or overshooting start/end tails on nearly closed strokes
+ * so tail noise does not shift shape centroids or bounding dimensions.
+ */
+export function trimClosedStrokeOvershoot(pts: Point[], diagonal: number): Point[] {
+  const n = pts.length;
+  if (n < 12) return pts;
+
+  const endsDist = Math.hypot(pts[n - 1].x - pts[0].x, pts[n - 1].y - pts[0].y);
+  const maxStartIdx = Math.floor(n * 0.16);
+  const minEndIdx = Math.ceil(n * 0.82);
+
+  let bestI = 0;
+  let bestJ = n - 1;
+  let bestDist = endsDist;
+
+  for (let i = 0; i <= maxStartIdx; i++) {
+    for (let j = minEndIdx; j < n; j++) {
+      if (j - i < Math.floor(n * 0.72)) continue;
+      const d = Math.hypot(pts[j].x - pts[i].x, pts[j].y - pts[i].y);
+      if (d < bestDist) {
+        bestDist = d;
+        bestI = i;
+        bestJ = j;
+      }
+    }
+  }
+
+  if ((bestI > 0 || bestJ < n - 1) && bestDist <= Math.min(endsDist * 0.65, diagonal * 0.12)) {
+    return pts.slice(bestI, bestJ + 1);
+  }
+  return pts;
+}
+
+/**
+ * Fit a 2D line via Total Least Squares (PCA) returning a point on the line and unit direction.
+ */
+function fitTlsLineModel(pts: Point[]): { origin: Point; dir: Point } | null {
+  const n = pts.length;
+  if (n < 2) return null;
+  let meanX = 0, meanY = 0;
+  for (const p of pts) {
+    meanX += p.x;
+    meanY += p.y;
+  }
+  meanX /= n;
+  meanY /= n;
+
+  let sxx = 0, sxy = 0, syy = 0;
+  for (const p of pts) {
+    const dx = p.x - meanX;
+    const dy = p.y - meanY;
+    sxx += dx * dx;
+    sxy += dx * dy;
+    syy += dy * dy;
+  }
+  if (sxx + syy < 1e-6) return null;
+  const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  return {
+    origin: { x: meanX, y: meanY },
+    dir: { x: Math.cos(theta), y: Math.sin(theta) },
+  };
+}
+
+function intersectLines(
+  l1: { origin: Point; dir: Point },
+  l2: { origin: Point; dir: Point }
+): Point | null {
+  const det = l1.dir.x * (-l2.dir.y) - l1.dir.y * (-l2.dir.x);
+  if (Math.abs(det) < 1e-4) return null;
+  const dx = l2.origin.x - l1.origin.x;
+  const dy = l2.origin.y - l1.origin.y;
+  const t = (dx * (-l2.dir.y) - dy * (-l2.dir.x)) / det;
+  return {
+    x: l1.origin.x + t * l1.dir.x,
+    y: l1.origin.y + t * l1.dir.y,
+  };
+}
+
 // ============================================================================
 // 3. MODEL FITTERS
 // ============================================================================
@@ -297,14 +384,31 @@ export function fitCircle(pts: Point[], diagonal: number): ShapeCandidate | null
   const uc = (mxz * myy - myz * mxy) / (2 * det);
   const vc = (mxx * myz - mxy * mxz) / (2 * det);
 
-  const cx = mx + uc;
-  const cy = my + vc;
+  let cx = mx + uc;
+  let cy = my + vc;
 
-  let sumR = 0;
-  for (const p of pts) {
-    sumR += Math.hypot(p.x - cx, p.y - cy);
+  // Two lightweight radial-median refinement steps so the fitted circle hugs ink density
+  for (let iter = 0; iter < 2; iter++) {
+    const rMed = median(pts.map(p => Math.hypot(p.x - cx, p.y - cy)));
+    if (rMed <= 2) break;
+    let nextX = 0;
+    let nextY = 0;
+    let valid = 0;
+    for (const p of pts) {
+      const dist = Math.hypot(p.x - cx, p.y - cy);
+      if (dist > 1e-4) {
+        nextX += p.x - (rMed * (p.x - cx)) / dist;
+        nextY += p.y - (rMed * (p.y - cy)) / dist;
+        valid++;
+      }
+    }
+    if (valid > 0) {
+      cx = nextX / valid;
+      cy = nextY / valid;
+    }
   }
-  const radius = sumR / n;
+
+  const radius = median(pts.map(p => Math.hypot(p.x - cx, p.y - cy)));
   if (radius <= 2) return null;
 
   let totalDist = 0;
@@ -358,9 +462,9 @@ export function fitEllipse(pts: Point[], diagonal: number): ShapeCandidate | nul
   myy /= n;
   mxy /= n;
 
-  const theta = 0.5 * Math.atan2(2 * mxy, mxx - myy);
-  const cos = Math.cos(theta);
-  const sin = Math.sin(theta);
+  let theta = 0.5 * Math.atan2(2 * mxy, mxx - myy);
+  let cos = Math.cos(theta);
+  let sin = Math.sin(theta);
 
   // Variances in rotated frame
   let varU = 0, varV = 0;
@@ -382,6 +486,10 @@ export function fitEllipse(pts: Point[], diagonal: number): ShapeCandidate | nul
     const tmp = a;
     a = b;
     b = tmp;
+    // Rotate frame by 90 degrees so major axis a always aligns with theta
+    theta += Math.PI / 2;
+    cos = Math.cos(theta);
+    sin = Math.sin(theta);
   }
 
   const axisRatio = b / a;
@@ -389,6 +497,19 @@ export function fitEllipse(pts: Point[], diagonal: number): ShapeCandidate | nul
   if (axisRatio >= 0.88) {
     return fitCircle(pts, diagonal);
   }
+
+  // Ink-hugging radial scale refinement using median normalized distance
+  const normRadii: number[] = [];
+  for (const p of pts) {
+    const dx = p.x - meanX;
+    const dy = p.y - meanY;
+    const u = dx * cos + dy * sin;
+    const v = -dx * sin + dy * cos;
+    normRadii.push(Math.hypot(u / a, v / b));
+  }
+  const medScale = Math.max(0.88, Math.min(1.12, median(normRadii)));
+  a *= medScale;
+  b *= medScale;
 
   let totalDist = 0;
   for (const p of pts) {
@@ -448,60 +569,126 @@ export function fitRotatedRectangle(pts: Point[], diagonal: number): ShapeCandid
   }
   const baseAngle = 0.5 * Math.atan2(2 * mxy, mxx - myy);
 
-  // Sample 36 angles spanning 0 to 90 degrees
+  // Sample 36 angles spanning 0 to 90 degrees + dominant RDP segment angles
   let bestAngle = 0;
+  let bestScore = Infinity;
   let minArea = Infinity;
+  let bestOuterArea = Infinity;
   let bestCorners: Point[] = [];
   let bestW = 0, bestH = 0;
   let bestCenter = { x: minMeanX, y: minMeanY };
 
-  const testAngle = (angle: number) => {
+  const computeInkEdgesAtAngle = (angle: number) => {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
 
     let minU = Infinity, maxU = -Infinity;
     let minV = Infinity, maxV = -Infinity;
+    const uvPts: Array<{ u: number; v: number }> = [];
 
     for (const p of pts) {
       const u = p.x * cos + p.y * sin;
       const v = -p.x * sin + p.y * cos;
+      uvPts.push({ u, v });
       if (u < minU) minU = u;
       if (u > maxU) maxU = u;
       if (v < minV) minV = v;
       if (v > maxV) maxV = v;
     }
 
-    const curW = maxU - minU;
-    const curH = maxV - minV;
+    const rawW = Math.max(1, maxU - minU);
+    const rawH = Math.max(1, maxV - minV);
+
+    const leftBand: number[] = [];
+    const rightBand: number[] = [];
+    const topBand: number[] = [];
+    const bottomBand: number[] = [];
+
+    for (const { u, v } of uvPts) {
+      if (u <= minU + 0.18 * rawW) leftBand.push(u);
+      if (u >= maxU - 0.18 * rawW) rightBand.push(u);
+      if (v <= minV + 0.18 * rawH) topBand.push(v);
+      if (v >= maxV - 0.18 * rawH) bottomBand.push(v);
+    }
+
+    const uLeft = leftBand.length >= 2 ? median(leftBand) : minU;
+    const uRight = rightBand.length >= 2 ? median(rightBand) : maxU;
+    const vTop = topBand.length >= 2 ? median(topBand) : minV;
+    const vBottom = bottomBand.length >= 2 ? median(bottomBand) : maxV;
+
+    const curW = Math.max(2, uRight - uLeft);
+    const curH = Math.max(2, vBottom - vTop);
     const area = curW * curH;
 
-    if (area < minArea) {
-      minArea = area;
-      bestAngle = angle;
-      bestW = curW;
-      bestH = curH;
+    let edgeErrSum = 0;
+    for (const { u, v } of uvPts) {
+      const cu = Math.max(uLeft, Math.min(uRight, u));
+      const cv = Math.max(vTop, Math.min(vBottom, v));
+      const dLeft = Math.hypot(u - uLeft, v - cv);
+      const dRight = Math.hypot(u - uRight, v - cv);
+      const dTop = Math.hypot(u - cu, v - vTop);
+      const dBottom = Math.hypot(u - cu, v - vBottom);
+      edgeErrSum += Math.min(dLeft, dRight, dTop, dBottom);
+    }
+    const meanEdgeErr = (edgeErrSum / uvPts.length) / diagonal;
+    const midU = (uLeft + uRight) / 2;
+    const midV = (vTop + vBottom) / 2;
 
-      const midU = (minU + maxU) / 2;
-      const midV = (minV + maxV) / 2;
-      bestCenter = {
+    return {
+      curW,
+      curH,
+      area,
+      outerArea: rawW * rawH,
+      meanEdgeErr,
+      center: {
         x: midU * cos - midV * sin,
         y: midU * sin + midV * cos,
-      };
+      },
+    };
+  };
+
+  const testAngle = (angle: number) => {
+    const res = computeInkEdgesAtAngle(angle);
+    // Score prioritizes lowest ink-to-edge error, tie-broken lightly by compact area
+    const score = res.meanEdgeErr + (res.area / (diagonal * diagonal)) * 0.015;
+    if (score < bestScore - 1e-5 || (Math.abs(score - bestScore) <= 1e-5 && res.area < minArea)) {
+      bestScore = score;
+      minArea = res.area;
+      bestOuterArea = res.outerArea;
+      bestAngle = angle;
+      bestW = res.curW;
+      bestH = res.curH;
+      bestCenter = res.center;
     }
   };
 
   for (let step = 0; step < 36; step++) {
     testAngle(baseAngle + (step * (Math.PI / 2)) / 36);
   }
+  const rdpForAngle = ramerDouglasPeucker(pts, Math.max(4, diagonal * 0.04));
+  for (let i = 0; i < rdpForAngle.length - 1; i++) {
+    const segLen = Math.hypot(
+      rdpForAngle[i + 1].x - rdpForAngle[i].x,
+      rdpForAngle[i + 1].y - rdpForAngle[i].y
+    );
+    if (segLen >= diagonal * 0.15) {
+      testAngle(Math.atan2(rdpForAngle[i + 1].y - rdpForAngle[i].y, rdpForAngle[i + 1].x - rdpForAngle[i].x));
+    }
+  }
   const fineStep = (Math.PI / 2) / 72;
   testAngle(bestAngle - fineStep);
   testAngle(bestAngle + fineStep);
 
-  // Snap angle if almost horizontal or vertical
+  // Snap angle only if almost horizontal or vertical (~3.4 degrees)
   let snappedAngle = bestAngle % (Math.PI / 2);
   if (snappedAngle < 0) snappedAngle += Math.PI / 2;
-  if (snappedAngle < 0.08 || Math.abs(snappedAngle - Math.PI / 2) < 0.08) {
+  if (snappedAngle < 0.06 || Math.abs(snappedAngle - Math.PI / 2) < 0.06) {
     bestAngle = 0;
+    const snappedRes = computeInkEdgesAtAngle(0);
+    bestW = snappedRes.curW;
+    bestH = snappedRes.curH;
+    bestOuterArea = snappedRes.outerArea;
+    bestCenter = snappedRes.center;
   }
 
   const cos = Math.cos(bestAngle);
@@ -514,7 +701,7 @@ export function fitRotatedRectangle(pts: Point[], diagonal: number): ShapeCandid
   let halfW = bestW / 2;
   let halfH = bestH / 2;
 
-  if (isSquare) {
+  if (ratio >= 0.88) {
     const s = (bestW + bestH) / 2;
     halfW = s / 2;
     halfH = s / 2;
@@ -551,6 +738,7 @@ export function fitRotatedRectangle(pts: Point[], diagonal: number): ShapeCandid
     points: bestCorners,
     error,
     confidence: Math.max(0, Math.min(1, 1 - error * 5)),
+    outerArea: bestOuterArea,
   };
 }
 
@@ -595,6 +783,59 @@ export function fitTriangle(pts: Point[], diagonal: number): ShapeCandidate | nu
   }
 
   if (vertices.length < 3) return null;
+
+  // Refine triangle corners by intersecting TLS lines fitted to each edge's interior points
+  const edgeBuckets: Point[][] = [[], [], []];
+  for (const p of pts) {
+    let bestEdge = 0;
+    let bestDist = Infinity;
+    for (let e = 0; e < 3; e++) {
+      const d = pointToSegmentDistance(p, vertices[e], vertices[(e + 1) % 3]);
+      if (d < bestDist) {
+        bestDist = d;
+        bestEdge = e;
+      }
+    }
+    const a = vertices[bestEdge];
+    const b = vertices[(bestEdge + 1) % 3];
+    const abX = b.x - a.x;
+    const abY = b.y - a.y;
+    const lenSq = abX * abX + abY * abY;
+    if (lenSq > 1e-4) {
+      const t = ((p.x - a.x) * abX + (p.y - a.y) * abY) / lenSq;
+      if (t >= 0.15 && t <= 0.85) {
+        edgeBuckets[bestEdge].push(p);
+      }
+    }
+  }
+
+  const edgeLines = edgeBuckets.map((bucket, idx) => {
+    if (bucket.length >= 4) {
+      const tls = fitTlsLineModel(bucket);
+      if (tls) return tls;
+    }
+    const a = vertices[idx];
+    const b = vertices[(idx + 1) % 3];
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    return {
+      origin: a,
+      dir: { x: (b.x - a.x) / len, y: (b.y - a.y) / len },
+    };
+  });
+
+  const i0 = intersectLines(edgeLines[2], edgeLines[0]);
+  const i1 = intersectLines(edgeLines[0], edgeLines[1]);
+  const i2 = intersectLines(edgeLines[1], edgeLines[2]);
+  if (
+    i0 &&
+    i1 &&
+    i2 &&
+    Math.hypot(i0.x - vertices[0].x, i0.y - vertices[0].y) <= diagonal * 0.18 &&
+    Math.hypot(i1.x - vertices[1].x, i1.y - vertices[1].y) <= diagonal * 0.18 &&
+    Math.hypot(i2.x - vertices[2].x, i2.y - vertices[2].y) <= diagonal * 0.18
+  ) {
+    vertices = [i0, i1, i2];
+  }
 
   // Close triangle: 4 points
   const trianglePoints = [
@@ -647,9 +888,22 @@ export function recognizeSmartShapeDetailed(rawPoints: Point[]): RecognizedShape
   const endsDist = Math.hypot(pN.x - p0.x, pN.y - p0.y);
   const closureRatio = endsDist / (totalArc || 1);
 
+  // Trim overshooting tails when stroke ends cross or loop back close together
+  const trimmedClosedCandidate = trimClosedStrokeOvershoot(smoothed, bbox.diagonal);
+  const trimmedResampled =
+    trimmedClosedCandidate.length < smoothed.length
+      ? resampleByArcLength(trimmedClosedCandidate, 64)
+      : resampled;
+  const trimmedEndsDist = Math.hypot(
+    trimmedResampled[trimmedResampled.length - 1].x - trimmedResampled[0].x,
+    trimmedResampled[trimmedResampled.length - 1].y - trimmedResampled[0].y
+  );
+  const { total: trimmedTotalArc } = computeArcLengths(trimmedResampled);
+  const trimmedClosureRatio = trimmedEndsDist / (trimmedTotalArc || 1);
+
   // Strict Open vs Closed classification:
-  // Closed curves have ends coming back close together: endsDist / totalArc <= 0.20
-  const isClosedStroke = closureRatio <= 0.20;
+  // Closed curves have ends coming back close together: endsDist / totalArc <= 0.20 (or after overshoot trim)
+  const isClosedStroke = closureRatio <= 0.20 || (trimmedClosedCandidate.length < smoothed.length && trimmedClosureRatio <= 0.20);
 
   const candidates: ShapeCandidate[] = [];
 
@@ -664,25 +918,27 @@ export function recognizeSmartShapeDetailed(rawPoints: Point[]): RecognizedShape
       }
     }
   } else {
-    // Closed stroke: Resample with closure segment to ensure full polygon fitting
-    const closedStroke = [...resampled, { ...p0 }];
-    const sharpCount = countSharpCorners(closedStroke, bbox.diagonal);
+    // Closed stroke: use overshoot-trimmed points and append closure segment
+    const baseClosed = trimmedClosureRatio <= closureRatio ? trimmedResampled : resampled;
+    const closedStroke = [...baseClosed, { ...baseClosed[0] }];
+    const closedBbox = computeBoundingBox(closedStroke);
+    const sharpCount = countSharpCorners(closedStroke, closedBbox.diagonal);
 
     // Fit Closed Primitives
-    const circle = fitCircle(closedStroke, bbox.diagonal);
+    const circle = fitCircle(closedStroke, closedBbox.diagonal);
     if (circle) candidates.push(circle);
 
-    const ellipse = fitEllipse(closedStroke, bbox.diagonal);
+    const ellipse = fitEllipse(closedStroke, closedBbox.diagonal);
     if (ellipse) candidates.push(ellipse);
 
-    const rect = fitRotatedRectangle(closedStroke, bbox.diagonal);
+    const rect = fitRotatedRectangle(closedStroke, closedBbox.diagonal);
     if (rect) candidates.push(rect);
 
-    const triangle = fitTriangle(closedStroke, bbox.diagonal);
+    const triangle = fitTriangle(closedStroke, closedBbox.diagonal);
     if (triangle) candidates.push(triangle);
 
     const strokeArea = computePolygonArea(closedStroke);
-    const rectArea = rect ? computePolygonArea(rect.points) : 0;
+    const rectArea = rect ? (rect.outerArea ?? computePolygonArea(rect.points)) : 0;
     const fillRatio = rectArea > 0 ? (strokeArea / rectArea) : 1;
 
     // Apply Corner Disambiguation & Complexity Penalties
@@ -691,16 +947,16 @@ export function recognizeSmartShapeDetailed(rawPoints: Point[]): RecognizedShape
         c.error *= (sharpCount === 3 ? 0.85 : (sharpCount >= 4 ? 1.4 : 1.05));
         if (fillRatio >= 0.72) c.error *= 1.60;
       } else if (c.shape === 'square' || c.shape === 'rectangle') {
-        c.error *= (sharpCount >= 3 ? 0.85 : (sharpCount === 0 ? 1.25 : 1.0));
-        if (fillRatio >= 0.80) c.error *= 0.88;
-        else if (fillRatio <= 0.72) c.error *= 1.35;
+        c.error *= (sharpCount >= 3 ? 0.85 : (sharpCount === 0 ? 1.35 : 1.0));
+        if (fillRatio >= 0.84) c.error *= 0.88;
+        else if (fillRatio <= 0.78) c.error *= 1.35;
       } else if (c.shape === 'circle') {
         c.error *= (sharpCount >= 2 ? 1.5 : (sharpCount <= 1 ? 0.95 : 1.0));
-        if (fillRatio <= 0.80) c.error *= 0.95;
+        if (fillRatio <= 0.83) c.error *= 0.95;
       } else if (c.shape === 'ellipse') {
-        c.error *= (sharpCount >= 3 ? 1.6 : (sharpCount === 0 ? 0.95 : 1.0));
-        if (fillRatio <= 0.80) c.error *= 0.90;
-        else if (fillRatio >= 0.80) c.error *= 1.80;
+        c.error *= (sharpCount >= 3 ? 1.6 : (sharpCount === 0 ? 0.92 : 1.0));
+        if (fillRatio <= 0.84) c.error *= 0.90;
+        else if (fillRatio >= 0.86) c.error *= 1.80;
       }
     }
   }

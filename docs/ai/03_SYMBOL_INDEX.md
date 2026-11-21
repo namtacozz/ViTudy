@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `ce23697`  
+> **Commit Hash:** `cd3e4bc`  
 > **Cập nhật lần cuối:** `2026-11-21`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -122,10 +122,10 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `clearOpenAiOAuthSession` | `fn` | [src/lib/openaiOAuth.ts:L322-L325](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `clearPendingPkce` | `fn` | [src/lib/openaiOAuth.ts:L130-L135](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `clearSupabaseConfig` | `fn` | [src/lib/supabase.ts:L77-L83](file:///F:/AppMaking/ViTudy/src/lib/supabase.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `computeArcLengths` | `fn` | [src/utils/smartShape.ts:L46-L54](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `computeBoundingBox` | `fn` | [src/utils/smartShape.ts:L85-L99](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `computePolygonArea` | `fn` | [src/utils/smartShape.ts:L142-L150](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `countSharpCorners` | `fn` | [src/utils/smartShape.ts:L152-L181](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `computeArcLengths` | `fn` | [src/utils/smartShape.ts:L47-L55](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `computeBoundingBox` | `fn` | [src/utils/smartShape.ts:L86-L100](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `computePolygonArea` | `fn` | [src/utils/smartShape.ts:L143-L151](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `countSharpCorners` | `fn` | [src/utils/smartShape.ts:L153-L182](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `decodeSignedPetCookie` | `fn` | [src/lib/petCookie.ts:L30-L57](file:///F:/AppMaking/ViTudy/src/lib/petCookie.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `DocumentOutlineNode` | `type` | [src/lib/nonAiEngine.ts:L45-L51](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `encodeSignedPetCookie` | `fn` | [src/lib/petCookie.ts:L24-L28](file:///F:/AppMaking/ViTudy/src/lib/petCookie.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -134,12 +134,12 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `extractOpenAiJwtClaims` | `fn` | [src/lib/openaiOAuth.ts:L148-L186](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `extractOutlineAndRoadmap` | `fn` | [src/lib/nonAiEngine.ts:L311-L337](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thuật toán trích xuất tiêu đề dựng lộ trình học tương tác theo thời gian |
 | `extractSpaceIdFromRoomParam` | `fn` | [src/lib/multiplayerRoom.ts:L7-L23](file:///F:/AppMaking/ViTudy/src/lib/multiplayerRoom.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `findTopItemAtPoint` | `fn` | [src/utils/strokeSegmentation.ts:L71-L80](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `fitCircle` | `fn` | [src/utils/smartShape.ts:L270-L332](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `fitEllipse` | `fn` | [src/utils/smartShape.ts:L337-L424](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `fitLine` | `fn` | [src/utils/smartShape.ts:L190-L265](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `fitRotatedRectangle` | `fn` | [src/utils/smartShape.ts:L429-L555](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `fitTriangle` | `fn` | [src/utils/smartShape.ts:L560-L622](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `findTopItemAtPoint` | `fn` | [src/utils/strokeSegmentation.ts:L72-L81](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `fitCircle` | `fn` | [src/utils/smartShape.ts:L357-L436](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `fitEllipse` | `fn` | [src/utils/smartShape.ts:L441-L545](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `fitLine` | `fn` | [src/utils/smartShape.ts:L277-L352](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `fitRotatedRectangle` | `fn` | [src/utils/smartShape.ts:L550-L743](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `fitTriangle` | `fn` | [src/utils/smartShape.ts:L748-L863](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `Flashcard` | `type` | [src/lib/nonAiEngine.ts:L28-L33](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `formatDeskItemsSummary` | `fn` | [src/utils/deskSummary.ts:L6-L33](file:///F:/AppMaking/ViTudy/src/utils/deskSummary.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `formatRelativeTimeVN` | `fn` | [src/lib/dateVN.ts:L65-L91](file:///F:/AppMaking/ViTudy/src/lib/dateVN.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -156,7 +156,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `generateTriangleStroke` | `fn` | [src/utils/smartShape.test.ts:L210-L258](file:///F:/AppMaking/ViTudy/src/utils/smartShape.test.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getActiveStroke` | `fn` | [src/lib/activeStrokeStore.ts:L12-L14](file:///F:/AppMaking/ViTudy/src/lib/activeStrokeStore.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getAssetPath` | `fn` | [src/lib/assets.ts:L4-L25](file:///F:/AppMaking/ViTudy/src/lib/assets.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `getDeskItemBounds` | `fn` | [src/utils/strokeSegmentation.ts:L40-L57](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `getDeskItemBounds` | `fn` | [src/utils/strokeSegmentation.ts:L41-L58](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getIDB` | `fn` | [src/lib/indexeddb.ts:L8-L28](file:///F:/AppMaking/ViTudy/src/lib/indexeddb.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getLast28DaysGrid` | `fn` | [src/lib/dateVN.ts:L28-L60](file:///F:/AppMaking/ViTudy/src/lib/dateVN.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `getOpenAiOAuthSession` | `fn` | [src/lib/openaiOAuth.ts:L286-L320](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -186,28 +186,28 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `PetStreakCookieData` | `type` | [src/lib/petCookie.ts:L3-L7](file:///F:/AppMaking/ViTudy/src/lib/petCookie.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `Point` | `type` | [src/utils/smartShape.ts:L8-L11](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `Point` | `type` | [src/utils/strokeSegmentation.ts:L3-L3](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `pointsToSvgPath` | `fn` | [src/utils/strokeSegmentation.ts:L5-L38](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `pointToSegmentDistance` | `fn` | [src/utils/smartShape.ts:L129-L140](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `pointsToSvgPath` | `fn` | [src/utils/strokeSegmentation.ts:L5-L39](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `pointToSegmentDistance` | `fn` | [src/utils/smartShape.ts:L130-L141](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `QuizQuestion` | `type` | [src/lib/nonAiEngine.ts:L19-L26](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `ramerDouglasPeucker` | `fn` | [src/utils/smartShape.ts:L105-L127](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `ramerDouglasPeucker` | `fn` | [src/utils/smartShape.ts:L106-L128](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `RecognizedLabel` | `type` | [src/utils/smartShape.test.ts:L330-L330](file:///F:/AppMaking/ViTudy/src/utils/smartShape.test.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `RecognizedShapeResult` | `type` | [src/utils/smartShape.ts:L15-L20](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `recognizeSmartShape` | `fn` | [src/utils/smartShape.ts:L733-L736](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `recognizeSmartShapeDetailed` | `fn` | [src/utils/smartShape.ts:L628-L728](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `recognizeSmartShape` | `fn` | [src/utils/smartShape.ts:L989-L992](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `recognizeSmartShapeDetailed` | `fn` | [src/utils/smartShape.ts:L869-L984](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `refreshOpenAiSession` | `fn` | [src/lib/aiClient.ts:L47-L118](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `refundAiRequest` | `fn` | [src/lib/aiClient.ts:L395-L431](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `resampleByArcLength` | `fn` | [src/utils/smartShape.ts:L56-L83](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `resampleByArcLength` | `fn` | [src/utils/smartShape.ts:L57-L84](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `ReviewQuality` | `type` | [src/lib/sm2.ts:L8-L8](file:///F:/AppMaking/ViTudy/src/lib/sm2.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `RoadmapStep` | `type` | [src/lib/nonAiEngine.ts:L35-L43](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `saveOpenAiOAuthSession` | `fn` | [src/lib/openaiOAuth.ts:L271-L284](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `savePendingPkce` | `fn` | [src/lib/openaiOAuth.ts:L105-L115](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `saveSupabaseConfig` | `fn` | [src/lib/supabase.ts:L69-L75](file:///F:/AppMaking/ViTudy/src/lib/supabase.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `segmentStrokeByDeskItems` | `fn` | [src/utils/strokeSegmentation.ts:L111-L181](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `segmentStrokeByDeskItems` | `fn` | [src/utils/strokeSegmentation.ts:L112-L184](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `setActiveStroke` | `fn` | [src/lib/activeStrokeStore.ts:L16-L23](file:///F:/AppMaking/ViTudy/src/lib/activeStrokeStore.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `setStudyCache` | `fn` | [src/lib/studyToolsCache.ts:L20-L23](file:///F:/AppMaking/ViTudy/src/lib/studyToolsCache.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `ShapeType` | `type` | [src/utils/smartShape.ts:L13-L13](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `SM2Card` | `type` | [src/lib/sm2.ts:L1-L6](file:///F:/AppMaking/ViTudy/src/lib/sm2.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `smoothPoints` | `fn` | [src/utils/smartShape.ts:L33-L44](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `smoothPoints` | `fn` | [src/utils/smartShape.ts:L34-L45](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `splitSentences` | `fn` | [src/lib/nonAiEngine.ts:L64-L71](file:///F:/AppMaking/ViTudy/src/lib/nonAiEngine.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `startOpenAiPkceLogin` | `fn` | [src/lib/openaiOAuth.ts:L137-L146](file:///F:/AppMaking/ViTudy/src/lib/openaiOAuth.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `subscribeActiveStroke` | `fn` | [src/lib/activeStrokeStore.ts:L25-L30](file:///F:/AppMaking/ViTudy/src/lib/activeStrokeStore.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
@@ -217,9 +217,10 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `testAiConnection` | `fn` | [src/lib/aiClient.ts:L517-L667](file:///F:/AppMaking/ViTudy/src/lib/aiClient.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `toDateKeyVN` | `fn` | [src/lib/dateVN.ts:L19-L22](file:///F:/AppMaking/ViTudy/src/lib/dateVN.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `todayKey` | `fn` | [src/lib/dateVN.ts:L6-L14](file:///F:/AppMaking/ViTudy/src/lib/dateVN.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `trimClosedStrokeOvershoot` | `fn` | [src/utils/smartShape.ts:L195-L223](file:///F:/AppMaking/ViTudy/src/utils/smartShape.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `VIETNAM_TIMEZONE` | `component` | [src/lib/dateVN.ts:L1-L1](file:///F:/AppMaking/ViTudy/src/lib/dateVN.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 | `ViewportTransform` | `type` | [src/lib/viewportCulling.ts:L9-L15](file:///F:/AppMaking/ViTudy/src/lib/viewportCulling.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
-| `worldToItemLocal` | `fn` | [src/utils/strokeSegmentation.ts:L59-L69](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
+| `worldToItemLocal` | `fn` | [src/utils/strokeSegmentation.ts:L60-L70](file:///F:/AppMaking/ViTudy/src/utils/strokeSegmentation.ts) | Thành phần nghiệp vụ của phân hệ Non-AI Engine & Utils |
 
 ### API Routes & Backend
 

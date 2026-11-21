@@ -2,7 +2,7 @@ import type { DeskItem, DrawingStroke } from '@/types/studyspace';
 
 export type Point = { x: number; y: number };
 
-export function pointsToSvgPath(points: Point[]): string {
+export function pointsToSvgPath(points: Point[], isSmartPolygon = false): string {
   if (points.length < 2) return '';
   if (points.length === 2) {
     return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
@@ -10,14 +10,15 @@ export function pointsToSvgPath(points: Point[]): string {
 
   const first = points[0];
   const last = points[points.length - 1];
-  const isClosedPolygon = points.length <= 8 && Math.hypot(first.x - last.x, first.y - last.y) < 10;
+  const isClosed = Math.hypot(first.x - last.x, first.y - last.y) < 10;
+  const useCrispSegments = (isSmartPolygon && points.length <= 12) || (points.length <= 8 && isClosed);
 
-  if (isClosedPolygon) {
+  if (useCrispSegments) {
     let d = `M ${points[0].x} ${points[0].y}`;
     for (let i = 1; i < points.length; i++) {
       d += ` L ${points[i].x} ${points[i].y}`;
     }
-    d += ' Z';
+    if (isClosed) d += ' Z';
     return d;
   }
 
@@ -144,7 +145,9 @@ export function segmentStrokeByDeskItems(
       const sampleTarget = findTopItemAtPoint(samplePt, sortedItemsDesc)?.id ?? null;
 
       if (sampleTarget === prevTarget) {
-        currentPoints.push(samplePt);
+        if (s === steps) {
+          currentPoints.push(samplePt);
+        }
       } else {
         const crossingPt = findBoundaryCrossing(prevPt, samplePt, prevTarget, sortedItemsDesc);
         currentPoints.push(crossingPt);
