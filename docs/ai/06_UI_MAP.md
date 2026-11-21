@@ -1,7 +1,7 @@
 # 06_UI_MAP.md — Cấu Trúc Cây Giao Diện & HUD ViTudy
 
-> **Commit Hash:** `Current Working Tree (Production Ready)`  
-> **Cập nhật lần cuối:** `2026-11-07`
+> **Commit Hash:** `main`  
+> **Cập nhật lần cuối:** `2026-11-21`
 
 ---
 
@@ -64,13 +64,13 @@ RootLayout (src/app/layout.tsx)
 
 ### 5. Thanh Công Cụ Sáng Tạo Dọc Bên Trái (Left Creation Bar)
 * **Vị trí file:** [`src/components/hud/LeftCreationBar.tsx`](file:///F:/AppMaking/ViTudy/src/components/hud/LeftCreationBar.tsx) (`LeftCreationBar`)
-* **Kiểu dáng Miro:** Thanh dọc nổi bên trái trung tâm (`left-4 top-1/2 -translate-y-1/2`), gom toàn bộ công cụ tạo tác:
+* **Kiểu dáng Miro:** Thanh dọc nổi bên trái trung tâm trên desktop/landscape (dock ngang dưới đáy trên mobile portrait), gom toàn bộ công cụ tạo tác:
   * Con trỏ (`cursor`)
-  * Tạo note (`+ Note` với icon StickyNote)
-  * Bút vẽ tự do (`pen`) kèm flyout chọn 4 màu mực
-  * Bút dạ quang (`highlighter`)
+  * Tạo note (`StickyNote` với flyout 5 màu pastel)
+  * Bút hợp nhất (`pen`, `highlighter`, `smart_shape` Vẽ thông minh, `eraser`, `area_eraser`, 3 cỡ nét, bảng 6 màu, bật/tắt vẽ bằng ngón tay)
+  * Công cụ mở rộng (`+` More Tools gồm 4 mục: `Stickers, Emojis & GIFs`, `Code block`, `Table`, `Mind map` — đã lược bỏ `Shapes and lines` trùng lặp với `smart_shape` trong bảng chọn Bút)
   * Khóa di chuyển canvas (`lock`)
-  * Hoàn tác nét vẽ (`undo`) & Xóa nét vẽ
+  * Hoàn tác nét vẽ (`undo`), Làm lại (`redo`) & Xóa toàn bộ nét vẽ (`Trash2`)
 
 ### 5. Modal STudy Đã Được Module Hóa
 * **Vị trí thư mục:** `src/components/modals/study-tools/`

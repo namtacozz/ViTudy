@@ -16,7 +16,6 @@ import {
   Unlock, 
   Trash2,
   Plus,
-  Shapes,
   Tag,
   Smile,
   Code2,
@@ -74,14 +73,8 @@ export function LeftCreationBar() {
     { label: 'Tím', value: '#9333ea' }
   ];
 
-  // More Tools List (Shapes and lines, Sticker, Emojis and GIFs, Code block, Table, Mind map)
+  // More Tools List (Stickers, Emojis and GIFs, Code block, Table, Mind map)
   const extraTools = [
-    {
-      id: 'shapes_and_lines',
-      title: 'Shapes and lines',
-      desc: 'Vẽ hình khối và đường kẻ nối thông minh',
-      icon: <Shapes className="w-5 h-5 text-slate-800 stroke-[2.2]" />
-    },
     {
       id: 'stickers_and_emojis',
       title: 'Stickers, Emojis & GIFs',
@@ -135,10 +128,6 @@ export function LeftCreationBar() {
 
   const handleSelectExtraTool = (toolId: string) => {
     setIsMoreToolsOpen(false);
-    if (toolId === 'shapes_and_lines') {
-      setActiveTool('smart_shape');
-      return;
-    }
     if (toolId === 'code_block') {
       setStickyCreationTemplate?.({
         itemType: 'code_block',
@@ -260,7 +249,7 @@ export function LeftCreationBar() {
 
         {/* Nút + Công cụ mở rộng (More tools) */}
         <button
-          title="Công cụ mở rộng (Shapes, Stickers, Code, Table, Mind map...)"
+          title="Công cụ mở rộng (Stickers, Code, Table, Mind map...)"
           onClick={() => {
             setIsMoreToolsOpen(!isMoreToolsOpen);
             setIsNoteFlyoutOpen(false);

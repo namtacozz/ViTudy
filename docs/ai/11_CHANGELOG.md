@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-11-21 18:11 — main (Gỡ bỏ mục Shapes and lines trùng lặp trong Công cụ mở rộng)
+- Task: Xóa bỏ công cụ `Shapes and lines` (`shapes_and_lines`) khỏi menu flyout `Công cụ mở rộng` (`+`) vì công cụ Vẽ thông minh (`smart_shape`) đã có sẵn trong bảng chọn của nút Bút (`LeftCreationBar`), sau đó build xuất tĩnh và deploy lại GitHub Pages.
+- Changed:
+  - `src/components/hud/LeftCreationBar.tsx`: Gỡ import icon `Shapes`, xóa item `shapes_and_lines` khỏi `extraTools`, xóa nhánh `if (toolId === 'shapes_and_lines')` trong `handleSelectExtraTool`, và cập nhật tooltip nút `+` thành `"Công cụ mở rộng (Stickers, Code, Table, Mind map...)"`.
+  - `AGENTS.md`, `docs/ai/06_UI_MAP.md`, `docs/ai/SNAPSHOT.md`: Đồng bộ danh sách 4 mục của menu `Công cụ mở rộng` và chi tiết `LeftCreationBar`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm run build:pages` (16/16 trang tĩnh xuất thành công), `pnpm run docs:index` (325 symbols), `pnpm run docs:check` (`[CHECK OK]`).
+- Open follow-ups: Không có.
+
 ## 2026-11-21 18:00 — main (Nâng cấp Smart Shape Engine bám sát nét vẽ mực)
 - Task: Nâng cấp thuật toán nhận diện và nắn nét Vẽ Hình Thông Minh (`smartShape`) để hình sau khi biến đổi bám khít nét tay thật, giữ đúng góc xoay và độ sắc nét đỉnh đa giác.
 - Changed:

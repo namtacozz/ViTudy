@@ -1,6 +1,6 @@
 # SNAPSHOT.md — Bản Tiêu Hóa Dự Án Toàn Diện ViTudy
 
-> **Commit Hash:** `Current Working Tree (Production Ready)` | **Ngày cập nhật:** `2026-11-15` | **Tác giả:** Senior Staff Engineer
+> **Commit Hash:** `main` | **Ngày cập nhật:** `2026-11-21` | **Tác giả:** Senior Staff Engineer
 
 ---
 
@@ -142,11 +142,11 @@ graph TD
 ---
 
 ## 9. Năm Bản Ghi Nhật Ký Gần Nhất (Recent Changelog)
-1. `2026-11-07 17:20`: Cập nhật quy tắc AGENTS.md, xoá CLAUDE.md, triệt tiêu 100% emoji (Zero-Emoji Policy) chuyển sang icon SVG vector Morphicons/Lucide, siết chặt kỷ luật vẽ giao diện theo combo skill.
-2. `2026-11-07 17:10`: Xây dựng toàn bộ hệ thống "Bộ nhớ dự án" trong `docs/ai/` và script AST tự động hóa.
-3. `2026-11-07 16:55`: Sửa lỗi cắt cụt công thức sách, giải phóng tiêu đề chương, nâng cấp phân trang 940x630, Inteline popover.
-4. `2026-11-06 22:30`: Hoàn thành Phase 4 (GPU acceleration, Chợ KnowInherit 85/15, Multiplayer Bar UI).
-5. `2026-11-06 20:00`: Triển khai phân hệ Inteline hỏi đáp theo dòng và dây nối trực quan SVG threads.
+1. `2026-11-21 18:10`: Gỡ bỏ mục `Shapes and lines` trùng lặp khỏi menu `Công cụ mở rộng` (`+`) trong `LeftCreationBar.tsx` (giữ `Vẽ thông minh` tập trung trong bảng chọn Bút).
+2. `2026-11-21 18:00`: Nâng cấp Smart Shape Engine bám sát nét vẽ mực (`trimClosedStrokeOvershoot`, `fitCircle`, `fitEllipse`, `fitRotatedRectangle`, `fitTriangle`) và render đa giác sắc nét.
+3. `2026-11-21 17:32`: Tinh gọn dự án chuẩn MVP (gỡ Bảng Vẽ 4 Góc, Quay màn hình, Discord SDK; giữ nguyên Kho Sticker/Emoji/Giphy).
+4. `2026-11-21 17:03`: Dọn sạch tàn dư `PhysicsDiceBox` & âm thanh xúc xắc.
+5. `2026-11-21 17:02`: Vá toàn bộ 9 lỗ hổng & lỗi tài nguyên từ Bug Hunter Audit (`BUG-1` đến `BUG-9`).
 
 ---
 
