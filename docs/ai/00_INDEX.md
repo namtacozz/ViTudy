@@ -1,8 +1,8 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
 > **Commit Hash:** `main`  
-> **Cập nhật lần cuối:** `2026-11-21`  
-> **Trạng thái Codebase:** Đã tinh gọn chuẩn MVP báo cáo cuối kỳ (gỡ bỏ Bút Trò Chơi, Bảng Vẽ 4 Góc, Quay màn hình, Discord Activity SDK; giữ nguyên Kho Sticker/Emoji/Giphy, Bàn học 2.5D, STudy 4 tab + Inteline, Chợ Tài Liệu, Vịt Streak Pet, Multiplayer `?room=`, và vá 9 hạng mục bảo mật/tài nguyên từ Bug Hunter).
+> **Cập nhật lần cuối:** `2026-11-23`  
+> **Trạng thái Codebase:** Đã tinh gọn chuẩn MVP báo cáo cuối kỳ; khắc phục triệt để lỗi clipping bảng màu bút vẽ, lỗi hồi sinh vật thể sau khi xóa (persistent desk item deletion) và thống nhất biểu phí 2 ViToken toàn hệ sinh thái.
 
 ---
 

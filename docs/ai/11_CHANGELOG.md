@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-11-23 14:58 — main (Khắc phục lỗi bảng màu bút vẽ, xóa bền vững vật thể và thống nhất 2 ViToken)
+- Task: Khắc phục 3 lỗi do người dùng báo cáo: (1) Bảng màu bút vẽ không mở khi nhấn nút chọn màu, (2) Xóa ghi chú/vật thể sau khi thoát ra vào lại vẫn bị hồi sinh, (3) Số ViToken yêu cầu (2 ViToken) không khớp với số bị tiêu trừ thực tế (1 ViToken).
+- Changed:
+  - `src/components/hud/LeftCreationBar.tsx`: Đổi container thanh flyout phụ `isPenFlyoutOpen` từ `overflow-y-auto` sang `overflow-visible` để triệt tiêu hoàn toàn lỗi clipping ngang của bảng 6 màu (`sm:left-full sm:ml-2.5`); bổ sung backdrop `fixed inset-0 z-40` để đóng flyout mượt mà khi nhấp ra ngoài; đóng `isPenColorPickerOpen` khi đóng thanh bút.
+  - `src/context/StudySpaceContext.tsx`:
+    - Loại bỏ lệnh gọi `saveCurrentSpaceImmediately()` trong cleanup function của `useEffect` lắng nghe sự kiện thoát trang/chuyển tab (sử dụng `saveCurrentSpaceImmediatelyRef`), ngăn chặn việc ghi đè state cũ chứa vật thể đã xóa lên `localStorage` và Supabase.
+    - Cập nhật `removeDeskItem`: Gọi `StudySpaceService.deleteItem` với `Promise.allSettled`, đồng thời cập nhật tức thì `updatedAt` của bàn học lên Supabase `study_spaces`.
+    - Cập nhật khâu hydrate/merge ban đầu: Tự động phát hiện và dọn sạch các vật thể zombie còn tồn dư trên Cloud nếu bàn học cục bộ có mốc thời gian mới hơn.
+  - `src/services/StudySpaceService.ts`: Cải tiến `deleteItem` bọc toàn bộ các lệnh xóa (`desk_documents`, `document_pages`, `inteline_threads`, `desk_drawings`) bằng `Promise.allSettled` và xử lý cả `safeItemId !== itemId` để đảm bảo lệnh xóa không bị hủy ngang.
+  - `src/components/objects/StickyNoteItem.tsx`: Bổ sung lắng nghe phím tắt `Delete`/`Backspace` khi ghi chú đang được chọn (`isSelected`) và không focus gõ chữ trong textarea để xóa nhanh vật thể theo chuẩn `AGENTS.md`.
+  - `src/components/modals/IntelineModal.tsx`: Thống nhất chi phí `2 ViToken` (sửa `cost = 2` và `spendTokens(2)` thay vì 1); bổ sung badge `2 ViToken / câu` (hoặc `Miễn phí` với ChatGPT) trên thanh tiêu đề.
+  - `supabase/functions/ai-chat/index.ts`: Thống nhất `tokenCost = 2` và `Math.max(2, costData.vitoken_cost)` khi trừ ViToken cho các yêu cầu AI hệ thống.
+  - `supabase/migrations/0024_unify_ai_model_costs.sql`: Tạo migration cập nhật chi phí mô hình AI hệ thống (`gpt-4o-mini`, `gemini-1.5-flash`) thành 2 ViToken trong bảng `ai_model_costs`.
+  - `AGENTS.md`: Tự động cập nhật 3 quy chuẩn thiết kế & kỹ thuật bắt buộc: (1) Quy chuẩn hiển thị bảng màu phụ `overflow-visible`, (2) Quy chuẩn xóa vật thể bền vững & phím tắt Delete/Backspace, (3) Quy chuẩn thống nhất biểu phí 2 ViToken toàn hệ sinh thái.
+  - `docs/ai/`: Cập nhật `04_DATA_MODEL.md`, `06_UI_MAP.md`, `09_ISSUES_AND_TODO.md` (`ISSUE-014`, `ISSUE-015`, `ISSUE-016`), `SNAPSHOT.md`, `00_INDEX.md`.
+- Added:
+  - `src/components/hud/LeftCreationBarAndNoteDelete.test.tsx`: 4 unit tests kiểm thử mở bảng màu, không bị clipping, và phím tắt Delete ghi chú.
+  - `src/components/modals/IntelineModalCost.test.tsx`: 2 unit tests kiểm thử hiển thị thống nhất 2 ViToken và chặn khi thiếu ViToken.
+- Verified by:
+  - `npx vitest run src/components/hud/LeftCreationBarAndNoteDelete.test.tsx` (4/4 tests pass)
+  - `npx vitest run src/components/modals/IntelineModalCost.test.tsx` (2/2 tests pass)
+  - `npx vitest run src/utils/smartShape.test.ts` (10/10 tests pass)
+  - `pnpm run docs:index` (325 symbols) & `pnpm run docs:check` (`[CHECK OK]`)
+- Open follow-ups: Không có.
+
+
 ## 2026-11-21 18:11 — main (Gỡ bỏ mục Shapes and lines trùng lặp trong Công cụ mở rộng)
 - Task: Xóa bỏ công cụ `Shapes and lines` (`shapes_and_lines`) khỏi menu flyout `Công cụ mở rộng` (`+`) vì công cụ Vẽ thông minh (`smart_shape`) đã có sẵn trong bảng chọn của nút Bút (`LeftCreationBar`), sau đó build xuất tĩnh và deploy lại GitHub Pages.
 - Changed:

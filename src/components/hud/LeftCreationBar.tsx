@@ -195,6 +195,7 @@ export function LeftCreationBar() {
             setActiveTool('cursor');
             setIsNoteFlyoutOpen(false);
             setIsPenFlyoutOpen(false);
+            setIsPenColorPickerOpen(false);
             setIsMoreToolsOpen(false);
           }}
           className={`${toolBtnBase} ${
@@ -212,6 +213,7 @@ export function LeftCreationBar() {
           onClick={() => {
             setIsNoteFlyoutOpen(!isNoteFlyoutOpen);
             setIsPenFlyoutOpen(false);
+            setIsPenColorPickerOpen(false);
             setIsMoreToolsOpen(false);
           }}
           className={`${toolBtnBase} ${
@@ -228,7 +230,9 @@ export function LeftCreationBar() {
           data-tour="tool-pen"
           title="Bộ công cụ bút vẽ, dạ quang, vẽ thông minh & tẩy (Bấm để mở bảng chọn)"
           onClick={() => {
-            setIsPenFlyoutOpen(!isPenFlyoutOpen);
+            const nextPenOpen = !isPenFlyoutOpen;
+            setIsPenFlyoutOpen(nextPenOpen);
+            if (!nextPenOpen) setIsPenColorPickerOpen(false);
             setIsNoteFlyoutOpen(false);
             setIsMoreToolsOpen(false);
             if (!isDrawingActive) {
@@ -339,7 +343,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED PEN SUB-TOOLBAR FLYOUT ================= */}
         {isPenFlyoutOpen && (
-          <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:top-auto max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:mb-2 max-sm:portrait:ml-0 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl flex max-sm:portrait:flex-row flex-col items-center gap-2 z-50 animate-fade-in min-w-[44px] max-h-[calc(100dvh-16px)] overflow-y-auto no-scrollbar landscape-subpanel">
+          <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:top-auto max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:mb-2 max-sm:portrait:ml-0 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl flex max-sm:portrait:flex-row flex-col items-center gap-2 z-50 animate-fade-in min-w-[44px] overflow-visible landscape-subpanel">
             {/* Tool 1: Pen (Bút vẽ thường) */}
             <button
               title="Bút vẽ tự do (Pen)"
@@ -443,6 +447,7 @@ export function LeftCreationBar() {
             {/* Single Current Color Button with Compact Popup */}
             <div className="relative pb-0.5">
               <button
+                type="button"
                 title="Bấm để đổi màu nét vẽ (Mở bảng 6 màu)"
                 onClick={() => setIsPenColorPickerOpen(!isPenColorPickerOpen)}
                 style={{ backgroundColor: penColor }}
@@ -453,26 +458,34 @@ export function LeftCreationBar() {
 
               {/* Flyout 6-Color Palette Grid (3 columns x 2 rows) */}
               {isPenColorPickerOpen && (
-                <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:mb-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2 shadow-2xl backdrop-blur-md grid grid-cols-3 gap-2 z-50 animate-fade-in w-28">
-                  {penColors.map(c => (
-                    <button
-                      key={c.value}
-                      title={c.label}
-                      onClick={() => {
-                        setPenColor(c.value);
-                        setIsPenColorPickerOpen(false);
-                      }}
-                      style={{ backgroundColor: c.value }}
-                      className={`w-7 h-7 rounded-full border border-black/15 transition-transform hover:scale-115 cursor-pointer flex items-center justify-center ${
-                        penColor === c.value ? 'ring-2 ring-[#E0562D] scale-105' : ''
-                      }`}
-                    >
-                      {penColor === c.value && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsPenColorPickerOpen(false)}
+                  />
+                  <div className="absolute max-sm:portrait:bottom-full max-sm:portrait:mb-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:ml-2.5 sm:mb-0 bg-white border border-slate-300 rounded-xl sm:rounded-2xl p-2.5 shadow-2xl backdrop-blur-md grid grid-cols-3 gap-2 z-50 animate-fade-in w-28 pointer-events-auto">
+                    {penColors.map(c => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        title={c.label}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPenColor(c.value);
+                          setIsPenColorPickerOpen(false);
+                        }}
+                        style={{ backgroundColor: c.value }}
+                        className={`w-7 h-7 rounded-full border border-black/15 transition-transform hover:scale-115 cursor-pointer flex items-center justify-center ${
+                          penColor === c.value ? 'ring-2 ring-[#E0562D] scale-105' : ''
+                        }`}
+                      >
+                        {penColor === c.value && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 

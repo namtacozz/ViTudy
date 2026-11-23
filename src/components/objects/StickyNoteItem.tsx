@@ -124,6 +124,23 @@ export function StickyNoteItemComponent({ item, isSelected }: StickyNoteItemProp
     setText(item.stickyText || '');
   }, [item.stickyText]);
 
+  // Lắng nghe phím Delete/Backspace khi ghi chú đang được chọn mà không focus vào vùng soạn thảo
+  useEffect(() => {
+    if (!isSelected) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as HTMLElement).isContentEditable)) {
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        removeDeskItem(item.id);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSelected, item.id, removeDeskItem]);
+
   // Hook for unified drag-and-move and continuous 360 rotation
   const { isDragging, handleMouseDown, handleRotateMouseDown, handleRotateDoubleClick } = useDeskItemInteraction({
     itemId: item.id,

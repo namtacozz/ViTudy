@@ -568,17 +568,19 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     } catch {}
   }, [user?.id]);
 
+  const flushSyncLocalRef = useRef(flushSyncLocal);
+  flushSyncLocalRef.current = flushSyncLocal;
+
   // Luôn flush dữ liệu trước khi thoát trang hoặc đóng tab
   useEffect(() => {
     const handleBeforeUnload = () => {
-      flushSyncLocal();
+      flushSyncLocalRef.current();
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      flushSyncLocal();
     };
-  }, [flushSyncLocal]);
+  }, []);
 
   // Deep NFC normalization & binary sanitizer for persistent storage safety (preserves emojis for emoji stickers/notes)
   const normalizeNFC = (text: string) => (text ? sanitizeDocumentText(text).normalize('NFC') : '');
@@ -679,6 +681,13 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
                   starred: resolvedStarred,
                   items: localMatch.items
                 };
+                // Dọn sạch các vật thể zombie đã xóa ở local nhưng còn tồn dư trên cloud
+                const ghostItems = cs.items.filter(
+                  csItem => !localMatch.items?.some(li => li.id === csItem.id || ensureUUID(li.id) === csItem.id)
+                );
+                ghostItems.forEach(ghost => {
+                  StudySpaceService.deleteItem(ghost.id).catch(() => {});
+                });
                 StudySpaceService.saveSpace(mergedSpace, user.id)
                   .then(() => StudySpaceService.upsertItems(localMatch.id, localMatch.items))
                   .catch(() => {});
@@ -890,17 +899,20 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
     return () => clearInterval(interval);
   }, [isLoaded, status, user?.id, saveCurrentSpaceImmediately]);
 
+  const saveCurrentSpaceImmediatelyRef = useRef(saveCurrentSpaceImmediately);
+  saveCurrentSpaceImmediatelyRef.current = saveCurrentSpaceImmediately;
+
   // Tự động lưu khi thoát trang, chuyển tab hoặc đóng trình duyệt
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleBeforeUnload = () => {
-      saveCurrentSpaceImmediately();
+      saveCurrentSpaceImmediatelyRef.current();
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        saveCurrentSpaceImmediately();
+        saveCurrentSpaceImmediatelyRef.current();
       }
     };
 
@@ -912,9 +924,8 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('pagehide', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      saveCurrentSpaceImmediately();
     };
-  }, [saveCurrentSpaceImmediately]);
+  }, []);
 
   // Debounce autosave khi thay đổi vật thể hoặc nét vẽ
   useEffect(() => {
@@ -2838,10 +2849,12 @@ Trong đó:
 
   const removeDeskItem = (id: string) => {
     if (isViewerSession()) return;
+    const nowIso = new Date().toISOString();
     if (status === 'authenticated') {
-      StudySpaceService.deleteItem(id);
+      StudySpaceService.deleteItem(id).catch(err => console.warn('Lỗi deleteItem:', err));
     }
     setSpaces(sList => {
+      let updatedSpaceForCloud: StudySpace | null = null;
       const nextList = sList.map(s => {
         if (s.id !== activeSpaceId) return s;
         const deletedItem = s.items.find(item => item.id === id);
@@ -2866,14 +2879,19 @@ Trong đó:
           });
         }
 
-        return {
+        const updated = {
           ...s,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowIso,
           items: nextItems,
           threads: (s.threads || []).filter(t => t.sourceItemId !== id && t.targetStickyId !== id),
         };
+        updatedSpaceForCloud = updated;
+        return updated;
       });
       syncLocal(nextList);
+      if (status === 'authenticated' && user?.id && updatedSpaceForCloud && !(updatedSpaceForCloud as StudySpace).isSharedGuest) {
+        StudySpaceService.saveSpace(updatedSpaceForCloud, user.id).catch(() => {});
+      }
       return nextList;
     });
     setStrokes(prev => prev.filter(s => s.attachedToItemId !== id));

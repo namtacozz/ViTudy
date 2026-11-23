@@ -58,9 +58,9 @@ export function IntelineModal({
     if (!q.trim()) return;
 
     if (aiConfig.provider === 'system') {
-      const cost = 1;
+      const cost = 2;
       if (wallet.balance < cost) {
-        alert('Số dư ViToken chưa đủ để đặt câu hỏi. Hãy điểm danh hàng ngày hoặc dùng khóa AI cá nhân.');
+        alert('Số dư ViToken chưa đủ để đặt câu hỏi (Cần 2 ViToken). Hãy điểm danh hàng ngày hoặc kết nối ChatGPT để dùng miễn phí.');
         return;
       }
     }
@@ -89,7 +89,7 @@ Yêu cầu: Trả lời tự nhiên, chính xác, súc tích và dễ hiểu.`,
       if (typeof data.balanceAfter === 'number') {
         syncBalanceFromServer(data.balanceAfter);
       } else if (aiConfig.provider === 'system') {
-        spendTokens(1, `Hỏi Inteline: "${q.slice(0, 30)}..."`);
+        spendTokens(2, `Hỏi Inteline: "${q.slice(0, 30)}..."`);
       }
 
       if (data.reply) {
@@ -138,6 +138,9 @@ Yêu cầu: Trả lời tự nhiên, chính xác, súc tích và dễ hiểu.`,
                 <span>Inteline</span>
                 <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                   {sourceItem.title} (Trang {pageNumber})
+                </span>
+                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                  {aiConfig.provider === 'oauth_chatgpt' || aiConfig.provider?.startsWith('byok_') ? 'Miễn phí' : '2 ViToken / câu'}
                 </span>
               </h3>
             </div>

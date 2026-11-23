@@ -367,12 +367,16 @@ export class StudySpaceService {
 
     try {
       const safeItemId = ensureUUID(itemId);
-      await Promise.all([
+      const deletes = [
         supabase.from('desk_documents').delete().eq('id', safeItemId),
         supabase.from('document_pages').delete().eq('document_id', safeItemId),
         supabase.from('inteline_threads').delete().or(`source_item_id.eq.${safeItemId},target_sticky_id.eq.${safeItemId}`),
         supabase.from('desk_drawings').delete().eq('attached_to_item_id', safeItemId),
-      ]);
+      ];
+      if (safeItemId !== itemId) {
+        deletes.push(supabase.from('desk_documents').delete().eq('id', itemId));
+      }
+      await Promise.allSettled(deletes);
     } catch (err) {
       console.warn('Lỗi deleteItem:', err);
     }

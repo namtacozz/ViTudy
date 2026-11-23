@@ -99,6 +99,10 @@
 *Nguồn: [`supabase/schema.sql:L154-L163`](file:///F:/AppMaking/ViTudy/supabase/schema.sql#L154-L163)*
 * **Cột dữ liệu:** `id`, `user_id` (FK profiles), `amount`, `balance_after`, `transaction_type (signup_grant, daily_streak, ai_usage, know_inherit_buy, know_inherit_earning, transfer)`, `description`, `created_at`.
 
+### 12. `public.ai_model_costs`
+*Nguồn: [`supabase/migrations/0003_rate_limit_and_ai_costs.sql`](file:///F:/AppMaking/ViTudy/supabase/migrations/0003_rate_limit_and_ai_costs.sql), [`supabase/migrations/0024_unify_ai_model_costs.sql`](file:///F:/AppMaking/ViTudy/supabase/migrations/0024_unify_ai_model_costs.sql)*
+* **Cột dữ liệu:** `model (PK)`, `vitoken_cost` (thống nhất 2 ViToken cho `gpt-4o-mini`, `gemini-1.5-flash`), `enabled`, `description`, `created_at`, `updated_at`.
+
 ---
 
 ## 2. Row Level Security (RLS) Policies

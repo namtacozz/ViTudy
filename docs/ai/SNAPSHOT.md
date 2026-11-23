@@ -1,6 +1,6 @@
 # SNAPSHOT.md — Bản Tiêu Hóa Dự Án Toàn Diện ViTudy
 
-> **Commit Hash:** `main` | **Ngày cập nhật:** `2026-11-21` | **Tác giả:** Senior Staff Engineer
+> **Commit Hash:** `main` | **Ngày cập nhật:** `2026-11-23` | **Tác giả:** Senior Staff Engineer
 
 ---
 

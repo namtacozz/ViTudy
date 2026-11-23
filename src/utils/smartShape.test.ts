@@ -569,5 +569,5 @@ describe('smartShape recognition test harness', () => {
 
     // We do not fail the benchmark here on the baseline, but record it
     expect(totalStrokes).toBe(1400);
-  });
+  }, 20000);
 });

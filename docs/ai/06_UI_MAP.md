@@ -67,7 +67,7 @@ RootLayout (src/app/layout.tsx)
 * **Kiểu dáng Miro:** Thanh dọc nổi bên trái trung tâm trên desktop/landscape (dock ngang dưới đáy trên mobile portrait), gom toàn bộ công cụ tạo tác:
   * Con trỏ (`cursor`)
   * Tạo note (`StickyNote` với flyout 5 màu pastel)
-  * Bút hợp nhất (`pen`, `highlighter`, `smart_shape` Vẽ thông minh, `eraser`, `area_eraser`, 3 cỡ nét, bảng 6 màu, bật/tắt vẽ bằng ngón tay)
+  * Bút hợp nhất (`pen`, `highlighter`, `smart_shape` Vẽ thông minh, `eraser`, `area_eraser`, 3 cỡ nét, flyout bảng 6 màu chống clipping với `overflow-visible`, bật/tắt vẽ bằng ngón tay)
   * Công cụ mở rộng (`+` More Tools gồm 4 mục: `Stickers, Emojis & GIFs`, `Code block`, `Table`, `Mind map` — đã lược bỏ `Shapes and lines` trùng lặp với `smart_shape` trong bảng chọn Bút)
   * Khóa di chuyển canvas (`lock`)
   * Hoàn tác nét vẽ (`undo`), Làm lại (`redo`) & Xóa toàn bộ nét vẽ (`Trash2`)

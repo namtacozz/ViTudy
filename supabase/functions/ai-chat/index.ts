@@ -479,7 +479,7 @@ serve(async (req: Request) => {
     }
 
     // 3. ViToken Debit for System Managed Provider (idempotent by p_reference)
-    let tokenCost = 1;
+    let tokenCost = 2;
     let balanceAfter: number | undefined;
     const requestId =
       typeof clientRequestId === 'string' && clientRequestId.trim()
@@ -494,7 +494,7 @@ serve(async (req: Request) => {
         .single();
 
       if (costData?.vitoken_cost !== undefined) {
-        tokenCost = costData.vitoken_cost;
+        tokenCost = Math.max(2, costData.vitoken_cost);
       }
 
       const { data: debitedBalance, error: debitError } = await supabaseAdmin.rpc('debit_vitoken', {
