@@ -21,3 +21,13 @@ export function setStudyCache(key: string, data: Partial<CachedStudyData>): void
   const current = cache.get(key) || {};
   cache.set(key, { ...current, ...data });
 }
+
+export const getStudyToolsCache = getStudyCache;
+export const updateStudyToolsCache = setStudyCache;
+export function clearStudyToolsCache(key?: string): void {
+  if (key) {
+    cache.delete(key);
+  } else {
+    cache.clear();
+  }
+}

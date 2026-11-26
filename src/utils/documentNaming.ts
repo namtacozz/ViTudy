@@ -1,37 +1,84 @@
+import { normalizeNFC } from './textNormalization';
+
 /**
- * Document Naming Helpers for ViTudy
- * Formats uploaded document titles into human-friendly names.
+ * Kiểm tra xem tên file có phải là mã máy, hash ngẫu nhiên hoặc tên chụp từ camera/điện thoại
  */
+export function isCameraOrMachineGeneratedName(nameWithoutExt: string): boolean {
+  const clean = nameWithoutExt.trim();
+  if (!clean) return true;
 
-export function formatUploadedDocTitle(fileName: string, isImage: boolean = false): string {
-  if (!fileName) return isImage ? 'Ảnh chụp mới' : 'Tài liệu mới';
+  // Dãy số ngẫu nhiên dài (ví dụ: 815733508_129482..., 1712938472938...)
+  if (/^\d{8,}/.test(clean) || /^[0-9_-]{8,}$/.test(clean)) {
+    return true;
+  }
 
-  // Strip extension
-  const rawBase = fileName.replace(/\.[^/.]+$/, '').trim();
+  // UUID
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean)) {
+    return true;
+  }
 
-  if (isImage) {
-    // Check if filename looks like a machine hash, camera timestamp, or random string
-    // e.g., "815733508_1644375293917880_8219887820277246382_n", "IMG_20241112_183015", "Screenshot_2024..."
-    const isNumericHash = /^[0-9_-]{12,}$/.test(rawBase);
-    const isCameraOrScreenshot = /^(IMG|Pasted|Screenshot|Screen Shot|Snapshot|Capture|Photo|Image|CAM|DSC)[-_0-9A-Za-z\s]*$/i.test(rawBase);
-    const isFbOrCdnHash = /^[0-9]+_[0-9]+_[0-9]+_n$/i.test(rawBase);
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawBase);
+  // Tên ảnh chụp tiêu chuẩn của các dòng máy ảnh & smartphone (Samsung, iPhone, Pixel, Xiaomi...)
+  // Ví dụ: IMG_20260312_142030, PXL_20260401, DSC_0042, Screenshot_2026...
+  const cameraPatterns = /^(IMG|PXL|DSC|PHOTO|PIC|CAMERA|CAPTURE|SCREENSHOT|SCREEN_SHOT|IMAGE|WP|DCIM)[-_0-9A-Z]*$/i;
+  if (cameraPatterns.test(clean)) {
+    return true;
+  }
 
-    if (isNumericHash || isCameraOrScreenshot || isFbOrCdnHash || isUuid || rawBase.length > 25) {
-      const now = new Date();
-      const day = String(now.getDate()).padStart(2, '0');
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      return `Ảnh chụp ${day}/${month} ${hours}:${minutes}`;
+  // Tên dạng "Ảnh chụp màn hình 2026-..."
+  if (/^(ảnh\s*chụp\s*màn\s*hình|screen\s*shot)[-_0-9\s:]*$/i.test(clean)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Định dạng thời gian thành chuỗi DD/MM HH:mm (giờ Việt Nam)
+ */
+function formatDateTimeVN(timestamp?: number): string {
+  const date = timestamp ? new Date(timestamp) : new Date();
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month} ${hours}:${minutes}`;
+}
+
+/**
+ * Chuẩn hóa tên tài liệu/hình ảnh tải lên:
+ * - Tự động phát hiện và làm sạch các tên file ảnh chụp camera, hash máy rác thành 'Ảnh chụp DD/MM HH:mm'
+ * - Loại bỏ phần mở rộng tệp (.pdf, .docx, .png...)
+ * - Thay thế dấu gạch dưới và khoảng trắng thừa, chuẩn hóa Unicode NFC
+ */
+export function formatUploadedDocTitle(
+  fileName: string,
+  isImage?: boolean,
+  fileTimestamp?: number
+): string {
+  if (!fileName || typeof fileName !== 'string') {
+    return isImage ? `Ảnh chụp ${formatDateTimeVN(fileTimestamp)}` : 'Tài liệu mới';
+  }
+
+  // 1. Tách phần tên không có extension
+  const rawWithoutExt = fileName.replace(/\.[^/.]+$/, '').trim();
+
+  // 2. Nếu là ảnh và tên là dạng camera/mã máy
+  if (isImage || /\.(png|jpe?g|webp|gif|bmp|heic|svg)$/i.test(fileName)) {
+    if (isCameraOrMachineGeneratedName(rawWithoutExt)) {
+      return `Ảnh chụp ${formatDateTimeVN(fileTimestamp)}`;
     }
   }
 
-  // Clean underscores and excess hyphens for better readability
-  const cleaned = rawBase
+  // 3. Với tài liệu văn bản / sách
+  if (!rawWithoutExt) {
+    return isImage ? `Ảnh chụp ${formatDateTimeVN(fileTimestamp)}` : 'Tài liệu không tên';
+  }
+
+  // Làm sạch dấu gạch dưới, khoảng trắng dư thừa
+  const readable = rawWithoutExt
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
-  return cleaned || (isImage ? 'Ảnh chụp' : 'Tài liệu');
+  return normalizeNFC(readable);
 }

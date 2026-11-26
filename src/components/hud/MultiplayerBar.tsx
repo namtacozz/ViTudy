@@ -3,25 +3,51 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
-import { useRealtimeMultiplayer, PeerUser } from '@/hooks/useRealtimeMultiplayer';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig } from '@/lib/supabase';
+import { getShareRoomUrl } from '@/lib/assets';
+import { MultiplayerCursorsLayer } from '../canvas/MultiplayerCursorsLayer';
 import { 
   Users, 
-  Share2, 
   Copy, 
   Check, 
   X, 
-  UserPlus,
-  LogOut,
-  Database,
-  Radio,
-  ExternalLink,
+  UserPlus, 
+  LogOut, 
+  Database, 
   ShieldCheck,
-  Sparkles
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  AlertCircle
 } from 'lucide-react';
 
 export function MultiplayerBar() {
-  const { activeSpace, setTransform } = useStudySpace();
+  const { 
+    activeSpace, 
+    transform, 
+    setTransform, 
+    multiplayerPeers, 
+    isMultiplayerConnected, 
+    isMultiplayerHost, 
+    multiplayerRoomId, 
+    multiplayerPermission, 
+    leaveMultiplayerRoom, 
+    isFollowPresenter, 
+    setIsFollowPresenter,
+    isMicOn,
+    isMuted,
+    isDeafened,
+    isSpeaking,
+    speakingPeers,
+    peerAudioVolumes,
+    setPeerAudioVolume,
+    toggleMic,
+    toggleMute,
+    toggleDeafen,
+    micError
+  } = useStudySpace();
+
   const [mounted, setMounted] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -32,34 +58,6 @@ export function MultiplayerBar() {
   const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
   const [supabaseKeyInput, setSupabaseKeyInput] = useState('');
   const [dbSavedNotice, setDbSavedNotice] = useState(false);
-
-  const {
-    peers,
-    isConnected,
-    isConfigured,
-    hasPeers,
-    setHasPeers,
-    isFollowPresenter,
-    setIsFollowPresenter,
-    toggleSimulation,
-    leaveRoom,
-    broadcastCursor
-  } = useRealtimeMultiplayer(activeSpace.id, 'Bạn (Chủ bàn)', true);
-
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('vitudy_peers_update', { detail: peers }));
-  }, [peers]);
-
-  useEffect(() => {
-    const onCursorBroadcast = (e: Event) => {
-      const pos = (e as CustomEvent<{ x: number; y: number }>).detail;
-      if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
-        broadcastCursor(pos.x, pos.y);
-      }
-    };
-    window.addEventListener('vitudy_cursor_broadcast', onCursorBroadcast);
-    return () => window.removeEventListener('vitudy_cursor_broadcast', onCursorBroadcast);
-  }, [broadcastCursor]);
 
   useEffect(() => {
     setMounted(true);
@@ -84,7 +82,8 @@ export function MultiplayerBar() {
 
   const handleCopyShareLink = () => {
     if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
+      const shareUrl = getShareRoomUrl(multiplayerRoomId || activeSpace.id, multiplayerPermission || 'edit');
+      navigator.clipboard.writeText(shareUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     }
@@ -120,32 +119,115 @@ export function MultiplayerBar() {
     }
   };
 
+  const hasRoomQuery = typeof window !== 'undefined' && window.location.search.includes('room=');
+  const showBar = !isDismissed && isMultiplayerConnected && (multiplayerPeers.length > 0 || hasRoomQuery);
+
   return (
     <>
-      {/* Bottom Center: Multiplayer Bar (Chỉ hiển thị khi có bạn bè trong phòng hoặc đang kết nối Realtime) */}
-      {!isDismissed && hasPeers && peers.length > 0 && (
+      {/* Bottom Center: Multiplayer Bar (Chỉ hiển thị khi có phòng học nhóm hoặc bạn bè đang online) */}
+      {showBar && (
         <div className="fixed bottom-1 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 pointer-events-auto select-none">
           <div className="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-md animate-fade-in text-slate-900">
             {/* Host Tag & Live Status */}
             <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold pr-2 border-r border-slate-200">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+              <span className={`w-2 h-2 rounded-full ${isMultiplayerConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
               <Users className="w-3.5 h-3.5 text-slate-700" />
-              <span>Chủ phòng: Bạn</span>
+              <span>{isMultiplayerHost ? 'Chủ phòng: Bạn' : 'Phòng học nhóm'}</span>
             </div>
 
-            {/* Peer Avatars */}
-            <div className="flex items-center -space-x-1.5 pr-2 border-r border-slate-200">
-              {peers.map(p => (
-                <div
-                  key={p.id}
-                  title={`${p.name} (${p.role === 'owner' ? 'Chủ phòng' : p.role === 'editor' ? 'Người thuyết trình' : 'Người xem'}) - ${p.status}`}
-                  style={{ backgroundColor: p.avatarColor }}
-                  className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold text-white shadow-2xs cursor-pointer hover:scale-110 transition-transform"
-                >
-                  {p.name.charAt(0)}
-                </div>
-              ))}
-            </div>
+            {/* Peer Avatars with Discord Speaking Glow & Mute Indicators */}
+            {multiplayerPeers.length > 0 && (
+              <div className="flex items-center -space-x-1.5 pr-2 border-r border-slate-200">
+                {multiplayerPeers.map(p => {
+                  const isPeerSpeaking = speakingPeers[p.id] || p.isSpeaking;
+                  return (
+                    <div
+                      key={p.id}
+                      title={`${p.name} (${p.role === 'owner' ? 'Chủ phòng' : p.role === 'editor' ? 'Người chỉnh sửa' : 'Người xem'}) - ${p.status}${isPeerSpeaking ? ' • Đang nói 🎤' : p.isMuted ? ' • Đã tắt mic' : ''}`}
+                      style={{ backgroundColor: p.avatarColor }}
+                      className={`relative w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold text-white shadow-2xs cursor-pointer hover:scale-110 transition-transform ${
+                        isPeerSpeaking ? 'ring-2 ring-[#E0562D] ring-offset-1 shadow-sm shadow-green-500/50 scale-105' : ''
+                      }`}
+                    >
+                      {p.name.charAt(0)}
+                      {p.isMuted && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white flex items-center justify-center" title="Đã tắt mic">
+                          <span className="w-1 h-0.5 bg-white rounded-full" />
+                        </span>
+                      )}
+                      {isPeerSpeaking && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#E0562D] rounded-full border border-white animate-ping" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Discord-like Voice Chat Button */}
+            <button
+              type="button"
+              onClick={isMicOn ? toggleMute : toggleMic}
+              title={
+                !isMicOn 
+                  ? 'Bật Micro nói chuyện trong phòng' 
+                  : isMuted 
+                  ? 'Đang tắt tiếng (Bấm để bật lại mic)' 
+                  : 'Micro đang bật (Bấm để tắt tiếng)'
+              }
+              className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 touch-target ${
+                !isMicOn
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  : isMuted
+                  ? 'bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100'
+                  : `bg-[#E0562D] text-white hover:bg-[#c9451e] shadow-xs ${isSpeaking ? 'ring-2 ring-green-400 ring-offset-1 animate-pulse' : ''}`
+              }`}
+            >
+              {!isMicOn ? (
+                <>
+                  <MicOff className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline text-[11px]">Bật Mic</span>
+                </>
+              ) : isMuted ? (
+                <>
+                  <MicOff className="w-3.5 h-3.5 text-rose-500" />
+                  <span className="hidden sm:inline text-[11px]">Đã tắt mic</span>
+                </>
+              ) : (
+                <>
+                  <Mic className={`w-3.5 h-3.5 text-white ${isSpeaking ? 'animate-bounce' : ''}`} />
+                  <span className="hidden sm:inline text-[11px]">{isSpeaking ? 'Đang nói...' : 'Đang bật mic'}</span>
+                </>
+              )}
+            </button>
+
+            {/* Discord-like Deafen / Mute Speaker Button */}
+            <button
+              type="button"
+              onClick={toggleDeafen}
+              title={
+                isDeafened 
+                  ? 'Đang tắt toàn bộ âm thanh phòng học (Bấm để bật lại loa)' 
+                  : 'Tắt loa phòng học khi quá ồn'
+              }
+              className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 touch-target ${
+                isDeafened
+                  ? 'bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 shadow-2xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              {isDeafened ? (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 text-rose-500" />
+                  <span className="hidden sm:inline text-[11px]">Đã tắt loa</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-slate-600" />
+                  <span className="hidden sm:inline text-[11px]">Loa</span>
+                </>
+              )}
+            </button>
 
             {/* Follow Presenter Mode (Functional Synced Viewport) */}
             <button
@@ -177,7 +259,7 @@ export function MultiplayerBar() {
             <button
               title="Về chế độ học cá nhân"
               onClick={() => {
-                leaveRoom();
+                leaveMultiplayerRoom();
                 setIsDismissed(true);
               }}
               className="text-slate-400 hover:text-rose-600 p-1 rounded-full hover:bg-rose-50 transition-colors cursor-pointer"
@@ -224,6 +306,14 @@ export function MultiplayerBar() {
               Chia sẻ liên kết để bạn bè cùng tham gia học nhóm, đồng bộ camera và tương tác thời gian thực trên bàn học.
             </p>
 
+            {/* Mic Error Banner if any */}
+            {micError && (
+              <div className="mb-4 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{micError}</span>
+              </div>
+            )}
+
             {/* Room Link Input Box */}
             <div className="mb-4">
               <label className="text-xs font-semibold text-slate-700 block mb-1">
@@ -233,8 +323,8 @@ export function MultiplayerBar() {
                 <input
                   type="text"
                   readOnly
-                  value={typeof window !== 'undefined' ? window.location.href : ''}
-                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all truncate"
+                  value={getShareRoomUrl(multiplayerRoomId || activeSpace.id, multiplayerPermission || 'edit')}
+                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all"
                 />
                 <button
                   type="button"
@@ -245,50 +335,114 @@ export function MultiplayerBar() {
                   <span>{copiedLink ? 'Đã sao chép' : 'Sao chép'}</span>
                 </button>
               </div>
-              <div className="text-[11px] text-slate-600 mt-1.5 flex items-center justify-between px-0.5">
-                <span>Hạn liên kết: 24 giờ</span>
-                <span className="text-slate-500">Tự động đồng bộ nét vẽ & tài liệu</span>
+            </div>
+
+            {/* Members in Room & Voice Audio Controls */}
+            <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="flex items-center justify-between text-xs mb-2.5">
+                <span className="font-bold text-slate-800">Bạn học & Âm thanh đàm thoại</span>
+                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                  {multiplayerPeers.length + 1} đang kết nối
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                {/* Local user */}
+                <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-semibold text-slate-900">Bạn ({isMultiplayerHost ? 'Chủ bàn học' : 'Người học'})</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    {isMicOn ? (
+                      isMuted ? (
+                        <span className="text-rose-600 font-semibold flex items-center gap-1">
+                          <MicOff className="w-3 h-3" /> Đã tắt mic
+                        </span>
+                      ) : (
+                        <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                          <Mic className="w-3 h-3" /> {isSpeaking ? 'Đang nói 🎤' : 'Đang bật mic'}
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-slate-400">Mic chưa bật</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Remote peers */}
+                {multiplayerPeers.map((peer) => {
+                  const peerVol = peerAudioVolumes[peer.id] !== undefined ? peerAudioVolumes[peer.id] : 1.0;
+                  const isPeerSpeaking = speakingPeers[peer.id] || peer.isSpeaking;
+
+                  return (
+                    <div key={peer.id} className="p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: peer.avatarColor || '#3b82f6' }} />
+                          <span className="font-medium text-slate-800">{peer.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px]">
+                          {isPeerSpeaking ? (
+                            <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                              <Mic className="w-3 h-3 animate-bounce" /> Đang nói
+                            </span>
+                          ) : peer.isMuted ? (
+                            <span className="text-rose-500 font-medium flex items-center gap-1">
+                              <MicOff className="w-3 h-3" /> Đã tắt mic
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">Trực tuyến</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Peer Audio Volume Slider */}
+                      <div className="flex items-center gap-2 pt-1 border-t border-slate-100 text-[11px] text-slate-600">
+                        {peerVol === 0 ? (
+                          <VolumeX className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        ) : (
+                          <Volume2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                        )}
+                        <span className="text-[10px] font-medium text-slate-500 shrink-0">Âm lượng</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={peerVol}
+                          onChange={(e) => setPeerAudioVolume(peer.id, parseFloat(e.target.value))}
+                          className="w-full accent-[#E0562D] h-1 bg-slate-200 rounded-lg cursor-pointer"
+                        />
+                        <span className="font-mono text-[10px] w-7 text-right shrink-0">{Math.round(peerVol * 100)}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Hotkey hint */}
+              <div className="mt-2 text-[10px] text-slate-400 flex flex-wrap items-center justify-between gap-1">
+                <span>Phím tắt: <kbd className="px-1 py-0.5 bg-slate-200 rounded text-slate-700 font-mono font-bold">M</kbd> Bật/Tắt Mic • <kbd className="px-1 py-0.5 bg-slate-200 rounded text-slate-700 font-mono font-bold">D</kbd> Bật/Tắt Loa</span>
+                {isDeafened && (
+                  <span className="text-rose-500 font-bold">● Đang tắt loa phòng</span>
+                )}
               </div>
             </div>
 
-            {/* Members in Room */}
-            <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="font-bold text-slate-800">Bạn học trong phòng</span>
-                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
-                  {peers.length + 1} đang kết nối
-                </span>
-              </div>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center justify-between text-slate-700">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="font-medium">Bạn (Chủ bàn học)</span>
-                  </div>
-                  <span className="text-[11px] text-slate-600 font-medium">Trực tuyến</span>
-                </div>
-                {peers.map((peer) => (
-                  <div key={peer.id} className="flex items-center justify-between text-slate-700">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: peer.avatarColor || '#3b82f6' }} />
-                      <span className="font-medium">{peer.name}</span>
-                    </div>
-                    <span className="text-[11px] text-emerald-600 font-semibold">Đang học cùng</span>
-                  </div>
-                ))}
-              </div>
+            {/* Advanced Settings Link */}
+            <div className="pt-2 border-t border-slate-100 mb-3">
+              <button
+                type="button"
+                onClick={() => setIsDbConfigOpen(true)}
+                className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                + Cài đặt kết nối máy chủ nâng cao
+              </button>
             </div>
 
             {/* Footer Buttons */}
-            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={toggleSimulation}
-                className="text-xs text-slate-600 hover:text-slate-900 font-medium cursor-pointer"
-              >
-                {!hasPeers ? 'Mô phỏng bạn học demo' : 'Tắt mô phỏng'}
-              </button>
-
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setIsShareModalOpen(false)}
@@ -397,6 +551,12 @@ export function MultiplayerBar() {
             </form>
           </div>
         </div>,
+        document.body
+      )}
+
+      {/* Cursors Overlay for Multiplayer */}
+      {mounted && createPortal(
+        <MultiplayerCursorsLayer peers={multiplayerPeers} />,
         document.body
       )}
     </>

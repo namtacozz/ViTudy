@@ -12,6 +12,9 @@ import { MindMapNodeItem } from '../objects/MindMapNodeItem';
 import { StickerItem } from '../objects/StickerItem';
 import { FourCornerArtboard } from '../objects/FourCornerArtboard';
 import { BoardGameArena } from '../objects/BoardGameArena';
+import { SpreadsheetItem } from '../objects/SpreadsheetItem';
+import { PresentationItem } from '../objects/PresentationItem';
+import { VoiceNoteItem } from '../objects/VoiceNoteItem';
 import { MindMapConnectors } from './MindMapConnectors';
 import { VisualLinkThreads } from './VisualLinkThreads';
 import { DeskDrawingCanvas } from './DeskDrawingCanvas';
@@ -340,17 +343,24 @@ export function InfiniteDesk() {
     if (files.length === 0) return;
 
     for (const file of files) {
-      const isImage = file.type.startsWith('image/');
-      const docTitle = formatUploadedDocTitle(file.name, isImage);
-
       try {
-        const parsedPages = await parseUploadedDocumentFile(file, docTitle);
-        if (parsedPages.length > 0) {
-          addUploadedDocument(docTitle, parsedPages);
+        const parsed = await parseUploadedDocumentFile(file);
+        if (parsed.pages.length > 0) {
+          if (parsed.kind === 'spreadsheet' && parsed.sheets) {
+            addUploadedDocument(parsed.title, parsed.pages, {
+              spreadsheetData: { sheets: parsed.sheets, activeSheetIndex: 0 },
+            });
+          } else if (parsed.kind === 'presentation' && parsed.slides) {
+            addUploadedDocument(parsed.title, parsed.pages, {
+              presentationData: { slides: parsed.slides, currentSlideIndex: 0 },
+            });
+          } else {
+            addUploadedDocument(parsed.title, parsed.pages);
+          }
         }
       } catch (err: any) {
         console.error('Lỗi nạp tệp kéo thả vào bàn học:', err);
-        alert(err?.message || 'Không thể đọc tệp này. Vui lòng kiểm tra lại định dạng (.pdf, .docx, .pptx, .txt, ảnh).');
+        alert(err?.message || 'Không thể đọc tệp này. Vui lòng kiểm tra lại định dạng (.pdf, .docx, .pptx, .xlsx, .txt, ảnh).');
       }
     }
   };
@@ -462,6 +472,15 @@ export function InfiniteDesk() {
           }
           if (item.type === 'board_game') {
             return <BoardGameArena key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'spreadsheet') {
+            return <SpreadsheetItem key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'presentation') {
+            return <PresentationItem key={item.id} item={item} isSelected={isSelected} />;
+          }
+          if (item.type === 'voice_note') {
+            return <VoiceNoteItem key={item.id} item={item} isSelected={isSelected} />;
           }
           return null;
         })}

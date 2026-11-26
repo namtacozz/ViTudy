@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { getShareRoomUrl } from '@/lib/assets';
 import { 
   Upload, 
   Share2,
@@ -26,12 +27,18 @@ import {
   QrCode,
   RefreshCw,
   UserMinus,
+  UserPlus,
+  UserCheck,
+  Send,
+  Link2,
   Clock,
-  Send
+  Plus
 } from 'lucide-react';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, getSupabase } from '@/lib/supabase';
 import { parseUploadedDocumentFile } from '@/services/OfficeParserService';
-import { formatUploadedDocTitle } from '@/utils/documentNaming';
+import { importDocumentFromUrl, UrlSharePermissionError } from '@/services/UrlDocumentService';
+import { useSocialPresence } from '@/hooks/useSocialPresence';
+import { DeskInviteNotification, SocialFriend } from '@/services/SocialFriendService';
 
 interface PendingDocument {
   file: File;
@@ -40,10 +47,22 @@ interface PendingDocument {
   pages: { title?: string; text: string; image?: string }[];
   fileSize: string;
   fileType: string;
+  spreadsheetData?: import('@/types/studyspace').SpreadsheetData;
+  presentationData?: import('@/types/studyspace').PresentationData;
 }
 
 export function BottomLeftKnowledge() {
-  const { addUploadedDocument, activeSpace } = useStudySpace();
+  const { 
+    addUploadedDocument, 
+    activeSpace,
+    multiplayerPeers,
+    isMultiplayerConnected,
+    multiplayerRoomId,
+    startHostingRoom,
+    joinMultiplayerRoom,
+    multiplayerPermission,
+    setMultiplayerPermission
+  } = useStudySpace();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
   const [pendingDoc, setPendingDoc] = useState<PendingDocument | null>(null);
@@ -53,13 +72,54 @@ export function BottomLeftKnowledge() {
     setMounted(true);
   }, []);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [urlTitleInput, setUrlTitleInput] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [urlError, setUrlError] = useState<{ message: string; guideSteps?: string[] } | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [roomPermission, setRoomPermission] = useState<'view_only' | 'edit'>('view_only');
   const [roomLinkExpiry, setRoomLinkExpiry] = useState<'24h' | '1h' | 'unlimited'>('24h');
   const [roomSalt, setRoomSalt] = useState('');
   const [showQrCode, setShowQrCode] = useState(false);
-  const [peersInRoom, setPeersInRoom] = useState<{ id: string; name: string; avatarColor: string }[]>([]);
+
+  // Social Friends & Realtime Presence
+  const {
+    currentUser,
+    buddies,
+    incomingInvite,
+    sendDeskInvite,
+    addFriend,
+    removeBuddy,
+    declineInvite
+  } = useSocialPresence(multiplayerRoomId || activeSpace.id, activeSpace.name);
+
+  const [inviteTargetInput, setInviteTargetInput] = useState('');
+  const [inviteMsg, setInviteMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [roomCodeInput, setRoomCodeInput] = useState('');
+  const [roomCodeError, setRoomCodeError] = useState('');
+
+  // Lắng nghe sự kiện mở modal mời và upload từ menu "⋯" hoặc các vị trí khác
+  useEffect(() => {
+    const handleOpenInvite = () => {
+      if (!isMultiplayerConnected) {
+        startHostingRoom(activeSpace.id, multiplayerPermission);
+      }
+      setIsShareModalOpen(true);
+    };
+    const handleTriggerUpload = () => {
+      fileInputRef.current?.click();
+    };
+
+    window.addEventListener('greenlearn:open-invite-modal', handleOpenInvite);
+    window.addEventListener('greenlearn:open-share-modal', handleOpenInvite);
+    window.addEventListener('greenlearn:trigger-upload', handleTriggerUpload);
+    return () => {
+      window.removeEventListener('greenlearn:open-invite-modal', handleOpenInvite);
+      window.removeEventListener('greenlearn:open-share-modal', handleOpenInvite);
+      window.removeEventListener('greenlearn:trigger-upload', handleTriggerUpload);
+    };
+  }, [isMultiplayerConnected, activeSpace.id, multiplayerPermission, startHostingRoom]);
 
   // Esc listener for ShareModal
   useEffect(() => {
@@ -181,14 +241,11 @@ export function BottomLeftKnowledge() {
     setIsSetupModalOpen(false);
 
     try {
-      // 1. Capture screen with display audio if available (prioritizing current tab)
+      // 1. Capture screen with display audio if available
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: 'browser' },
-        audio: true,
-        preferCurrentTab: true,
-        selfBrowserSurface: 'include',
-        systemAudio: 'include',
-      } as DisplayMediaStreamOptions);
+        audio: true
+      });
 
       let combinedStream = displayStream;
 
@@ -308,32 +365,31 @@ export function BottomLeftKnowledge() {
     document.body.removeChild(a);
   };
 
-  // Handle native file input selection (Real PDF & document extraction)
+  // Handle native file input selection (Real PDF, Word, PowerPoint & document extraction)
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isImage = file.type.startsWith('image/');
-    const rawName = formatUploadedDocTitle(file.name, isImage);
-
     setIsParsingDoc(true);
 
     try {
-      const parsedPages = await parseUploadedDocumentFile(file, rawName);
+      const parsed = await parseUploadedDocumentFile(file);
 
       setPendingDoc({
         file,
-        title: rawName,
+        title: parsed.title,
         description: '',
-        pages: parsedPages,
-        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-        fileType: file.name.split('.').pop()?.toUpperCase() || 'TỆP'
+        pages: parsed.pages,
+        fileSize: parsed.fileSize,
+        fileType: parsed.fileType,
+        spreadsheetData: parsed.kind === 'spreadsheet' && parsed.sheets ? { sheets: parsed.sheets, activeSheetIndex: 0 } : undefined,
+        presentationData: parsed.kind === 'presentation' && parsed.slides ? { slides: parsed.slides, currentSlideIndex: 0 } : undefined,
       });
 
       setIsConfirmModalOpen(true);
     } catch (err: any) {
       console.error('Lỗi nạp tệp:', err);
-      alert(err?.message || 'Không thể trích xuất nội dung tệp. Vui lòng kiểm tra lại định dạng tài liệu.');
+      alert(err.message || 'Không thể trích xuất nội dung tệp. Vui lòng thử lại với file PDF, Word (.docx), PowerPoint (.pptx) hoặc hình ảnh khác.');
     } finally {
       setIsParsingDoc(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -349,9 +405,49 @@ export function BottomLeftKnowledge() {
       title: p.title || pendingDoc.title
     }));
 
-    addUploadedDocument(pendingDoc.title, pages);
+    addUploadedDocument(pendingDoc.title, pages, {
+      spreadsheetData: pendingDoc.spreadsheetData,
+      presentationData: pendingDoc.presentationData,
+    });
     setIsConfirmModalOpen(false);
     setPendingDoc(null);
+  };
+
+  const handleImportFromUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!urlInput.trim() || isFetchingUrl) return;
+    setIsFetchingUrl(true);
+    setUrlError(null);
+
+    try {
+      const result = await importDocumentFromUrl(urlInput, urlTitleInput);
+      const { parsed, title, sourceUrl } = result;
+      if (parsed.kind === 'spreadsheet') {
+        addUploadedDocument(title, parsed.pages, {
+          spreadsheetData: { sheets: parsed.sheets, activeSheetIndex: 0, sourceUrl },
+        });
+      } else if (parsed.kind === 'presentation') {
+        addUploadedDocument(title, parsed.pages, {
+          presentationData: { slides: parsed.slides, currentSlideIndex: 0, sourceUrl },
+        });
+      } else {
+        addUploadedDocument(title, parsed.pages);
+      }
+      setIsUrlModalOpen(false);
+      setUrlInput('');
+      setUrlTitleInput('');
+      setUrlError(null);
+    } catch (err: any) {
+      if (err instanceof UrlSharePermissionError) {
+        setUrlError({ message: err.message, guideSteps: err.guideSteps });
+      } else {
+        setUrlError({
+          message: err?.message || 'Không thể tải tài liệu từ đường liên kết này.',
+        });
+      }
+    } finally {
+      setIsFetchingUrl(false);
+    }
   };
 
   const handleCopyShareLink = () => {
@@ -373,19 +469,32 @@ export function BottomLeftKnowledge() {
         onChange={handleFileSelect}
       />
 
-      {/* 1. Button: Tải lên tài liệu (Hài hòa với thanh dock) */}
+      {/* 1. Button: Tải lên tài liệu (Hài hòa với thanh dock, ẩn trên mobile/landscape phone vì đã đưa vào menu ...) */}
       <button
         data-tour="upload-btn"
         disabled={isParsingDoc}
         onClick={() => fileInputRef.current?.click()}
         title={isParsingDoc ? "Đang trích xuất tài liệu..." : "Tải lên tài liệu (PDF, Word, Text, Ảnh...)"}
-        className="w-10 h-10 rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-orange-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
+        className="hidden md:flex landscape-phone:hidden w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white hover:bg-orange-50/80 text-[#E0562D] shadow-sm border border-slate-300 hover:border-green-300 items-center justify-center transition-all active:scale-95 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
       >
         {isParsingDoc ? (
-          <Loader2 className="w-4.5 h-4.5 text-[#E0562D] animate-spin" />
+          <Loader2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#E0562D] animate-spin" />
         ) : (
-          <Upload className="w-4.5 h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
+          <Upload className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#E0562D] stroke-[2.4] group-hover:scale-110 transition-transform" />
         )}
+      </button>
+
+      {/* 1b. Button: Nhập tài liệu từ URL (Google Docs, Sheets, Slides, Link trực tiếp) */}
+      <button
+        type="button"
+        onClick={() => {
+          setUrlError(null);
+          setIsUrlModalOpen(true);
+        }}
+        title="Đưa tài liệu từ URL (Google Docs, Sheets, Slides...)"
+        className="hidden md:flex landscape-phone:hidden w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white hover:bg-orange-50/80 text-slate-700 hover:text-[#E0562D] shadow-sm border border-slate-300 hover:border-green-300 items-center justify-center transition-all active:scale-95 cursor-pointer group"
+      >
+        <Link2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2] group-hover:scale-110 transition-transform" />
       </button>
 
       {/* Parsing PDF Indicator Toast */}
@@ -414,16 +523,23 @@ export function BottomLeftKnowledge() {
         </div>
       )}
 
-      {/* 3. Button: Mời bạn bè & Supabase (Có đèn tín hiệu trạng thái) */}
+      {/* 3. Button: Mời bạn bè & Supabase (ẩn trên mobile/landscape phone vì đã đưa vào menu ...) */}
       <button
-        onClick={() => setIsShareModalOpen(true)}
-        title="Phòng học nhóm trực tuyến"
-        className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 flex items-center justify-center transition-all active:scale-95 cursor-pointer group relative"
+        onClick={() => {
+          if (!isMultiplayerConnected) {
+            startHostingRoom(activeSpace.id, multiplayerPermission);
+          }
+          setIsShareModalOpen(true);
+        }}
+        title="Mời bạn cùng học (Multiplayer Realtime)"
+        className="hidden md:flex landscape-phone:hidden w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white hover:bg-slate-100 text-slate-800 shadow-sm border border-slate-300 items-center justify-center transition-all active:scale-95 cursor-pointer group relative"
       >
-        <Share2 className="w-4.5 h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
-        {supabaseConfigState.isConfigured && (
+        <Share2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-800 stroke-[2.4] group-hover:scale-110 transition-transform" />
+        {isMultiplayerConnected ? (
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute top-1.5 right-1.5 ring-2 ring-white animate-pulse" />
+        ) : supabaseConfigState.isConfigured ? (
           <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-1.5 right-1.5 ring-1 ring-white" />
-        )}
+        ) : null}
       </button>
 
       {/* MODAL 1: Cài đặt & Bắt đầu ghi hình */}
@@ -650,7 +766,7 @@ export function BottomLeftKnowledge() {
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="bg-white border border-slate-300 rounded-3xl w-full max-w-md p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans"
+            className="bg-white border border-slate-300 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans flex flex-col max-h-[90dvh]"
           >
             <button
               onClick={() => setIsShareModalOpen(false)}
@@ -666,289 +782,442 @@ export function BottomLeftKnowledge() {
               </div>
               <h3 className="text-base font-bold text-slate-900">Mời bạn cùng học</h3>
             </div>
-            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+            <p className="text-xs text-slate-600 mb-3.5 leading-relaxed">
               Mời bạn bè cùng vào bàn học để thảo luận, giải đề thi và đối chiếu tài liệu trực tiếp theo thời gian thực.
             </p>
 
-            {/* 1. Share Room Link Box */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-700">
-                  Liên kết phòng học
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newSalt = Math.random().toString(36).substring(2, 8);
-                    setRoomSalt(newSalt);
-                    setCopiedLink(false);
-                  }}
-                  className="text-[11px] font-bold text-[#E0562D] hover:underline flex items-center gap-1 cursor-pointer"
-                  title="Vô hiệu hóa liên kết cũ và tạo mã phòng mới"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Tạo liên kết mới</span>
-                </button>
-              </div>
-
-              {/* URL Display + Copy Button */}
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl p-2 focus-within:border-[#E0562D] focus-within:bg-white transition-colors">
-                <input
-                  type="text"
-                  readOnly
-                  value={
-                    typeof window !== 'undefined' 
-                      ? `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}`
-                      : 'https://vitudy.edu.vn/'
-                  }
-                  className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      const url = `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}`;
-                      navigator.clipboard.writeText(url);
-                      setCopiedLink(true);
-                      setTimeout(() => setCopiedLink(false), 2500);
+            <div className="flex-1 overflow-y-auto pr-1">
+              {/* 1. Mời trực tiếp qua mạng */}
+              <div className="mb-4 p-3 bg-orange-50/40 border border-orange-200 rounded-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Send className="w-3.5 h-3.5 text-[#E0562D]" />
+                    <span>Mời bạn học trực tiếp</span>
+                  </span>
+                  <span className="text-[10.5px] text-slate-500">
+                    Tên của bạn: <b className="text-slate-800">{currentUser.name}</b>
+                  </span>
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!inviteTargetInput.trim()) return;
+                    const targetRoom = multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id);
+                    if (!isMultiplayerConnected) {
+                      startHostingRoom(targetRoom, multiplayerPermission);
                     }
+                    const res = sendDeskInvite(inviteTargetInput.trim(), targetRoom);
+                    setInviteMsg({ text: res.msg, isError: !res.ok });
+                    if (res.ok) setInviteTargetInput('');
                   }}
-                  aria-label="Sao chép liên kết phòng học"
-                  className="px-3 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                  className="flex items-center gap-2"
                 >
-                  {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedLink ? 'Đã sao chép' : 'Sao chép'}</span>
-                </button>
-              </div>
-
-              {/* Quick Share Buttons & Expiry Selector */}
-              <div className="flex items-center justify-between mt-2 pt-1 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500 font-medium">Chia sẻ nhanh:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}` : '';
-                      window.open(`https://zalo.me/share?url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
+                  <input
+                    type="text"
+                    placeholder="Nhập tên hoặc email bạn học cần mời..."
+                    value={inviteTargetInput}
+                    onChange={(e) => {
+                      setInviteTargetInput(e.target.value);
+                      if (inviteMsg) setInviteMsg(null);
                     }}
-                    className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold transition-colors cursor-pointer"
-                  >
-                    Zalo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}` : '';
-                      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold transition-colors cursor-pointer"
-                  >
-                    Messenger
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowQrCode(!showQrCode)}
-                    className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <QrCode className="w-3 h-3" />
-                    <span>Mã QR</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1 text-slate-600 font-medium">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  <select
-                    value={roomLinkExpiry}
-                    onChange={(e) => setRoomLinkExpiry(e.target.value as any)}
-                    className="bg-transparent border-0 text-[11px] font-semibold text-slate-700 cursor-pointer outline-none"
-                    aria-label="Thời hạn liên kết"
-                  >
-                    <option value="24h">Hạn 24 giờ</option>
-                    <option value="1h">Hạn 1 giờ</option>
-                    <option value="unlimited">Không giới hạn</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* QR Code Popup preview */}
-              {showQrCode && (
-                <div className="mt-2.5 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center animate-fade-in">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
-                      typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?room=${roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id}&perm=${roomPermission}` : ''
-                    )}`}
-                    alt="Mã QR phòng học"
-                    className="w-32 h-32 rounded-xl bg-white p-1 border border-slate-200 shadow-2xs"
+                    className="flex-1 px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs outline-none focus:border-[#E0562D]"
                   />
-                  <span className="text-[10.5px] text-slate-600 font-medium mt-1.5">Quét mã bằng điện thoại để vào bàn học</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!inviteTargetInput.trim()) return;
+                      const res = addFriend(inviteTargetInput.trim());
+                      setInviteMsg({ text: res.msg, isError: !res.ok });
+                      if (res.ok) setInviteTargetInput('');
+                    }}
+                    title="Lưu vào danh sách bạn bè mà không gửi ngay (+)"
+                    className="px-2.5 py-1.5 bg-white hover:bg-orange-50 text-[#E0562D] border border-green-300 text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[2.4]" />
+                    <span>Lưu bạn</span>
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3.5 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap active:scale-95"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Mời ngay</span>
+                  </button>
+                </form>
+                {inviteMsg && (
+                  <div className={`mt-2 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl ${
+                    inviteMsg.isError ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-orange-50 text-emerald-700 border border-orange-200'
+                  }`}>
+                    {inviteMsg.text}
+                  </div>
+                )}
+
+                {/* Danh sách đã mời gần đây */}
+                {buddies.length > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-orange-200/60">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10.5px] font-bold text-slate-600 block">
+                        Đã mời gần đây (Mời lại nhanh):
+                      </span>
+                      <span className="text-[10.5px] text-slate-500 font-medium">
+                        {buddies.length} bạn
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {buddies.slice(0, 5).map((b) => (
+                        <div
+                          key={b.id}
+                          className="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-xl text-xs shadow-2xs hover:border-green-300 transition-colors"
+                        >
+                          <span 
+                            className={`w-2 h-2 rounded-full ${b.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} 
+                            title={b.online ? 'Đang trực tuyến' : 'Ngoại tuyến'}
+                          />
+                          <span className="font-semibold text-slate-800 text-[11.5px] max-w-[120px] truncate">{b.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const targetRoom = multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id);
+                              if (!isMultiplayerConnected) {
+                                startHostingRoom(targetRoom, multiplayerPermission);
+                              }
+                              const res = sendDeskInvite(b, targetRoom);
+                              setInviteMsg({ text: res.msg, isError: !res.ok });
+                            }}
+                            className="px-1.5 py-0.5 rounded-md bg-orange-50 hover:bg-orange-100 text-[#E0562D] text-[10px] font-bold transition-colors cursor-pointer"
+                            title="Gửi lại lời mời"
+                          >
+                            Mời lại
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeBuddy(b.id)}
+                            className="text-slate-400 hover:text-slate-600 ml-0.5"
+                            title="Xóa khỏi danh sách gần đây"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Chia sẻ liên kết phòng */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Hoặc sao chép liên kết phòng học
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newSalt = Math.random().toString(36).substring(2, 8);
+                      const newRoom = `${activeSpace.id}-${newSalt}`;
+                      setRoomSalt(newSalt);
+                      startHostingRoom(newRoom, multiplayerPermission);
+                      setCopiedLink(false);
+                    }}
+                    className="text-[11px] font-bold text-[#E0562D] hover:underline flex items-center gap-1 cursor-pointer"
+                    title="Tạo mã liên kết mới để thu hồi liên kết cũ"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Tạo mã mới</span>
+                  </button>
                 </div>
-              )}
-            </div>
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl p-2 focus-within:border-[#E0562D] focus-within:bg-white transition-colors">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getShareRoomUrl(multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id), multiplayerPermission)}
+                    className="bg-transparent text-xs text-slate-800 flex-1 outline-none font-mono select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        const url = getShareRoomUrl(multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id), multiplayerPermission);
+                        navigator.clipboard.writeText(url);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2500);
+                      }
+                    }}
+                    aria-label="Sao chép liên kết phòng học"
+                    className="px-3 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedLink ? 'Đã sao chép' : 'Sao chép link'}</span>
+                  </button>
+                </div>
 
-            {/* 2. Room Permissions (Mặc định: Chỉ xem) */}
-            <div className="mb-4">
-              <span className="text-xs font-semibold text-slate-700 block mb-1.5">
-                Quyền của bạn học tham gia
-              </span>
-              <div 
-                role="radiogroup"
-                aria-label="Quyền của bạn học tham gia"
-                className="grid grid-cols-2 gap-2 text-xs"
-              >
-                {/* Quyền 1: Chỉ xem (Mặc định an toàn) */}
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={roomPermission === 'view_only'}
-                  onClick={() => setRoomPermission('view_only')}
-                  className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                    roomPermission === 'view_only'
-                      ? 'border-[#E0562D] bg-orange-50/60 text-slate-900 font-bold shadow-2xs ring-1 ring-[#E0562D]'
-                      : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
-                  }`}
-                >
-                  <div>
-                    <div className="font-bold text-slate-900">Chỉ xem</div>
-                    <div className="text-[10px] text-slate-600 font-medium mt-0.5 leading-snug">Chỉ xem bàn học và con trỏ chuột</div>
-                  </div>
-                  {roomPermission === 'view_only' && (
-                    <div className="w-3.5 h-3.5 rounded-full bg-[#E0562D] text-white flex items-center justify-center shrink-0 ml-1">
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    </div>
-                  )}
-                </button>
-
-                {/* Quyền 2: Cùng chỉnh sửa */}
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={roomPermission === 'edit'}
-                  onClick={() => setRoomPermission('edit')}
-                  className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                    roomPermission === 'edit'
-                      ? 'border-[#E0562D] bg-orange-50/60 text-slate-900 font-bold shadow-2xs ring-1 ring-[#E0562D]'
-                      : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
-                  }`}
-                >
-                  <div>
-                    <div className="font-bold text-slate-900">Cùng chỉnh sửa</div>
-                    <div className="text-[10px] text-slate-600 font-medium mt-0.5 leading-snug">Bất kỳ ai có link đều có thể viết note, giải đề</div>
-                  </div>
-                  {roomPermission === 'edit' && (
-                    <div className="w-3.5 h-3.5 rounded-full bg-[#E0562D] text-white flex items-center justify-center shrink-0 ml-1">
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    </div>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* 3. People in Room */}
-            <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="font-bold text-slate-800">Người trong phòng</span>
-                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
-                  {peersInRoom.length + 1} đang online
-                </span>
-              </div>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center justify-between text-slate-700">
+                {/* Quick Share Buttons */}
+                <div className="flex items-center justify-between mt-2 pt-1 text-[11px]">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="font-bold text-slate-800">Bạn (Chủ phòng)</span>
-                  </div>
-                </div>
-
-                {peersInRoom.map((peer) => (
-                  <div key={peer.id} className="flex items-center justify-between text-slate-700">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: peer.avatarColor }} />
-                      <span className="font-medium text-slate-800">{peer.name}</span>
-                    </div>
+                    <span className="text-slate-500 font-medium">Chia sẻ qua:</span>
                     <button
                       type="button"
-                      onClick={() => setPeersInRoom(prev => prev.filter(p => p.id !== peer.id))}
-                      className="text-[10.5px] font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1 cursor-pointer"
-                      title="Mời bạn học này ra khỏi phòng"
+                      onClick={() => {
+                        const url = getShareRoomUrl(multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id), multiplayerPermission);
+                        window.open(`https://zalo.me/share?url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold transition-colors cursor-pointer"
                     >
-                      <UserMinus className="w-3 h-3" />
-                      <span>Mời ra</span>
+                      Zalo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = getShareRoomUrl(multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id), multiplayerPermission);
+                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold transition-colors cursor-pointer"
+                    >
+                      Messenger
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowQrCode(!showQrCode)}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <QrCode className="w-3 h-3" />
+                      <span>Mã QR</span>
                     </button>
                   </div>
-                ))}
 
-                {peersInRoom.length === 0 && (
-                  <div className="text-[11px] text-slate-600 font-medium italic pt-1">
-                    Đang đợi bạn học truy cập liên kết...
+                  <div className="flex items-center gap-1 text-slate-600 font-medium">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <select
+                      value={roomLinkExpiry}
+                      onChange={(e) => setRoomLinkExpiry(e.target.value as any)}
+                      className="bg-transparent border-0 text-[11px] font-semibold text-slate-700 cursor-pointer outline-none"
+                      aria-label="Thời hạn liên kết"
+                    >
+                      <option value="24h">Hạn 24 giờ</option>
+                      <option value="1h">Hạn 1 giờ</option>
+                      <option value="unlimited">Không giới hạn</option>
+                    </select>
                   </div>
+                </div>
+
+                {/* QR Code Popup preview */}
+                {showQrCode && (
+                  <div className="mt-2.5 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center animate-fade-in">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
+                        getShareRoomUrl(multiplayerRoomId || (roomSalt ? `${activeSpace.id}-${roomSalt}` : activeSpace.id), multiplayerPermission)
+                      )}`}
+                      alt="Mã QR phòng học"
+                      className="w-32 h-32 rounded-xl bg-white p-1 border border-slate-200 shadow-2xs"
+                    />
+                    <span className="text-[10.5px] text-slate-600 font-medium mt-1.5">Quét mã bằng điện thoại để vào bàn học</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Phân quyền tham gia */}
+              <div className="mb-4">
+                <span className="text-xs font-semibold text-slate-700 block mb-1.5">
+                  Quyền của bạn học tham gia
+                </span>
+                <div 
+                  role="radiogroup"
+                  aria-label="Quyền của bạn học tham gia"
+                  className="grid grid-cols-2 gap-2 text-xs"
+                >
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={multiplayerPermission === 'view_only'}
+                    onClick={() => setMultiplayerPermission('view_only')}
+                    className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      multiplayerPermission === 'view_only'
+                        ? 'border-[#E0562D] bg-orange-50/60 text-slate-900 font-bold shadow-2xs ring-1 ring-[#E0562D]'
+                        : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                    }`}
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900">Chỉ xem</div>
+                      <div className="text-[10px] text-slate-600 font-medium mt-0.5 leading-snug">Chỉ xem bàn học và con trỏ chuột</div>
+                    </div>
+                    {multiplayerPermission === 'view_only' && (
+                      <div className="w-3.5 h-3.5 rounded-full bg-[#E0562D] text-white flex items-center justify-center shrink-0 ml-1">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={multiplayerPermission === 'edit'}
+                    onClick={() => setMultiplayerPermission('edit')}
+                    className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      multiplayerPermission === 'edit'
+                        ? 'border-[#E0562D] bg-orange-50/60 text-slate-900 font-bold shadow-2xs ring-1 ring-[#E0562D]'
+                        : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                    }`}
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900">Cùng chỉnh sửa</div>
+                      <div className="text-[10px] text-slate-600 font-medium mt-0.5 leading-snug">Cùng viết note, vẽ sơ đồ và giải đề</div>
+                    </div>
+                    {multiplayerPermission === 'edit' && (
+                      <div className="w-3.5 h-3.5 rounded-full bg-[#E0562D] text-white flex items-center justify-center shrink-0 ml-1">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* 4. Vào nhanh bằng mã phòng (Quick Join Box) */}
+              <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[11px] font-bold text-slate-700 block mb-1.5">
+                  Vào nhanh bằng mã phòng (Room ID)
+                </span>
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const code = roomCodeInput.trim();
+                    if (!code) {
+                      setRoomCodeError('Vui lòng nhập mã phòng');
+                      return;
+                    }
+                    setRoomCodeError('');
+                    joinMultiplayerRoom(code);
+                    setIsShareModalOpen(false);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    placeholder="Nhập mã phòng (ví dụ: demo-space-1)..."
+                    value={roomCodeInput}
+                    onChange={(e) => {
+                      setRoomCodeInput(e.target.value);
+                      if (roomCodeError) setRoomCodeError('');
+                    }}
+                    className="flex-1 px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-mono outline-none focus:border-[#E0562D]"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3.5 py-1.5 bg-[#E0562D] hover:bg-[#c9451e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                  >
+                    Vào phòng
+                  </button>
+                </form>
+                {roomCodeError && (
+                  <p className="text-[10.5px] text-red-500 mt-1 font-medium">{roomCodeError}</p>
+                )}
+              </div>
+
+              {/* 5. Người đang cùng học trong phòng */}
+              <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="font-bold text-slate-800">Người trong phòng</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                    {multiplayerPeers.length + 1} đang online
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-slate-700">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${isMultiplayerConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+                      <span className="font-bold text-slate-800">Bạn (Chủ phòng)</span>
+                    </div>
+                    <span className="text-[11px] text-emerald-600 font-semibold">
+                      {isMultiplayerConnected ? 'Trực tuyến' : 'Đang kết nối...'}
+                    </span>
+                  </div>
+
+                  {multiplayerPeers.map((peer) => (
+                    <div key={peer.id} className="flex items-center justify-between text-slate-700 animate-fade-in">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: peer.avatarColor }} />
+                        <span className="font-semibold text-slate-800">{peer.name}</span>
+                        <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 text-slate-700 rounded font-medium">
+                          {peer.role === 'owner' ? 'Chủ phòng' : peer.role === 'editor' ? 'Chỉnh sửa' : 'Chỉ xem'}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-emerald-600 font-medium">Đang học cùng</span>
+                    </div>
+                  ))}
+
+                  {multiplayerPeers.length === 0 && (
+                    <div className="text-[11px] text-slate-500 font-medium italic pt-1 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      <span>Đang đợi bạn học truy cập liên kết phòng...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 6. Advanced Supabase Settings */}
+              <div className="pt-2 border-t border-slate-100 mb-3">
+                {!isDbConfigOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsDbConfigOpen(true)}
+                    className="text-[11px] text-slate-500 hover:text-slate-700 font-medium transition-colors cursor-pointer"
+                  >
+                    + Cài đặt kết nối máy chủ nâng cao
+                  </button>
+                ) : (
+                  <form onSubmit={handleSaveDb} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 text-xs animate-fade-in mt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800">Cấu hình máy chủ Realtime</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsDbConfigOpen(false)}
+                        className="text-slate-400 hover:text-slate-600 text-xs"
+                      >
+                        Ẩn
+                      </button>
+                    </div>
+                    <div>
+                      <label className="text-[10.5px] font-semibold text-slate-600 block mb-0.5">Project URL</label>
+                      <input
+                        type="url"
+                        required
+                        value={supabaseUrlInput}
+                        onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                        className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10.5px] font-semibold text-slate-600 block mb-0.5">Anon Key</label>
+                      <input
+                        type="text"
+                        required
+                        value={supabaseKeyInput}
+                        onChange={(e) => setSupabaseKeyInput(e.target.value)}
+                        className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={handleTestDatabase}
+                        className="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded-lg text-slate-700"
+                      >
+                        Thử kết nối
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold"
+                      >
+                        Lưu
+                      </button>
+                    </div>
+                  </form>
                 )}
               </div>
             </div>
 
-            {/* 4. Advanced / Developer Supabase Settings (Tucked away) */}
-            <div className="pt-2 border-t border-slate-100 mb-3">
-              {!isDbConfigOpen ? (
-                <button
-                  type="button"
-                  onClick={() => setIsDbConfigOpen(true)}
-                  className="text-[11px] text-slate-500 hover:text-slate-700 font-medium transition-colors cursor-pointer"
-                >
-                  + Cài đặt kết nối máy chủ nâng cao
-                </button>
-              ) : (
-                <form onSubmit={handleSaveDb} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 text-xs animate-fade-in mt-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800">Cấu hình máy chủ Realtime</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsDbConfigOpen(false)}
-                      className="text-slate-400 hover:text-slate-600 text-xs"
-                    >
-                      Ẩn
-                    </button>
-                  </div>
-                  <div>
-                    <label className="text-[10.5px] font-semibold text-slate-600 block mb-0.5">Project URL</label>
-                    <input
-                      type="url"
-                      required
-                      value={supabaseUrlInput}
-                      onChange={(e) => setSupabaseUrlInput(e.target.value)}
-                      className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10.5px] font-semibold text-slate-600 block mb-0.5">Anon Key</label>
-                    <input
-                      type="text"
-                      required
-                      value={supabaseKeyInput}
-                      onChange={(e) => setSupabaseKeyInput(e.target.value)}
-                      className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <button
-                      type="button"
-                      onClick={handleTestDatabase}
-                      className="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded-lg text-slate-700"
-                    >
-                      Thử kết nối
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold"
-                    >
-                      Lưu
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-
             {/* Modal Footer */}
-            <div className="pt-3 border-t border-slate-200 flex items-center justify-end">
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-end mt-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsShareModalOpen(false)}
@@ -957,6 +1226,108 @@ export function BottomLeftKnowledge() {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* MODAL 4: Nhập tài liệu từ URL (Google Docs, Sheets, Slides, Link trực tiếp) */}
+      {isUrlModalOpen && mounted && createPortal(
+        <div
+          data-overlay="true"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] flex items-center justify-center p-4 font-sans"
+        >
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative text-slate-900 animate-fade-in font-sans">
+            <button
+              type="button"
+              onClick={() => {
+                setIsUrlModalOpen(false);
+                setUrlError(null);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="w-5 h-5 text-[#E0562D]" />
+              <h3 className="text-sm font-bold text-slate-900">Đưa tài liệu từ liên kết (URL)</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Hỗ trợ Google Docs, Google Sheets (đa trang tính), Google Slides và liên kết trực tiếp (.pdf, .docx, .xlsx, .csv, .pptx). Tài liệu gốc cần được bật chia sẻ công khai để mọi người có thể xem và tải về.
+            </p>
+
+            <form onSubmit={handleImportFromUrl} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Đường liên kết tài liệu</label>
+                <input
+                  type="url"
+                  required
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://docs.google.com/document/d/... hoặc link tệp"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#E0562D] transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                  Tên hiển thị trên bàn học <span className="text-slate-400 font-normal">(tùy chọn)</span>
+                </label>
+                <input
+                  type="text"
+                  value={urlTitleInput}
+                  onChange={(e) => setUrlTitleInput(e.target.value)}
+                  placeholder="Tự động nhận diện từ tài liệu gốc"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#E0562D] transition-colors"
+                />
+              </div>
+
+              {urlError && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="font-medium leading-relaxed">{urlError.message}</p>
+                  </div>
+                  {urlError.guideSteps && urlError.guideSteps.length > 0 && (
+                    <div className="pt-2 border-t border-amber-200/80">
+                      <p className="font-bold text-[11px] text-amber-950 mb-1.5">Hướng dẫn cấp quyền:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px] text-amber-800 leading-normal">
+                        {urlError.guideSteps.map((step, idx) => (
+                          <li key={idx}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUrlModalOpen(false);
+                    setUrlError(null);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="submit"
+                  disabled={isFetchingUrl}
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#E0562D] hover:bg-[#c9451e] text-white transition-colors shadow-sm cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+                >
+                  {isFetchingUrl ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang trích xuất...</span>
+                    </>
+                  ) : (
+                    <span>Đưa vào bàn học</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body

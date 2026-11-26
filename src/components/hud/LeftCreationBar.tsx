@@ -26,11 +26,17 @@ import {
   X,
   Gamepad2,
   Palette,
-  Archive
+  Archive,
+  BookOpen,
+  Table2,
+  Presentation,
+  Mic
 } from 'lucide-react';
 import { StickerEmojiPickerFlyout, StickerPickerItem } from '@/components/hud/StickerEmojiPickerFlyout';
 import { GamePenToolbar } from '@/components/hud/GamePenToolbar';
 import { GameCabinetModal } from '@/components/modals/GameCabinetModal';
+import { BookCoverModal, BookInitialPage } from '@/components/modals/BookCoverModal';
+import { VoiceNoteRecordModal } from '@/components/modals/VoiceNoteRecordModal';
 
 export function LeftCreationBar() {
   const {
@@ -49,7 +55,10 @@ export function LeftCreationBar() {
     redoStroke,
     redoStack,
     clearStrokes,
-    addStickyNote
+    addStickyNote,
+    addBook,
+    addSpreadsheet,
+    addPresentation
   } = useStudySpace();
 
   const [isNoteFlyoutOpen, setIsNoteFlyoutOpen] = useState(false);
@@ -58,6 +67,8 @@ export function LeftCreationBar() {
   const [isMoreToolsOpen, setIsMoreToolsOpen] = useState(false);
   const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
   const [isGameCabinetOpen, setIsGameCabinetOpen] = useState(false);
+  const [isBookCoverModalOpen, setIsBookCoverModalOpen] = useState(false);
+  const [isVoiceNoteModalOpen, setIsVoiceNoteModalOpen] = useState(false);
 
   // Note pastel colors
   const stickyColors = [
@@ -93,6 +104,12 @@ export function LeftCreationBar() {
       icon: <Smile className="w-5 h-5 text-slate-800 stroke-[2.2]" />
     },
     {
+      id: 'book_cover',
+      title: 'Book cover',
+      desc: 'Sách giáo trình & sổ tay bìa da học tập',
+      icon: <BookOpen className="w-5 h-5 text-slate-800 stroke-[2.2]" />
+    },
+    {
       id: 'code_block',
       title: 'Code block',
       desc: 'Khối mã nguồn & cú pháp code lập trình',
@@ -105,10 +122,28 @@ export function LeftCreationBar() {
       icon: <Table className="w-5 h-5 text-slate-800 stroke-[2.2]" />
     },
     {
+      id: 'spreadsheet',
+      title: 'Bảng tính (Spreadsheet)',
+      desc: 'Bảng tính đa trang tính tương tác kiểu Excel',
+      icon: <Table2 className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
+    },
+    {
+      id: 'presentation',
+      title: 'Slide thuyết trình (Presentation)',
+      desc: 'Bộ slide bài giảng thuyết trình 16:9',
+      icon: <Presentation className="w-5 h-5 text-[#E0562D] stroke-[2.2]" />
+    },
+    {
       id: 'mind_map',
       title: 'Mind map',
       desc: 'Sơ đồ tư duy liên kết ý tưởng học tập',
       icon: <Network className="w-5 h-5 text-slate-800 stroke-[2.2]" />
+    },
+    {
+      id: 'voice_note',
+      title: 'Note ghi âm',
+      desc: 'Ghi âm giọng nói & bong bóng âm thanh',
+      icon: <Mic className="w-5 h-5 text-blue-600 stroke-[2.2]" />
     },
     {
       id: 'artboard_4corner',
@@ -179,6 +214,22 @@ export function LeftCreationBar() {
       setActiveTool('smart_shape');
       return;
     }
+    if (toolId === 'spreadsheet') {
+      addSpreadsheet?.('Bảng tính mới');
+      return;
+    }
+    if (toolId === 'presentation') {
+      addPresentation?.('Bài thuyết trình mới');
+      return;
+    }
+    if (toolId === 'book_cover') {
+      setIsBookCoverModalOpen(true);
+      return;
+    }
+    if (toolId === 'voice_note') {
+      setIsVoiceNoteModalOpen(true);
+      return;
+    }
     if (toolId === 'code_block') {
       setStickyCreationTemplate?.({
         itemType: 'code_block',
@@ -219,6 +270,23 @@ export function LeftCreationBar() {
       setIsStickerPickerOpen(true);
       return;
     }
+  };
+
+  const handlePlaceBookToCenter = (bookTitle: string, coverColor: string, pages: BookInitialPage[]) => {
+    addBook(bookTitle, undefined, undefined, coverColor, pages);
+  };
+
+  const handleStartStampPlacement = (bookTitle: string, coverColor: string, pages: BookInitialPage[]) => {
+    setStickyCreationTemplate?.({
+      itemType: 'book',
+      title: bookTitle,
+      coverColor,
+      pages,
+      width: 980,
+      height: 640,
+      typeLabel: `Sách bìa da: ${bookTitle}`
+    });
+    setActiveTool('create_note');
   };
 
   const currentPenIcon = (() => {
@@ -617,6 +685,20 @@ export function LeftCreationBar() {
       <GameCabinetModal
         isOpen={isGameCabinetOpen}
         onClose={() => setIsGameCabinetOpen(false)}
+      />
+
+      {/* Book Cover Modal */}
+      <BookCoverModal
+        isOpen={isBookCoverModalOpen}
+        onClose={() => setIsBookCoverModalOpen(false)}
+        onPlaceToCenter={handlePlaceBookToCenter}
+        onStartStampPlacement={handleStartStampPlacement}
+      />
+
+      {/* Voice Note Recording Modal */}
+      <VoiceNoteRecordModal
+        isOpen={isVoiceNoteModalOpen}
+        onClose={() => setIsVoiceNoteModalOpen(false)}
       />
     </div>
   );

@@ -1,10 +1,21 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Open_Sans, Patrick_Hand, Lora } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { ViTokenProvider } from '@/context/ViTokenContext';
 import { StudySpaceProvider } from '@/context/StudySpaceContext';
+import { SocialPresenceProvider } from '@/context/SocialPresenceContext';
 import { PomodoroProvider } from '@/context/PomodoroContext';
+import { FloatingPet } from '@/components/pet/FloatingPet';
+import { DebugOverlay } from '@/components/common/DebugOverlay';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  themeColor: '#E0562D',
+};
 
 const openSans = Open_Sans({
   subsets: ['latin', 'latin-ext', 'vietnamese'],
@@ -55,7 +66,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#E0562D" />
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://img.vietqr.io https://api.vietqr.io https://media.giphy.com https://*.giphy.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://chatgpt.com https://auth.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://vi.wikipedia.org https://api.giphy.com; worker-src 'self' blob:;"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://img.vietqr.io https://api.vietqr.io https://media.giphy.com https://*.giphy.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.discordapp.com https://*.googleusercontent.com; media-src 'self' data: blob: https://media.giphy.com https://*.giphy.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://chatgpt.com https://auth.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://vi.wikipedia.org https://api.giphy.com https://cdn.jsdelivr.net blob:; worker-src 'self' blob:;"
         />
       </head>
       <body 
@@ -67,7 +78,11 @@ export default function RootLayout({
           <ViTokenProvider>
             <PomodoroProvider>
               <StudySpaceProvider>
-                {children}
+                <SocialPresenceProvider>
+                  {children}
+                  <FloatingPet />
+                  <DebugOverlay />
+                </SocialPresenceProvider>
               </StudySpaceProvider>
             </PomodoroProvider>
           </ViTokenProvider>

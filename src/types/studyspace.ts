@@ -10,7 +10,49 @@ export type ItemType =
   | 'mind_map'
   | 'sticker'
   | 'artboard'
-  | 'board_game';
+  | 'board_game'
+  | 'spreadsheet'
+  | 'presentation'
+  | 'voice_note';
+
+export interface SpreadsheetSheet {
+  name: string;
+  rows: string[][];
+}
+
+export interface SpreadsheetData {
+  sheets: SpreadsheetSheet[];
+  activeSheetIndex?: number;
+  sourceUrl?: string;
+}
+
+export interface PresentationSlide {
+  id: string;
+  slideNumber: number;
+  title: string;
+  body: string;
+  notes?: string;
+  image?: string;
+}
+
+export interface PresentationData {
+  slides: PresentationSlide[];
+  currentSlideIndex?: number;
+  sourceUrl?: string;
+}
+
+export interface VoiceNoteData {
+  audioUrl?: string;
+  audioBlob?: string; // Base64 data URL for persistence and peer syncing
+  duration: number; // in seconds
+  waveform: number[]; // normalized amplitudes (0 to 100)
+  transcript?: string;
+  isTranscribed?: boolean;
+  authorName?: string;
+  authorAvatar?: string;
+  authorColor?: string;
+  createdAt?: string;
+}
 
 export interface PageContent {
   id: string;
@@ -87,6 +129,9 @@ export interface DeskItem {
   marketItemId?: string;
   artboardData?: SavedDrawingAsset;
   boardGameData?: BoardGamePackage;
+  spreadsheetData?: SpreadsheetData;
+  presentationData?: PresentationData;
+  voiceNoteData?: VoiceNoteData;
 }
 
 export interface IntelineThread {

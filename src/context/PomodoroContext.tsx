@@ -1,165 +1,129 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { usePomodoro, PomodoroPhase, UsePomodoroResult } from '@/hooks/usePomodoro';
 import { ActivityService } from '@/services/ActivityService';
 
-interface PomodoroState {
-  status: 'idle' | 'running' | 'paused' | 'completed';
-  mode: 'work' | 'short_break' | 'long_break';
+export interface PomodoroSession {
+  id: string;
+  completedAt: string;
   durationMinutes: number;
-  remainingSeconds: number;
-  endsAt: number | null; // Mốc timestamp kết thúc phiên
+  phase: PomodoroPhase;
 }
 
-interface PomodoroContextType {
-  state: PomodoroState;
+interface PomodoroContextType extends UsePomodoroResult {
+  completedSessionsToday: number;
+  totalFocusMinutesToday: number;
+  isChipExpanded: boolean;
+  setIsChipExpanded: (expanded: boolean) => void;
+  // Backward-compatible ViTudy API
+  state: {
+    status: 'idle' | 'running' | 'paused' | 'completed';
+    mode: 'work' | 'short_break' | 'long_break';
+    durationMinutes: number;
+    remainingSeconds: number;
+  };
   startSession: (minutes?: number) => void;
   pauseSession: () => void;
   resumeSession: () => void;
   stopSession: () => void;
-  formattedTime: string;
 }
-
-const STORAGE_KEY = 'vitudy_pomodoro_state';
-
-const defaultState: PomodoroState = {
-  status: 'idle',
-  mode: 'work',
-  durationMinutes: 25,
-  remainingSeconds: 25 * 60,
-  endsAt: null,
-};
 
 const PomodoroContext = createContext<PomodoroContextType | null>(null);
 
+const STORAGE_KEY = 'vitudy_pomodoro_sessions';
+
 export function PomodoroProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<PomodoroState>(defaultState);
-  const recordedSessionRef = useRef<boolean>(false);
-
-  // Khôi phục trạng thái từ localStorage khi khởi động
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: PomodoroState = JSON.parse(saved);
-        if (parsed.status === 'running' && parsed.endsAt) {
-          const now = Date.now();
-          const left = Math.max(0, Math.round((parsed.endsAt - now) / 1000));
-          if (left > 0) {
-            setState({ ...parsed, remainingSeconds: left });
-          } else {
-            setState({ ...parsed, status: 'completed', remainingSeconds: 0 });
-          }
-        } else {
-          setState(parsed);
-        }
+  const [completedSessions, setCompletedSessions] = useState<PomodoroSession[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
       }
-    } catch {}
-  }, []);
+    }
+    return [];
+  });
 
-  // Lưu vào localStorage khi trạng thái thay đổi
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {}
-  }, [state]);
+  const [isChipExpanded, setIsChipExpanded] = useState(false);
 
-  // Bộ đếm đếm lùi thời gian thực dựa vào mốc endsAt
-  useEffect(() => {
-    if (state.status !== 'running' || !state.endsAt) return;
+  const handlePhaseComplete = useCallback((finishedPhase: PomodoroPhase) => {
+    if (finishedPhase === 'work') {
+      // Hoàn thành phiên làm việc 25 phút
+      const session: PomodoroSession = {
+        id: `pomo-${Date.now()}`,
+        completedAt: new Date().toISOString(),
+        durationMinutes: 25,
+        phase: 'work',
+      };
 
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const left = Math.max(0, Math.round((state.endsAt! - now) / 1000));
-
-      if (left <= 0) {
-        clearInterval(interval);
-        setState(prev => ({
-          ...prev,
-          status: 'completed',
-          remainingSeconds: 0,
-          endsAt: null
-        }));
-
-        // Ghi nhận thời gian học vào nhật ký (chỉ ghi 1 lần cho mỗi phiên)
-        if (!recordedSessionRef.current) {
-          recordedSessionRef.current = true;
-          ActivityService.recordHeartbeat(state.durationMinutes).catch(() => {});
+      setCompletedSessions(prev => {
+        const updated = [...prev, session];
+        if (typeof window !== 'undefined') {
           try {
-            // Phát âm thanh hoặc thông báo nếu trình duyệt hỗ trợ
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('ViTudy - Hoàn thành phiên học!', {
-                body: `Chúc mừng bạn đã hoàn thành trọn vẹn ${state.durationMinutes} phút tập trung.`,
-              });
-            }
-          } catch {}
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated.slice(-100)));
+          } catch {
+            // ignore
+          }
         }
-      } else {
-        setState(prev => ({ ...prev, remainingSeconds: left }));
+        return updated;
+      });
+
+      // Tự động ghi nhận nhịp tim học tập
+      try {
+        ActivityService.recordHeartbeat(25 * 60);
+      } catch (e) {
+        console.warn('Lỗi ghi nhận ActivityService:', e);
       }
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [state.status, state.endsAt, state.durationMinutes]);
-
-  const startSession = useCallback((minutes = 25) => {
-    recordedSessionRef.current = false;
-    const durationSec = minutes * 60;
-    const endsAt = Date.now() + durationSec * 1000;
-    setState({
-      status: 'running',
-      mode: 'work',
-      durationMinutes: minutes,
-      remainingSeconds: durationSec,
-      endsAt,
-    });
+      // Phát sự kiện toàn cục để HUD / Mascot chúc mừng
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vitudy:pomodoro-complete', {
+          detail: { durationMinutes: 25 }
+        }));
+      }
+    }
   }, []);
 
-  const pauseSession = useCallback(() => {
-    if (state.status !== 'running' || !state.endsAt) return;
-    const now = Date.now();
-    const left = Math.max(0, Math.round((state.endsAt - now) / 1000));
-    setState(prev => ({
-      ...prev,
-      status: 'paused',
-      remainingSeconds: left,
-      endsAt: null,
-    }));
-  }, [state.status, state.endsAt]);
+  const pomodoro = usePomodoro({
+    workMinutes: 25,
+    breakMinutes: 5,
+    onPhaseComplete: handlePhaseComplete,
+  });
 
-  const resumeSession = useCallback(() => {
-    if (state.status !== 'paused') return;
-    const endsAt = Date.now() + state.remainingSeconds * 1000;
-    setState(prev => ({
-      ...prev,
-      status: 'running',
-      endsAt,
-    }));
-  }, [state.status, state.remainingSeconds]);
+  // Tính số phiên và số phút tập trung hôm nay
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todaySessions = completedSessions.filter(s => s.completedAt.startsWith(todayStr));
+  const completedSessionsToday = todaySessions.length;
+  const totalFocusMinutesToday = todaySessions.reduce((acc, s) => acc + s.durationMinutes, 0);
 
-  const stopSession = useCallback(() => {
-    setState({
-      status: 'idle',
-      mode: 'work',
-      durationMinutes: 25,
-      remainingSeconds: 25 * 60,
-      endsAt: null,
-    });
-  }, []);
-
-  const mins = Math.floor(state.remainingSeconds / 60);
-  const secs = state.remainingSeconds % 60;
-  const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  const compatState = {
+    status: (pomodoro.isRunning
+      ? 'running'
+      : pomodoro.secondsLeft === 0
+      ? 'completed'
+      : pomodoro.secondsLeft < 25 * 60
+      ? 'paused'
+      : 'idle') as 'idle' | 'running' | 'paused' | 'completed',
+    mode: (pomodoro.phase === 'work' ? 'work' : 'short_break') as 'work' | 'short_break' | 'long_break',
+    durationMinutes: pomodoro.phase === 'work' ? 25 : 5,
+    remainingSeconds: pomodoro.secondsLeft,
+  };
 
   return (
     <PomodoroContext.Provider
       value={{
-        state,
-        startSession,
-        pauseSession,
-        resumeSession,
-        stopSession,
-        formattedTime,
+        ...pomodoro,
+        completedSessionsToday,
+        totalFocusMinutesToday,
+        isChipExpanded,
+        setIsChipExpanded,
+        state: compatState,
+        startSession: () => pomodoro.start(),
+        pauseSession: () => pomodoro.pause(),
+        resumeSession: () => pomodoro.start(),
+        stopSession: () => pomodoro.reset(),
       }}
     >
       {children}
@@ -167,10 +131,10 @@ export function PomodoroProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function usePomodoroContext() {
+export function usePomodoroContext(): PomodoroContextType {
   const ctx = useContext(PomodoroContext);
   if (!ctx) {
-    throw new Error('usePomodoroContext must be used within PomodoroProvider');
+    throw new Error('usePomodoroContext must be used within a PomodoroProvider');
   }
   return ctx;
 }

@@ -43,6 +43,12 @@ export function deskItemToRow(item: DeskItem, spaceId: string): DeskDocumentInse
     extraDataJson = item.artboardData as unknown as Json;
   } else if (item.type === 'board_game' && item.boardGameData) {
     extraDataJson = item.boardGameData as unknown as Json;
+  } else if (item.type === 'spreadsheet' && item.spreadsheetData) {
+    extraDataJson = item.spreadsheetData as unknown as Json;
+  } else if (item.type === 'presentation' && item.presentationData) {
+    extraDataJson = item.presentationData as unknown as Json;
+  } else if (item.type === 'voice_note' && item.voiceNoteData) {
+    extraDataJson = item.voiceNoteData as unknown as Json;
   }
 
   return {
@@ -110,6 +116,9 @@ export function rowToDeskItem(row: DeskDocumentRow, pages: PageContent[] = []): 
     stickerData: row.item_type === 'sticker' && row.exam_data ? (row.exam_data as any) : undefined,
     artboardData: (row.item_type as string) === 'artboard' && row.exam_data ? (row.exam_data as any) : undefined,
     boardGameData: (row.item_type as string) === 'board_game' && row.exam_data ? (row.exam_data as any) : undefined,
+    spreadsheetData: (row.item_type as string) === 'spreadsheet' && row.exam_data ? (row.exam_data as any) : undefined,
+    presentationData: (row.item_type as string) === 'presentation' && row.exam_data ? (row.exam_data as any) : undefined,
+    voiceNoteData: (row.item_type as string) === 'voice_note' && row.exam_data ? (row.exam_data as any) : undefined,
   };
 }
 
@@ -236,6 +245,39 @@ export class StudySpaceService {
       await supabase.from('study_spaces').delete().eq('id', safeSpaceId);
     } catch (err) {
       console.warn('Lỗi deleteSpace:', err);
+    }
+  }
+
+  static async renameSpace(spaceId: string, newName: string, userId?: string): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !spaceId) return false;
+
+    const trimmed = newName.trim();
+    if (!trimmed) return false;
+
+    try {
+      const safeSpaceId = ensureUUID(spaceId);
+      const updatePayload: Record<string, any> = {
+        name: trimmed,
+        updated_at: new Date().toISOString(),
+      };
+      if (userId) {
+        updatePayload.owner_id = userId;
+      }
+
+      const { error } = await supabase
+        .from('study_spaces')
+        .update(updatePayload)
+        .eq('id', safeSpaceId);
+
+      if (error) {
+        console.warn('Lỗi renameSpace trên Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn('Lỗi renameSpace:', err);
+      return false;
     }
   }
 

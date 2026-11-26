@@ -1,8 +1,8 @@
 # 00_INDEX.md — Chỉ Mục & Giao Thức Bộ Nhớ Dự Án ViTudy
 
 > **Commit Hash:** `Current Working Tree`  
-> **Cập nhật lần cuối:** `2026-11-13`  
-> **Trạng thái Codebase:** Đã hoàn thành Board Game Studio, Bảng Vẽ 4 Góc, 23/23 test suites (78 tests) pass, `build:pages` pass, `docs:check` pass.
+> **Cập nhật lần cuối:** `2026-11-26`  
+> **Trạng thái Codebase:** Đã port toàn bộ tính năng từ GreenLearn (Voice Note, Book Cover, Spreadsheet, Presentation, Floating Pet, Social Friends, WebRTC Voice Chat, 60-120fps drawing, Batch Delete, Rename Space), 40/40 test suites (156 tests) pass, `build:pages` pass, `docs:check` pass.
 
 ---
 

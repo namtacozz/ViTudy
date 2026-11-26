@@ -9,15 +9,33 @@ interface MathRendererProps {
 }
 
 // Global cache for compiled KaTeX HTML to guarantee 0ms overhead on re-renders
-const katexHtmlCache = new Map<string, string>();
+export const katexHtmlCache = new Map<string, string>();
+export const MAX_KATEX_CACHE_ENTRIES = 1000;
 
-function renderKatexWithCache(math: string, displayMode: boolean): string {
+export function getKatexCacheSize(): number {
+  return katexHtmlCache.size;
+}
+
+export function clearKatexCache(): void {
+  katexHtmlCache.clear();
+}
+
+export function renderKatexWithCache(math: string, displayMode: boolean): string {
   const cacheKey = `${displayMode ? 'D:' : 'I:'}${math}`;
   const hit = katexHtmlCache.get(cacheKey);
-  if (hit !== undefined) return hit;
+  if (hit !== undefined) {
+    // Refresh LRU order
+    katexHtmlCache.delete(cacheKey);
+    katexHtmlCache.set(cacheKey, hit);
+    return hit;
+  }
 
   try {
     const html = katex.renderToString(math, { displayMode, throwOnError: false });
+    if (katexHtmlCache.size >= MAX_KATEX_CACHE_ENTRIES) {
+      const oldestKey = katexHtmlCache.keys().next().value;
+      if (oldestKey) katexHtmlCache.delete(oldestKey);
+    }
     katexHtmlCache.set(cacheKey, html);
     return html;
   } catch {

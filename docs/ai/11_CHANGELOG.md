@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-11-26 15:00 — uncommitted (Port Toàn Bộ Tính Năng Từ GreenLearn Sang ViTudy)
+- Task: Port toàn bộ các tính năng GreenLearn có mà ViTudy chưa có (chuẩn hóa sang thương hiệu Cam ViT `#E0562D`, giữ nguyên ViToken, KnowInherit Market, Board Game Studio & Bảng Vẽ 4 Góc).
+- Changed:
+  - `src/lib/activeStrokeStore.ts`, `src/components/canvas/DeskDrawingCanvas.tsx`, `src/components/canvas/ItemDrawingOverlay.tsx`, `src/components/common/MathRenderer.tsx`, `src/services/OfficeParserService.ts`: Tối ưu 60-120fps qua `activeStrokeStore`, memoized `CompletedDeskStrokes`, dynamic import `mammoth`/`xlsx`, LRU cache KaTeX 1000 entries.
+  - `src/components/objects/VoiceNoteItem.tsx`, `src/components/modals/VoiceNoteRecordModal.tsx`, `src/components/modals/BookCoverModal.tsx`, `src/components/objects/SpreadsheetItem.tsx`, `src/components/objects/PresentationItem.tsx`, `src/components/pet/*`, `src/hooks/usePetMascot.ts`, `src/lib/petHelpers.ts`, `src/lib/soundFx.ts`, `src/components/hud/PomodoroChip.tsx`: Thêm Voice Note kiểu Zalo (24kbps Opus + peer sync), Book Cover 3D, Spreadsheet (`.xlsx`), Presentation (`.pptx`), Floating Pet 5 giai đoạn, PomodoroChip.
+  - `src/services/SocialFriendService.ts`, `src/context/SocialPresenceContext.tsx`, `src/hooks/useSocialPresence.ts`, `src/components/hud/FriendsRightDrawer.tsx`, `src/components/hud/FriendInviteToast.tsx`, `src/components/social/*`, `src/hooks/useRealtimeMultiplayer.ts`, `src/hooks/useWebRtcVoiceChat.ts`, `src/components/hud/MultiplayerBar.tsx`: Tích hợp hệ thống bạn bè, mời học nhóm, phê duyệt vào phòng, đồng bộ Realtime 2 chiều và WebRTC P2P Voice Chat (Discord-like).
+  - `src/services/UrlDocumentService.ts`, `src/hooks/useStorageManager.ts`, `src/components/modals/StorageManagerModal.tsx`, `src/hooks/useResponsiveLayout.ts`, `src/components/common/DebugOverlay.tsx`, `src/hooks/useDeskItemInteraction.ts`, `src/utils/textNormalization.ts`, `src/lib/assets.ts`: Nhập tài liệu từ URL, quản lý bộ nhớ trình duyệt, Pointer Events đa nền tảng, responsive & DebugOverlay.
+  - `src/context/StudySpaceContext.tsx`, `src/services/StudySpaceService.ts`, `src/components/hud/TopLeftNav.tsx`, `src/components/hud/LeftCreationBar.tsx`, `src/components/hud/BottomLeftKnowledge.tsx`, `src/components/home/HomePage.tsx`, `src/components/canvas/StudySpaceDeskView.tsx`, `src/components/canvas/InfiniteDesk.tsx`, `src/app/layout.tsx`: Đổi tên bàn học toàn diện, xóa nhiều bàn học hàng loạt, tích hợp toàn bộ HUD/Canvas/Providers.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (40/40 files, 156/156 tests pass), `pnpm run build` & `pnpm run build:pages` (16/16 static pages pass), `pnpm run docs:check` (OK).
+- Open follow-ups: Không có.
+
+---
+
 ## 2026-11-13 22:14 — uncommitted (Board Game Studio & Bảng Vẽ 4 Góc)
 - Task: Xây dựng trọn vẹn hệ thống thiết kế Board Game (Bút Trò Chơi / Game Pen), Bảng Vẽ 4 Góc, Quân cờ khớp ô Map, Xúc xắc 3D top-down, Bộ thẻ Cơ hội/Khí vận (AI), Sổ Đỏ, Tiền VNĐ (1k–500k), Ngân hàng và Tủ Trò Chơi Cá Nhân.
 - Changed:

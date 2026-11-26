@@ -29,7 +29,8 @@ describe('Docx crash & freeze regression', () => {
     if (!file.arrayBuffer) {
       (file as any).arrayBuffer = async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
     }
-    const pages = await parseUploadedDocumentFile(file, 'test');
+    const parsed = await parseUploadedDocumentFile(file, 'test');
+    const pages = parsed.pages;
     expect(pages.length).toBeGreaterThan(0);
     expect(pages[0].text).not.toContain('\u0000');
     expect(pages[0].text.startsWith('PK')).toBe(false);

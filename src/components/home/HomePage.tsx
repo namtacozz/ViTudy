@@ -58,9 +58,31 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
     createSpaceFromTemplate, 
     toggleStarSpace,
     deleteSpace,
+    deleteSpaces,
     renameSpace,
     duplicateSpace
   } = useStudySpace();
+  const [selectedSpaceIds, setSelectedSpaceIds] = useState<string[]>([]);
+  const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
+
+  const toggleSelectSpace = (spaceId: string) => {
+    setSelectedSpaceIds(prev =>
+      prev.includes(spaceId) ? prev.filter(id => id !== spaceId) : [...prev, spaceId]
+    );
+  };
+
+  const handleConfirmBatchDelete = async () => {
+    if (selectedSpaceIds.length === 0) return;
+    setIsDeletingBatch(true);
+    try {
+      await deleteSpaces(selectedSpaceIds);
+      setSelectedSpaceIds([]);
+      setIsBatchDeleteModalOpen(false);
+    } finally {
+      setIsDeletingBatch(false);
+    }
+  };
   const { startSession: startPomodoroSession } = usePomodoroContext();
   const router = useRouter();
 
@@ -828,6 +850,24 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
             </div>
 
             <div className="flex items-center gap-2">
+              {selectedSpaceIds.length > 0 && (
+                <div className="flex items-center gap-1.5 mr-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSpaceIds([])}
+                    className="px-2 py-1 rounded-lg text-[11px] font-semibold text-stone-600 hover:bg-stone-200/70 transition-colors cursor-pointer"
+                  >
+                    Bỏ chọn
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsBatchDeleteModalOpen(true)}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-2xs"
+                  >
+                    Xóa đã chọn ({selectedSpaceIds.length})
+                  </button>
+                </div>
+              )}
               {/* View Toggle */}
               <div className="flex items-center bg-stone-200/80 p-0.5 rounded-lg text-xs text-stone-700">
                 <button
@@ -917,6 +957,16 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
                         >
                           {/* Name & Subtitle */}
                           <div className="col-span-6 pr-3 flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={selectedSpaceIds.includes(space.id)}
+                              onChange={() => toggleSelectSpace(space.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              title="Chọn bàn học để xóa hàng loạt"
+                              className={`w-3.5 h-3.5 rounded border-stone-300 text-[#E0562D] focus:ring-[#E0562D] cursor-pointer transition-opacity ${
+                                selectedSpaceIds.length > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                              }`}
+                            />
                             <button
                               type="button"
                               onClick={(e) => {
@@ -1153,6 +1203,44 @@ export function HomePage({ onEnterDesk, onCreateSpace }: HomePageProps) {
       <TopUpModal isOpen={isTopUpOpen} onClose={() => setIsTopUpOpen(false)} />
       <MarketModal isOpen={isMarketOpen} onClose={() => setIsMarketOpen(false)} onEnterDesk={onEnterDesk} />
       <AiConfigModal isOpen={isAiConfigOpen} onClose={() => setIsAiConfigOpen(false)} />
+
+      {/* Batch Delete Confirmation Modal */}
+      {isBatchDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-[9995] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => !isDeletingBatch && setIsBatchDeleteModalOpen(false)}
+        >
+          <div
+            className="bg-white border border-stone-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-stone-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold text-stone-900 mb-2">
+              Xác nhận xóa {selectedSpaceIds.length} bàn học?
+            </h3>
+            <p className="text-xs text-stone-600 leading-relaxed mb-5">
+              Hành động này sẽ xóa vĩnh viễn <strong className="text-stone-900">{selectedSpaceIds.length}</strong> bàn học đã chọn cùng toàn bộ tài liệu, ghi chú và nét vẽ bên trong. Không thể khôi phục dữ liệu này.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
+              <button
+                type="button"
+                disabled={isDeletingBatch}
+                onClick={() => setIsBatchDeleteModalOpen(false)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:bg-stone-100 cursor-pointer disabled:opacity-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingBatch}
+                onClick={handleConfirmBatchDelete}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingBatch ? 'Đang xóa...' : `Xóa ${selectedSpaceIds.length} bàn học`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

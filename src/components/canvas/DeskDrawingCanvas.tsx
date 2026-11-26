@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useStudySpace } from '@/context/StudySpaceContext';
+import { useActiveStroke } from '@/lib/activeStrokeStore';
+import type { DrawingStroke } from '@/types/studyspace';
 
 // Helper to convert points to SVG Path data
 // For geometric polygons (triangle, square, rectangle <= 8 points): renders crisp straight lines L and sharp corners
@@ -43,8 +45,7 @@ function pointsToSvgPath(points: { x: number; y: number }[]): string {
   return d;
 }
 
-// Memoized single stroke renderer to avoid recomputing SVG paths on every frame
-const MemoizedStroke = React.memo(function MemoizedStroke({ stroke }: { stroke: import('@/types/studyspace').DrawingStroke }) {
+function renderStrokeElement(stroke: DrawingStroke) {
   const isHigh = stroke.isHighlighter;
   const strokeWidth = isHigh ? (stroke.width || 14) : (stroke.width || 2.5);
   const opacity = isHigh ? 0.65 : 0.9;
@@ -53,6 +54,7 @@ const MemoizedStroke = React.memo(function MemoizedStroke({ stroke }: { stroke: 
   if (stroke.points.length === 1) {
     return (
       <circle
+        key={stroke.id}
         cx={stroke.points[0].x}
         cy={stroke.points[0].y}
         r={strokeWidth / 2}
@@ -68,6 +70,7 @@ const MemoizedStroke = React.memo(function MemoizedStroke({ stroke }: { stroke: 
 
   return (
     <path
+      key={stroke.id}
       d={pathData}
       stroke={stroke.color}
       strokeWidth={strokeWidth}
@@ -78,37 +81,48 @@ const MemoizedStroke = React.memo(function MemoizedStroke({ stroke }: { stroke: 
       fill="none"
     />
   );
+}
+
+// Memoized layer for completed strokes: will NOT re-render while user is actively drawing a new stroke
+const CompletedDeskStrokes = React.memo(function CompletedDeskStrokes({
+  strokes,
+}: {
+  strokes: DrawingStroke[];
+}) {
+  return (
+    <svg 
+      className="absolute inset-0 pointer-events-none z-10 overflow-visible"
+      style={{ width: 10000, height: 10000, left: -5000, top: -5000 }}
+    >
+      <g transform="translate(5000, 5000)">
+        {strokes.map(renderStrokeElement)}
+      </g>
+    </svg>
+  );
 });
 
 export const DeskDrawingCanvas = React.memo(function DeskDrawingCanvas() {
-  const { strokes, currentStroke } = useStudySpace();
+  const { strokes } = useStudySpace();
+  const currentStroke = useActiveStroke();
 
-  const deskStrokes = React.useMemo(() => {
-    return strokes.filter(s => !s.attachedToItemId);
-  }, [strokes]);
+  const deskStrokes = useMemo(
+    () => strokes.filter((s) => !s.attachedToItemId),
+    [strokes]
+  );
 
   return (
     <>
-      {/* Completed Desk Strokes (not attached to any document) */}
-      <svg 
-        className="absolute inset-0 pointer-events-none z-10 overflow-visible"
-        style={{ width: 10000, height: 10000, left: -5000, top: -5000 }}
-      >
-        <g transform="translate(5000, 5000)">
-          {deskStrokes.map(s => (
-            <MemoizedStroke key={s.id} stroke={s} />
-          ))}
-        </g>
-      </svg>
+      {/* Completed Desk Strokes (not attached to any document, memoized against in-progress stroke updates) */}
+      <CompletedDeskStrokes strokes={deskStrokes} />
 
-      {/* Current Active Stroke (Topmost layer z-[1000] visible directly under cursor across all books and documents in real time) */}
+      {/* Current Active Stroke (Topmost layer z-[1000] updated directly via activeStrokeStore without root context re-renders) */}
       {currentStroke && currentStroke.points.length > 0 && (
         <svg 
           className="absolute inset-0 pointer-events-none overflow-visible"
           style={{ width: 10000, height: 10000, left: -5000, top: -5000, zIndex: 1000 }}
         >
           <g transform="translate(5000, 5000)">
-            <MemoizedStroke stroke={currentStroke} />
+            {renderStrokeElement(currentStroke)}
           </g>
         </svg>
       )}

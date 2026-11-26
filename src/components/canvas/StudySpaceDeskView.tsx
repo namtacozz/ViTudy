@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useStudySpace } from '@/context/StudySpaceContext';
 import { InfiniteDesk } from './InfiniteDesk';
@@ -11,14 +11,28 @@ import { BottomLeftKnowledge } from '../hud/BottomLeftKnowledge';
 import { BottomRightToolkit } from '../hud/BottomRightToolkit';
 import { LeftCreationBar } from '../hud/LeftCreationBar';
 import { MultiplayerBar } from '../hud/MultiplayerBar';
+import { FriendsRightDrawer } from '../hud/FriendsRightDrawer';
 import { ActivityService } from '@/services/ActivityService';
+import { usePetMascot } from '@/hooks/usePetMascot';
 import { OnboardingTour } from '../onboarding/OnboardingTour';
 import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAssetPath } from '@/lib/assets';
 
 export default function StudySpaceDeskView() {
-  const { focusedItemId, isDeskReady } = useStudySpace();
+  const { focusedItemId, isDeskReady, fitAllToScreen, activeSpaceId } = useStudySpace();
+  const { addStudySeconds } = usePetMascot();
   const isFocusMode = !!focusedItemId;
+
+  const autoFittedSpaceRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isDeskReady && activeSpaceId && autoFittedSpaceRef.current !== activeSpaceId) {
+      autoFittedSpaceRef.current = activeSpaceId;
+      const timer = setTimeout(() => {
+        fitAllToScreen?.();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [isDeskReady, activeSpaceId, fitAllToScreen]);
 
   // Independent drawer states for each of the 5 HUD islands in focus mode
   const [showTopLeftInFocus, setShowTopLeftInFocus] = useState(false);
@@ -48,7 +62,11 @@ export default function StudySpaceDeskView() {
     window.addEventListener('pointerdown', handleActivity);
 
     const stopHeartbeat = ActivityService.startHeartbeat(() => {
-      return Date.now() - lastActivityTime < 60000;
+      const active = Date.now() - lastActivityTime < 60000;
+      if (active && document.visibilityState === 'visible') {
+        addStudySeconds(20);
+      }
+      return active;
     });
 
     return () => {
@@ -240,6 +258,9 @@ export default function StudySpaceDeskView() {
       <div className={clsx("transition-opacity duration-300", isFocusMode ? "opacity-0 pointer-events-none" : "opacity-100")}>
         <MultiplayerBar />
       </div>
+
+      {/* ================= FRIENDS RIGHT DRAWER ================= */}
+      <FriendsRightDrawer />
 
       {/* ================= 7-STEP ONBOARDING TOUR ================= */}
       <OnboardingTour />

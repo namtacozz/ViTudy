@@ -1,13 +1,16 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { DeskItem, StudySpace, CanvasTransform, PageContent, IntelineThread } from '@/types/studyspace';
+import { DeskItem, StudySpace, CanvasTransform, PageContent, IntelineThread, DrawingStroke } from '@/types/studyspace';
 import { INITIAL_SPACES } from '@/data/mockSpaces';
 import { recognizeSmartShape, recognizeSmartShapeDetailed } from '@/utils/smartShape';
 import { useAuth } from '@/hooks/useAuth';
 import { StudySpaceService, ensureUUID } from '@/services/StudySpaceService';
 import { sanitizeDocumentText } from '@/services/OfficeParserService';
 import { OfflineQueue } from '@/services/OfflineQueue';
+import { activeStrokeStore } from '@/lib/activeStrokeStore';
+import { useRealtimeMultiplayer, PeerUser, DeskAction, VoiceSignal } from '@/hooks/useRealtimeMultiplayer';
+import { useWebRtcVoiceChat } from '@/hooks/useWebRtcVoiceChat';
 
 export interface CreationPlacementTemplate {
   itemType?: import('@/types/studyspace').ItemType;
@@ -21,6 +24,9 @@ export interface CreationPlacementTemplate {
   mindMapColor?: string;
   mindMapParentId?: string;
   mindMapShape?: 'pill' | 'rectangle' | 'cloud';
+  title?: string;
+  coverColor?: string;
+  pages?: { title?: string; text: string; image?: string }[];
   stickerData?: {
     type: 'emoji' | 'sticker' | 'gif';
     name: string;
@@ -49,7 +55,8 @@ interface StudySpaceContextType {
   createSpace: (name: string, subject: string) => string;
   createSpaceFromTemplate?: (templateType: 'blank' | 'midterm' | 'curriculum_exam' | 'group_study', customName?: string) => string;
   deleteSpace?: (spaceId: string) => void;
-  renameSpace?: (spaceId: string, newName: string) => void;
+  deleteSpaces: (spaceIds: string[]) => Promise<boolean>;
+  renameSpace: (spaceId: string, newName: string) => Promise<boolean>;
   duplicateSpace?: (spaceId: string) => string;
   setTransform: React.Dispatch<React.SetStateAction<CanvasTransform>>;
   panBy: (dx: number, dy: number) => void;
@@ -59,6 +66,7 @@ interface StudySpaceContextType {
   resetView: () => void;
   selectItem: (id: string | null) => void;
   updateItemPosition: (id: string, x: number, y: number) => void;
+  updateDeskItem: (id: string, patch: Partial<DeskItem>) => void;
   updateItemDimensions?: (id: string, width: number, height: number) => void;
   updateItemRotation: (id: string, deltaAngle: number) => void;
   updateItemTitle?: (id: string, newTitle: string) => void;
@@ -70,6 +78,7 @@ interface StudySpaceContextType {
   combineIntoBinder: (targetId: string, draggedId: string) => boolean;
   detachPageFromBinder: (bookId: string, pageIndex: number) => void;
   convertPaperToBook?: (paperId: string, coverColor?: string) => void;
+  addPageToBook: (bookId: string, pageData?: { title?: string; text?: string; image?: string }) => string;
   tidyUpDesk?: () => void;
   fitAllToScreen?: () => void;
   updateStickyNoteColor?: (id: string, color: string) => void;
@@ -78,7 +87,17 @@ interface StudySpaceContextType {
   updateStickyNoteTextAlign?: (id: string, align: 'left' | 'center' | 'right') => void;
   updateStickyNoteIsBold?: (id: string, isBold: boolean) => void;
   addStickyNote: (text?: string, x?: number, y?: number, color?: string, width?: number, height?: number) => string;
-  addUploadedDocument: (title: string, pages: { title?: string; text: string; image?: string }[]) => void;
+  addBook: (title?: string, x?: number, y?: number, coverColor?: string, initialPages?: { title?: string; text: string; image?: string }[]) => string;
+  addUploadedDocument: (
+    title: string,
+    pages: { title?: string; text: string; image?: string }[],
+    options?: {
+      spreadsheetData?: import('@/types/studyspace').SpreadsheetData;
+      presentationData?: import('@/types/studyspace').PresentationData;
+    }
+  ) => void;
+  addSpreadsheet: (title?: string, sheets?: import('@/types/studyspace').SpreadsheetSheet[]) => string;
+  addPresentation: (title?: string, slides?: import('@/types/studyspace').PresentationSlide[]) => string;
   addMarketItemToSpace: (spaceId: string, marketItem: import('@/data/marketMockData').MarketItem) => void;
   removeDeskItem: (id: string) => void;
   setSearchQuery: (query: string) => void;
@@ -115,6 +134,8 @@ interface StudySpaceContextType {
   updateBoardGame: (id: string, pkg: import('@/types/boardgame').BoardGamePackage) => void;
   activeGamePenTool: import('@/types/boardgame').GamePenTool;
   setActiveGamePenTool: (tool: import('@/types/boardgame').GamePenTool) => void;
+  addVoiceNote: (voiceData: import('@/types/studyspace').VoiceNoteData, x?: number, y?: number) => string;
+  updateVoiceNoteTranscript: (id: string, transcript: string) => void;
   updateCodeBlock: (id: string, snippet: string, language?: string) => void;
   updateMindMapNode: (id: string, text: string, color?: string, shape?: 'pill' | 'rectangle' | 'cloud') => void;
   strokes: import('@/types/studyspace').DrawingStroke[];
@@ -124,6 +145,9 @@ interface StudySpaceContextType {
   snapCurrentStroke: () => import('@/utils/smartShape').RecognizedShapeResult | null;
   revertCurrentStroke: () => void;
   finishStroke: () => void;
+  cancelStroke: () => void;
+  isFingerDrawingEnabled: boolean;
+  setIsFingerDrawingEnabled: (enabled: boolean) => void;
   addStroke: (stroke: import('@/types/studyspace').DrawingStroke) => void;
   undoStroke: () => void;
   redoStroke: () => void;
@@ -154,6 +178,33 @@ interface StudySpaceContextType {
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
   saveCurrentSpaceImmediately: (isManual?: boolean) => Promise<boolean>;
   isDeskReady: boolean;
+  // Multiplayer Realtime Synchronized State
+  multiplayerPeers: PeerUser[];
+  isMultiplayerConnected: boolean;
+  multiplayerRoomId: string | null;
+  isMultiplayerHost: boolean;
+  multiplayerPermission: 'view_only' | 'edit';
+  setMultiplayerPermission: (perm: 'view_only' | 'edit') => void;
+  startHostingRoom: (customRoomId?: string, permission?: 'view_only' | 'edit') => string;
+  joinMultiplayerRoom: (roomId: string, permission?: 'view_only' | 'edit') => void;
+  leaveMultiplayerRoom: () => void;
+  broadcastDeskAction: (action: DeskAction) => void;
+  isFollowPresenter: boolean;
+  setIsFollowPresenter: React.Dispatch<React.SetStateAction<boolean>>;
+  isViewerSession: () => boolean;
+  isViewer: boolean;
+  // WebRTC Voice Chat State & Controls
+  isMicOn: boolean;
+  isMuted: boolean;
+  isDeafened: boolean;
+  isSpeaking: boolean;
+  speakingPeers: Record<string, boolean>;
+  peerAudioVolumes: Record<string, number>;
+  setPeerAudioVolume: (peerId: string, volume: number) => void;
+  toggleMic: () => Promise<void>;
+  toggleMute: () => void;
+  toggleDeafen: () => void;
+  micError: string | null;
 }
 
 const DEFAULT_TRANSFORM: CanvasTransform = {
@@ -176,7 +227,7 @@ const DEFAULT_EMPTY_SPACE: StudySpace = {
 const StudySpaceContext = createContext<StudySpaceContextType | null>(null);
 
 export function StudySpaceProvider({ children }: { children: React.ReactNode }) {
-  const { user, status } = useAuth();
+  const { user, status, profile } = useAuth();
   const [spaces, setSpaces] = useState<StudySpace[]>([]);
   const [activeSpaceId, setActiveSpaceId] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -187,6 +238,14 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [isPanLocked, setIsPanLocked] = useState(false);
   const [maxZIndex, setMaxZIndex] = useState(20);
   const [isViewRotateMode, setIsViewRotateMode] = useState(false);
+
+  const isApplyingRemoteAction = useRef(false);
+  const syncedRemoteSpaceRef = useRef<{ items: DeskItem[]; strokes: DrawingStroke[]; spaceName?: string } | null>(null);
+  const spacesRef = useRef<StudySpace[]>(spaces);
+  useEffect(() => { spacesRef.current = spaces; }, [spaces]);
+  const activeSpaceIdRef = useRef<string>(activeSpaceId);
+  useEffect(() => { activeSpaceIdRef.current = activeSpaceId; }, [activeSpaceId]);
+  const broadcastDeskActionRef = useRef<(action: DeskAction) => void>(() => {});
 
   // Focus Reading Mode state
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
@@ -280,8 +339,296 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   const [stickyCreationColor, setStickyCreationColor] = useState<string | null>(null);
   const [stickyCreationTemplate, setStickyCreationTemplate] = useState<CreationPlacementTemplate | null>(null);
   const [strokes, setStrokes] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
-  const [currentStroke, setCurrentStroke] = useState<import('@/types/studyspace').DrawingStroke | null>(null);
+  const strokesRef = useRef<DrawingStroke[]>(strokes);
+  useEffect(() => { strokesRef.current = strokes; }, [strokes]);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const currentUserName = profile?.display_name
+    || (typeof window !== 'undefined' ? (localStorage.getItem('vitudy_nickname') || localStorage.getItem('greenlearn_nickname')) : '')
+    || (user?.email ? user.email.split('@')[0] : 'Bạn học');
+
+  const handleRemoteDeskAction = useCallback((action: DeskAction) => {
+    isApplyingRemoteAction.current = true;
+    try {
+      const curSpaceId = activeSpaceIdRef.current;
+      switch (action.type) {
+        case 'ITEM_MOVE': {
+          const { id, x, y } = action.payload;
+          setSpaces(prev => prev.map(s => {
+            if (s.id !== curSpaceId) return s;
+            return { ...s, items: s.items.map(it => it.id === id ? { ...it, x, y } : it) };
+          }));
+          break;
+        }
+        case 'ITEM_ROTATE': {
+          const { id, rotation } = action.payload;
+          setSpaces(prev => prev.map(s => {
+            if (s.id !== curSpaceId) return s;
+            return { ...s, items: s.items.map(it => it.id === id ? { ...it, rotation } : it) };
+          }));
+          break;
+        }
+        case 'PAGE_TURN': {
+          const { id, pageIndex } = action.payload;
+          setSpaces(prev => prev.map(s => {
+            if (s.id !== curSpaceId) return s;
+            return { ...s, items: s.items.map(it => it.id === id ? { ...it, currentPageIndex: pageIndex } : it) };
+          }));
+          break;
+        }
+        case 'ADD_ITEM': {
+          const { item } = action.payload;
+          setSpaces(prev => prev.map(s => {
+            if (s.id !== curSpaceId) return s;
+            if (s.items.some(it => it.id === item.id)) return s;
+            return { ...s, items: [...s.items, item] };
+          }));
+          break;
+        }
+        case 'DELETE_ITEM': {
+          const { id } = action.payload;
+          setSpaces(prev => prev.map(s => {
+            if (s.id !== curSpaceId) return s;
+            return { ...s, items: s.items.filter(it => it.id !== id) };
+          }));
+          break;
+        }
+        case 'UPDATE_ITEM_TEXT': {
+          const { id, text } = action.payload;
+          setSpaces(prev => prev.map(s => {
+            if (s.id !== curSpaceId) return s;
+            return { ...s, items: s.items.map(it => it.id === id ? { ...it, stickyText: text } : it) };
+          }));
+          break;
+        }
+        case 'DRAW_STROKE': {
+          const { stroke } = action.payload;
+          setStrokes(prev => {
+            if (prev.some(st => st.id === stroke.id)) return prev;
+            return [...prev, stroke];
+          });
+          break;
+        }
+        case 'CLEAR_STROKES': {
+          setStrokes([]);
+          break;
+        }
+        case 'REMOVE_STROKE': {
+          const { id } = action.payload;
+          setStrokes(prev => prev.filter(st => st.id !== id));
+          break;
+        }
+        case 'SYNC_SPACE_ITEMS': {
+          const { items, spaceName } = action.payload as any;
+          const targetId = activeSpaceIdRef.current;
+          if (Array.isArray(items)) {
+            syncedRemoteSpaceRef.current = {
+              ...(syncedRemoteSpaceRef.current || { strokes: [] }),
+              items: [...items],
+              spaceName: spaceName || syncedRemoteSpaceRef.current?.spaceName
+            };
+            setSpaces(prev => {
+              const exists = prev.some(s => s.id === targetId);
+              const friendlyName = spaceName ? (spaceName.startsWith('Bàn học nhóm') ? spaceName : `Bàn học cùng bạn: ${spaceName}`) : undefined;
+              if (exists) {
+                return prev.map(s => s.id !== targetId ? s : { ...s, name: friendlyName || s.name, items: [...items] });
+              }
+              return [{
+                id: targetId,
+                name: friendlyName || `Bàn học nhóm (${targetId.slice(-6).toUpperCase()})`,
+                subject: 'Học nhóm trực tuyến',
+                description: 'Bàn học được chia sẻ trực tuyến cùng bạn học',
+                items: [...items],
+                threads: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                lastOpenedAt: new Date().toISOString()
+              }, ...prev];
+            });
+          }
+          break;
+        }
+        case 'SYNC_SPACE_STROKES': {
+          const { strokes: chunkStrokes, isChunk, isFirstChunk } = action.payload as any;
+          if (Array.isArray(chunkStrokes)) {
+            if (isChunk && !isFirstChunk) {
+              setStrokes(prev => {
+                const existingIds = new Set(prev.map(s => s.id));
+                const newOnly = chunkStrokes.filter(s => !existingIds.has(s.id));
+                const merged = [...prev, ...newOnly];
+                if (syncedRemoteSpaceRef.current) syncedRemoteSpaceRef.current.strokes = merged;
+                return merged;
+              });
+            } else {
+              setStrokes([...chunkStrokes]);
+              if (syncedRemoteSpaceRef.current) syncedRemoteSpaceRef.current.strokes = [...chunkStrokes];
+            }
+          }
+          break;
+        }
+        case 'SYNC_SPACE_STATE': {
+          const { items, strokes: remoteStrokes, spaceName } = action.payload as any;
+          const targetId = activeSpaceIdRef.current;
+          if (Array.isArray(items)) {
+            syncedRemoteSpaceRef.current = {
+              items: [...items],
+              strokes: Array.isArray(remoteStrokes) ? [...remoteStrokes] : [],
+              spaceName: spaceName || syncedRemoteSpaceRef.current?.spaceName
+            };
+            setSpaces(prev => {
+              const exists = prev.some(s => s.id === targetId);
+              const friendlyName = spaceName ? (spaceName.startsWith('Bàn học nhóm') ? spaceName : `Bàn học cùng bạn: ${spaceName}`) : undefined;
+              if (exists) {
+                return prev.map(s => s.id !== targetId ? s : { ...s, name: friendlyName || s.name, items: [...items] });
+              }
+              return [{
+                id: targetId,
+                name: friendlyName || `Bàn học nhóm (${targetId.slice(-6).toUpperCase()})`,
+                subject: 'Học nhóm trực tuyến',
+                description: 'Bàn học được chia sẻ trực tuyến cùng bạn học',
+                items: [...items],
+                threads: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                lastOpenedAt: new Date().toISOString()
+              }, ...prev];
+            });
+          }
+          if (Array.isArray(remoteStrokes)) setStrokes([...remoteStrokes]);
+          break;
+        }
+      }
+    } finally {
+      isApplyingRemoteAction.current = false;
+    }
+  }, []);
+
+  const handleRequestSpaceState = useCallback((requesterId?: string) => {
+    const curSpace = spacesRef.current.find(s => s.id === activeSpaceIdRef.current) || spacesRef.current[0];
+    const items = curSpace?.items || [];
+    const curStrokes = strokesRef.current || [];
+    const spaceName = curSpace?.name || 'Bàn học';
+    const spaceId = activeSpaceIdRef.current;
+
+    broadcastDeskActionRef.current({
+      type: 'SYNC_SPACE_ITEMS',
+      payload: { targetId: requesterId || 'all', spaceId, spaceName, items }
+    });
+
+    if (curStrokes.length === 0) {
+      broadcastDeskActionRef.current({
+        type: 'SYNC_SPACE_STROKES',
+        payload: { targetId: requesterId || 'all', strokes: [], isChunk: false }
+      });
+    } else {
+      const CHUNK_SIZE = 15;
+      for (let i = 0; i < curStrokes.length; i += CHUNK_SIZE) {
+        const chunk = curStrokes.slice(i, i + CHUNK_SIZE);
+        broadcastDeskActionRef.current({
+          type: 'SYNC_SPACE_STROKES',
+          payload: {
+            targetId: requesterId || 'all',
+            strokes: chunk,
+            isChunk: true,
+            isFirstChunk: i === 0,
+            chunkIndex: Math.floor(i / CHUNK_SIZE),
+            totalChunks: Math.ceil(curStrokes.length / CHUNK_SIZE)
+          }
+        });
+      }
+    }
+
+    broadcastDeskActionRef.current({
+      type: 'SYNC_SPACE_STATE',
+      payload: { targetId: requesterId || 'all', spaceId, spaceName, items, strokes: curStrokes.slice(0, 30) }
+    });
+  }, []);
+
+  const incomingVoiceSignalHandlerRef = useRef<((senderId: string, signal: VoiceSignal) => void) | null>(null);
+  const handleIncomingVoiceSignal = useCallback((senderId: string, signal: VoiceSignal) => {
+    incomingVoiceSignalHandlerRef.current?.(senderId, signal);
+  }, []);
+
+  const realtimeMultiplayer = useRealtimeMultiplayer({
+    spaceId: activeSpaceId,
+    currentUserName,
+    transform,
+    onDeskAction: handleRemoteDeskAction,
+    onRequestSpaceState: handleRequestSpaceState,
+    onVoiceSignal: handleIncomingVoiceSignal
+  });
+
+  const voiceChat = useWebRtcVoiceChat({
+    currentUserId: realtimeMultiplayer.userId,
+    peers: realtimeMultiplayer.peers,
+    isConnected: realtimeMultiplayer.isConnected,
+    sendVoiceSignal: realtimeMultiplayer.sendVoiceSignal,
+    broadcastVoiceState: realtimeMultiplayer.broadcastVoiceState
+  });
+
+  useEffect(() => {
+    incomingVoiceSignalHandlerRef.current = voiceChat.handleIncomingSignal;
+  }, [voiceChat.handleIncomingSignal]);
+
+  const {
+    peers: multiplayerPeers,
+    isConnected: isMultiplayerConnected,
+    roomId: multiplayerRoomId,
+    isHost: isMultiplayerHost,
+    roomPermission: multiplayerPermission,
+    setRoomPermission: setMultiplayerPermission,
+    startHostingRoom,
+    joinRoom: rawJoinMultiplayerRoom,
+    leaveRoom: leaveMultiplayerRoom,
+    broadcastDeskAction,
+    isFollowPresenter,
+    setIsFollowPresenter
+  } = realtimeMultiplayer;
+
+  const isViewerSession = useCallback((): boolean => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+      const roleParam = params.get('role');
+      const permParam = params.get('perm');
+      if (roomParam) {
+        const isHostedLocally = localStorage.getItem('vitudy_hosted_room_' + roomParam) === 'true';
+        if (!isHostedLocally && (roleParam === 'viewer' || permParam === 'view_only' || multiplayerPermission === 'view_only')) {
+          return true;
+        }
+      }
+    }
+    const inRoom = isMultiplayerConnected || Boolean(multiplayerRoomId);
+    if (inRoom && !isMultiplayerHost && multiplayerPermission === 'view_only') {
+      return true;
+    }
+    return false;
+  }, [isMultiplayerConnected, multiplayerRoomId, isMultiplayerHost, multiplayerPermission]);
+
+  const isViewer = isViewerSession();
+
+  const joinMultiplayerRoom = useCallback((roomId: string, permission: 'view_only' | 'edit' = 'view_only') => {
+    rawJoinMultiplayerRoom(roomId, permission);
+    setActiveSpaceId(roomId);
+    setSpaces(prev => {
+      if (prev.some(s => s.id === roomId)) return prev;
+      return [{
+        id: roomId,
+        name: `Bàn học nhóm (${roomId.slice(-6).toUpperCase()})`,
+        subject: 'Học nhóm trực tuyến',
+        description: `Bàn học đồng bộ cùng bạn qua phòng ${roomId}`,
+        items: [],
+        threads: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastOpenedAt: new Date().toISOString()
+      }, ...prev];
+    });
+  }, [rawJoinMultiplayerRoom]);
+
+  useEffect(() => {
+    broadcastDeskActionRef.current = broadcastDeskAction;
+  }, [broadcastDeskAction]);
 
   // Auto-flush offline queue when back online
   useEffect(() => {
@@ -289,11 +636,12 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const startStroke = (point: { x: number; y: number }, color: string, width: number, isHighlighter: boolean) => {
+    if (isViewerSession()) return;
     const strokeId =
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()
         : ensureUUID(`stroke-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`);
-    setCurrentStroke({
+    activeStrokeStore.setStroke({
       id: strokeId,
       points: [point],
       color,
@@ -303,88 +651,88 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const appendPoint = (point: { x: number; y: number }) => {
-    setCurrentStroke(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        points: [...prev.points, point]
-      };
-    });
+    activeStrokeStore.appendPoint(point);
   };
 
   const snapCurrentStroke = (): import('@/utils/smartShape').RecognizedShapeResult | null => {
-    let result: import('@/utils/smartShape').RecognizedShapeResult | null = null;
-    setCurrentStroke(prev => {
-      if (!prev || prev.points.length < 5) return prev;
-      const res = recognizeSmartShapeDetailed(prev.points);
-      if (res.shape !== 'none') {
-        result = res;
-        return {
-          ...prev,
-          points: res.points,
-          originalPoints: prev.originalPoints || [...prev.points],
-          isSmartShape: true,
-          shapeType: res.shape
-        };
-      }
-      return prev;
-    });
-    return result;
+    const prev = activeStrokeStore.getStroke();
+    if (!prev || prev.points.length < 5) return null;
+    const res = recognizeSmartShapeDetailed(prev.points);
+    if (res.shape !== 'none') {
+      activeStrokeStore.setStroke({
+        ...prev,
+        points: res.points,
+        originalPoints: prev.originalPoints || [...prev.points],
+        isSmartShape: true,
+        shapeType: res.shape
+      });
+      return res;
+    }
+    return null;
   };
 
   const revertCurrentStroke = () => {
-    setCurrentStroke(prev => {
-      if (!prev || !prev.originalPoints) return prev;
-      return {
-        ...prev,
-        points: prev.originalPoints,
-        originalPoints: undefined,
-        isSmartShape: false,
-        shapeType: undefined
-      };
+    const prev = activeStrokeStore.getStroke();
+    if (!prev || !prev.originalPoints) return;
+    activeStrokeStore.setStroke({
+      ...prev,
+      points: prev.originalPoints,
+      originalPoints: undefined,
+      isSmartShape: false,
+      shapeType: undefined
     });
   };
 
   const finishStroke = () => {
-    setCurrentStroke(prev => {
-      if (prev && prev.points.length > 1) {
-        let finalPoints = prev.points;
-        let isSmart = prev.isSmartShape ?? false;
-        let origPts = prev.originalPoints;
-        let sType = prev.shapeType;
+    const prev = activeStrokeStore.getStroke();
+    activeStrokeStore.setStroke(null);
+    if (prev && prev.points.length > 1) {
+      let finalPoints = prev.points;
+      let isSmart = prev.isSmartShape ?? false;
+      let origPts = prev.originalPoints;
+      let sType = prev.shapeType;
 
-        if (activeTool === 'smart_shape' && !isSmart) {
-          const res = recognizeSmartShapeDetailed(prev.points);
-          if (res.shape !== 'none') {
-            finalPoints = res.points;
-            isSmart = true;
-            origPts = [...prev.points];
-            sType = res.shape;
-          }
+      if (activeTool === 'smart_shape' && !isSmart) {
+        const res = recognizeSmartShapeDetailed(prev.points);
+        if (res.shape !== 'none') {
+          finalPoints = res.points;
+          isSmart = true;
+          origPts = [...prev.points];
+          sType = res.shape;
         }
+      }
 
-        // Check if stroke started over a desk document (book, paper, or sticky note)
-        const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
-        const sortedItems = [...(curSpace?.items || [])].sort((a, b) => b.zIndex - a.zIndex);
-        const p0 = finalPoints[0];
+      // Check if stroke started over a desk document (book, paper, or sticky note)
+      const curSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
+      const sortedItems = [...(curSpace?.items || [])].sort((a, b) => b.zIndex - a.zIndex);
+      const p0 = finalPoints[0];
 
-        let targetItem: import('@/types/studyspace').DeskItem | null = null;
-        let localPoints = finalPoints;
-        let localOriginalPoints = origPts;
+      let targetItem: import('@/types/studyspace').DeskItem | null = null;
+      let localPoints = finalPoints;
+      let localOriginalPoints = origPts;
 
-        for (const item of sortedItems) {
-          const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 380 : 360) : (item.width || 220);
-          const h = item.type === 'book' ? 640 : item.type === 'paper' ? (item.isExamSheet ? 490 : 500) : (item.height || 200);
+      for (const item of sortedItems) {
+        const w = item.type === 'book' ? 980 : item.type === 'paper' ? (item.isExamSheet ? 380 : 360) : (item.width || 220);
+        const h = item.type === 'book' ? 640 : item.type === 'paper' ? (item.isExamSheet ? 490 : 500) : (item.height || 200);
 
-          const dx = p0.x - item.x;
-          const dy = p0.y - item.y;
-          const rad = (-item.rotation * Math.PI) / 180;
-          const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
-          const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+        const dx = p0.x - item.x;
+        const dy = p0.y - item.y;
+        const rad = (-item.rotation * Math.PI) / 180;
+        const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+        const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
 
-          if (localX >= -10 && localX <= w + 10 && localY >= -10 && localY <= h + 10) {
-            targetItem = item;
-            localPoints = finalPoints.map(p => {
+        if (localX >= -10 && localX <= w + 10 && localY >= -10 && localY <= h + 10) {
+          targetItem = item;
+          localPoints = finalPoints.map(p => {
+            const pdx = p.x - item.x;
+            const pdy = p.y - item.y;
+            return {
+              x: Math.round((pdx * Math.cos(rad) - pdy * Math.sin(rad)) * 10) / 10,
+              y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
+            };
+          });
+          if (origPts) {
+            localOriginalPoints = origPts.map(p => {
               const pdx = p.x - item.x;
               const pdy = p.y - item.y;
               return {
@@ -392,42 +740,53 @@ export function StudySpaceProvider({ children }: { children: React.ReactNode }) 
                 y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
               };
             });
-            if (origPts) {
-              localOriginalPoints = origPts.map(p => {
-                const pdx = p.x - item.x;
-                const pdy = p.y - item.y;
-                return {
-                  x: Math.round((pdx * Math.cos(rad) - pdy * Math.sin(rad)) * 10) / 10,
-                  y: Math.round((pdx * Math.sin(rad) + pdy * Math.cos(rad)) * 10) / 10
-                };
-              });
-            }
-            break;
           }
+          break;
         }
-
-        const newStroke: import('@/types/studyspace').DrawingStroke = {
-          ...prev,
-          points: targetItem ? localPoints : finalPoints,
-          attachedToItemId: targetItem ? targetItem.id : undefined,
-          isSmartShape: isSmart,
-          originalPoints: targetItem ? localOriginalPoints : origPts,
-          shapeType: sType
-        };
-
-        setStrokes(s => {
-          const updatedStrokes = [...s, newStroke];
-          try {
-            const uId = user?.id;
-            const userPrefix = uId ? `user_${uId}_` : 'guest_';
-            localStorage.setItem(`${userPrefix}vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
-            localStorage.setItem(`vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
-          } catch {}
-          return updatedStrokes;
-        });
       }
-      return null;
-    });
+
+      const newStroke: import('@/types/studyspace').DrawingStroke = {
+        ...prev,
+        points: targetItem ? localPoints : finalPoints,
+        attachedToItemId: targetItem ? targetItem.id : undefined,
+        isSmartShape: isSmart,
+        originalPoints: targetItem ? localOriginalPoints : origPts,
+        shapeType: sType
+      };
+
+      setStrokes(s => {
+        const updatedStrokes = [...s, newStroke];
+        try {
+          const uId = user?.id;
+          const userPrefix = uId ? `user_${uId}_` : 'guest_';
+          localStorage.setItem(`${userPrefix}vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
+          localStorage.setItem(`vitudy_strokes_${activeSpaceId}`, JSON.stringify(updatedStrokes));
+        } catch {}
+        return updatedStrokes;
+      });
+      if (!isApplyingRemoteAction.current) {
+        broadcastDeskActionRef.current({ type: 'DRAW_STROKE', payload: { stroke: newStroke } });
+      }
+    }
+  };
+
+  const cancelStroke = () => {
+    activeStrokeStore.setStroke(null);
+  };
+
+  const [isFingerDrawingEnabled, setIsFingerDrawingEnabledState] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vitudy_finger_drawing_enabled');
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+
+  const setIsFingerDrawingEnabled = (enabled: boolean) => {
+    setIsFingerDrawingEnabledState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vitudy_finger_drawing_enabled', String(enabled));
+    }
   };
 
   const [redoStack, setRedoStack] = useState<import('@/types/studyspace').DrawingStroke[]>([]);
@@ -1347,32 +1706,78 @@ Trong đó:
     }
   };
 
-  const renameSpace = (spaceId: string, newName: string) => {
+  const deleteSpaces = useCallback(async (spaceIds: string[]): Promise<boolean> => {
+    if (!spaceIds || spaceIds.length === 0) return false;
+
+    const idSet = new Set(spaceIds);
+    const remaining = spaces.filter(s => !idSet.has(s.id));
+
+    let nextSpaces = remaining;
+    if (nextSpaces.length === 0) {
+      const fallbackSpace: StudySpace = {
+        ...DEFAULT_EMPTY_SPACE,
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `space-${Date.now()}`,
+        name: 'Bàn học cá nhân',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastOpenedAt: new Date().toISOString(),
+      };
+      nextSpaces = [fallbackSpace];
+    }
+
+    let nextActiveId = activeSpaceId;
+    if (idSet.has(activeSpaceId)) {
+      nextActiveId = nextSpaces[0].id;
+      setActiveSpaceId(nextActiveId);
+    }
+
+    setSpaces(nextSpaces);
+    syncLocal(nextSpaces, nextActiveId);
+
+    try {
+      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
+      spaceIds.forEach(id => {
+        localStorage.removeItem(`${userPrefix}vitudy_strokes_${id}`);
+        localStorage.removeItem(`vitudy_strokes_${id}`);
+      });
+    } catch {}
+
+    if (status === 'authenticated' && user?.id) {
+      for (const id of spaceIds) {
+        try {
+          await StudySpaceService.deleteSpace(id);
+        } catch (err) {
+          console.warn('Lỗi xóa bàn học trên cloud:', id, err);
+        }
+      }
+    }
+
+    return true;
+  }, [spaces, activeSpaceId, status, user, syncLocal]);
+
+  const renameSpace = useCallback(async (spaceId: string, newName: string): Promise<boolean> => {
     const trimmed = normalizeNFC(newName.trim());
-    if (!trimmed) return;
-    let targetRenamedSpace: StudySpace | null = null;
+    if (!trimmed || !spaceId) return false;
     setSpaces(prev => {
       const updated = prev.map(s => {
         if (s.id === spaceId) {
-          targetRenamedSpace = { ...s, name: trimmed, updatedAt: new Date().toISOString() };
-          return targetRenamedSpace;
+          return { ...s, name: trimmed, updatedAt: new Date().toISOString() };
         }
         return s;
       });
-      const userPrefix = user?.id ? `user_${user.id}_` : 'guest_';
-      try {
-        localStorage.setItem(`${userPrefix}vitudy_spaces`, JSON.stringify(updated));
-        localStorage.setItem('vitudy_spaces', JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
+      syncLocal(updated);
       return updated;
     });
 
-    if (status === 'authenticated' && user?.id && targetRenamedSpace) {
-      StudySpaceService.saveSpace(targetRenamedSpace, user.id).catch(() => {});
+    if (status === 'authenticated' && user?.id) {
+      try {
+        await StudySpaceService.renameSpace(spaceId, trimmed, user.id);
+      } catch (err) {
+        console.warn('Lỗi renameSpace trên cloud:', spaceId, err);
+      }
     }
-  };
+    return true;
+  }, [status, user, syncLocal]);
 
   const duplicateSpace = (spaceId: string): string => {
     const source = spaces.find(s => s.id === spaceId);
@@ -1543,6 +1948,25 @@ Trong đó:
           ...s,
           updatedAt: new Date().toISOString(),
           items: s.items.map(item => (item.id === id ? { ...item, x, y } : item))
+        };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+    if (!isApplyingRemoteAction.current) {
+      broadcastDeskActionRef.current({ type: 'ITEM_MOVE', payload: { id, x, y } });
+    }
+  };
+
+  const updateDeskItem = (id: string, patch: Partial<DeskItem>) => {
+    if (!isApplyingRemoteAction.current && isViewerSession()) return;
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          updatedAt: new Date().toISOString(),
+          items: s.items.map(item => (item.id === id ? { ...item, ...patch } : item))
         };
       });
       syncLocal(nextList);
@@ -1835,11 +2259,6 @@ Trong đó:
   };
 
   // Combine non-destructive binder merging
-  const isViewerSession = () => {
-    if (typeof window === 'undefined' || !window.location.search.includes('room=')) return false;
-    return new URLSearchParams(window.location.search).get('role') === 'viewer';
-  };
-
   const combineIntoBinder = (targetId: string, draggedId: string): boolean => {
     if (isViewerSession()) return false;
     if (targetId === draggedId) return false;
@@ -1962,6 +2381,39 @@ Trong đó:
         };
       })
     );
+  };
+
+  const addPageToBook = (bookId: string, pageData?: { title?: string; text?: string; image?: string }): string => {
+    const pageId = `p-${Date.now()}`;
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          updatedAt: new Date().toISOString(),
+          items: s.items.map(item => {
+            if (item.id !== bookId) return item;
+            const newIndex = item.pages.length + 1;
+            const newPage: PageContent = {
+              id: pageId,
+              pageNumber: newIndex,
+              title: normalizeNFC(pageData?.title || `Trang ${newIndex}`),
+              text: normalizeNFC(pageData?.text || ''),
+              image: pageData?.image
+            };
+            const updatedPages = [...item.pages, newPage];
+            return {
+              ...item,
+              pageCount: updatedPages.length,
+              pages: updatedPages
+            };
+          })
+        };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+    return pageId;
   };
 
   const addStickyNote = (text = '', x?: number, y?: number, color = '#fef08a', width?: number, height?: number): string => {
@@ -2157,6 +2609,83 @@ Trong đó:
     );
     setSelectedItemId(stickerId);
     return stickerId;
+  };
+
+  const addVoiceNote = (voiceData: import('@/types/studyspace').VoiceNoteData, x?: number, y?: number): string => {
+    if (!isApplyingRemoteAction.current && isViewerSession()) return '';
+    const voiceId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `voice-${Date.now()}`;
+    const w = 340;
+    const h = 76;
+
+    let targetX = x;
+    let targetY = y;
+    if (targetX === undefined || targetY === undefined) {
+      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const curScale = transform.scale || 1;
+      const centerX = (-transform.x + (viewW / 2)) / curScale - (w / 2);
+      const centerY = (-transform.y + (viewH / 2)) / curScale - (h / 2);
+      targetX = Math.round(centerX + Math.round(Math.random() * 40 - 20));
+      targetY = Math.round(centerY + Math.round(Math.random() * 40 - 20));
+    }
+
+    const newVoiceNote: DeskItem = {
+      id: voiceId,
+      type: 'voice_note',
+      title: 'Note ghi âm',
+      x: targetX,
+      y: targetY,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: 1,
+      currentPageIndex: 0,
+      pages: [],
+      voiceNoteData: voiceData,
+      width: w,
+      height: h,
+    };
+
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, updatedAt: new Date().toISOString(), items: [...s.items, newVoiceNote] };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+    setSelectedItemId(voiceId);
+    if (!isApplyingRemoteAction.current) {
+      broadcastDeskActionRef.current({ type: 'ADD_ITEM', payload: { item: newVoiceNote } });
+    }
+    return voiceId;
+  };
+
+  const updateVoiceNoteTranscript = (id: string, transcript: string) => {
+    const normalized = normalizeNFC(transcript);
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return {
+          ...s,
+          updatedAt: new Date().toISOString(),
+          items: s.items.map(item =>
+            item.id === id && item.voiceNoteData
+              ? {
+                  ...item,
+                  voiceNoteData: {
+                    ...item.voiceNoteData,
+                    transcript: normalized,
+                    isTranscribed: true
+                  }
+                }
+              : item
+          )
+        };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
   };
 
   const addArtboard = (
@@ -2416,10 +2945,116 @@ Trong đó:
     return stickyId;
   };
 
-  const addUploadedDocument = (title: string, rawPages: { title?: string; text: string; image?: string }[]) => {
+  const addBook = (
+    title = 'Sổ tay bài học',
+    x?: number,
+    y?: number,
+    coverColor = 'brown',
+    initialPages?: { title?: string; text: string; image?: string }[]
+  ): string => {
+    const bookId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `doc-book-${Date.now()}`;
+    const w = 980;
+    const h = 640;
+
+    let targetX = x;
+    let targetY = y;
+    if (targetX === undefined || targetY === undefined) {
+      const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+      const viewH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const curScale = transform.scale || 1;
+      targetX = Math.round((-transform.x + (viewW / 2)) / curScale - (w / 2));
+      targetY = Math.round((-transform.y + (viewH / 2)) / curScale - (h / 2));
+    }
+
+    const defaultPages = [
+      {
+        id: `p-${Date.now()}-1`,
+        pageNumber: 1,
+        title: 'Mục lục & Giới thiệu',
+        text: `# ${title}\n\nChào mừng bạn đến với cuốn sổ tay học tập trên ViTudy.\n\n### Hướng dẫn sử dụng:\n- Sử dụng các tab bookmark bên cạnh phải để lật nhanh giữa các trang.\n- Bấm công cụ STudy hoặc Inteline để trò chuyện hỏi đáp sâu với AI.\n- Ghi chú hoặc vẽ tự do trực tiếp lên mặt sách.`
+      },
+      {
+        id: `p-${Date.now()}-2`,
+        pageNumber: 2,
+        title: 'Phần 1: Kiến thức trọng tâm',
+        text: `### 1. Khái niệm cốt lõi\n\nGhi chú các định nghĩa, định lý và công thức then chốt tại đây.\n\n$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$\n\n### 2. Điểm cần lưu ý\n- Nắm vững bản chất trước khi giải bài tập mẫu.\n- Liên kết với các sơ đồ tư duy liên quan trên bàn học.`
+      }
+    ];
+
+    const pages: PageContent[] = initialPages !== undefined
+      ? initialPages.map((p, idx) => ({
+          id: `p-${Date.now()}-${idx + 1}`,
+          pageNumber: idx + 1,
+          title: normalizeNFC(p.title || `Trang ${idx + 1}`),
+          text: normalizeNFC(p.text),
+          image: p.image
+        }))
+      : defaultPages.map(p => ({
+          ...p,
+          title: normalizeNFC(p.title),
+          text: normalizeNFC(p.text)
+        }));
+
+    const colorThemeMap: Record<string, string> = {
+      brown: '#5c3920',
+      burgundy: '#6b1d28',
+      navy: '#1e3a5f',
+      forest: '#1b4d3e',
+      plum: '#5b2149'
+    };
+
+    const newBook: DeskItem = {
+      id: bookId,
+      type: 'book',
+      title: normalizeNFC(title),
+      x: targetX,
+      y: targetY,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: pages.length,
+      currentPageIndex: 0,
+      pages,
+      coverColor,
+      colorTheme: colorThemeMap[coverColor] || '#5c3920',
+      isBinder: false,
+      width: w,
+      height: h
+    };
+
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, updatedAt: new Date().toISOString(), items: [...s.items, newBook] };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+    setMaxZIndex(prev => prev + 1);
+    setSelectedItemId(bookId);
+    if (!isApplyingRemoteAction.current) {
+      broadcastDeskActionRef.current({ type: 'ADD_ITEM', payload: { item: newBook } });
+    }
+    return bookId;
+  };
+
+  const addUploadedDocument = (
+    title: string,
+    rawPages: { title?: string; text: string; image?: string }[],
+    options?: {
+      spreadsheetData?: import('@/types/studyspace').SpreadsheetData;
+      presentationData?: import('@/types/studyspace').PresentationData;
+    }
+  ) => {
     if (isViewerSession()) return;
     const pageCount = rawPages.length;
-    const type: 'paper' | 'book' = pageCount < 5 ? 'paper' : 'book';
+    const type: import('@/types/studyspace').ItemType = options?.spreadsheetData
+      ? 'spreadsheet'
+      : options?.presentationData
+      ? 'presentation'
+      : pageCount <= 1
+      ? 'paper'
+      : 'book';
 
     const pages: PageContent[] = rawPages.map((p, idx) => ({
       id: `p-${Date.now()}-${idx}`,
@@ -2435,13 +3070,24 @@ Trong đó:
       title: normalizeNFC(title),
       x: 320 + Math.random() * 80,
       y: 200 + Math.random() * 60,
-      rotation: Math.floor(Math.random() * 6) - 3,
+      rotation: type === 'spreadsheet' || type === 'presentation' ? 0 : Math.floor(Math.random() * 6) - 3,
       scale: 1,
       zIndex: maxZIndex + 1,
       pageCount,
       currentPageIndex: 0,
       pages,
-      colorTheme: type === 'book' ? '#1e3a8a' : '#047857'
+      width: type === 'spreadsheet' ? 580 : type === 'presentation' ? 620 : undefined,
+      height: type === 'spreadsheet' ? 400 : type === 'presentation' ? 400 : undefined,
+      spreadsheetData: options?.spreadsheetData,
+      presentationData: options?.presentationData,
+      colorTheme:
+        type === 'spreadsheet'
+          ? '#E0562D'
+          : type === 'presentation'
+          ? '#0D9488'
+          : type === 'book'
+          ? '#1e3a8a'
+          : '#047857'
     };
 
     setSpaces(sList => {
@@ -2452,6 +3098,137 @@ Trong đó:
       syncLocal(nextList);
       return nextList;
     });
+    setMaxZIndex(prev => prev + 1);
+    setSelectedItemId(newItem.id);
+    if (!isApplyingRemoteAction.current) {
+      broadcastDeskActionRef.current({ type: 'ADD_ITEM', payload: { item: newItem } });
+    }
+  };
+
+  const addSpreadsheet = (
+    title = 'Bảng tính mới',
+    sheets?: import('@/types/studyspace').SpreadsheetSheet[]
+  ): string => {
+    if (!isApplyingRemoteAction.current && isViewerSession()) return '';
+    const itemId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sheet-${Date.now()}`;
+    const defaultSheets = sheets || [
+      {
+        name: 'Trang 1',
+        rows: [
+          ['STT', 'Nội dung công việc', 'Số lượng', 'Đơn giá', 'Ghi chú'],
+          ['1', 'Tài liệu học tập', '2', '50.000', 'Đã chuẩn bị'],
+          ['2', 'Giáo trình tham khảo', '1', '120.000', 'Thư viện'],
+          ['3', 'Bộ bài tập ôn luyện', '3', '30.000', 'Đang làm'],
+        ],
+      },
+    ];
+
+    const newItem: DeskItem = {
+      id: itemId,
+      type: 'spreadsheet',
+      title: normalizeNFC(title),
+      x: 340 + Math.random() * 60,
+      y: 200 + Math.random() * 50,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: defaultSheets.length,
+      currentPageIndex: 0,
+      width: 580,
+      height: 400,
+      pages: defaultSheets.map((s, idx) => ({
+        id: `p-${idx + 1}-${Date.now()}`,
+        pageNumber: idx + 1,
+        title: s.name,
+        text: s.rows.map(r => r.join(' | ')).join('\n'),
+      })),
+      spreadsheetData: {
+        sheets: defaultSheets,
+        activeSheetIndex: 0,
+      },
+      colorTheme: '#E0562D',
+    };
+
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, updatedAt: new Date().toISOString(), items: [...s.items, newItem] };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+    setMaxZIndex(prev => prev + 1);
+    setSelectedItemId(itemId);
+    if (!isApplyingRemoteAction.current) {
+      broadcastDeskActionRef.current({ type: 'ADD_ITEM', payload: { item: newItem } });
+    }
+    return itemId;
+  };
+
+  const addPresentation = (
+    title = 'Bài thuyết trình mới',
+    slides?: import('@/types/studyspace').PresentationSlide[]
+  ): string => {
+    if (!isApplyingRemoteAction.current && isViewerSession()) return '';
+    const itemId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `pres-${Date.now()}`;
+    const defaultSlides = slides || [
+      {
+        id: `slide-1-${Date.now()}`,
+        slideNumber: 1,
+        title: 'Tiêu Đề Bài Thuyết Trình',
+        body: 'Thuyết trình nhóm học tập ViTudy\n\nNội dung chính và tóm tắt đề tài.',
+        notes: 'Chào mừng các bạn đến với buổi thuyết trình!',
+      },
+      {
+        id: `slide-2-${Date.now()}`,
+        slideNumber: 2,
+        title: 'Mục Tiêu & Phương Pháp',
+        body: '1. Khám phá kiến thức cốt lõi\n2. Phân tích số liệu và giải pháp\n3. Thảo luận và phản biện nhóm',
+        notes: 'Nhấn mạnh 3 mục tiêu trọng tâm.',
+      },
+    ];
+
+    const newItem: DeskItem = {
+      id: itemId,
+      type: 'presentation',
+      title: normalizeNFC(title),
+      x: 360 + Math.random() * 60,
+      y: 210 + Math.random() * 50,
+      rotation: 0,
+      scale: 1,
+      zIndex: maxZIndex + 1,
+      pageCount: defaultSlides.length,
+      currentPageIndex: 0,
+      width: 620,
+      height: 400,
+      pages: defaultSlides.map((s, idx) => ({
+        id: s.id,
+        pageNumber: idx + 1,
+        title: s.title,
+        text: `## ${s.title}\n\n${s.body}`,
+        notes: s.notes,
+      })),
+      presentationData: {
+        slides: defaultSlides,
+        currentSlideIndex: 0,
+      },
+      colorTheme: '#0D9488',
+    };
+
+    setSpaces(sList => {
+      const nextList = sList.map(s => {
+        if (s.id !== activeSpaceId) return s;
+        return { ...s, updatedAt: new Date().toISOString(), items: [...s.items, newItem] };
+      });
+      syncLocal(nextList);
+      return nextList;
+    });
+    setMaxZIndex(prev => prev + 1);
+    setSelectedItemId(itemId);
+    if (!isApplyingRemoteAction.current) {
+      broadcastDeskActionRef.current({ type: 'ADD_ITEM', payload: { item: newItem } });
+    }
+    return itemId;
   };
 
   const addMarketItemToSpace = (spaceId: string, marketItem: import('@/data/marketMockData').MarketItem) => {
@@ -2729,6 +3506,7 @@ Trong đó:
         createSpace,
         createSpaceFromTemplate,
         deleteSpace,
+        deleteSpaces,
         renameSpace,
         duplicateSpace,
         setTransform,
@@ -2739,6 +3517,7 @@ Trong đó:
         resetView,
         selectItem,
         updateItemPosition,
+        updateDeskItem,
         updateItemDimensions,
         updateItemRotation,
         updateItemTitle,
@@ -2750,6 +3529,7 @@ Trong đó:
         combineIntoBinder,
         detachPageFromBinder,
         convertPaperToBook,
+        addPageToBook,
         updateStickyNoteText,
         updateStickyNoteColor,
         updateBookCoverColor,
@@ -2758,9 +3538,12 @@ Trong đó:
         tidyUpDesk,
         fitAllToScreen,
         addStickyNote,
+        addBook,
         addCodeBlock,
         addMindMapNode,
         addSticker,
+        addVoiceNote,
+        updateVoiceNoteTranscript,
         addArtboard,
         updateArtboard,
         addBoardGame,
@@ -2770,6 +3553,8 @@ Trong đó:
         updateCodeBlock,
         updateMindMapNode,
         addUploadedDocument,
+        addSpreadsheet,
+        addPresentation,
         addMarketItemToSpace,
         addExamSheet,
         updateExamAnswer,
@@ -2789,12 +3574,15 @@ Trong đó:
         stickyCreationTemplate,
         setStickyCreationTemplate,
         strokes,
-        currentStroke,
+        currentStroke: activeStrokeStore.getStroke(),
         startStroke,
         appendPoint,
         snapCurrentStroke,
         revertCurrentStroke,
         finishStroke,
+        cancelStroke,
+        isFingerDrawingEnabled,
+        setIsFingerDrawingEnabled,
         addStroke,
         undoStroke,
         redoStroke,
@@ -2809,7 +3597,32 @@ Trong đó:
         setIsViewRotateMode,
         saveStatus,
         saveCurrentSpaceImmediately,
-        isDeskReady: isLoaded && !isSwitchingSpace
+        isDeskReady: isLoaded && !isSwitchingSpace,
+        multiplayerPeers,
+        isMultiplayerConnected,
+        multiplayerRoomId,
+        isMultiplayerHost,
+        multiplayerPermission,
+        setMultiplayerPermission,
+        startHostingRoom,
+        joinMultiplayerRoom,
+        leaveMultiplayerRoom,
+        broadcastDeskAction,
+        isFollowPresenter,
+        setIsFollowPresenter,
+        isViewerSession,
+        isViewer,
+        isMicOn: voiceChat.isMicOn,
+        isMuted: voiceChat.isMuted,
+        isDeafened: voiceChat.isDeafened,
+        isSpeaking: voiceChat.isSpeaking,
+        speakingPeers: voiceChat.speakingPeers,
+        peerAudioVolumes: voiceChat.peerVolumes,
+        setPeerAudioVolume: voiceChat.setPeerVolume,
+        toggleMic: voiceChat.toggleMic,
+        toggleMute: voiceChat.toggleMute,
+        toggleDeafen: voiceChat.toggleDeafen,
+        micError: voiceChat.micError
       }}
     >
       {children}
