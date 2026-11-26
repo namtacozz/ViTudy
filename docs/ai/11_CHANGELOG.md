@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-11-26 18:02 — uncommitted (Khôi Phục Pet Con Vịt 4 Giai Đoạn Bản Cũ ViTudy)
+- Task: Khôi phục nguyên bản Streak Pet con vịt 4 giai đoạn (Trứng $\rightarrow$ Nứt vỏ $\rightarrow$ Vịt con $\rightarrow$ Vịt trưởng thành) cùng bộ ảnh PNG transparent từ commit `b1d3f46` theo yêu cầu của Sếp.
+- Changed:
+  - `src/components/pet/FloatingPet.tsx`, `src/components/pet/FloatingPet.test.tsx`, `src/components/pet/PetGalleryModal.tsx`, `src/components/pet/stages.ts`, `src/components/pet/usePet.ts`, `src/components/pet/pet.css`: Khôi phục bản 4 giai đoạn con vịt của ViTudy.
+  - `public/pets/*`, `public/brand/pet/*`: Khôi phục ảnh `stage1.png..stage4.png` và `sleep-stage1.png..sleep-stage4.png`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (40/40 files, 158/158 tests pass), `pnpm run docs:check` (OK).
+- Open follow-ups: Không có.
+
+---
+
 ## 2026-11-26 17:55 — uncommitted (Vào Thẳng Bàn Học 2.5D Khi Bấm Vào Bàn Học Trên Mobile)
 - Task: Sửa lỗi khi bấm vào bàn học trên mobile/màn hình nhỏ bị văng vào `MobileCompanionView` thay vì vào thẳng không gian Bàn học 2.5D.
 - Changed:

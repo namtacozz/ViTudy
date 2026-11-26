@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `b1a24ca`  
+> **Commit Hash:** `58b977a`  
 > **Cập nhật lần cuối:** `2026-11-26`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -287,7 +287,10 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `breakAmountIntoVndNotes` | `fn` | [src/types/boardgame.ts:L259-L271](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `buildVietQrUrl` | `fn` | [src/services/PaymentService.ts:L59-L72](file:////home/nhat/Documents/DUT/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `calculateBalanceTotal` | `fn` | [src/types/boardgame.ts:L249-L254](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `calculateDaysToNextStage` | `fn` | [src/components/pet/stages.ts:L67-L72](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `calculateStage` | `fn` | [src/components/pet/stages.ts:L56-L65](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `CanvasTransform` | `type` | [src/types/studyspace.ts:L186-L191](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `CheckinResult` | `type` | [src/components/pet/usePet.ts:L18-L21](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `clearKatexCache` | `fn` | [src/components/common/MathRenderer.tsx:L19-L21](file:////home/nhat/Documents/DUT/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `createDefaultBoardGamePackage` | `fn` | [src/types/boardgame.ts:L359-L407](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `createDemoStudySpace` | `fn` | [src/data/demoSpace.ts:L3-L97](file:////home/nhat/Documents/DUT/ViTudy/src/data/demoSpace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -319,7 +322,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `FaqPage` | `component` | [src/app/faq/page.tsx:L705-L717](file:////home/nhat/Documents/DUT/ViTudy/src/app/faq/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FeatureGrid` | `component` | [src/components/landing/FeatureGrid.tsx:L75-L160](file:////home/nhat/Documents/DUT/ViTudy/src/components/landing/FeatureGrid.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `FlashcardReview` | `type` | [src/services/FlashcardService.ts:L4-L16](file:////home/nhat/Documents/DUT/ViTudy/src/services/FlashcardService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `FloatingPet` | `component` | [src/components/pet/FloatingPet.tsx:L14-L278](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/FloatingPet.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `FloatingPet` | `component` | [src/components/pet/FloatingPet.tsx:L13-L283](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/FloatingPet.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCabinetStorage` | `component` | [src/services/GameCabinetStorage.ts:L27-L79](file:////home/nhat/Documents/DUT/ViTudy/src/services/GameCabinetStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCardDeck` | `type` | [src/types/boardgame.ts:L138-L148](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GameCardEffect` | `type` | [src/types/boardgame.ts:L124-L127](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -337,6 +340,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `getEffectiveBankConfig` | `fn` | [src/services/PaymentService.ts:L51-L53](file:////home/nhat/Documents/DUT/ViTudy/src/services/PaymentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getKatexCacheSize` | `fn` | [src/components/common/MathRenderer.tsx:L15-L17](file:////home/nhat/Documents/DUT/ViTudy/src/components/common/MathRenderer.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `getPurchasedItemIds` | `fn` | [src/services/MarketPurchaseStorage.ts:L8-L21](file:////home/nhat/Documents/DUT/ViTudy/src/services/MarketPurchaseStorage.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `getStageConfig` | `fn` | [src/components/pet/stages.ts:L52-L54](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GOOGLE_SHARE_GUIDE_STEPS` | `component` | [src/services/UrlDocumentService.ts:L19-L25](file:////home/nhat/Documents/DUT/ViTudy/src/services/UrlDocumentService.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `GuestBanner` | `component` | [src/components/auth/GuestBanner.tsx:L12-L54](file:////home/nhat/Documents/DUT/ViTudy/src/components/auth/GuestBanner.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `HeroSection` | `component` | [src/components/landing/HeroSection.tsx:L52-L238](file:////home/nhat/Documents/DUT/ViTudy/src/components/landing/HeroSection.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -381,11 +385,15 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `PaymentSuccess` | `component` | [src/components/payment/PaymentSuccess.tsx:L15-L90](file:////home/nhat/Documents/DUT/ViTudy/src/components/payment/PaymentSuccess.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PeerUser` | `type` | [src/hooks/useRealtimeMultiplayer.ts:L8-L20](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/useRealtimeMultiplayer.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PendingApprovalModal` | `component` | [src/components/social/PendingApprovalModal.tsx:L13-L139](file:////home/nhat/Documents/DUT/ViTudy/src/components/social/PendingApprovalModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `PET_STAGES` | `component` | [src/components/pet/stages.ts:L13-L50](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PET_STAGES` | `component` | [src/types/pet.ts:L14-L65](file:////home/nhat/Documents/DUT/ViTudy/src/types/pet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `PetGalleryModal` | `component` | [src/components/pet/PetGalleryModal.tsx:L15-L179](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/PetGalleryModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PetMascotModal` | `component` | [src/components/pet/PetMascotModal.tsx:L29-L490](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/PetMascotModal.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PetStage` | `type` | [src/types/pet.ts:L1-L1](file:////home/nhat/Documents/DUT/ViTudy/src/types/pet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `PetStageConfig` | `type` | [src/components/pet/stages.ts:L3-L11](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/stages.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PetStageInfo` | `type` | [src/types/pet.ts:L3-L12](file:////home/nhat/Documents/DUT/ViTudy/src/types/pet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PetState` | `type` | [src/types/pet.ts:L67-L75](file:////home/nhat/Documents/DUT/ViTudy/src/types/pet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `PetStatus` | `type` | [src/components/pet/usePet.ts:L8-L16](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PomodoroPhase` | `type` | [src/hooks/usePomodoro.ts:L5-L5](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PresentationData` | `type` | [src/types/studyspace.ts:L38-L42](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `PresentationSlide` | `type` | [src/types/studyspace.ts:L29-L36](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
@@ -440,6 +448,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `UseDiscordActivityResult` | `type` | [src/hooks/useDiscordActivity.ts:L8-L20](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/useDiscordActivity.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `usePaymentStatus` | `hook` | [src/hooks/usePaymentStatus.ts:L14-L167](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePaymentStatus.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePaymentStatusResult` | `type` | [src/hooks/usePaymentStatus.ts:L7-L12](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePaymentStatus.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `usePet` | `hook` | [src/components/pet/usePet.ts:L23-L222](file:////home/nhat/Documents/DUT/ViTudy/src/components/pet/usePet.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `usePetMascot` | `hook` | [src/hooks/usePetMascot.ts:L75-L214](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePetMascot.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `UsePetMascotResult` | `type` | [src/hooks/usePetMascot.ts:L19-L28](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePetMascot.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `usePomodoro` | `hook` | [src/hooks/usePomodoro.ts:L23-L83](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/usePomodoro.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

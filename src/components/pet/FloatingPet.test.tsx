@@ -1,85 +1,106 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FloatingPet } from './FloatingPet';
+import { calculateStage, calculateDaysToNextStage } from './stages';
 
-const mockClaimToday = vi.fn().mockReturnValue({ success: true, newStreak: 2, stageChanged: false });
-let mockIsClaimedToday = false;
-let mockPet = {
-  name: 'Mầm Xanh',
-  stage: 1 as const,
-  isSleeping: true,
-  streakDays: 1,
-  lastStudyDate: null,
-  unlockedStages: [1 as const],
-  todayStudySeconds: 0,
+// Mock hook usePet
+const mockCheckin = vi.fn();
+let mockStatus = {
+  current_streak: 5,
+  longest_streak: 12,
+  checked_in_today: false,
+  stage: 2,
+  unlocked_stages: [1, 2, 3],
+  days_to_next_stage: 6,
 };
+let mockLoading = false;
 
-vi.mock('@/hooks/usePetMascot', () => ({
-  usePetMascot: () => ({
-    pet: mockPet,
-    info: {
-      stage: 1,
-      name: 'Hạt Giống Xanh',
-      title: 'Mầm Mới Nhú',
-      minDays: 1,
-      maxDays: 2,
-      description: 'Mầm non bé bỏng',
-      activeQuote: 'Chào bạn',
-      sleepingQuote: 'Khò khò',
-    },
-    isClaimedToday: mockIsClaimedToday,
-    claimToday: mockClaimToday,
-    renamePet: vi.fn(),
-    addStudySeconds: vi.fn(),
-    currentImageUrl: '/pet/sleeping-stage1.png',
-    nextStageProgress: {
-      currentStage: 1,
-      nextStage: 2,
-      currentDays: 1,
-      daysNeeded: 2,
-      progressPercent: 50,
-    },
+vi.mock('./usePet', () => ({
+  usePet: () => ({
+    status: mockStatus,
+    loading: mockLoading,
+    checkin: mockCheckin,
+    isCheckingIn: false,
+    evolutionModalData: null,
+    closeEvolutionModal: vi.fn(),
+    fetchStatus: vi.fn(),
   }),
 }));
 
-describe('FloatingPet Widget Component for GreenLearn', () => {
+describe('Streak Pet Stages & Helpers', () => {
+  it('calculates stages accurately according to streak day ranges', () => {
+    // Stage 1: 0 - 3 days
+    expect(calculateStage(0)).toBe(1);
+    expect(calculateStage(3)).toBe(1);
+
+    // Stage 2: 4 - 10 days
+    expect(calculateStage(4)).toBe(2);
+    expect(calculateStage(10)).toBe(2);
+
+    // Stage 3: 11 - 100 days
+    expect(calculateStage(11)).toBe(3);
+    expect(calculateStage(100)).toBe(3);
+
+    // Stage 4: 101+ days
+    expect(calculateStage(101)).toBe(4);
+    expect(calculateStage(365)).toBe(4);
+  });
+
+  it('calculates days remaining until the next evolution', () => {
+    // Current streak 2 (Stage 1: 0-3) -> Next stage 2 is at 4 -> 4 - 2 = 2 days
+    expect(calculateDaysToNextStage(2)).toBe(2);
+
+    // Current streak 8 (Stage 2: 4-10) -> Next stage 3 is at 11 -> 11 - 8 = 3 days
+    expect(calculateDaysToNextStage(8)).toBe(3);
+
+    // Current streak 101+ (Stage 4 max) -> null
+    expect(calculateDaysToNextStage(105)).toBeNull();
+  });
+});
+
+describe('FloatingPet Widget Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsClaimedToday = false;
-    mockPet = {
-      name: 'Mầm Xanh',
-      stage: 1 as const,
-      isSleeping: true,
-      streakDays: 1,
-      lastStudyDate: null,
-      unlockedStages: [1 as const],
-      todayStudySeconds: 0,
+    mockLoading = false;
+    mockStatus = {
+      current_streak: 5,
+      longest_streak: 12,
+      checked_in_today: false,
+      stage: 2,
+      unlocked_stages: [1, 2, 3],
+      days_to_next_stage: 6,
     };
   });
 
-  it('renders pet sleeping image when not claimed today', () => {
+  it('renders pet sleep image cleanly without redundant badge box when not checked in', () => {
     render(<FloatingPet />);
     const img = screen.getByRole('img');
-    expect(img.getAttribute('src')).toContain('sleeping-stage1.png');
+    expect(img.getAttribute('src')).toContain('sleep-stage2.png');
+    // Ensure the redundant pill box is gone
+    expect(screen.queryByText('🔥')).toBeNull();
   });
 
-  it('triggers claimToday and wake up when tapped while asleep (movement under 6px)', () => {
+  it('triggers checkin when tapped while asleep (movement under 6px)', async () => {
     render(<FloatingPet />);
-    const petContainer = screen.getByTitle('Bấm để đánh thức Mầm Xanh và điểm danh chuỗi học hôm nay');
+    const petContainer = screen.getByTitle('Bấm để đánh thức và điểm danh hôm nay');
 
+    // Simulate tap: pointerDown -> pointerUp at the exact same coordinates (movement = 0px)
     fireEvent.pointerDown(petContainer, { clientX: 200, clientY: 300, pointerId: 1 });
     fireEvent.pointerUp(petContainer, { clientX: 200, clientY: 300, pointerId: 1 });
 
-    expect(mockClaimToday).toHaveBeenCalledTimes(1);
+    expect(mockCheckin).toHaveBeenCalledTimes(1);
   });
 
-  it('renders awake pet title when already claimed today', () => {
-    mockIsClaimedToday = true;
-    mockPet.isSleeping = false;
+  it('opens PetGalleryModal when tapped while awake', () => {
+    mockStatus.checked_in_today = true;
     render(<FloatingPet />);
 
-    const petContainer = screen.getByTitle('Bấm để xem chi tiết Mầm Xanh');
-    expect(petContainer).toBeDefined();
+    const petContainer = screen.getByTitle('Bấm để xem bộ sưu tập');
+    fireEvent.pointerDown(petContainer, { clientX: 200, clientY: 300, pointerId: 1 });
+    fireEvent.pointerUp(petContainer, { clientX: 200, clientY: 300, pointerId: 1 });
+
+    expect(screen.getByText('Bộ Sưu Tập Thú Cưng')).toBeDefined();
+    expect(screen.getByText(/Kỷ lục chuỗi bền bỉ nhất/)).toBeDefined();
   });
 });

@@ -1,40 +1,37 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { usePetMascot } from '@/hooks/usePetMascot';
-import { PetMascotModal } from './PetMascotModal';
-import { PET_STAGES, PetStage } from '@/types/pet';
-import { getPetAssetUrl } from '@/lib/petHelpers';
+import { usePet } from './usePet';
+import { getStageConfig } from './stages';
+import { PetGalleryModal } from './PetGalleryModal';
 import './pet.css';
 
-const STORAGE_KEY = 'greenlearn_pet_position';
+const STORAGE_KEY = 'vitudy_pet_position_v1';
 const DRAG_THRESHOLD = 6; // Dưới 6px tính là Tap/Click, trên 6px tính là Kéo
 
 export const FloatingPet: React.FC = () => {
-  const {
-    pet,
-    info,
-    isClaimedToday,
-    claimToday,
-  } = usePetMascot();
+  const { status, loading, checkin, isCheckingIn, evolutionModalData, closeEvolutionModal } = usePet();
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
-  const [isMascotModalOpen, setIsMascotModalOpen] = useState(false);
-  const [evolutionModalData, setEvolutionModalData] = useState<{ newStage: PetStage } | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const dragStartRef = useRef<{ pointerX: number; pointerY: number; petX: number; petY: number } | null>(null);
   const hasMovedRef = useRef(false);
-  const petSize = 84;
+  const petSize = 88;
 
-  // Khởi tạo vị trí ban đầu từ localStorage hoặc góc dưới bên phải màn hình
+  const stageConfig = useMemo(() => {
+    return getStageConfig(status?.stage || 1);
+  }, [status?.stage]);
+
+  // Khởi tạo vị trí ban đầu từ localStorage hoặc góc phải màn hình
   useEffect(() => {
     setMounted(true);
     try {
-      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('vitudy_pet_position_v1');
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
@@ -49,7 +46,7 @@ export const FloatingPet: React.FC = () => {
     setPosition({ x: defaultX, y: defaultY });
   }, []);
 
-  // Đảm bảo vị trí luôn nằm trong khung nhìn khi xoay/co giãn màn hình
+  // Đảm bảo vị trí luôn nằm trong viewport khi thay đổi kích thước cửa sổ
   useEffect(() => {
     const handleResize = () => {
       setPosition((prev) => {
@@ -66,7 +63,7 @@ export const FloatingPet: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Kéo thả bằng Pointer Events (hỗ trợ cả chuột và màn hình cảm ứng)
+  // Xử lý kéo thả bằng Pointer Events (chuột & cảm ứng)
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!position) return;
     e.stopPropagation();
@@ -125,35 +122,35 @@ export const FloatingPet: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPos));
     } catch {}
 
-    // Nếu chỉ là Tap (chạm mà không kéo di chuyển)
+    // Nếu chỉ là Tap (chạm mà không kéo)
     if (wasJustTap) {
       handleTap();
     }
   };
 
-  const handleTap = () => {
-    if (!isClaimedToday) {
-      // Đang ngủ -> Bừng tỉnh thức giấc, điểm danh tăng streak
+  const handleTap = async () => {
+    if (!status) return;
+
+    if (!status.checked_in_today) {
+      // Đang ngủ -> Bừng tỉnh, điểm danh tăng streak
       setIsWakingUp(true);
-      const res = claimToday();
-      if (res.stageChanged) {
-        setEvolutionModalData({ newStage: pet.stage });
-      }
+      await checkin();
       setTimeout(() => {
         setIsWakingUp(false);
       }, 700);
     } else {
-      // Đã thức -> Mở hộp thoại Chi tiết / Bộ sưu tập Mầm Xanh
-      setIsMascotModalOpen(true);
+      // Đã thức -> Mở Bộ sưu tập (Gallery)
+      setIsGalleryOpen(true);
     }
   };
 
-  if (!mounted || !position) {
+  // Tránh flash sai ảnh khi đang nạp dữ liệu ban đầu
+  if (!mounted || loading || !status || !position) {
     return null;
   }
 
-  const isAsleep = !isClaimedToday;
-  const currentImageSrc = getPetAssetUrl(pet.stage, isAsleep && !isWakingUp);
+  const isAsleep = !status.checked_in_today;
+  const currentImageSrc = isAsleep && !isWakingUp ? stageConfig.sleepSrc : stageConfig.awakeSrc;
 
   return (
     <>
@@ -183,11 +180,11 @@ export const FloatingPet: React.FC = () => {
             WebkitTapHighlightColor: 'transparent',
           }}
           className="absolute top-0 left-0 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group bg-transparent border-0 shadow-none outline-none p-0"
-          title={isAsleep ? 'Bấm để đánh thức Mầm Xanh và điểm danh chuỗi học hôm nay' : 'Bấm để xem chi tiết Mầm Xanh'}
+          title={isAsleep ? 'Bấm để đánh thức và điểm danh hôm nay' : 'Bấm để xem bộ sưu tập'}
         >
-          {/* Vỏ Pet & Animation Container — Giữ nguyên hình ảnh Mầm Xanh GreenLearn */}
+          {/* Vỏ Pet & Animation Container — Chỉ giữ lại hình ảnh thú cưng tự nhiên */}
           <div
-            className={`relative w-[84px] h-[84px] flex items-center justify-center bg-transparent border-0 shadow-none outline-none p-0 ${
+            className={`relative w-[88px] h-[88px] flex items-center justify-center bg-transparent border-0 shadow-none outline-none p-0 ${
               isWakingUp
                 ? 'pet-wake-animation'
                 : isAsleep
@@ -205,7 +202,7 @@ export const FloatingPet: React.FC = () => {
           >
             <img
               src={currentImageSrc}
-              alt={info.name}
+              alt={stageConfig.name}
               draggable={false}
               style={{
                 background: 'transparent',
@@ -222,12 +219,19 @@ export const FloatingPet: React.FC = () => {
               className="w-full h-full object-contain pointer-events-none"
             />
 
-            {/* Chữ Zzz bay lơ lửng khi Mầm Xanh đang ngủ */}
+            {/* Chữ Zzz bay lơ lửng khi đang ngủ */}
             {isAsleep && !isWakingUp && (
               <>
                 <span className="pet-zzz-bubble pet-zzz-1">z</span>
                 <span className="pet-zzz-bubble pet-zzz-2">Z</span>
               </>
+            )}
+
+            {/* Spinner nhỏ khi đang gọi điểm danh */}
+            {isCheckingIn && (
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-2xs rounded-full flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-[#E0562D] border-t-transparent rounded-full animate-spin" />
+              </div>
             )}
           </div>
         </div>
@@ -239,27 +243,27 @@ export const FloatingPet: React.FC = () => {
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans"
-          onClick={() => setEvolutionModalData(null)}
+          onClick={closeEvolutionModal}
         >
           <div
-            className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border border-green-200 relative overflow-hidden"
+            className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border border-orange-200 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-32 h-32 mx-auto my-2 flex items-center justify-center pet-evolve-animation">
               <img
-                src={getPetAssetUrl(evolutionModalData.newStage, false)}
+                src={getStageConfig(evolutionModalData.newStage).awakeSrc}
                 alt="Tiến hóa thành công"
                 className="w-full h-full object-contain"
               />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mt-2">Mầm Xanh Đã Lớn Lên!</h3>
+            <h3 className="text-xl font-black text-slate-900 mt-2">Tiến Hóa Cấp Mới!</h3>
             <p className="text-sm text-slate-600 mt-1">
-              Thú cưng của Sếp đã tiến hóa thành <strong>{PET_STAGES[evolutionModalData.newStage]?.name}</strong>.
+              Thú cưng của Sếp đã tiến hóa thành <strong>{getStageConfig(evolutionModalData.newStage).name}</strong>.
             </p>
             <button
               type="button"
-              onClick={() => setEvolutionModalData(null)}
-              className="mt-6 w-full py-3 bg-[#16A34A] hover:bg-[#15803D] text-white font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+              onClick={closeEvolutionModal}
+              className="mt-6 w-full py-3 bg-[#E0562D] hover:bg-[#c9451e] text-white font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
             >
               Tuyệt vời!
             </button>
@@ -268,10 +272,11 @@ export const FloatingPet: React.FC = () => {
         document.body
       )}
 
-      {/* Modal Bộ Sưu Tập / Chi Tiết Mầm Xanh */}
-      <PetMascotModal
-        isOpen={isMascotModalOpen}
-        onClose={() => setIsMascotModalOpen(false)}
+      {/* Modal Bộ sưu tập */}
+      <PetGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        status={status}
       />
     </>
   );
