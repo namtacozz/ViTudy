@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `713e531`  
+> **Commit Hash:** `14aaec4`  
 > **Cập nhật lần cuối:** `2026-11-26`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -15,7 +15,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `DeskDrawingCanvas` | `component` | [src/components/canvas/DeskDrawingCanvas.tsx:L104-L131](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/DeskDrawingCanvas.tsx) | Canvas vẽ nét bút dạ quang và bút vẽ tự do với chế độ multiply blend |
 | `DeskDrawingInteractionLayer` | `component` | [src/components/canvas/DeskDrawingInteractionLayer.tsx:L6-L686](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/DeskDrawingInteractionLayer.tsx) | Lớp đón bắt sự kiện kéo vẽ mượt mà, phân định vẽ nét vs di chuyển bàn |
 | `DeskGrid` | `component` | [src/components/canvas/DeskGrid.tsx:L5-L50](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/DeskGrid.tsx) | Lưới caro toạ độ bàn học trắng tinh khiết chống mỏi mắt |
-| `InfiniteDesk` | `component` | [src/components/canvas/InfiniteDesk.tsx:L27-L525](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/InfiniteDesk.tsx) | Mặt bàn vô cực 2.5D: quản lý pan, zoom, phím tắt Alt+Drag, bắt sự kiện click |
+| `InfiniteDesk` | `component` | [src/components/canvas/InfiniteDesk.tsx:L26-L658](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/InfiniteDesk.tsx) | Mặt bàn vô cực 2.5D: quản lý pan, zoom, phím tắt Alt+Drag, bắt sự kiện click |
 | `ItemDrawingOverlay` | `component` | [src/components/canvas/ItemDrawingOverlay.tsx:L43-L93](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/ItemDrawingOverlay.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
 | `MindMapConnectors` | `component` | [src/components/canvas/MindMapConnectors.tsx:L6-L103](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/MindMapConnectors.tsx) | Thành phần nghiệp vụ của phân hệ Canvas & 2.5D Desk |
 | `Minimap` | `component` | [src/components/canvas/Minimap.tsx:L12-L233](file:////home/nhat/Documents/DUT/ViTudy/src/components/canvas/Minimap.tsx) | Bản đồ radar thu nhỏ góc nhìn toàn cảnh không gian bàn học 2.5D |

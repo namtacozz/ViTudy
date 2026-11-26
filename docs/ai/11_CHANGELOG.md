@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-11-26 18:19 — uncommitted (Tối Ưu Di Chuyển Bàn Học & Pinch-Zoom Theo GreenLearn)
+- Task: Đồng bộ hoàn chỉnh cơ chế di chuyển, pan và pinch-zoom bàn học từ GreenLearn (`InfiniteDesk.tsx`) với `requestAnimationFrame` batching, Pointer Events đa điểm, chặn zoom trình duyệt iOS/trackpad và giữ nguyên các vật thể riêng của ViTudy.
+- Changed:
+  - `src/components/canvas/InfiniteDesk.tsx`: Áp dụng toàn bộ hệ thống `PointerEvent` + `requestAnimationFrame` pan/pinch-zoom của GreenLearn, giữ `FourCornerArtboard`, `BoardGameArena`, `MultiplayerCursorsLayer` và scroll isolation (`[data-overlay]`, `[data-study-tools]`, `.overflow-y-auto`).
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (40/40 files, 158/158 tests pass), `pnpm run docs:check` (OK).
+- Open follow-ups: Không có.
+
+---
+
 ## 2026-11-26 18:10 — uncommitted (Đồng Bộ Toàn Bộ Bố Trí Bàn Học & Cài Đặt Từ GreenLearn)
 - Task: Đồng bộ 100% cách bố trí bàn học, responsive landscape/portrait, flyout không che khuất, nút bật/tắt vẽ bằng ngón tay (`isFingerDrawingEnabled`), palm rejection & pinch-zoom từ GreenLearn sang ViTudy, đồng thời giữ nguyên Pet con vịt 4 giai đoạn, ViToken, KnowInherit Market và Board Game Studio.
 - Changed:
