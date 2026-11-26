@@ -122,7 +122,7 @@ export default function StudySpaceDeskView() {
       {/* ================= 1. TOP-LEFT NAV HUD (ViTudy | Tên bàn học | Search) ================= */}
       <div 
         className={clsx(
-          "fixed top-1 left-1 z-40 transition-transform duration-300 ease-out pointer-events-auto",
+          "fixed top-1 left-1 landscape-phone:left-[56px] landscape-header-offset z-40 transition-transform duration-300 ease-out pointer-events-auto max-w-[50vw] sm:max-w-none shrink-0",
           isFocusMode && !showTopLeftInFocus ? "-translate-y-[calc(100%+12px)]" : "translate-y-0"
         )}
       >
@@ -171,16 +171,17 @@ export default function StudySpaceDeskView() {
         )}
       </div>
 
-      {/* ================= 3. LEFT TOOL CREATION BAR (Responsive Floating Dock on Mobile) ================= */}
+      {/* ================= 3. TOOL CREATION BAR (Dock ngang đáy trên mobile portrait, Dọc mép trái trên landscape & desktop) ================= */}
       <div 
         className={clsx(
           "fixed z-40 transition-transform duration-300 ease-out pointer-events-auto flex items-center",
-          // Desktop & Tablet (Left centered)
-          "md:left-1 md:top-1/2 md:-translate-y-1/2",
-          isFocusMode && !showLeftInFocus ? "md:-translate-x-[calc(100%+12px)]" : "md:translate-x-0",
-          // Mobile (< 768px): Bottom floating dock
-          "max-md:bottom-2 max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-auto",
-          isFocusMode && !showLeftInFocus ? "max-md:translate-y-[calc(100%+24px)]" : "max-md:translate-y-0"
+          // Mobile Portrait: Dock ngang đáy
+          "max-sm:portrait:bottom-2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:top-auto",
+          // Landscape & Desktop: Cột dọc mép trái
+          "sm:left-1 sm:top-1/2 sm:-translate-y-1/2 max-sm:landscape:left-1 max-sm:landscape:top-1/2 max-sm:landscape:-translate-y-1/2",
+          isFocusMode && !showLeftInFocus 
+            ? "max-sm:portrait:translate-y-[calc(100%+16px)] sm:-translate-x-[calc(100%+12px)] max-sm:landscape:-translate-x-[calc(100%+12px)]" 
+            : "max-sm:portrait:translate-y-0 sm:translate-x-0 max-sm:landscape:translate-x-0"
         )}
       >
         <LeftCreationBar />

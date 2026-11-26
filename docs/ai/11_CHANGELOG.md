@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-11-26 18:10 — uncommitted (Đồng Bộ Toàn Bộ Bố Trí Bàn Học & Cài Đặt Từ GreenLearn)
+- Task: Đồng bộ 100% cách bố trí bàn học, responsive landscape/portrait, flyout không che khuất, nút bật/tắt vẽ bằng ngón tay (`isFingerDrawingEnabled`), palm rejection & pinch-zoom từ GreenLearn sang ViTudy, đồng thời giữ nguyên Pet con vịt 4 giai đoạn, ViToken, KnowInherit Market và Board Game Studio.
+- Changed:
+  - `src/app/globals.css`: Đồng bộ hệ thống `.landscape-fixed-toolbar`, `.landscape-subpanel`, `.landscape-header-offset`, `.touch-target`, `pb-safe`/`pt-safe` (giữ `--accent: #E0562D`).
+  - `src/components/canvas/StudySpaceDeskView.tsx`, `src/components/hud/LeftCreationBar.tsx`, `src/components/hud/BottomRightToolkit.tsx`: Áp dụng y bố trí `max-sm:portrait` / `landscape-fixed-toolbar` / `landscape-subpanel` của GreenLearn, tích hợp Undo/Redo gọn trong dock, thêm nút bật/tắt vẽ bằng ngón tay (`Hand`).
+  - `src/components/canvas/DeskDrawingInteractionLayer.tsx`: Lấy nguyên lớp tương tác vẽ của GreenLearn (palm rejection, 40ms touch delay, multi-touch pinch-zoom, `isFingerDrawingEnabled`) và giữ `addArtboard`.
+- Verified by: `npx tsc --noEmit` (0 lỗi), `pnpm test` (40/40 files, 158/158 tests pass), `pnpm run docs:check` (OK).
+- Open follow-ups: Không có.
+
+---
+
 ## 2026-11-26 18:02 — uncommitted (Khôi Phục Pet Con Vịt 4 Giai Đoạn Bản Cũ ViTudy)
 - Task: Khôi phục nguyên bản Streak Pet con vịt 4 giai đoạn (Trứng $\rightarrow$ Nứt vỏ $\rightarrow$ Vịt con $\rightarrow$ Vịt trưởng thành) cùng bộ ảnh PNG transparent từ commit `b1d3f46` theo yêu cầu của Sếp.
 - Changed:
