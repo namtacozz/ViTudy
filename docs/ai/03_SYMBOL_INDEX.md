@@ -1,6 +1,6 @@
 # 03_SYMBOL_INDEX.md — Chỉ Mục Toàn Bộ Ký Hiệu Codebase ViTudy
 
-> **Commit Hash:** `9d15d3e`  
+> **Commit Hash:** `b1a24ca`  
 > **Cập nhật lần cuối:** `2026-11-26`  
 > **Quy ước:** Symbol | Kind | File:Lines (Symbol) | Vai trò chức năng
 
@@ -423,7 +423,7 @@ Tài liệu này được đồng bộ tự động qua `npm run docs:index` và
 | `StorageUsage` | `type` | [src/hooks/useStorageManager.ts:L20-L26](file:////home/nhat/Documents/DUT/ViTudy/src/hooks/useStorageManager.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StreakCalendar` | `component` | [src/components/dashboard/StreakCalendar.tsx:L19-L114](file:////home/nhat/Documents/DUT/ViTudy/src/components/dashboard/StreakCalendar.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudySpace` | `type` | [src/types/studyspace.ts:L149-L161](file:////home/nhat/Documents/DUT/ViTudy/src/types/studyspace.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |
-| `StudySpacePage` | `component` | [src/app/page.tsx:L114-L120](file:////home/nhat/Documents/DUT/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
+| `StudySpacePage` | `component` | [src/app/page.tsx:L110-L116](file:////home/nhat/Documents/DUT/ViTudy/src/app/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `StudyStats` | `component` | [src/components/dashboard/StudyStats.tsx:L14-L189](file:////home/nhat/Documents/DUT/ViTudy/src/components/dashboard/StudyStats.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TermsPage` | `component` | [src/app/terms/page.tsx:L8-L84](file:////home/nhat/Documents/DUT/ViTudy/src/app/terms/page.tsx) | Thành phần nghiệp vụ của phân hệ Types & Data |
 | `TileFormTemplate` | `type` | [src/types/boardgame.ts:L63-L69](file:////home/nhat/Documents/DUT/ViTudy/src/types/boardgame.ts) | Thành phần nghiệp vụ của phân hệ Types & Data |

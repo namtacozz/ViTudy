@@ -21,7 +21,7 @@ function StudySpacePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
-  const [mobileMode, setMobileMode] = useState<'companion' | 'canvas'>('companion');
+  const [mobileMode, setMobileMode] = useState<'companion' | 'canvas'>('canvas');
 
   useEffect(() => {
     const checkMobile = () => {
@@ -77,28 +77,24 @@ function StudySpacePageContent() {
     return <HomePage onEnterDesk={handleEnterDesk} />;
   }
 
-  // Mobile Mode (<768px): Mặc định mở Mobile Companion, có thể chuyển sang Canvas 2.5D
-  if (isMobile && mobileMode === 'companion') {
+  // Mobile Companion Mode (mở khi ?view=companion hoặc người dùng bấm chuyển sang chế độ đọc)
+  if (viewParam === 'companion' || (isMobile && mobileMode === 'companion')) {
     return (
-      <div className="w-full min-h-screen bg-white overflow-y-auto">
-        <MobileCompanionView onSwitchToCanvas={() => setMobileMode('canvas')} />
+      <div className="w-full min-h-[100dvh] bg-white overflow-y-auto">
+        <MobileCompanionView onSwitchToCanvas={() => {
+          setMobileMode('canvas');
+          if (viewParam === 'companion') {
+            router.push(spaceParam ? `/?view=desk&space=${encodeURIComponent(spaceParam)}` : '/?view=desk');
+          }
+        }} />
         <GuestBanner user={user} />
       </div>
     );
   }
 
-  // Desktop & Tablet (hoặc Mobile khi chọn chuyển sang Canvas 2.5D)
+  // Desktop, Tablet & Mobile 2.5D Infinite Workspace
   return (
     <>
-      {isMobile && mobileMode === 'canvas' && (
-        <button
-          type="button"
-          onClick={() => setMobileMode('companion')}
-          className="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 bg-[#0f172a]/95 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all border border-slate-700 hover:bg-[#E0562D]"
-        >
-          <span>Chế độ đọc</span>
-        </button>
-      )}
       <ModalErrorBoundary
         fallbackTitle="Không thể hiển thị bàn học này"
         onReset={() => router.push('/?view=home')}

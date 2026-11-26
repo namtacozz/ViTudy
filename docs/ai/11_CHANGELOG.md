@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-11-26 17:55 — uncommitted (Vào Thẳng Bàn Học 2.5D Khi Bấm Vào Bàn Học Trên Mobile)
+- Task: Sửa lỗi khi bấm vào bàn học trên mobile/màn hình nhỏ bị văng vào `MobileCompanionView` thay vì vào thẳng không gian Bàn học 2.5D.
+- Changed:
+  - `src/app/page.tsx`: Chuyển mặc định `mobileMode` sang `'canvas'` để bấm vào bàn học là mở thẳng `StudySpaceDeskView` 2.5D trên mọi thiết bị; chỉ mở `MobileCompanionView` khi truy cập `?view=companion`.
+- Verified by: `npx tsc --noEmit`, `pnpm test`, `pnpm run docs:check`.
+- Open follow-ups: Không có.
+
+---
+
 ## 2026-11-26 17:25 — uncommitted (Sửa Lỗi Flyout Ghi Chú & Bút Bị Che Trên Mobile)
 - Task: Khắc phục lỗi giao diện mobile khi bấm Ghi chú hoặc Bút thì flyout chọn màu và tùy chọn nét bút bị che khuất do định vị `left-full` của desktop.
 - Changed:
