@@ -60,7 +60,7 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
   ];
 
   return (
-    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl flex flex-col items-center gap-1.5 z-50 animate-fade-in min-w-[46px] select-none">
+    <div className="absolute md:left-full md:top-1/2 md:-translate-y-1/2 md:ml-3 max-md:bottom-full max-md:left-1/2 max-md:-translate-x-1/2 max-md:mb-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl flex flex-col max-md:flex-row items-center gap-1.5 z-50 animate-fade-in min-w-[46px] select-none">
       {/* Nút Tạo Map kèm popover cấu hình bung sang phải */}
       <div className="relative">
         <button
@@ -77,7 +77,7 @@ export function GamePenToolbar({ onOpenCabinet }: GamePenToolbarProps) {
         </button>
 
         {showMapConfig && (
-          <div className="absolute left-full top-0 ml-3 w-72 bg-white border border-slate-300 rounded-2xl shadow-2xl p-3.5 space-y-3 z-50">
+          <div className="absolute md:left-full md:top-0 md:ml-3 max-md:bottom-full max-md:left-1/2 max-md:-translate-x-1/2 max-md:mb-3 w-72 max-md:w-[min(92vw,300px)] bg-white border border-slate-300 rounded-2xl shadow-2xl p-3.5 space-y-3 z-50">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-slate-900">Cấu hình Map Board Game</span>
               <button

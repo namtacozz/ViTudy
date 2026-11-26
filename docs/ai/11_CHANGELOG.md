@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-11-26 17:25 — uncommitted (Sửa Lỗi Flyout Ghi Chú & Bút Bị Che Trên Mobile)
+- Task: Khắc phục lỗi giao diện mobile khi bấm Ghi chú hoặc Bút thì flyout chọn màu và tùy chọn nét bút bị che khuất do định vị `left-full` của desktop.
+- Changed:
+  - `src/components/hud/LeftCreationBar.tsx`: Chuyển toàn bộ các flyout (bảng màu Ghi chú, thanh công cụ Bút + độ dày nét + bảng 6 màu, Công cụ mở rộng) sang bật lên phía trên (`max-md:bottom-full max-md:mb-3`) và xếp ngang gọn gàng trên mobile (`max-md:flex-row`, nút `max-md:w-9 max-md:h-9`), đồng thời chuyển cột Undo/Redo sang hàng ngang trên mobile.
+  - `src/components/hud/GamePenToolbar.tsx`: Chuyển thanh công cụ Bút Trò Chơi và form tạo Map sang bật lên phía trên (`max-md:bottom-full max-md:mb-3`) trên mobile.
+- Verified by: `npx tsc --noEmit`, `pnpm test`, `pnpm run docs:check`.
+- Open follow-ups: Không có.
+
+---
+
 ## 2026-11-26 15:00 — uncommitted (Port Toàn Bộ Tính Năng Từ GreenLearn Sang ViTudy)
 - Task: Port toàn bộ các tính năng GreenLearn có mà ViTudy chưa có (chuẩn hóa sang thương hiệu Cam ViT `#E0562D`, giữ nguyên ViToken, KnowInherit Market, Board Game Studio & Bảng Vẽ 4 Góc).
 - Changed:

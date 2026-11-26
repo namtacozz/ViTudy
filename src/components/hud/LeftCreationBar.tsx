@@ -310,13 +310,13 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             activeTool === 'cursor'
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <MousePointer className="w-5 h-5 text-slate-900 stroke-[2.4]" />
+          <MousePointer className="w-5 h-5 max-md:w-4 max-md:h-4 text-slate-900 stroke-[2.4]" />
         </button>
 
         {/* Sticky Note Button (+ Note with vertical color flyout) */}
@@ -327,13 +327,13 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             activeTool === 'create_note' || isNoteFlyoutOpen
               ? 'bg-slate-200 text-slate-900 border border-slate-300 shadow-xs'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <StickyNote className="w-5 h-5 text-slate-900 stroke-[2.4]" />
+          <StickyNote className="w-5 h-5 max-md:w-4 max-md:h-4 text-slate-900 stroke-[2.4]" />
         </button>
 
         {/* Unified Pen Button with Miro-style Full Overlay Flyout */}
@@ -348,7 +348,7 @@ export function LeftCreationBar() {
               setActiveTool('pen');
             }
           }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             isDrawingActive || isPenFlyoutOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
@@ -366,13 +366,13 @@ export function LeftCreationBar() {
             setIsPenFlyoutOpen(false);
             setIsMoreToolsOpen(false);
           }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             activeTool === 'game_pen'
               ? 'bg-[#E0562D] text-white shadow-sm font-bold'
               : 'text-slate-900 hover:text-[#E0562D] hover:bg-orange-50'
           }`}
         >
-          <Gamepad2 className="w-5 h-5 stroke-[2.2]" />
+          <Gamepad2 className="w-5 h-5 max-md:w-4 max-md:h-4 stroke-[2.2]" />
         </button>
 
         {/* Bảng Vẽ 4 Góc */}
@@ -390,13 +390,13 @@ export function LeftCreationBar() {
             });
             setActiveTool('create_note');
           }}
-          className="w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer text-slate-900 hover:text-[#E0562D] hover:bg-orange-50"
+          className="w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer text-slate-900 hover:text-[#E0562D] hover:bg-orange-50"
         >
-          <Palette className="w-5 h-5 stroke-[2.2]" />
+          <Palette className="w-5 h-5 max-md:w-4 max-md:h-4 stroke-[2.2]" />
         </button>
 
         {/* Gạch chia vùng NẰM TRÊN nút + */}
-        <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+        <div className="w-7 h-[1px] my-0.5 max-md:w-[1px] max-md:h-6 max-md:my-0 max-md:mx-0.5 bg-slate-200" />
 
         {/* Nút + Công cụ mở rộng (More tools) - nằm dưới pen và trên lock */}
         <button
@@ -406,34 +406,34 @@ export function LeftCreationBar() {
             setIsNoteFlyoutOpen(false);
             setIsPenFlyoutOpen(false);
           }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             isMoreToolsOpen
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
           }`}
         >
-          <Plus className="w-5 h-5 text-slate-900 stroke-[2.4]" />
+          <Plus className="w-5 h-5 max-md:w-4 max-md:h-4 text-slate-900 stroke-[2.4]" />
         </button>
 
         {/* Gạch chia vùng NẰM DƯỚI nút + */}
-        <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+        <div className="w-7 h-[1px] my-0.5 max-md:w-[1px] max-md:h-6 max-md:my-0 max-md:mx-0.5 bg-slate-200" />
 
         {/* Lock Pan View Toggle */}
         <button
           title={isPanLocked ? 'Mở khóa di chuyển bàn' : 'Khóa góc nhìn bàn học'}
           onClick={togglePanLock}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             isPanLocked
               ? 'bg-slate-200 text-slate-900 shadow-xs font-bold border border-slate-300'
               : 'text-slate-900 hover:text-black hover:bg-slate-100'
           }`}
         >
-          {isPanLocked ? <Lock className="w-5 h-5 text-slate-900 stroke-[2.4]" /> : <Unlock className="w-5 h-5 text-slate-900 stroke-[2.4]" />}
+          {isPanLocked ? <Lock className="w-5 h-5 max-md:w-4 max-md:h-4 text-slate-900 stroke-[2.4]" /> : <Unlock className="w-5 h-5 max-md:w-4 max-md:h-4 text-slate-900 stroke-[2.4]" />}
         </button>
 
         {/* ================= VERTICALLY CENTERED NOTE COLOR FLYOUT ================= */}
         {isNoteFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-xl flex flex-col gap-2 z-50 animate-fade-in">
+          <div className="absolute md:left-full md:top-1/2 md:-translate-y-1/2 md:ml-3 max-md:bottom-full max-md:left-1/2 max-md:-translate-x-1/2 max-md:mb-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-xl flex flex-col max-md:flex-row gap-2 z-50 animate-fade-in">
             {stickyColors.map(c => (
               <button
                 key={c.value}
@@ -450,7 +450,7 @@ export function LeftCreationBar() {
 
         {/* ================= VERTICALLY CENTERED PEN SUB-TOOLBAR FLYOUT ================= */}
         {isPenFlyoutOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl flex flex-col items-center gap-2 z-50 animate-fade-in min-w-[46px]">
+          <div className="absolute md:left-full md:top-1/2 md:-translate-y-1/2 md:ml-3 max-md:bottom-full max-md:left-1/2 max-md:-translate-x-1/2 max-md:mb-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl flex flex-col max-md:flex-row max-md:flex-wrap max-md:justify-center max-md:w-max max-md:max-w-[calc(100vw-24px)] items-center gap-2 z-50 animate-fade-in min-w-[46px]">
             {/* Tool 1: Pen (Bút vẽ thường) */}
             <button
               title="Bút vẽ tự do (Pen)"
@@ -516,10 +516,10 @@ export function LeftCreationBar() {
               <BoxSelect className="w-4.5 h-4.5 text-slate-900 stroke-[2.4]" />
             </button>
 
-            <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+            <div className="w-7 h-[1px] my-0.5 max-md:w-[1px] max-md:h-6 max-md:my-0 max-md:mx-0.5 bg-slate-200" />
 
             {/* Stroke Width Selector (3 kích thước: S, M, L) */}
-            <div className="flex flex-col items-center gap-1.5 py-0.5">
+            <div className="flex flex-col max-md:flex-row items-center gap-1.5 py-0.5 max-md:py-0 max-md:px-0.5">
               <button
                 title="Nét mảnh (Nhỏ)"
                 onClick={() => setPenWidthLevel('small')}
@@ -549,10 +549,10 @@ export function LeftCreationBar() {
               </button>
             </div>
 
-            <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+            <div className="w-7 h-[1px] my-0.5 max-md:w-[1px] max-md:h-6 max-md:my-0 max-md:mx-0.5 bg-slate-200" />
 
             {/* Single Current Color Button with Compact Popup (Ảnh 1) */}
-            <div className="relative pb-0.5">
+            <div className="relative pb-0.5 max-md:pb-0">
               <button
                 title="Bấm để đổi màu nét vẽ (Mở bảng 6 màu)"
                 onClick={() => setIsPenColorPickerOpen(!isPenColorPickerOpen)}
@@ -564,7 +564,7 @@ export function LeftCreationBar() {
 
               {/* Flyout 6-Color Palette Grid (3 columns x 2 rows) */}
               {isPenColorPickerOpen && (
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl backdrop-blur-md grid grid-cols-3 gap-2 z-50 animate-fade-in w-28">
+                <div className="absolute md:left-full md:top-1/2 md:-translate-y-1/2 md:ml-3 max-md:bottom-full max-md:right-0 max-md:mb-3 bg-white border border-slate-300 rounded-2xl p-2 shadow-2xl backdrop-blur-md grid grid-cols-3 gap-2 z-50 animate-fade-in w-28">
                   {penColors.map(c => (
                     <button
                       key={c.value}
@@ -591,7 +591,7 @@ export function LeftCreationBar() {
 
         {/* ================= MORE TOOLS FLYOUT (Miro-style, Zero Search) ================= */}
         {isMoreToolsOpen && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-white border border-slate-300 rounded-2xl p-3 shadow-2xl flex flex-col gap-1 z-50 animate-fade-in w-72 text-slate-900 select-none">
+          <div className="absolute md:left-full md:top-1/2 md:-translate-y-1/2 md:ml-3 max-md:bottom-full max-md:left-1/2 max-md:-translate-x-1/2 max-md:mb-3 max-md:max-h-[60dvh] max-md:overflow-y-auto bg-white border border-slate-300 rounded-2xl p-3 shadow-2xl flex flex-col gap-1 z-50 animate-fade-in w-72 max-md:w-[min(92vw,300px)] text-slate-900 select-none">
             <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-100 mb-1">
               <span className="text-xs font-black text-slate-900 tracking-wide uppercase">
                 Công cụ mở rộng
@@ -640,42 +640,42 @@ export function LeftCreationBar() {
       </div>
 
       {/* Grouped Undo & Redo Column Pill below toolbar (Width and button sizes matching the main toolbar above) */}
-      <div className="w-full bg-white/95 border border-slate-300 rounded-2xl p-1.5 shadow-md backdrop-blur-md flex flex-col items-center gap-1 text-slate-900">
+      <div className="w-full max-md:w-auto bg-white/95 border border-slate-300 rounded-2xl p-1.5 max-md:p-1 shadow-md backdrop-blur-md flex flex-col max-md:flex-row items-center gap-1 text-slate-900">
         <button
           title="Hoàn tác nét vẽ (Undo • Ctrl+Z)"
           onClick={undoStroke}
           disabled={strokes.length === 0}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             strokes.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Undo2 className="w-5 h-5 stroke-[2.4]" />
+          <Undo2 className="w-5 h-5 max-md:w-4 max-md:h-4 stroke-[2.4]" />
         </button>
 
         <button
           title="Làm lại nét vẽ (Redo • Ctrl+Y)"
           onClick={redoStroke}
           disabled={redoStack.length === 0}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             redoStack.length > 0
               ? 'text-slate-800 hover:bg-slate-100 hover:text-black active:scale-95'
               : 'text-slate-300 cursor-not-allowed'
           }`}
         >
-          <Redo2 className="w-5 h-5 stroke-[2.4]" />
+          <Redo2 className="w-5 h-5 max-md:w-4 max-md:h-4 stroke-[2.4]" />
         </button>
 
         {strokes.length > 0 && (
           <>
-            <div className="w-7 h-[1px] bg-slate-200 my-0.5" />
+            <div className="w-7 h-[1px] my-0.5 max-md:w-[1px] max-md:h-6 max-md:my-0 max-md:mx-0.5 bg-slate-200" />
             <button
               title="Xóa toàn bộ nét vẽ"
               onClick={clearStrokes}
-              className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95"
+              className="w-11 h-11 max-md:w-9 max-md:h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95"
             >
-              <Trash2 className="w-5 h-5 stroke-[2.4]" />
+              <Trash2 className="w-5 h-5 max-md:w-4 max-md:h-4 stroke-[2.4]" />
             </button>
           </>
         )}
